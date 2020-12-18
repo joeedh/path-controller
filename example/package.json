@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "pngjs": "^5.0.0",
-    "pngjs-nozlib": "^1.0.0"
-  }
-}
