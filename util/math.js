@@ -58,10 +58,10 @@ export function barycentric_v2(p, v1, v2, v3, axis1=0, axis2=1, out=undefined) {
   if (!out) {
     out = barycentric_v2_rets.next();
   }
-  
+
   out[0] = u;
   out[1] = v;
-  
+
   return out;
 }
 
@@ -108,6 +108,170 @@ function _linedis2(co, v1, v2) {
     (((v1y-v2y)*v1y+(v1z-v2z)*v1z+(v1x-v2x)*v1x)*(v1x-v2x)-v1x)**2;
 
   return dis;
+}
+
+let closest_p_tri_rets = new util.cachering(() => {return {
+  co : new Vector3(),
+  uv : new Vector2()
+}}, 512);
+
+let cpt_v1 = new Vector3();
+let cpt_v2 = new Vector3();
+let cpt_v3 = new Vector3();
+let cpt_v4 = new Vector3();
+let cpt_v5 = new Vector3();
+let cpt_v6 = new Vector3();
+let cpt_p = new Vector3();
+let cpt_n = new Vector3();
+
+export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
+  let op = p;
+
+  if (uvw) {
+    uvw[0] = uvw[1] = 0.0;
+    if (uvw.length > 2) {
+      uvw[2] = 0.0;
+    }
+  }
+
+  v1 = cpt_v1.load(v1);
+  v2 = cpt_v2.load(v2);
+  v3 = cpt_v3.load(v3);
+  p = cpt_p.load(p);
+
+  if (n === undefined) {
+    n = cpt_n.load(normal_tri(v1, v2, v3));
+  }
+
+  v1.sub(p);
+  v2.sub(p);
+  v3.sub(p);
+  p.zero();
+
+
+  /*use least squares to solve for barycentric coordinates
+    then clip to triangle
+
+    we do this in 2d, as all solutions are coplanar anyway and that way we
+    can have one of the equations be "u+v+w = 1".
+    should investigate if this is really necassary.
+   */
+
+  let ax1, ax2;
+  let ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);
+  if (ax === 0.0 && ay === 0.0 && az === 0.0) {
+    console.log("eek1");
+    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0 / 3.0).add(op);
+  }
+
+  let ax3;
+  if (ax >= ay && ax >= az) {
+    ax1 = 1;
+    ax2 = 2;
+    ax3 = 0;
+  } else if (ay >= ax && ay >= az) {
+    ax1 = 0;
+    ax2 = 2;
+    ax3 = 1;
+  } else {
+    ax1 = 0;
+    ax2 = 1;
+    ax3 = 2;
+  }
+
+  let mat = cpt_mat;
+  let mat2 = cpt_mat2;
+  mat.makeIdentity();
+
+  let m = mat.$matrix;
+
+  m.m11 = v1[ax1];
+  m.m12 = v2[ax1];
+  m.m13 = v3[ax1];
+  m.m14 = 0.0;
+
+  m.m21 = v1[ax2];
+  m.m22 = v2[ax2];
+  m.m23 = v3[ax2];
+  m.m24 = 0.0;
+
+  /*
+  m.m31 = v1[ax3];
+  m.m32 = v2[ax3];
+  m.m33 = v3[ax3];
+  m.m34 = 0.0;
+  */
+
+  m.m31 = 1;
+  m.m32 = 1;
+  m.m33 = 1;
+  m.m34 = 0.0;
+
+  mat.transpose();
+
+  let b = cpt_b.zero();
+
+  b[0] = p[ax1];
+  b[1] = p[ax2];
+  //b[2] = p[ax3];
+  b[2] = 1.0;
+  b[3] = 0.0;
+
+  mat2.load(mat).transpose();
+
+  mat.preMultiply(mat2);
+
+  if (mat.invert() === null) {
+    console.log("eek2", mat.determinant(), ax1, ax2, n);
+    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0 / 3.0).add(op);
+  }
+
+  mat.multiply(mat2);
+
+
+  b.multVecMatrix(mat);
+
+  let u = b[0];
+  let v = b[1];
+  let w = b[2];
+
+  for (let i = 0; i < 1; i++) {
+    u = Math.min(Math.max(u, 0.0), 1.0);
+    v = Math.min(Math.max(v, 0.0), 1.0);
+    w = Math.min(Math.max(w, 0.0), 1.0);
+
+    let tot = u + v + w;
+
+    if (tot !== 0.0) {
+      tot = 1.0 / tot;
+      u *= tot;
+      v *= tot;
+      w *= tot;
+    }
+  }
+
+  if (uvw) {
+    uvw[0] = u;
+    uvw[1] = v;
+    if (uvw.length > 2) {
+      uvw[2] = w;
+    }
+  }
+
+  let x = v1[0] * u + v2[0] * v + v3[0] * w;
+  let y = v1[1] * u + v2[1] * v + v3[1] * w;
+  let z = v1[2] * u + v2[2] * v + v3[2] * w;
+
+  let ret = closest_p_tri_rets.next();
+
+  ret.p.loadXYZ(x, y, z);
+  ret.uv[0] = u;
+  ret.uv[1] = v;
+
+  ret.dist = ret.p.vectorLength();
+  ret.p.add(op);
+
+  return ret;
 }
 
 export function dist_to_tri_v3(co, v1, v2, v3, no=undefined) {
