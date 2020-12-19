@@ -1,6 +1,69 @@
 "use strict";
-/*
-a basic, simple tool system implementation
+/**
+
+ToolOps are base operators for modifying application state.
+They operate on Contexts and can use the datapath API.
+They make up the undo stack.
+
+ToolOp subclasses handle undo with their undoPre (run before tool execution)
+and undo methods.  You can set default handlers (most commonly this is just
+saving/reloading the app state) with setDefaultUndoHandlers.
+
+ToolOps have inputs and outputs (which are ToolProperties) and can also
+be modal.
+
+## Rules
+
+Tools are never, EVER allowed to store direct pointers to the application state,
+with one exception: tools in modal mode may store such pointers, but they must
+delete them when existing modal mode by overriding modalEnd.
+
+This is to prevent very evil and difficult to debug bugs in the undo stack
+and nasty memory leaks.
+
+## Example
+
+<pre>
+
+const ExampleEnum = {
+  ITEM1 : 0,
+  ITEM2 : 1
+}
+
+class MyTool extends ToolOp {
+  static tooldef() {return {
+    uiname     : "Tool Name",
+    toolpath   : "my.tool",
+    inputs     : {
+        input1 : new IntProperty(),
+        input2 : new EnumProperty(0, ExampleEnum)
+    },
+    outputs    : {
+        someoutput : new IntProperty
+    }
+  }}
+
+  undoPre(ctx) {
+    //run before tool starts
+  }
+
+  undo(ctx) {
+    //undo handler
+  }
+
+  execPre(ctx) {
+    //run right before exec
+  }
+  exec(ctx) {
+    //main execution method
+  }
+  execPost(ctx) {
+    //run right after exec
+  }
+}
+ToolOp.register(MyTool);
+
+</pre>
 */
 
 import * as events from '../util/events.js';
@@ -34,6 +97,24 @@ class InheritFlag {
 }
 
 let modalstack = [];
+
+let defaultUndoHandlers = {
+  undoPre(ctx) {
+    throw new Error("implement me");
+  },
+  undo(ctx) {
+    throw new Error("implement me");
+  }
+}
+
+export function setDefaultUndoHandlers(undoPre, undo) {
+  if (!undoPre || !undo) {
+    throw new Error("invalid parameters to setDefaultUndoHandlers");
+  }
+
+  defaultUndoHandlers.undoPre = undoPre;
+  defaultUndoHandlers.undo = undo;
+}
 
 export class ToolPropertyCache {
   constructor() {
