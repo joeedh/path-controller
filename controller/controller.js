@@ -179,8 +179,15 @@ export class  DataList extends ListIface {
     }
 
     this.cb = {};
-    for (let cb of callbacks) {
-      this.cb[cb.name] = cb;
+
+    if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
+      for (let k in callbacks) {
+        this.cb[k] = callbacks[k];
+      }
+    } else {
+      for (let cb of callbacks) {
+        this.cb[cb.name] = cb;
+      }
     }
 
     let check = (key) => {
