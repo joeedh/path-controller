@@ -864,7 +864,7 @@ class BSplineCurve extends CurveTypeData {
     };
 
     let Icons = row.constructor.getIconEnum();
-    
+
     row.iconbutton(Icons.TINY_X, "Delete Point", () => {
       console.log("delete point");
 
