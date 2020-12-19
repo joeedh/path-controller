@@ -11,16 +11,16 @@
  users who e.g. write python scripts, extend the UI, use advanced animation features, or anything else
  that uses RNA paths.
 
-## Contexts
+ ## Contexts
 
-The datapath system works in tandem with the context module.  Contexts are client-provided classes
-that the datapath API and ToolOps use to communicate with the application state.
+ The datapath system works in tandem with the context module.  Contexts are client-provided classes
+ that the datapath API and ToolOps use to communicate with the application state.
 
-## Example
+ ## Example
 
-<pre>
+ <pre>
 
-function initMyDataAPI() {
+ function initMyDataAPI() {
   let api = new DataAPI();
 
   //map MyContextClass to a struct, true tells mapStruct to auto-create
@@ -37,8 +37,8 @@ function initMyDataAPI() {
 
   return api;
 }
-</pre>
-*/
+ </pre>
+ */
 import * as toolprop from '../toolsys/toolprop.js';
 import * as parseutil from '../util/parseutil.js';
 import {print_stack} from '../util/util.js';
@@ -89,10 +89,11 @@ for (let i=0; i<parserStack.length; i++) {
 parserStack.cur = 0;
 
 import {
-  ModelInterface, ToolOpIface,
+  ToolOpIface,
   setImplementationClass, isVecProperty, ListIface
 } from './controller_base.js';
 import {initToolPaths, parseToolPath} from '../toolsys/toolpath.js';
+import {ModelInterface} from './controller_abstract.js';
 
 export {DataPathError, DataFlags} from './controller_base.js';
 

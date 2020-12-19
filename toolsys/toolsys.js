@@ -189,7 +189,7 @@ export class ToolPropertyCache {
     uiname = ToolProperty.makeUIName(uiname);
 
     prop2.uiname = uiname;
-    prop2.description = prop2.description ?? prop2.uiname;
+    prop2.description = prop2.description || prop2.uiname;
 
     st.add(dpath);
 

@@ -366,7 +366,7 @@ export class RandCurve extends SimpleCurveBase {
   }}
 }
 CurveTypeData.register(RandCurve);
-EaseCurve.STRUCT = nstructjs.inherit(RandCurve, SimpleCurveBase) + `
+RandCurve.STRUCT = nstructjs.inherit(RandCurve, SimpleCurveBase) + `
 }`;
 nstructjs.register(RandCurve);
 
