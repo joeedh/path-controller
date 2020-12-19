@@ -4,6 +4,7 @@ import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as toolprop from '../toolsys/toolprop.js';
 import {print_stack} from '../util/util.js';
 import {ToolProperty} from '../toolsys/toolprop.js';
+import {ToolOp} from '../toolsys/toolsys.js';
 
 export const DataFlags = {
   READ_ONLY         : 1,
