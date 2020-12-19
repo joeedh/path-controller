@@ -291,9 +291,6 @@ export const StructFlags = {
              //via the DataPathToolOp
 };
 
-let PropFlags = toolprop.PropFlags,
-    PropTypes = toolprop.PropTypes;
-
 export class ListIface {
   getStruct(api, list, key) {
 

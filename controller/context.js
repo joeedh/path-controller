@@ -1,12 +1,16 @@
-import * as util from '../util/util.js';
-
-import cconst from '../config/const.js';
-import * as ui_noteframe from "../widgets/ui_noteframe.js";
-
-/*
+/**
 see doc_src/context.md
 */
-window.ccosnt = cconst;
+
+import * as util from '../util/util.js';
+
+import cconst from '../config/config.js';
+
+let notifier = undefined;
+
+export function setNotifier(cls) {
+  notifier = cls;
+}
 
 export const ContextFlags = {
   IS_VIEW : 1
@@ -260,7 +264,7 @@ export class Context {
     console.warn(message);
 
     if (state && state.screen) {
-      return ui_noteframe.error(state.screen, message, timeout);
+      return notifier.error(state.screen, message, timeout);
     }
   }
 
@@ -270,7 +274,7 @@ export class Context {
     console.warn(message);
 
     if (state && state.screen) {
-      return ui_noteframe.warning(state.screen, message, timeout);
+      return notifier.warning(state.screen, message, timeout);
     }
   }
 
@@ -280,7 +284,7 @@ export class Context {
     console.warn(msg);
 
     if (state && state.screen) {
-      return ui_noteframe.message(state.screen, msg, timeout);
+      return notifier.message(state.screen, msg, timeout);
     }
   }
 
@@ -289,7 +293,7 @@ export class Context {
 
     if (state && state.screen) {
       //progbarNote(screen, msg, percent, color, timeout) {
-      return ui_noteframe.progbarNote(state.screen, msg, perc, "green", timeout, id);
+      return notifier.progbarNote(state.screen, msg, perc, "green", timeout, id);
     }
   }
 

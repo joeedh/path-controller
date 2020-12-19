@@ -1,5 +1,5 @@
 import * as util from "./util.js";
-import cconst from '../config/const.js';
+import cconst from '../config/config.js';
 import {Vector2} from './vectormath.js';
 
 export let modalstack = [];

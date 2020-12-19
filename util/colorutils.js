@@ -1,6 +1,5 @@
 import * as util from '../util/util.js';
 import * as vectormath from '../util/vectormath.js';
-import cconst from '../config/const.js';
 
 let rgb_to_hsv_rets = new util.cachering(() => [0, 0, 0], 64);
 

@@ -1,10 +1,10 @@
-import {ToolOp, ToolFlags} from "../toolsys/simple_toolsys.js";
+import {ToolOp, ToolFlags} from "../toolsys/toolsys.js";
 import {PropTypes, PropFlags, BoolProperty, IntProperty, FloatProperty, FlagProperty,
   EnumProperty, StringProperty, Vec3Property, Vec2Property, Vec4Property,
   QuatProperty, Mat4Property} from "../toolsys/toolprop.js";
 
 import * as util from '../util/util.js';
-import {isVecProperty, getVecClass} from "./controller.js";
+import {isVecProperty, getVecClass} from "./controller_base.js";
 
 export class DataPathSetOp extends ToolOp {
   constructor() {

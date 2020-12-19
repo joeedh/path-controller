@@ -42,11 +42,10 @@ function initMyDataAPI() {
 import * as toolprop from '../toolsys/toolprop.js';
 import * as parseutil from '../util/parseutil.js';
 import {print_stack} from '../util/util.js';
-import {ToolOp, UndoFlags, ToolFlags} from "../toolsys/simple_toolsys.js";
+import {ToolOp, UndoFlags, ToolFlags} from "../toolsys/toolsys.js";
 import {Vec2Property, Vec3Property, Vec4Property, PropTypes, PropFlags} from '../toolsys/toolprop.js';
 import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as util from '../util/util.js';
-import cconst from '../config/const.js';
 
 import {DataPath, DataFlags, DataTypes, DataPathError, StructFlags} from './controller_base.js';
 export * from './controller_base.js';
@@ -92,12 +91,12 @@ parserStack.cur = 0;
 import {
   ModelInterface, ToolOpIface,
   setImplementationClass, isVecProperty, ListIface
-} from './controller.js';
+} from './controller_base.js';
 import {initToolPaths, parseToolPath} from '../toolsys/toolpath.js';
 
-export {DataPathError, DataFlags} from './controller.js';
+export {DataPathError, DataFlags} from './controller_base.js';
 
-import {ToolClasses} from '../toolsys/simple_toolsys.js';
+import {ToolClasses} from '../toolsys/toolsys.js';
 import {ToolProperty, IntProperty} from "../toolsys/toolprop.js";
 
 let tool_classes = ToolClasses;
@@ -665,12 +664,12 @@ export class DataAPI extends ModelInterface {
     return _map_structs[key];
   }
 
-  //used by simple_controller.js for tagging error messages
+  //used for tagging error messages
   pushReportContext(name) {
     pushReportName(name);
   }
 
-  //used by simple_controller.js for tagging error messages
+  //used for tagging error messages
   popReportContext() {
     popReportName();
   }
@@ -746,7 +745,7 @@ export class DataAPI extends ModelInterface {
         report("error while evaluating path " + inpath);
       }
 
-      if (cconst.DEBUG.datapaths) {
+      if (window.DEBUG && window.DEBUG.datapaths) {
         util.print_stack(error);
       }
 

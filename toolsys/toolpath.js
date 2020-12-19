@@ -1,6 +1,6 @@
-import {ToolClasses, ToolOp, ToolFlags, UndoFlags, ToolMacro} from './simple_toolsys.js';
+import {ToolClasses, ToolOp, ToolFlags, UndoFlags, ToolMacro} from './toolsys.js';
 import {tokdef, lexer, parser, PUTLParseError} from '../util/parseutil.js';
-import {DataPathError} from '../controller/controller.js';
+import {DataPathError} from '../controller/controller_base.js';
 import {cachering} from '../util/util.js';
 
 export let ToolPaths = {};
