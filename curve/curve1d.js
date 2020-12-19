@@ -2,7 +2,6 @@
 
 /*FIXME: not sure this works anymore*/
 import {nstructjs} from "../util/struct.js";
-import {Icons} from "../icon_enum.js";
 
 import * as util from '../util/util.js';
 //import * as ui_base from './ui_base.js';

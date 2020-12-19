@@ -1,7 +1,6 @@
 "use strict";
 
 import {nstructjs} from "../util/struct.js";
-import {Icons} from "../icon_enum.js";
 
 import * as util from '../util/util.js';
 //import * as ui_base from './ui_base.js';
@@ -864,6 +863,8 @@ class BSplineCurve extends CurveTypeData {
       this.redraw();
     };
 
+    let Icons = row.constructor.getIconEnum();
+    
     row.iconbutton(Icons.TINY_X, "Delete Point", () => {
       console.log("delete point");
 
