@@ -1966,6 +1966,26 @@ export class Matrix4 {
     return this;
   }
 
+  setTranslation(x, y, z, resetW=true) {
+    if (typeof x === "object") {
+      y = x[1];
+      z = x[2];
+      x = x[0];
+    }
+
+    let m = this.$matrix;
+
+    m.m41 = x;
+    m.m42 = y;
+    m.m43 = z;
+
+    if (resetW) {
+      m.m44 = 1.0;
+    }
+
+    return this;
+  }
+
   //this is really like the lookAt method, isn't it.
   makeNormalMatrix(normal, up=undefined) {
     if (normal === undefined) {
