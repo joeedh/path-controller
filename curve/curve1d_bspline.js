@@ -10,44 +10,54 @@ import * as vectormath from '../util/vectormath.js';
 var Vector2 = vectormath.Vector2;
 
 export const SplineTemplates = {
-  CONSTANT: 0,
-  LINEAR: 1,
-  SHARP : 2,
-  SQRT: 3,
-  SMOOTH: 4,
-  SMOOTHER: 5,
-  SHARPER: 6,
-  SPHERE: 7
+  CONSTANT      : 0,
+  LINEAR        : 1,
+  SHARP         : 2,
+  SQRT          : 3,
+  SMOOTH        : 4,
+  SMOOTHER      : 5,
+  SHARPER       : 6,
+  SPHERE        : 7,
+  REVERSE_LINEAR: 8
 };
 
 const templates = {
-  [SplineTemplates.CONSTANT]: [
+  [SplineTemplates.CONSTANT]      : [
     [1, 1], [1, 1]
   ],
-  [SplineTemplates.LINEAR]: [
+  [SplineTemplates.LINEAR]        : [
     [0, 0], [1, 1]
   ],
-  [SplineTemplates.SHARP]: [
+  [SplineTemplates.SHARP]         : [
     [0, 0], [0.9999, 0.0001], [1, 1]
   ],
-  [SplineTemplates.SQRT]: [
+  [SplineTemplates.SQRT]          : [
     [0, 0], [0.05, 0.25], [0.33, 0.65], [1, 1]
   ],
-  [SplineTemplates.SMOOTH]: [
-    [0, 0], [0.5, 0], [0.5, 1.0], [1, 1]
+  [SplineTemplates.SMOOTH]        : [
+    "DEG", 2, [0, 0], [1.0/3.0, 0], [2.0/3.0, 1.0], [1, 1]
   ],
-  [SplineTemplates.SMOOTHER]: [
-    [0, 0], [1.0/3.0, 0], [2.0/3.0, 1.0], [1, 1]
+  [SplineTemplates.SMOOTHER]      : [
+    "DEG", 6, [0, 0], [1.0/3.0, 0], [2.0/3.0, 1.0], [1, 1]
   ],
-  [SplineTemplates.SHARPER]: [
+  [SplineTemplates.SHARPER]       : [
     [0, 0], [0.3, 0.03], [0.7, 0.065], [0.9, 0.16], [1, 1]
-  ]
+  ],
+  [SplineTemplates.SPHERE]        : [
+    [0, 0], [0.01953, 0.23438], [0.08203, 0.43359], [0.18359, 0.625], [0.35938, 0.81641], [0.625, 0.97656], [1, 1]
+  ],
+  [SplineTemplates.REVERSE_LINEAR]: [
+    [0, 1], [1, 0]
+  ],
 };
+
+//is initialized below
+export const SplineTemplateIcons = {};
 
 let RecalcFlags = {
   BASIS: 1,
-  FULL: 2,
-  ALL: 3,
+  FULL : 2,
+  ALL  : 3,
 
   //private flag
   FULL_BASIS: 4
@@ -90,17 +100,17 @@ var eval2_rets = util.cachering.fromConstructor(Vector2, 32);
 */
 
 function bez3(a, b, c, t) {
-  var r1 = a + (b - a) * t;
-  var r2 = b + (c - b) * t;
+  var r1 = a + (b - a)*t;
+  var r2 = b + (c - b)*t;
 
-  return r1 + (r2 - r1) * t;
+  return r1 + (r2 - r1)*t;
 }
 
 function bez4(a, b, c, d, t) {
   var r1 = bez3(a, b, c, t);
   var r2 = bez3(b, c, d, t);
 
-  return r1 + (r2 - r1) * t;
+  return r1 + (r2 - r1)*t;
 }
 
 export function binomial(n, i) {
@@ -153,10 +163,10 @@ export class Curve1DPoint extends Vector2 {
 
   toJSON() {
     return {
-      0: this[0],
-      1: this[1],
-      eid: this.eid,
-      flag: this.flag,
+      0      : this[0],
+      1      : this[1],
+      eid    : this.eid,
+      flag   : this.flag,
       tangent: this.tangent
     };
   }
@@ -254,7 +264,7 @@ class BSplineCurve extends CurveTypeData {
   static define() {
     return {
       uiname: "B-Spline",
-      name: "bspline"
+      name  : "bspline"
     }
   }
 
@@ -325,22 +335,22 @@ class BSplineCurve extends CurveTypeData {
 
     var p = l1.copy();
     p.rco[0] = l1.rco[0] - 0.00004;
-    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1]) * 1.0 / 3.0;
+    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1])*1.0/3.0;
     //this._ps.push(p);
 
     var p = l1.copy();
     p.rco[0] = l1.rco[0] - 0.00003;
-    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1]) * 1.0 / 3.0;
+    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1])*1.0/3.0;
     //this._ps.push(p);
 
     var p = l1.copy();
     p.rco[0] = l1.rco[0] - 0.00001;
-    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1]) * 1.0 / 3.0;
+    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1])*1.0/3.0;
     this._ps.push(p);
 
     var p = l1.copy();
     p.rco[0] = l1.rco[0] - 0.00001;
-    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1]) * 2.0 / 3.0;
+    p.rco[1] = l2.rco[1] + (l1.rco[1] - l2.rco[1])*2.0/3.0;
     this._ps.push(p);
 
     this._ps.push(l1);
@@ -369,10 +379,10 @@ class BSplineCurve extends CurveTypeData {
     }
 
     ret = Object.assign(ret, {
-      points: ps,
-      deg: this.deg,
+      points       : ps,
+      deg          : this.deg,
       interpolating: this.interpolating,
-      eidgen: this.eidgen.toJSON()
+      eidgen       : this.eidgen.toJSON()
     });
 
     return ret;
@@ -413,17 +423,17 @@ class BSplineCurve extends CurveTypeData {
     }
 
     i = Math.min(Math.max(i, 0), this._ps.length - 1);
-    t = Math.min(Math.max(t, 0.0), 1.0) * 0.999999999;
+    t = Math.min(Math.max(t, 0.0), 1.0)*0.999999999;
 
     var table = this.basis_tables[i];
 
-    var s = t * (table.length / 4) * 0.99999;
+    var s = t*(table.length/4)*0.99999;
 
     var j = ~~s;
     s -= j;
 
     j *= 4;
-    return table[j] + (table[j + 3] - table[j]) * s;
+    return table[j] + (table[j + 3] - table[j])*s;
 
     return bez4(table[j], table[j + 1], table[j + 2], table[j + 3], s);
   }
@@ -460,27 +470,27 @@ class BSplineCurve extends CurveTypeData {
     var table = this.hermite;
 
     var eps = 0.00001;
-    var dt = (1.0 - eps * 4.001) / (steps - 1);
-    var t = eps * 4;
+    var dt = (1.0 - eps*4.001)/(steps - 1);
+    var t = eps*4;
     var lastdv1, lastf3;
 
     for (var j = 0; j < steps; j++, t += dt) {
-      var f1 = this._evaluate(t - eps * 2);
+      var f1 = this._evaluate(t - eps*2);
       var f2 = this._evaluate(t - eps);
       var f3 = this._evaluate(t);
       var f4 = this._evaluate(t + eps);
-      var f5 = this._evaluate(t + eps * 2);
+      var f5 = this._evaluate(t + eps*2);
 
-      var dv1 = (f4 - f2) / (eps * 2);
+      var dv1 = (f4 - f2)/(eps*2);
       dv1 /= steps;
 
       if (j > 0) {
         var j2 = j - 1;
 
-        table[j2 * 4] = lastf3;
-        table[j2 * 4 + 1] = lastf3 + lastdv1 / 3.0;
-        table[j2 * 4 + 2] = f3 - dv1 / 3.0;
-        table[j2 * 4 + 3] = f3;
+        table[j2*4] = lastf3;
+        table[j2*4 + 1] = lastf3 + lastdv1/3.0;
+        table[j2*4 + 2] = f3 - dv1/3.0;
+        table[j2*4 + 3] = f3;
       }
 
       lastdv1 = dv1;
@@ -541,7 +551,7 @@ class BSplineCurve extends CurveTypeData {
           let r2 = error(p);
           p.rco[i] = orig;
 
-          g[i] = (r2 - r1) / df;
+          g[i] = (r2 - r1)/df;
         }
 
         let totgs = g.dot(g);
@@ -554,8 +564,8 @@ class BSplineCurve extends CurveTypeData {
         r1 /= totgs;
         let k = 0.5;
 
-        p.rco[0] += -r1 * g[0] * k;
-        p.rco[1] += -r1 * g[1] * k;
+        p.rco[0] += -r1*g[0]*k;
+        p.rco[1] += -r1*g[1]*k;
       }
 
       //console.log("ERR", err);
@@ -583,30 +593,30 @@ class BSplineCurve extends CurveTypeData {
     this.basis_tables = new Array(this._ps.length);
 
     for (var i = 0; i < this._ps.length; i++) {
-      var table = this.basis_tables[i] = new Array((steps - 1) * 4);
+      var table = this.basis_tables[i] = new Array((steps - 1)*4);
 
       var eps = 0.00001;
-      var dt = (1.0 - eps * 8) / (steps - 1);
-      var t = eps * 4;
+      var dt = (1.0 - eps*8)/(steps - 1);
+      var t = eps*4;
       var lastdv1, lastf3;
 
       for (var j = 0; j < steps; j++, t += dt) {
-        var f1 = this._basis(t - eps * 2, i);
+        var f1 = this._basis(t - eps*2, i);
         var f2 = this._basis(t - eps, i);
         var f3 = this._basis(t, i);
         var f4 = this._basis(t + eps, i);
-        var f5 = this._basis(t + eps * 2, i);
+        var f5 = this._basis(t + eps*2, i);
 
-        var dv1 = (f4 - f2) / (eps * 2);
+        var dv1 = (f4 - f2)/(eps*2);
         dv1 /= steps;
 
         if (j > 0) {
           var j2 = j - 1;
 
-          table[j2 * 4] = lastf3;
-          table[j2 * 4 + 1] = lastf3 + lastdv1 / 3.0;
-          table[j2 * 4 + 2] = f3 - dv1 / 3.0;
-          table[j2 * 4 + 3] = f3;
+          table[j2*4] = lastf3;
+          table[j2*4 + 1] = lastf3 + lastdv1/3.0;
+          table[j2*4 + 2] = f3 - dv1/3.0;
+          table[j2*4 + 3] = f3;
         }
 
         lastdv1 = dv1;
@@ -620,7 +630,7 @@ class BSplineCurve extends CurveTypeData {
     var ps = this._ps;
 
     function safe_inv(n) {
-      return n == 0 ? 0 : 1.0 / n;
+      return n == 0 ? 0 : 1.0/n;
     }
 
     function bas(s, i, n) {
@@ -634,10 +644,10 @@ class BSplineCurve extends CurveTypeData {
         return s >= ps[ki].rco[0] && s < ps[kn].rco[0] ? 1 : 0;
       } else {
 
-        var a = (s - ps[ki].rco[0]) * safe_inv(ps[knn].rco[0] - ps[ki].rco[0] + 0.0001);
-        var b = (ps[knn1].rco[0] - s) * safe_inv(ps[knn1].rco[0] - ps[kn].rco[0] + 0.0001);
+        var a = (s - ps[ki].rco[0])*safe_inv(ps[knn].rco[0] - ps[ki].rco[0] + 0.0001);
+        var b = (ps[knn1].rco[0] - s)*safe_inv(ps[knn1].rco[0] - ps[kn].rco[0] + 0.0001);
 
-        var ret = a * bas(s, i, n - 1) + b * bas(s, i + 1, n - 1);
+        var ret = a*bas(s, i, n - 1) + b*bas(s, i + 1, n - 1);
 
         /*
         if (isNaN(ret)) {
@@ -668,8 +678,8 @@ class BSplineCurve extends CurveTypeData {
     if (t > b[0]) return b[1];
 
     if (this.points.length == 2) {
-      t = (t - a[0]) / (b[0] - a[0]);
-      return a[1] + (b[1] - a[1]) * t;
+      t = (t - a[0])/(b[0] - a[0]);
+      return a[1] + (b[1] - a[1])*t;
     }
 
     if (this.recalc) {
@@ -686,14 +696,14 @@ class BSplineCurve extends CurveTypeData {
     t *= 0.999999;
 
     var table = this.hermite;
-    var s = t * (table.length / 4);
+    var s = t*(table.length/4);
 
     var i = Math.floor(s);
     s -= i;
 
     i *= 4;
 
-    return table[i] + (table[i + 3] - table[i]) * s;
+    return table[i] + (table[i + 3] - table[i])*s;
   }
 
   _evaluate(t) {
@@ -713,7 +723,7 @@ class BSplineCurve extends CurveTypeData {
 
       var f1 = Math.abs(ret1[0] - start_t);
       var f2 = Math.abs(ret2[0] - start_t);
-      var g = (f2 - f1) / df;
+      var g = (f2 - f1)/df;
 
       if (f1 == f2) break;
 
@@ -722,11 +732,11 @@ class BSplineCurve extends CurveTypeData {
       if (f1 == 0.0 || g == 0.0)
         return this._evaluate2(t)[1];
 
-      var fac = -(f1 / g) * 0.5;
+      var fac = -(f1/g)*0.5;
       if (fac == 0.0) {
         fac = 0.01;
       } else if (Math.abs(fac) > 0.1) {
-        fac = 0.1 * Math.sign(fac);
+        fac = 0.1*Math.sign(fac);
       }
 
       t += fac;
@@ -750,8 +760,8 @@ class BSplineCurve extends CurveTypeData {
       var p = this._ps[i].rco;
       var b = this.basis(t, i);
 
-      sumx += b * p[0];
-      sumy += b * p[1];
+      sumx += b*p[0];
+      sumy += b*p[1];
 
       totbasis += b;
     }
@@ -773,16 +783,16 @@ class BSplineCurve extends CurveTypeData {
 
   _wrapTouchEvent(e) {
     return {
-      x: e.touches.length ? e.touches[0].pageX : this.mpos[0],
-      y: e.touches.length ? e.touches[0].pageY : this.mpos[1],
-      button: 0,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      ctrlKey: e.ctrlKey,
-      isTouch: true,
-      commandKey: e.commandKey,
+      x              : e.touches.length ? e.touches[0].pageX : this.mpos[0],
+      y              : e.touches.length ? e.touches[0].pageY : this.mpos[1],
+      button         : 0,
+      shiftKey       : e.shiftKey,
+      altKey         : e.altKey,
+      ctrlKey        : e.ctrlKey,
+      isTouch        : true,
+      commandKey     : e.commandKey,
       stopPropagation: () => e.stopPropagation(),
-      preventDefault: () => e.preventDefault()
+      preventDefault : () => e.preventDefault()
     };
   }
 
@@ -805,11 +815,20 @@ class BSplineCurve extends CurveTypeData {
     templ = templates[templ];
 
     this.reset(true);
-    for (let p of templ) {
+    this.deg = 3.0;
+
+    for (let i = 0; i < templ.length; i++) {
+      let p = templ[i];
+
+      if (p === "DEG") {
+        this.deg = templ[i + 1];
+        i++;
+        continue;
+      }
+
       this.add(p[0], p[1], true);
     }
 
-    this.deg = 3.0;
     this.recalc = 1;
     this.updateKnots();
     this.update();
@@ -833,14 +852,14 @@ class BSplineCurve extends CurveTypeData {
 
   makeGUI(container, canvas, drawTransform) {
     this.uidata = {
-      start_mpos: new Vector2(),
+      start_mpos : new Vector2(),
       transpoints: [],
 
-      dom: container,
-      canvas: canvas,
-      g: canvas.g,
+      dom         : container,
+      canvas      : canvas,
+      g           : canvas.g,
       transforming: false,
-      draw_trans: drawTransform
+      draw_trans  : drawTransform
     };
 
     canvas.addEventListener("touchstart", this.on_touchstart);
@@ -852,6 +871,24 @@ class BSplineCurve extends CurveTypeData {
     canvas.addEventListener("mousemove", this.on_mousemove);
     canvas.addEventListener("mouseup", this.on_mouseup);
     canvas.addEventListener("keydown", this.on_keydown);
+
+    let bstrip = container.row().strip();
+
+    let makebutton = (strip, k) => {
+      let uiname = k[0] + k.slice(1, k.length).toLowerCase();
+      uiname = uiname.replace(/_/g, " ");
+
+      let icon = strip.iconbutton(-1, uiname, () => {
+        this.loadTemplate(SplineTemplates[k]);
+      });
+
+      icon.iconsheet = 0;
+      icon.customIcon = SplineTemplateIcons[k];
+    }
+
+    for (let k in SplineTemplates) {
+      makebutton(bstrip, k);
+    }
 
     let row = container.row();
 
@@ -991,11 +1028,11 @@ class BSplineCurve extends CurveTypeData {
   do_highlight(x, y) {
     var trans = this.uidata.draw_trans;
     var mindis = 1e17, minp = undefined;
-    var limit = 19 / trans[0], limitsqr = limit * limit;
+    var limit = 19/trans[0], limitsqr = limit*limit;
 
     for (var i = 0; i < this.points.length; i++) {
       var p = this.points[i];
-      var dx = x - p.sco[0], dy = y - p.sco[1], dis = dx * dx + dy * dy;
+      var dx = x - p.sco[0], dy = y - p.sco[1], dis = dx*dx + dy*dy;
 
       if (dis < mindis && dis < limitsqr) {
         mindis = dis;
@@ -1038,8 +1075,8 @@ class BSplineCurve extends CurveTypeData {
 
     var trans = this.uidata.draw_trans;
 
-    x = x / trans[0] - trans[1][0];
-    y = -y / trans[0] - trans[1][1];
+    x = x/trans[0] - trans[1][0];
+    y = -y/trans[0] - trans[1][1];
 
     return [x, y];
   }
@@ -1123,7 +1160,7 @@ class BSplineCurve extends CurveTypeData {
           if (ssi)
             val /= (totbasis == 0 ? 1 : totbasis);
 
-          (i == 0 ? g.moveTo : g.lineTo).call(g, f, ssi ? val : val * 0.5, w, w);
+          (i == 0 ? g.moveTo : g.lineTo).call(g, f, ssi ? val : val*0.5, w, w);
         }
 
         var color, alpha = this.points[si] === this.points.highlight ? 1.0 : 0.7;
@@ -1153,7 +1190,7 @@ class BSplineCurve extends CurveTypeData {
         g.fillStyle = "orange";
       }
 
-      g.rect(p.sco[0] - w / 2, p.sco[1] - w / 2, w, w);
+      g.rect(p.sco[0] - w/2, p.sco[1] - w/2, w, w);
 
       g.fill();
     }
@@ -1180,3 +1217,58 @@ BSplineCurve.STRUCT = nstructjs.inherit(BSplineCurve, CurveTypeData) + `
 `;
 nstructjs.register(BSplineCurve);
 CurveTypeData.register(BSplineCurve);
+
+
+function makeSplineTemplateIcons(size = 64) {
+  let dpi = devicePixelRatio;
+  size = ~~(size*dpi);
+
+  for (let k in SplineTemplates) {
+    let curve = new BSplineCurve();
+    curve.loadTemplate(SplineTemplates[k])
+
+    let canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+
+    let g = canvas.getContext("2d");
+    let steps = 64;
+
+    curve.update();
+
+    g.strokeStyle = "orange";
+    g.lineWidth = 4.0*dpi/size;
+
+    g.scale(size, size);
+
+    //margin
+    let m = 0.05;
+
+    let tent = f => 1.0 - Math.abs(Math.fract(f) - 0.5)*2.0;
+
+    for (let i = 0; i < steps; i++) {
+      let s = i/(steps - 1);
+      let f = 1.0 - curve.evaluate(tent(s));
+
+      s = s*(1.0 - m*2.0) + m;
+      f = f*(1.0 - m*2.0) + m;
+
+      if (i === 0) {
+        g.moveTo(s, f);
+      } else {
+        g.lineTo(s, f);
+      }
+    }
+
+    g.stroke();
+
+    let url = canvas.toDataURL();
+    let img = document.createElement("img");
+    img.src = url;
+
+    SplineTemplateIcons[k] = img;
+    SplineTemplateIcons[SplineTemplates[k]] = img;
+  }
+}
+
+makeSplineTemplateIcons();
+window._SplineTemplateIcons = SplineTemplateIcons;

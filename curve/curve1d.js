@@ -9,7 +9,7 @@ import * as vectormath from '../util/vectormath.js';
 import {EventDispatcher} from "../util/events.js";
 
 export {getCurve} from './curve1d_base.js';
-export {SplineTemplates} from './curve1d_bspline.js';
+export {SplineTemplates, SplineTemplateIcons} from './curve1d_bspline.js';
 
 var Vector2 = vectormath.Vector2;
 
