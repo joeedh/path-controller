@@ -191,3 +191,55 @@ CurveTypeData {
 `;
 nstructjs.register(CurveTypeData);
 
+
+
+export function evalHermiteTable(table, t) {
+  let s = t*(table.length/4);
+
+  let i = Math.floor(s);
+  s -= i;
+
+  i *= 4;
+
+  let a = table[i] + (table[i+1] - table[i]) * s;
+  let b = table[i+2] + (table[i+3] - table[i+2]) * s;
+
+  return a + (b - a)*s;
+  //return table[i] + (table[i + 3] - table[i])*s;
+}
+
+export function genHermiteTable(evaluate, steps) {
+  //console.log("building spline approx");
+
+  let table = new Array(steps);
+
+  let eps = 0.00001;
+  let dt = (1.0 - eps*4.001)/(steps - 1);
+  let t = eps*4;
+  let lastdv1, lastf3;
+
+  for (let j = 0; j < steps; j++, t += dt) {
+    //let f1 = evaluate(t - eps*2);
+    let f2 = evaluate(t - eps);
+    let f3 = evaluate(t);
+    let f4 = evaluate(t + eps);
+    //let f5 = evaluate(t + eps*2);
+
+    let dv1 = (f4 - f2)/(eps*2);
+    dv1 /= steps;
+
+    if (j > 0) {
+      let j2 = j - 1;
+
+      table[j2*4] = lastf3;
+      table[j2*4 + 1] = lastf3 + lastdv1/3.0;
+      table[j2*4 + 2] = f3 - dv1/3.0;
+      table[j2*4 + 3] = f3;
+    }
+
+    lastdv1 = dv1;
+    lastf3 = f3;
+  }
+
+  return table;
+}

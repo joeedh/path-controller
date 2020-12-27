@@ -1,12 +1,15 @@
 import {nstructjs} from "../util/struct.js";
 import {CurveFlags, TangentModes, CurveTypeData} from './curve1d_base.js';
 import {Vector2, Vector3, Vector4, Quat, Matrix4} from '../util/vectormath.js';
+import {genHermiteTable, evalHermiteTable} from './curve1d_base.js';
 
 class EquationCurve extends CurveTypeData {
   constructor(type) {
     super();
 
     this.equation = "x";
+    this._last_equation = "";
+    this.hermite = undefined;
   }
 
   static define() {return {
@@ -65,6 +68,24 @@ class EquationCurve extends CurveTypeData {
   }
 
   evaluate(s) {
+    if (!this.hermite || this._last_equation !== this.equation) {
+      this._last_equation = this.equation;
+
+      this._evaluate(0.0);
+
+      if (this._haserror) {
+        console.warn("ERROR!");
+        return 0.0;
+      }
+
+      let steps = 32;
+      this.hermite = genHermiteTable((s) => this._evaluate(s), steps);
+    }
+
+    return evalHermiteTable(this.hermite, s);
+  }
+
+  _evaluate(s) {
     let sin = Math.sin, cos = Math.cos, pi = Math.PI, PI = Math.PI,
       e = Math.E, E = Math.E, tan = Math.tan, abs = Math.abs,
       floor = Math.floor, ceil = Math.ceil, acos = Math.acos,
@@ -82,7 +103,7 @@ class EquationCurve extends CurveTypeData {
       return ret;
     } catch (error) {
       this._haserror = true;
-      console.log("ERROR!");
+      console.warn("ERROR!");
       return 0.0;
     }
   }
