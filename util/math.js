@@ -1740,17 +1740,25 @@ var _closest_point_rets = new util.cachering(function() {
 }, 64);
 
 var _closest_tmps = [new Vector3(), new Vector3(), new Vector3()];
-export function closest_point_on_line(p, v1, v2, clip) {
-  if (clip == undefined)
-    clip = true;
+export function closest_point_on_line(p, v1, v2, clip=true) {
   var l1 = _closest_tmps[0], l2 = _closest_tmps[1];
+  var len;
 
-  l1.load(v2).sub(v1).normalize();
+
+  l1.load(v2).sub(v1);
+
+  if (clip) {
+    len = l1.vectorLength();
+  }
+
+  l1.normalize();
   l2.load(p).sub(v1);
 
   var t = l2.dot(l1);
   if (clip) {
-    t = t*(t<0.0) + t*(t>1.0) + (t>1.0);
+    //t = t*(t<0.0) + t*(t>1.0) + (t>1.0);
+    t = t < 0.0 ? 0.0 : t;
+    t = t > len ? len : t;
   }
 
   var p = _closest_point_on_line_cache.next();
