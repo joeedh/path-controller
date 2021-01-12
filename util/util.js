@@ -1907,8 +1907,204 @@ window._test_idmap = function() {
   }
 
   for (let [key, val] of map) {
-    console.log(key, val, map.has(key), map.get(key));
+    window.console.log(key, val, map.has(key), map.get(key));
   }
 
   return map;
+}
+
+let HW=0, HELEM=1, HTOT = 2;
+
+function heaplog() {
+  //window.console.log(...arguments);
+}
+
+export class MinHeapQueue {
+  constructor(iter, iterw=iter) {
+    this.heap = [];
+    this.freelist = [];
+    this.length = 0;
+    this.end = 0;
+
+    if (iter) {
+      let witer = iterw[Symbol.iterator]();
+
+      for (let item of iter) {
+        let w = witer.next().value;
+        this.push(item, w);
+      }
+    }
+  }
+
+  push(e, w) {
+    if (typeof w !== "number") {
+      throw new Error("w must be a number");
+    }
+
+    if (isNaN(w)) {
+      throw new Error("NaN");
+    }
+
+    this.length++;
+    let depth = Math.ceil(Math.log(this.length) / Math.log(2.0));
+    let tot = Math.pow(2, depth) + 1;
+
+    heaplog(depth, tot);
+
+    if (this.heap.length < tot*HTOT) {
+      let start = this.heap.length/HTOT;
+
+      for (let i=start; i<tot; i++) {
+        this.freelist.push(i*HTOT);
+      }
+    }
+
+    let heap = this.heap;
+    heap.length = tot*HTOT;
+
+    let n = this.freelist.pop();
+
+    heaplog("freelist", this.freelist);
+    this.end = Math.max(this.end, n);
+
+    heap[n] = w;
+    heap[n+1] = e;
+
+    while (n > 0) {
+      n /= HTOT;
+
+      let p = (n-1)>>1;
+      n *= HTOT;
+      p *= HTOT;
+
+      if (heap[p] === undefined || heap[p] > w) {
+        heap[n] = heap[p];
+        heap[n+1] = heap[p+1];
+
+        heap[p] = w;
+        heap[p+1] = e;
+
+        n = p;
+      } else {
+        break;
+      }
+    }
+  }
+
+  pop() {
+    if (this.length === 0) {
+      return undefined;
+      //throw new Error("heap is empty");
+    }
+
+    let heap = this.heap;
+
+    if (this.end === 0) {
+      let ret = heap[1];
+      this.freelist.push(0);
+      heap[0] = undefined;
+
+      return ret;
+    }
+
+    let ret = heap[1];
+
+    let end = this.end;
+
+    function swap(n1, n2) {
+      let t = heap[n1];
+      heap[n1] = heap[n2];
+      heap[n2] = t;
+
+      t = heap[n1+1];
+      heap[n1+1] = heap[n2+1];
+      heap[n2+1] = t;
+    }
+
+    heaplog("end", end);
+    heaplog(heap.concat([]));
+
+    heap[0] = heap[end];
+    heap[1] = heap[end+1];
+    heap[end] = undefined;
+    heap[end+1] = undefined;
+
+    let n = 0;
+    while (n < heap.length) {
+      n /= HTOT;
+
+      let n1 = n*2 + 1;
+      let n2 = n*2 + 2;
+
+      n1 = ~~(n1*HTOT);
+      n2 = ~~(n2*HTOT);
+      n = ~~(n*HTOT);
+
+      heaplog("  ", heap[n], heap[n1], heap[n2]);
+
+      if (heap[n1] !== undefined && heap[n2] !== undefined) {
+        if (heap[n1] > heap[n2]) {
+          let t = n1;
+          n1 = n2;
+          n2 = t;
+        }
+
+        if (heap[n] > heap[n1]) {
+          swap(n, n1);
+          n = n1;
+        } else if (heap[n] > heap[n2]) {
+          swap(n, n2);
+          n = n2;
+        } else {
+          break;
+        }
+      } else if (heap[n1] !== undefined) {
+        if (heap[n] > heap[n1]) {
+         swap(n, n1);
+         n = n1;
+        } else {
+          break;
+        }
+      } else if (heap[n2] !== undefined) {
+        if (heap[n] > heap[n2]) {
+          swap(n, n2);
+          n = n2;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    this.freelist.push(this.end);
+
+    heap[this.end] = undefined;
+    heap[this.end+1] = undefined;
+
+    while (this.end > 0 && heap[this.end] === undefined) {
+      this.end -= HTOT;
+    }
+
+    this.length--;
+
+    return ret;
+  }
+}
+
+window.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
+  let h = new MinHeapQueue(list1);
+
+  window.console.log(h.heap.concat([]));
+
+  let list = [];
+  let len = h.length;
+
+  for (let i=0; i<len; i++) {
+    list.push(h.pop());
+  }
+
+  window.console.log(h.heap.concat([]));
+
+  return list;
 }

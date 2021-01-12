@@ -370,7 +370,7 @@ export class BaseVector extends Array {
 
     return this;
   }
-
+  
   static inherit(cls, vectorsize) {
     make_norm_safe_dot(cls);
 

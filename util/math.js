@@ -45,15 +45,15 @@ export function calc_projection_axes(no) {
   return ret;
 }
 
-export function barycentric_v2(p, v1, v2, v3, axis1=0, axis2=1, out=undefined) {
-  let div = (v2[axis1]*v3[axis2]-v2[axis2]*v3[axis1]+(v2[axis2]-v3[axis2])*v1[axis1]-(v2[axis1]-v3[axis1])*v1[axis2]);
+export function barycentric_v2(p, v1, v2, v3, axis1 = 0, axis2 = 1, out = undefined) {
+  let div = (v2[axis1]*v3[axis2] - v2[axis2]*v3[axis1] + (v2[axis2] - v3[axis2])*v1[axis1] - (v2[axis1] - v3[axis1])*v1[axis2]);
 
   if (Math.abs(div) < 0.000001) {
     div = 0.00001;
   }
 
-  let u=(v2[axis1]*v3[axis2]-v2[axis2]*v3[axis1]+(v2[axis2]-v3[axis2])*p[axis1]-(v2[axis1]-v3[axis1])*p[axis2])/div;
-  let v=(-(v1[axis1]*v3[axis2]-v1[axis2]*v3[axis1]+(v1[axis2]-v3[axis2])*p[axis1])+(v1[axis1]-v3[axis1])*p[axis2])/div;
+  let u = (v2[axis1]*v3[axis2] - v2[axis2]*v3[axis1] + (v2[axis2] - v3[axis2])*p[axis1] - (v2[axis1] - v3[axis1])*p[axis2])/div;
+  let v = (-(v1[axis1]*v3[axis2] - v1[axis2]*v3[axis1] + (v1[axis2] - v3[axis2])*p[axis1]) + (v1[axis1] - v3[axis1])*p[axis2])/div;
 
   if (!out) {
     out = barycentric_v2_rets.next();
@@ -103,17 +103,19 @@ function _linedis2(co, v1, v2) {
   let v2y = v2[1] - co[1];
   let v2z = v2[2] - co[2];
 
-  let dis = (((v1y-v2y)*v1y+(v1z-v2z)*v1z+(v1x-v2x)*v1x)*(v1y-v2y)-v1y)**2+
-    (((v1y-v2y)*v1y+(v1z-v2z)*v1z+(v1x-v2x)*v1x)*(v1z-v2z)-v1z)**2+
-    (((v1y-v2y)*v1y+(v1z-v2z)*v1z+(v1x-v2x)*v1x)*(v1x-v2x)-v1x)**2;
+  let dis = (((v1y - v2y)*v1y + (v1z - v2z)*v1z + (v1x - v2x)*v1x)*(v1y - v2y) - v1y)**2 +
+    (((v1y - v2y)*v1y + (v1z - v2z)*v1z + (v1x - v2x)*v1x)*(v1z - v2z) - v1z)**2 +
+    (((v1y - v2y)*v1y + (v1z - v2z)*v1z + (v1x - v2x)*v1x)*(v1x - v2x) - v1x)**2;
 
   return dis;
 }
 
-let closest_p_tri_rets = new util.cachering(() => {return {
-  co : new Vector3(),
-  uv : new Vector2()
-}}, 512);
+let closest_p_tri_rets = new util.cachering(() => {
+  return {
+    co: new Vector3(),
+    uv: new Vector2()
+  }
+}, 512);
 
 let cpt_v1 = new Vector3();
 let cpt_v2 = new Vector3();
@@ -161,7 +163,7 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
   let ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);
   if (ax === 0.0 && ay === 0.0 && az === 0.0) {
     console.log("eek1");
-    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0 / 3.0).add(op);
+    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0/3.0).add(op);
   }
 
   let ax3;
@@ -223,7 +225,7 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
 
   if (mat.invert() === null) {
     console.log("eek2", mat.determinant(), ax1, ax2, n);
-    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0 / 3.0).add(op);
+    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0/3.0).add(op);
   }
 
   mat.multiply(mat2);
@@ -243,7 +245,7 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
     let tot = u + v + w;
 
     if (tot !== 0.0) {
-      tot = 1.0 / tot;
+      tot = 1.0/tot;
       u *= tot;
       v *= tot;
       w *= tot;
@@ -258,9 +260,9 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
     }
   }
 
-  let x = v1[0] * u + v2[0] * v + v3[0] * w;
-  let y = v1[1] * u + v2[1] * v + v3[1] * w;
-  let z = v1[2] * u + v2[2] * v + v3[2] * w;
+  let x = v1[0]*u + v2[0]*v + v3[0]*w;
+  let y = v1[1]*u + v2[1]*v + v3[1]*w;
+  let z = v1[2]*u + v2[2]*v + v3[2]*w;
 
   let ret = closest_p_tri_rets.next();
 
@@ -274,7 +276,7 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
   return ret;
 }
 
-export function dist_to_tri_v3(co, v1, v2, v3, no=undefined) {
+export function dist_to_tri_v3_old(co, v1, v2, v3, no = undefined) {
   if (!no) {
     no = dtvtmps.next().load(normal_tri(v1, v2, v3));
   }
@@ -318,9 +320,10 @@ export function dist_to_tri_v3(co, v1, v2, v3, no=undefined) {
       dis = Math.min(dis, _linedis2(co, v3, v1));
       dis = Math.sqrt(dis);
     } else {
-      dis = Math.min(dis, dist_to_line(co, v1, v2, true));
-      dis = Math.min(dis, dist_to_line(co, v2, v3, true));
-      dis = Math.min(dis, dist_to_line(co, v3, v1, true));
+      dis = Math.min(dis, dist_to_line_sqr(co, v1, v2, true));
+      dis = Math.min(dis, dist_to_line_sqr(co, v2, v3, true));
+      dis = Math.min(dis, dist_to_line_sqr(co, v3, v1, true));
+      dis = Math.sqrt(dis);
     }
 
     return dis;
@@ -383,42 +386,356 @@ export function dist_to_tri_v3(co, v1, v2, v3, no=undefined) {
     return p2.vectorDistance(co);
   }
 
-   /*
+  /*
+ on factor;
+
+ x2 := ax*u + bx*v + cx*w;
+ y2 := ay*u + by*v + cy*w;
+ z2 := az*u + bz*v + cz*w;
+
+ f1 := x2 - x1;
+ f2 := y2 - y1;
+ f3 := z2 - z1;
+
+ ff := solve({f1, f2, f3}, {u, v, w});
+
+ on fort;
+ part(ff, 1, 1);
+ part(ff, 1, 2);
+ part(ff, 1, 3);
+ off fort;
+
+
+  */
+}
+
+
+export function dist_to_tri_v3(p, v1, v2, v3, n) {
+  return dist_to_tri_v3_old(p, v1, v2, v3, n);
+  //return Math.sqrt(Math.abs(dist_to_tri_v3_sqr(p, v1, v2, v3, n)));
+}
+
+
+/* reduce script
+
+on factor;
+
+ax := 0;
+ay := 0;
+
+e1x := bx - ax;
+e1y := by - ay;
+e2x := cx - bx;
+e2y := cy - by;
+e3x := ax - cx;
+e3y := ay - cy;
+
+l1 := (e1x**2 + e1y**2)**0.5;
+l2 := (e2x**2 + e2y**2)**0.5;
+l3 := (e3x**2 + e3y**2)**0.5;
+
+load_package "avector";
+
+e1 := avec(e1x / l1, e1y / l1, 0.0);
+e2 := avec(e2x / l2, e2y / l2, 0.0);
+e3 := avec(e3x / l3, e3y / l3, 0.0);
+
+d1 := x1*e1[1] - y1*e1[0];
+d2 := x1*e2[1] - y1*e2[0];
+d3 := x1*e3[1] - y1*e3[0];
+
+d1 := d1**2;
+d2 := d2**2;
+d3 := d3**2;
+
+on fort;
+d1;
+d2;
+d3;
+off fort;
+
+*/
+
+let _dt3s_n = new Vector3();
+
+export function dist_to_tri_v3_sqr(p, v1, v2, v3, n) {
+  if (n === undefined) {
+    n = _dt3s_n;
+    n.load(normal_tri(v1, v2, v3));
+  }
+
+  // find projection axis;
+  let axis1, axis2, axis3;
+  let nx = n[0] < 0.0 ? -n[0] : n[0];
+  let ny = n[1] < 0.0 ? -n[1] : n[1];
+  let nz = n[2] < 0.0 ? -n[2] : n[2];
+
+  const feps = 0.0000001;
+
+  if (nx > ny && nx > nz) {
+    axis1 = 1;
+    axis2 = 2;
+    axis3 = 0;
+  } else if (ny > nx && ny > nz) {
+    axis1 = 0;
+    axis2 = 2;
+    axis3 = 1;
+  } else {
+    axis1 = 0;
+    axis2 = 1;
+    axis3 = 2;
+  }
+
+  //n.load(normal_tri(v1, v2, v3));
+
+  let planedis = (p[0] - v1[0])*n[0] + (p[1] - v1[1])*n[1] + (p[2] - v1[2])*n[2];
+  planedis = planedis < 0.0 ? -planedis : planedis;
+
+  let ax = v1[axis1], ay = v1[axis2], az = v1[axis3];
+
+  let bx = v2[axis1] - ax, by = v2[axis2] - ay, bz = v2[axis3] - az;
+  let cx = v3[axis1] - ax, cy = v3[axis2] - ay, cz = v3[axis3] - az;
+
+  let bx2 = bx*bx, by2 = by*by, bz2 = bz*bz, cx2 = cx*cx, cy2 = cy*cy, cz2 = cz*cz;
+
+  let x1 = p[axis1] - ax;
+  let y1 = p[axis2] - ay;
+  let z1 = p[axis3] - az;
+
+  const testf = 0.0;
+
+  let l1 = Math.sqrt(bx**2 + by**2);
+  let l2 = Math.sqrt((cx - bx)**2 + (cy - by)**2);
+  let l3 = Math.sqrt(cx**2 + cy**2);
+
+  let s1 = x1*by - y1*bx < testf;
+  let s2 = (x1 - bx)*(cy - by) - (y1 - by)*(cx - bx) < testf;
+  let s3 = (x1* -cy + y1*cx) < testf;
+
+  /*
+    (x1-cx)*-cy - (y1-cy)*-cx
+   reduces to:
+     x1*-cy + y1*cx;
+   */
+
+  //console.log(axis1, axis2, axis3, n);
+  //console.log(s1, s2, s3);
+  //console.log(bx, by, cx, cy);
+
+  if (1 && n[axis3] < 0.0) {
+    s1 = !s1;
+    s2 = !s2;
+    s3 = !s3;
+/*
+    bx = v3[axis1];
+    by = v3[axis2];
+    bz = v3[axis3];
+
+    cx = v2[axis1];
+    cy = v2[axis2];
+    cz = v2[axis3];
+
+    bx2 = bx*bx;
+    by2 = by*by;
+    bz2 = bz*bz;
+
+    cx2 = cx*cx;
+    cy2 = cy*cy;
+    cz2 = cz*cz;*/
+  }
+
+  let mask = (s1 & 1) | (s2<<1) | (s3<<2);
+  if (mask === 0 || mask === 7) {
+    return planedis*planedis;
+  }
+
+  let d1, d2, d3, div;
+
+
+  /*
+//\  3|
+//  \ |
+//    b
+//    | \
+//  1 |   \  2
+//    |  0  \
+// ___a_______c___
+//  5 |   4      \ 6
+*/
+
+  let dis = 0.0;
+  let lx, ly, lz;
+
+  lx = bx;
+  ly = by;
+  lz = bz;
+
+  nx = n[axis1];
+  ny = n[axis2];
+  nz = n[axis3];
+
+  switch (mask) {
+    case 1:
+      div = (bx2 + by2);
+
+      if (div > feps) {
+        d1 = (bx*y1 - by*x1);
+        d1 = (d1*d1)/div;
+
+        lx = -by;
+        ly = bx;
+        lz = bz;
+      } else {
+        d1 = x1*x1 + y1*y1;
+
+        lx = x1;
+        ly = y1;
+        lz = z1;
+      }
+
+      dis = d1;
+      break;
+    case 3:
+      lx = x1 - bx;
+      ly = y1 - by;
+      lz = z1 - bz;
+
+      dis = lx*lx + ly*ly;
+      return lx*lx + ly*ly + lz*lz;
+    case 2:
+      div = (bx - cx)**2 + (by - cy)**2;
+
+      if (div > feps) {
+        d2 = ((bx - cx)*y1 - (by - cy)*x1);
+        d2 = d2/div;
+
+        lx = (by - cy);
+        ly = (cx - bx);
+        lz = cz - bz;
+      } else {
+        d2 = (x1 - bx)*(x1 - bx) + (y1 - by)*(y1 - by);
+
+        lx = x1 - bx;
+        ly = y1 - by;
+        lz = z1 - bz;
+      }
+
+      dis = d2;
+      break;
+    case 6:
+      lx = x1 - cx;
+      ly = y1 - cy;
+      lz = z1 - cz;
+
+      return lx*lx + ly*ly + lz*lz;
+    case 4:
+      div = (cx2 + cy2);
+
+      if (div > feps) {
+        d3 = (cx*y1 - cy*x1);
+        d3 = (d3*d3)/div;
+
+        lx = cy;
+        ly = -cx;
+        lz = cz;
+      } else {
+        d3 = (x1 - cx)*(x1 - cx) + (y1 - cy)*(y1 - cy);
+
+        lx = x1 - cx;
+        ly = y1 - cy;
+        lz = z1 - cz;
+      }
+
+      dis = d3;
+      break;
+    case 5:
+      lx = x1;
+      ly = y1;
+      lz = z1;
+
+      return lx*lx + ly*ly + lz*lz;
+  }
+
+  //lx = p[axis1] - v1[axis1];
+  //ly = p[axis2] - v1[axis2];
+  {
+    let d = lx*nx + ly*ny + lz*nz;
+
+    d = -d;
+
+    lx += nx*d;
+    ly += ny*d;
+    lz += nz*d;
+
+    //dis = lx*lx + ly*ly;
+
+    if (0 && Math.random() > 0.999) {
+      console.log("d", d.toFixed(6));
+      console.log(lx*nx + ly*ny + lz*nz);
+    }
+  }
+
+  let mul = ((lx**2 + ly**2)*nz**2 + (lx*nx + ly*ny)**2)/((lx**2 + ly**2)*nz**2);
+  //let mul = ((lx**2+ly**2)*nz**2+(lx*nx+ly*ny)**2)/((ly**2+lz**2+lx**2)*nz**2);
+
+  //mul = 1.0 / nz;
+  //mul *= mul;
+
+  if (Math.random() > 0.999) {
+    console.log(mul.toFixed(4));
+  }
+
+  //mul = 1.0;
+
+  if (0) {
+    let odis = dis;
+
+    dis = x1**2 + y1**2 + z1**2;
+
+    if (Math.random() > 0.999) {
+      console.log((dis/odis).toFixed(4), mul.toFixed(4));
+    }
+    mul = 1.0;
+  }
+
+  /*
   on factor;
 
-  x2 := ax*u + bx*v + cx*w;
-  y2 := ay*u + by*v + cy*w;
-  z2 := az*u + bz*v + cz*w;
+  dx := sqrt(dis)*(lx / sqrt(lx**2 + ly**2));
+  dy := sqrt(dis)*(ly / sqrt(lx**2 + ly**2));
+  f2 := dx*nx + dy*ny + dz*nz;
 
-  f1 := x2 - x1;
-  f2 := y2 - y1;
-  f3 := z2 - z1;
+  fz := solve(f2, dz);
+  fz := part(fz, 1, 2);
 
-  ff := solve({f1, f2, f3}, {u, v, w});
+  dis2 := dx*dx + dy*dy + fz*fz;
+  fmul := dis2/dis;
 
   on fort;
-  part(ff, 1, 1);
-  part(ff, 1, 2);
-  part(ff, 1, 3);
+  fmul;
   off fort;
 
 
-   */
+  */
+
+  return dis*mul + planedis*planedis;
 }
 
 let tri_area_temps = util.cachering.fromConstructor(Vector3, 64);
+
 export function tri_area(v1, v2, v3) {
   let l1 = v1.vectorDistance(v2);
   let l2 = v2.vectorDistance(v3);
   let l3 = v3.vectorDistance(v1);
 
-  let s = (l1+l2+l3)/2.0;
-  return Math.sqrt(s*(s-l1)*(s-l2)*(s-l3))
+  let s = (l1 + l2 + l3)/2.0;
+  return Math.sqrt(s*(s - l1)*(s - l2)*(s - l3))
 }
-export function aabb_overlap_area(pos1, size1, pos2, size2) {
-  let r1=0.0, r2=0.0;
 
-  for (let i=0; i<2; i++) {
+export function aabb_overlap_area(pos1, size1, pos2, size2) {
+  let r1 = 0.0, r2 = 0.0;
+
+  for (let i = 0; i < 2; i++) {
     let a1 = pos1[i], a2 = pos2[i];
     let b1 = pos1[i] + size1[i];
     let b2 = pos2[i] + size2[i];
@@ -447,23 +764,23 @@ export function aabb_overlap_area(pos1, size1, pos2, size2) {
  */
 
 export function aabb_isect_2d(pos1, size1, pos2, size2) {
-  var ret=0;
-  for (var i=0; i<2; i++) {
-    var a=pos1[i];
-    var b=pos1[i]+size1[i];
-    var c=pos2[i];
-    var d=pos2[i]+size2[i];
-    if (b>=c&&a<=d)
-      ret+=1;
+  var ret = 0;
+  for (var i = 0; i < 2; i++) {
+    var a = pos1[i];
+    var b = pos1[i] + size1[i];
+    var c = pos2[i];
+    var d = pos2[i] + size2[i];
+    if (b >= c && a <= d)
+      ret += 1;
   }
-  return ret==2;
+  return ret == 2;
 };
 
 let aabb_intersect_vs = util.cachering.fromConstructor(Vector2, 32);
 let aabb_intersect_rets = new util.cachering(() => {
   return {
-    pos   : new Vector2(),
-    size  : new Vector2()
+    pos : new Vector2(),
+    size: new Vector2()
   }
 }, 512);
 
@@ -483,9 +800,9 @@ export function aabb_intersect_2d(pos1, size1, pos2, size2) {
   let min = aabb_intersect_vs.next().zero();
   let max = aabb_intersect_vs.next().zero();
 
-  let tot=0;
+  let tot = 0;
 
-  for (let i=0; i<2; i++) {
+  for (let i = 0; i < 2; i++) {
     if (v2[i] >= v3[i] && v1[i] <= v4[i]) {
       tot++;
 
@@ -505,7 +822,7 @@ export function aabb_intersect_2d(pos1, size1, pos2, size2) {
   return ret;
 }
 
-window.test_aabb_intersect_2d = function() {
+window.test_aabb_intersect_2d = function () {
   let canvas = document.getElementById("test_canvas");
 
   if (!canvas) {
@@ -580,8 +897,8 @@ window.test_aabb_intersect_2d = function() {
   //*/
 
   return {
-    end   : test_aabb_intersect_2d.end,
-    timer : test_aabb_intersect_2d.timer
+    end  : test_aabb_intersect_2d.end,
+    timer: test_aabb_intersect_2d.timer
   };
 }
 
@@ -602,7 +919,7 @@ test_aabb_intersect_2d.end = function end() {
     canvas.remove();
   }
 }
-test_aabb_intersect_2d.timer = function timer(rate=500) {
+test_aabb_intersect_2d.timer = function timer(rate = 500) {
   if (test_aabb_intersect_2d._timer) {
     window.clearInterval(test_aabb_intersect_2d._timer);
     test_aabb_intersect_2d._timer = undefined;
@@ -620,9 +937,9 @@ test_aabb_intersect_2d.timer = function timer(rate=500) {
 let aabb_intersect_vs3 = util.cachering.fromConstructor(Vector3, 64);
 
 export function aabb_intersect_3d(min1, max1, min2, max2) {
-  let tot=0;
+  let tot = 0;
 
-  for (let i=0; i<2; i++) {
+  for (let i = 0; i < 2; i++) {
     if (max1[i] >= min2[i] && min1[i] <= max2[i]) {
       tot++;
     }
@@ -644,8 +961,8 @@ export function aabb_intersect_3d(min1, max1, min2, max2) {
  * @returns a
  */
 export function aabb_union(a, b) {
-  for (let i=0; i<2; i++) {
-    for (let j=0; j<a[i].length; j++) {
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < a[i].length; j++) {
       a[i][j] = i ? Math.max(a[i][j], b[i][j]) : Math.min(a[i][j], b[i][j]);
     }
   }
@@ -710,14 +1027,14 @@ export const COLINEAR = 1;
 export const LINECROSS = 2;
 export const COLINEAR_ISECT = 3;
 
-var _cross_vec1=new Vector3();
-var _cross_vec2=new Vector3();
+var _cross_vec1 = new Vector3();
+var _cross_vec2 = new Vector3();
 
 export const SQRT2 = Math.sqrt(2.0);
 export const FEPS_DATA = {
-  F16 : 1.11e-16,
-  F32 : 5.96e-08,
-  F64 : 4.88e-04
+  F16: 1.11e-16,
+  F32: 5.96e-08,
+  F64: 4.88e-04
 };
 
 /*use 32 bit epsilon by default, since we're often working from
@@ -791,109 +1108,104 @@ Matrix4UI.prototype = inherit(Matrix4UI, Matrix4, {
 });
 */
 
-if (FLOAT_MIN!=FLOAT_MIN||FLOAT_MAX!=FLOAT_MAX) {
-    FLOAT_MIN = 1e-05;
-    FLOAT_MAX = 1000000.0;
-    console.log("Floating-point 16-bit system detected!");
+if (FLOAT_MIN != FLOAT_MIN || FLOAT_MAX != FLOAT_MAX) {
+  FLOAT_MIN = 1e-05;
+  FLOAT_MAX = 1000000.0;
+  console.log("Floating-point 16-bit system detected!");
 }
 
-var _static_grp_points4=new Array(4);
-var _static_grp_points8=new Array(8);
+var _static_grp_points4 = new Array(4);
+var _static_grp_points8 = new Array(8);
+
 export function get_rect_points(p, size) {
   var cs;
-  if (p.length==2) {
-      cs = _static_grp_points4;
-      cs[0] = p;
-      cs[1] = [p[0]+size[0], p[1]];
-      cs[2] = [p[0]+size[0], p[1]+size[1]];
-      cs[3] = [p[0], p[1]+size[1]];
-  }
-  else
-    if (p.length==3) {
-      cs = _static_grp_points8;
-      cs[0] = p;
-      cs[1] = [p[0]+size[0], p[1], p[2]];
-      cs[2] = [p[0]+size[0], p[1]+size[1], p[2]];
-      cs[3] = [p[0], p[1]+size[0], p[2]];
-      cs[4] = [p[0], p[1], p[2]+size[2]];
-      cs[5] = [p[0]+size[0], p[1], p[2]+size[2]];
-      cs[6] = [p[0]+size[0], p[1]+size[1], p[2]+size[2]];
-      cs[7] = [p[0], p[1]+size[0], p[2]+size[2]];
-  }
-  else {
-    throw "get_rect_points has no implementation for "+p.length+"-dimensional data";
+  if (p.length == 2) {
+    cs = _static_grp_points4;
+    cs[0] = p;
+    cs[1] = [p[0] + size[0], p[1]];
+    cs[2] = [p[0] + size[0], p[1] + size[1]];
+    cs[3] = [p[0], p[1] + size[1]];
+  } else if (p.length == 3) {
+    cs = _static_grp_points8;
+    cs[0] = p;
+    cs[1] = [p[0] + size[0], p[1], p[2]];
+    cs[2] = [p[0] + size[0], p[1] + size[1], p[2]];
+    cs[3] = [p[0], p[1] + size[0], p[2]];
+    cs[4] = [p[0], p[1], p[2] + size[2]];
+    cs[5] = [p[0] + size[0], p[1], p[2] + size[2]];
+    cs[6] = [p[0] + size[0], p[1] + size[1], p[2] + size[2]];
+    cs[7] = [p[0], p[1] + size[0], p[2] + size[2]];
+  } else {
+    throw "get_rect_points has no implementation for " + p.length + "-dimensional data";
   }
   return cs;
 };
 
 export function get_rect_lines(p, size) {
-  var ps=get_rect_points(p, size);
-  if (p.length==2) {
-      return [[ps[0], ps[1]], [ps[1], ps[2]], [ps[2], ps[3]], [ps[3], ps[0]]];
-  }
-  else
-    if (p.length==3) {
-      var l1=[[ps[0], ps[1]], [ps[1], ps[2]], [ps[2], ps[3]], [ps[3], ps[0]]];
-      var l2=[[ps[4], ps[5]], [ps[5], ps[6]], [ps[6], ps[7]], [ps[7], ps[4]]];
-      l1.concat(l2);
-      l1.push([ps[0], ps[4]]);
-      l1.push([ps[1], ps[5]]);
-      l1.push([ps[2], ps[6]]);
-      l1.push([ps[3], ps[7]]);
-      return l1;
-  }
-  else {
-    throw "get_rect_points has no implementation for "+p.length+"-dimensional data";
+  var ps = get_rect_points(p, size);
+  if (p.length == 2) {
+    return [[ps[0], ps[1]], [ps[1], ps[2]], [ps[2], ps[3]], [ps[3], ps[0]]];
+  } else if (p.length == 3) {
+    var l1 = [[ps[0], ps[1]], [ps[1], ps[2]], [ps[2], ps[3]], [ps[3], ps[0]]];
+    var l2 = [[ps[4], ps[5]], [ps[5], ps[6]], [ps[6], ps[7]], [ps[7], ps[4]]];
+    l1.concat(l2);
+    l1.push([ps[0], ps[4]]);
+    l1.push([ps[1], ps[5]]);
+    l1.push([ps[2], ps[6]]);
+    l1.push([ps[3], ps[7]]);
+    return l1;
+  } else {
+    throw "get_rect_points has no implementation for " + p.length + "-dimensional data";
   }
 };
 
-var $vs_simple_tri_aabb_isect=[0, 0, 0];
+var $vs_simple_tri_aabb_isect = [0, 0, 0];
+
 export function simple_tri_aabb_isect(v1, v2, v3, min, max) {
   $vs_simple_tri_aabb_isect[0] = v1;
   $vs_simple_tri_aabb_isect[1] = v2;
   $vs_simple_tri_aabb_isect[2] = v3;
-  for (var i=0; i<3; i++) {
-      var isect=true;
-      for (var j=0; j<3; j++) {
-          if ($vs_simple_tri_aabb_isect[j][i]<min[i]||$vs_simple_tri_aabb_isect[j][i]>=max[i])
-            isect = false;
-      }
-      if (isect)
-        return true;
+  for (var i = 0; i < 3; i++) {
+    var isect = true;
+    for (var j = 0; j < 3; j++) {
+      if ($vs_simple_tri_aabb_isect[j][i] < min[i] || $vs_simple_tri_aabb_isect[j][i] >= max[i])
+        isect = false;
+    }
+    if (isect)
+      return true;
   }
   return false;
 };
 
 export class MinMax {
   constructor(totaxis) {
-    if (totaxis==undefined) {
-        totaxis = 1;
+    if (totaxis == undefined) {
+      totaxis = 1;
     }
     this.totaxis = totaxis;
-    if (totaxis!=1) {
-        let cls;
+    if (totaxis != 1) {
+      let cls;
 
-        switch (totaxis) {
-          case 2:
-            cls = Vector2;
-            break;
-          case 3:
-            cls = Vector3;
-            break;
-          case 4:
-            cls = Vector4;
-            break;
-          default:
-            cls = Array;
-            break;
-        }
+      switch (totaxis) {
+        case 2:
+          cls = Vector2;
+          break;
+        case 3:
+          cls = Vector3;
+          break;
+        case 4:
+          cls = Vector4;
+          break;
+        default:
+          cls = Array;
+          break;
+      }
 
-        this._min = new cls(totaxis);
-        this._max = new cls(totaxis);
-        this.min = new cls(totaxis);
-        this.max = new cls(totaxis);
-    }
-    else {
+      this._min = new cls(totaxis);
+      this._max = new cls(totaxis);
+      this.min = new cls(totaxis);
+      this.max = new cls(totaxis);
+    } else {
       this.min = this.max = 0;
       this._min = FLOAT_MAX;
       this._max = FLOAT_MIN;
@@ -904,13 +1216,12 @@ export class MinMax {
   }
 
   load(mm) {
-    if (this.totaxis==1) {
-        this.min = mm.min;
-        this.max = mm.max;
-        this._min = mm.min;
-        this._max = mm.max;
-    }
-    else {
+    if (this.totaxis == 1) {
+      this.min = mm.min;
+      this.max = mm.max;
+      this._min = mm.min;
+      this._max = mm.max;
+    } else {
       this.min = new Vector3(mm.min);
       this.max = new Vector3(mm.max);
       this._min = new Vector3(mm._min);
@@ -919,56 +1230,52 @@ export class MinMax {
   }
 
   reset() {
-    var totaxis=this.totaxis;
-    if (totaxis==1) {
-        this.min = this.max = 0;
-        this._min = FLOAT_MAX;
-        this._max = FLOAT_MIN;
-    }
-    else {
-      for (var i=0; i<totaxis; i++) {
-          this._min[i] = FLOAT_MAX;
-          this._max[i] = FLOAT_MIN;
-          this.min[i] = 0;
-          this.max[i] = 0;
+    var totaxis = this.totaxis;
+    if (totaxis == 1) {
+      this.min = this.max = 0;
+      this._min = FLOAT_MAX;
+      this._max = FLOAT_MIN;
+    } else {
+      for (var i = 0; i < totaxis; i++) {
+        this._min[i] = FLOAT_MAX;
+        this._max[i] = FLOAT_MIN;
+        this.min[i] = 0;
+        this.max[i] = 0;
       }
     }
   }
 
   minmax_rect(p, size) {
-    var totaxis=this.totaxis;
-    var cs=this._static_mr_cs;
-    if (totaxis==2) {
-        cs[0] = p;
-        cs[1] = [p[0]+size[0], p[1]];
-        cs[2] = [p[0]+size[0], p[1]+size[1]];
-        cs[3] = [p[0], p[1]+size[1]];
+    var totaxis = this.totaxis;
+    var cs = this._static_mr_cs;
+    if (totaxis == 2) {
+      cs[0] = p;
+      cs[1] = [p[0] + size[0], p[1]];
+      cs[2] = [p[0] + size[0], p[1] + size[1]];
+      cs[3] = [p[0], p[1] + size[1]];
+    } else if (totaxis = 3) {
+      cs[0] = p;
+      cs[1] = [p[0] + size[0], p[1], p[2]];
+      cs[2] = [p[0] + size[0], p[1] + size[1], p[2]];
+      cs[3] = [p[0], p[1] + size[0], p[2]];
+      cs[4] = [p[0], p[1], p[2] + size[2]];
+      cs[5] = [p[0] + size[0], p[1], p[2] + size[2]];
+      cs[6] = [p[0] + size[0], p[1] + size[1], p[2] + size[2]];
+      cs[7] = [p[0], p[1] + size[0], p[2] + size[2]];
+    } else {
+      throw "Minmax.minmax_rect has no implementation for " + totaxis + "-dimensional data";
     }
-    else
-      if (totaxis = 3) {
-        cs[0] = p;
-        cs[1] = [p[0]+size[0], p[1], p[2]];
-        cs[2] = [p[0]+size[0], p[1]+size[1], p[2]];
-        cs[3] = [p[0], p[1]+size[0], p[2]];
-        cs[4] = [p[0], p[1], p[2]+size[2]];
-        cs[5] = [p[0]+size[0], p[1], p[2]+size[2]];
-        cs[6] = [p[0]+size[0], p[1]+size[1], p[2]+size[2]];
-        cs[7] = [p[0], p[1]+size[0], p[2]+size[2]];
-    }
-    else {
-      throw "Minmax.minmax_rect has no implementation for "+totaxis+"-dimensional data";
-    }
-    for (var i=0; i<cs.length; i++) {
-        this.minmax(cs[i]);
+    for (var i = 0; i < cs.length; i++) {
+      this.minmax(cs[i]);
     }
   }
 
   minmax(p) {
-    var totaxis=this.totaxis;
+    var totaxis = this.totaxis;
 
-    if (totaxis==1) {
-        this._min = this.min = Math.min(this._min, p);
-        this._max = this.max = Math.max(this._max, p);
+    if (totaxis == 1) {
+      this._min = this.min = Math.min(this._min, p);
+      this._max = this.max = Math.max(this._max, p);
     } else if (totaxis == 2) {
       this._min[0] = this.min[0] = Math.min(this._min[0], p[0]);
       this._min[1] = this.min[1] = Math.min(this._min[1], p[1]);
@@ -982,15 +1289,15 @@ export class MinMax {
       this._max[1] = this.max[1] = Math.max(this._max[1], p[1]);
       this._max[2] = this.max[2] = Math.max(this._max[2], p[2]);
     } else {
-      for (var i=0; i<totaxis; i++) {
-          this._min[i] = this.min[i] = Math.min(this._min[i], p[i]);
-          this._max[i] = this.max[i] = Math.max(this._max[i], p[i]);
+      for (var i = 0; i < totaxis; i++) {
+        this._min[i] = this.min[i] = Math.min(this._min[i], p[i]);
+        this._max[i] = this.max[i] = Math.max(this._max[i], p[i]);
       }
     }
   }
 
   static fromSTRUCT(reader) {
-    var ret=new MinMax();
+    var ret = new MinMax();
     reader(ret);
     return ret;
   }
@@ -998,21 +1305,21 @@ export class MinMax {
 MinMax.STRUCT = "\n  math.MinMax {\n    min     : vec3;\n    max     : vec3;\n    _min    : vec3;\n    _max    : vec3;\n    totaxis : int;\n  }\n";
 
 export function winding_axis(a, b, c, up_axis) {
-  let xaxis = (up_axis+1) % 3;
-  let yaxis = (up_axis+2) % 3;
+  let xaxis = (up_axis + 1)%3;
+  let yaxis = (up_axis + 2)%3;
 
   let x1 = a[xaxis], y1 = a[yaxis];
   let x2 = b[xaxis], y2 = b[yaxis];
   let x3 = c[xaxis], y3 = c[yaxis];
 
-  let dx1 = x1-x2, dy1 = y1-y2;
-  let dx2 = x3-x2, dy2 = y3-y2;
+  let dx1 = x1 - x2, dy1 = y1 - y2;
+  let dx2 = x3 - x2, dy2 = y3 - y2;
 
   let f = dx1*dy2 - dy1*dx2;
   return f >= 0.0;
 }
 
-export function winding(a, b, c, zero_z, tol=0.0) {
+export function winding(a, b, c, zero_z, tol = 0.0) {
   let t1 = _cross_vec1;
   let t2 = _cross_vec2;
 
@@ -1041,36 +1348,37 @@ export function winding(a, b, c, zero_z, tol=0.0) {
 }
 
 export function inrect_2d(p, pos, size) {
-  if (p==undefined||pos==undefined||size==undefined) {
-      console.trace();
-      console.log("Bad paramters to inrect_2d()");
-      console.log("p: ", p, ", pos: ", pos, ", size: ", size);
-      return false;
+  if (p == undefined || pos == undefined || size == undefined) {
+    console.trace();
+    console.log("Bad paramters to inrect_2d()");
+    console.log("p: ", p, ", pos: ", pos, ", size: ", size);
+    return false;
   }
-  return p[0]>=pos[0]&&p[0]<=pos[0]+size[0]&&p[1]>=pos[1]&&p[1]<=pos[1]+size[1];
+  return p[0] >= pos[0] && p[0] <= pos[0] + size[0] && p[1] >= pos[1] && p[1] <= pos[1] + size[1];
 };
-var $smin_aabb_isect_line_2d=new Vector2();
-var $ssize_aabb_isect_line_2d=new Vector2();
-var $sv1_aabb_isect_line_2d=new Vector2();
-var $ps_aabb_isect_line_2d=[new Vector2(), new Vector2(), new Vector2()];
-var $l1_aabb_isect_line_2d=[0, 0];
-var $smax_aabb_isect_line_2d=new Vector2();
-var $sv2_aabb_isect_line_2d=new Vector2();
-var $l2_aabb_isect_line_2d=[0, 0];
+var $smin_aabb_isect_line_2d = new Vector2();
+var $ssize_aabb_isect_line_2d = new Vector2();
+var $sv1_aabb_isect_line_2d = new Vector2();
+var $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2()];
+var $l1_aabb_isect_line_2d = [0, 0];
+var $smax_aabb_isect_line_2d = new Vector2();
+var $sv2_aabb_isect_line_2d = new Vector2();
+var $l2_aabb_isect_line_2d = [0, 0];
+
 export function aabb_isect_line_2d(v1, v2, min, max) {
-  for (var i=0; i<2; i++) {
-      $smin_aabb_isect_line_2d[i] = Math.min(min[i], v1[i]);
-      $smax_aabb_isect_line_2d[i] = Math.max(max[i], v2[i]);
+  for (var i = 0; i < 2; i++) {
+    $smin_aabb_isect_line_2d[i] = Math.min(min[i], v1[i]);
+    $smax_aabb_isect_line_2d[i] = Math.max(max[i], v2[i]);
   }
   $smax_aabb_isect_line_2d.sub($smin_aabb_isect_line_2d);
   $ssize_aabb_isect_line_2d.load(max).sub(min);
   if (!aabb_isect_2d($smin_aabb_isect_line_2d, $smax_aabb_isect_line_2d, min, $ssize_aabb_isect_line_2d))
     return false;
-  for (var i=0; i<4; i++) {
-      if (inrect_2d(v1, min, $ssize_aabb_isect_line_2d))
-        return true;
-      if (inrect_2d(v2, min, $ssize_aabb_isect_line_2d))
-        return true;
+  for (var i = 0; i < 4; i++) {
+    if (inrect_2d(v1, min, $ssize_aabb_isect_line_2d))
+      return true;
+    if (inrect_2d(v2, min, $ssize_aabb_isect_line_2d))
+      return true;
   }
   $ps_aabb_isect_line_2d[0] = min;
   $ps_aabb_isect_line_2d[1][0] = min[0];
@@ -1080,61 +1388,61 @@ export function aabb_isect_line_2d(v1, v2, min, max) {
   $ps_aabb_isect_line_2d[3][1] = min[1];
   $l1_aabb_isect_line_2d[0] = v1;
   $l1_aabb_isect_line_2d[1] = v2;
-  for (var i=0; i<4; i++) {
-      var a=$ps_aabb_isect_line_2d[i], b=$ps_aabb_isect_line_2d[(i+1)%4];
-      $l2_aabb_isect_line_2d[0] = a;
-      $l2_aabb_isect_line_2d[1] = b;
-      if (line_line_cross($l1_aabb_isect_line_2d, $l2_aabb_isect_line_2d))
-        return true;
+  for (var i = 0; i < 4; i++) {
+    var a = $ps_aabb_isect_line_2d[i], b = $ps_aabb_isect_line_2d[(i + 1)%4];
+    $l2_aabb_isect_line_2d[0] = a;
+    $l2_aabb_isect_line_2d[1] = b;
+    if (line_line_cross($l1_aabb_isect_line_2d, $l2_aabb_isect_line_2d))
+      return true;
   }
   return false;
 };
 
 
 export function expand_rect2d(pos, size, margin) {
-  pos[0]-=Math.floor(margin[0]);
-  pos[1]-=Math.floor(margin[1]);
-  size[0]+=Math.floor(margin[0]*2.0);
-  size[1]+=Math.floor(margin[1]*2.0);
+  pos[0] -= Math.floor(margin[0]);
+  pos[1] -= Math.floor(margin[1]);
+  size[0] += Math.floor(margin[0]*2.0);
+  size[1] += Math.floor(margin[1]*2.0);
 };
 
 export function expand_line(l, margin) {
-  var c=new Vector3();
+  var c = new Vector3();
   c.add(l[0]);
   c.add(l[1]);
   c.mulScalar(0.5);
   l[0].sub(c);
   l[1].sub(c);
-  var l1=l[0].vectorLength();
-  var l2=l[1].vectorLength();
+  var l1 = l[0].vectorLength();
+  var l2 = l[1].vectorLength();
   l[0].normalize();
   l[1].normalize();
-  l[0].mulScalar(margin+l1);
-  l[1].mulScalar(margin+l2);
+  l[0].mulScalar(margin + l1);
+  l[1].mulScalar(margin + l2);
   l[0].add(c);
   l[1].add(c);
   return l;
 };
 
 export function colinear(a, b, c) {
-  for (var i=0; i<3; i++) {
-      _cross_vec1[i] = b[i]-a[i];
-      _cross_vec2[i] = c[i]-a[i];
+  for (var i = 0; i < 3; i++) {
+    _cross_vec1[i] = b[i] - a[i];
+    _cross_vec2[i] = c[i] - a[i];
   }
-  var limit=2.2e-16;
-  if (a.vectorDistance(b)<feps*100&&a.vectorDistance(c)<feps*100) {
-      return true;
+  var limit = 2.2e-16;
+  if (a.vectorDistance(b) < feps*100 && a.vectorDistance(c) < feps*100) {
+    return true;
   }
-  if (_cross_vec1.dot(_cross_vec1)<limit||_cross_vec2.dot(_cross_vec2)<limit)
+  if (_cross_vec1.dot(_cross_vec1) < limit || _cross_vec2.dot(_cross_vec2) < limit)
     return true;
   _cross_vec1.cross(_cross_vec2);
-  return _cross_vec1.dot(_cross_vec1)<limit;
+  return _cross_vec1.dot(_cross_vec1) < limit;
 };
 
-var _llc_l1=[new Vector3(), new Vector3()];
-var _llc_l2=[new Vector3(), new Vector3()];
-var _llc_l3=[new Vector3(), new Vector3()];
-var _llc_l4=[new Vector3(), new Vector3()];
+var _llc_l1 = [new Vector3(), new Vector3()];
+var _llc_l2 = [new Vector3(), new Vector3()];
+var _llc_l3 = [new Vector3(), new Vector3()];
+var _llc_l4 = [new Vector3(), new Vector3()];
 
 var lli_v1 = new Vector3(), lli_v2 = new Vector3(), lli_v3 = new Vector3(), lli_v4 = new Vector3();
 
@@ -1231,11 +1539,11 @@ export function line_line_isect(v1, v2, v3, v4, test_segment) {
   var xa1 = v1[0], xa2 = v2[0], ya1 = v1[1], ya2 = v2[1];
   var xb1 = v3[0], xb2 = v4[0], yb1 = v3[1], yb2 = v4[1];
 
-  var div = ((xa1-xa2)*(yb1-yb2)-(xb1-xb2)*(ya1-ya2));
+  var div = ((xa1 - xa2)*(yb1 - yb2) - (xb1 - xb2)*(ya1 - ya2));
   if (div < 0.00000001) { //parallel but intersecting lines.
     return COLINEAR_ISECT;
   } else { //intersection exists
-    var t1 = (-((ya1-yb2)*xb1-(yb1-yb2)*xa1-(ya1-yb1)*xb2))/div;
+    var t1 = (-((ya1 - yb2)*xb1 - (yb1 - yb2)*xa1 - (ya1 - yb1)*xb2))/div;
 
     return lli_v1.load(v1).interp(v2, t1);
   }
@@ -1261,15 +1569,15 @@ export function line_line_cross(v1, v2, v3, v4) {
   }
   //*/
 
-  var a=l1[0];
-  var b=l1[1];
-  var c=l2[0];
-  var d=l2[1];
-  var w1=winding(a, b, c);
-  var w2=winding(c, a, d);
-  var w3=winding(a, b, d);
-  var w4=winding(c, b, d);
-  return (w1==w2)&&(w3==w4)&&(w1!=w3);
+  var a = l1[0];
+  var b = l1[1];
+  var c = l2[0];
+  var d = l2[1];
+  var w1 = winding(a, b, c);
+  var w2 = winding(c, a, d);
+  var w3 = winding(a, b, d);
+  var w4 = winding(c, b, d);
+  return (w1 == w2) && (w3 == w4) && (w1 != w3);
 };
 
 var _asi_v1 = new Vector3();
@@ -1289,6 +1597,7 @@ var _asi2d_v3 = new Vector2();
 var _asi2d_v4 = new Vector2();
 var _asi2d_v5 = new Vector2();
 var _asi2d_v6 = new Vector2();
+
 export function aabb_sphere_isect_2d(p, r, min, max) {
   var v1 = _asi2d_v1, v2 = _asi2d_v2, v3 = _asi2d_v3, mvec = _asi2d_v4;
   var v4 = _asi2d_v5;
@@ -1300,17 +1609,17 @@ export function aabb_sphere_isect_2d(p, r, min, max) {
   min = _asi_v5.load(min);
   max = _asi_v6.load(max);
 
-  mvec.load(max).sub(min).normalize().mulScalar(r+0.0001);
+  mvec.load(max).sub(min).normalize().mulScalar(r + 0.0001);
 
   v1.sub(mvec);
   v2.add(mvec);
   v3.load(p);
 
   var ret = point_in_aabb_2d(v1, min, max) || point_in_aabb_2d(v2, min, max)
-         || point_in_aabb_2d(v3, min, max);
+    || point_in_aabb_2d(v3, min, max);
 
   if (ret)
-      return ret;
+    return ret;
 
   /*
   v1.load(min).add(max).mulScalar(0.5);
@@ -1330,19 +1639,23 @@ export function aabb_sphere_isect_2d(p, r, min, max) {
   */
   //*
   v1.load(min);
-  v2[0] = min[0]; v2[1] = max[1];
+  v2[0] = min[0];
+  v2[1] = max[1];
   ret = ret || dist_to_line_2d(p, v1, v2) < r;
 
   v1.load(max);
-  v2[0] = max[0]; v2[1] = max[1];
+  v2[0] = max[0];
+  v2[1] = max[1];
   ret = ret || dist_to_line_2d(p, v1, v2) < r;
 
   v1.load(max);
-  v2[0] = max[0]; v2[1] = min[1];
+  v2[0] = max[0];
+  v2[1] = min[1];
   ret = ret || dist_to_line_2d(p, v1, v2) < r;
 
   v1.load(max);
-  v2[0] = min[0]; v2[1] = min[1];
+  v2[0] = min[0];
+  v2[1] = min[1];
   ret = ret || dist_to_line_2d(p, v1, v2) < r;
   //*/
   return ret;
@@ -1350,8 +1663,9 @@ export function aabb_sphere_isect_2d(p, r, min, max) {
 
 export function point_in_aabb(p, min, max) {
   return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1]
-         && p[2] >= min[2] && p[2] <= max[2];
+    && p[2] >= min[2] && p[2] <= max[2];
 }
+
 let asi_rect = new Array(8);
 for (let i = 0; i < 8; i++) {
   asi_rect[i] = new Vector3();
@@ -1415,8 +1729,8 @@ export function aabb_sphere_isect(p, r, min, max) {
   for (let i = 0; i < 3; i++) {
     p2.load(p);
 
-    let i2 = (i + 1) % 3;
-    let i3 = (i + 2) % 3;
+    let i2 = (i + 1)%3;
+    let i3 = (i + 2)%3;
 
     p2[i] = p2[i] < 0.0 ? min[i] : max[i];
 
@@ -1491,8 +1805,8 @@ export function aabb_sphere_dist(p, min, max) {
   for (let i = 0; i < 3; i++) {
     p2.load(p);
 
-    let i2 = (i + 1) % 3;
-    let i3 = (i + 2) % 3;
+    let i2 = (i + 1)%3;
+    let i3 = (i + 2)%3;
 
     p2[i] = p2[i] < 0.0 ? min[i] : max[i];
 
@@ -1509,87 +1823,89 @@ export function aabb_sphere_dist(p, min, max) {
 };
 
 export function point_in_tri(p, v1, v2, v3) {
-  var w1=winding(p, v1, v2);
-  var w2=winding(p, v2, v3);
-  var w3=winding(p, v3, v1);
-  return w1==w2&&w2==w3;
+  var w1 = winding(p, v1, v2);
+  var w2 = winding(p, v2, v3);
+  var w3 = winding(p, v3, v1);
+  return w1 == w2 && w2 == w3;
 };
 
 export function convex_quad(v1, v2, v3, v4) {
   return line_line_cross([v1, v3], [v2, v4]);
 };
 
-var $e1_normal_tri=new Vector3();
-var $e3_normal_tri=new Vector3();
-var $e2_normal_tri=new Vector3();
-export function normal_tri(v1, v2, v3) {
-  $e1_normal_tri[0] = v2[0]-v1[0];
-  $e1_normal_tri[1] = v2[1]-v1[1];
-  $e1_normal_tri[2] = v2[2]-v1[2];
-  $e2_normal_tri[0] = v3[0]-v1[0];
-  $e2_normal_tri[1] = v3[1]-v1[1];
-  $e2_normal_tri[2] = v3[2]-v1[2];
-  $e3_normal_tri[0] = $e1_normal_tri[1]*$e2_normal_tri[2]-$e1_normal_tri[2]*$e2_normal_tri[1];
-  $e3_normal_tri[1] = $e1_normal_tri[2]*$e2_normal_tri[0]-$e1_normal_tri[0]*$e2_normal_tri[2];
-  $e3_normal_tri[2] = $e1_normal_tri[0]*$e2_normal_tri[1]-$e1_normal_tri[1]*$e2_normal_tri[0];
+var $e1_normal_tri = new Vector3();
+var $e3_normal_tri = new Vector3();
+var $e2_normal_tri = new Vector3();
 
-  var _len=Math.sqrt(($e3_normal_tri[0]*$e3_normal_tri[0]+$e3_normal_tri[1]*$e3_normal_tri[1]+$e3_normal_tri[2]*$e3_normal_tri[2]));
-  if (_len>1e-05)
+export function normal_tri(v1, v2, v3) {
+  $e1_normal_tri[0] = v2[0] - v1[0];
+  $e1_normal_tri[1] = v2[1] - v1[1];
+  $e1_normal_tri[2] = v2[2] - v1[2];
+  $e2_normal_tri[0] = v3[0] - v1[0];
+  $e2_normal_tri[1] = v3[1] - v1[1];
+  $e2_normal_tri[2] = v3[2] - v1[2];
+  $e3_normal_tri[0] = $e1_normal_tri[1]*$e2_normal_tri[2] - $e1_normal_tri[2]*$e2_normal_tri[1];
+  $e3_normal_tri[1] = $e1_normal_tri[2]*$e2_normal_tri[0] - $e1_normal_tri[0]*$e2_normal_tri[2];
+  $e3_normal_tri[2] = $e1_normal_tri[0]*$e2_normal_tri[1] - $e1_normal_tri[1]*$e2_normal_tri[0];
+
+  var _len = Math.sqrt(($e3_normal_tri[0]*$e3_normal_tri[0] + $e3_normal_tri[1]*$e3_normal_tri[1] + $e3_normal_tri[2]*$e3_normal_tri[2]));
+  if (_len > 1e-05)
     _len = 1.0/_len;
-  $e3_normal_tri[0]*=_len;
-  $e3_normal_tri[1]*=_len;
-  $e3_normal_tri[2]*=_len;
+  $e3_normal_tri[0] *= _len;
+  $e3_normal_tri[1] *= _len;
+  $e3_normal_tri[2] *= _len;
   return $e3_normal_tri;
 };
 
-var $n2_normal_quad=new Vector3();
+var $n2_normal_quad = new Vector3();
+
 export function normal_quad(v1, v2, v3, v4) {
-  var n=normal_tri(v1, v2, v3);
+  var n = normal_tri(v1, v2, v3);
   $n2_normal_quad[0] = n[0];
   $n2_normal_quad[1] = n[1];
   $n2_normal_quad[2] = n[2];
   n = normal_tri(v1, v3, v4);
-  $n2_normal_quad[0] = $n2_normal_quad[0]+n[0];
-  $n2_normal_quad[1] = $n2_normal_quad[1]+n[1];
-  $n2_normal_quad[2] = $n2_normal_quad[2]+n[2];
-  var _len=Math.sqrt(($n2_normal_quad[0]*$n2_normal_quad[0]+$n2_normal_quad[1]*$n2_normal_quad[1]+$n2_normal_quad[2]*$n2_normal_quad[2]));
-  if (_len>1e-05)
+  $n2_normal_quad[0] = $n2_normal_quad[0] + n[0];
+  $n2_normal_quad[1] = $n2_normal_quad[1] + n[1];
+  $n2_normal_quad[2] = $n2_normal_quad[2] + n[2];
+  var _len = Math.sqrt(($n2_normal_quad[0]*$n2_normal_quad[0] + $n2_normal_quad[1]*$n2_normal_quad[1] + $n2_normal_quad[2]*$n2_normal_quad[2]));
+  if (_len > 1e-05)
     _len = 1.0/_len;
-  $n2_normal_quad[0]*=_len;
-  $n2_normal_quad[1]*=_len;
-  $n2_normal_quad[2]*=_len;
+  $n2_normal_quad[0] *= _len;
+  $n2_normal_quad[1] *= _len;
+  $n2_normal_quad[2] *= _len;
   return $n2_normal_quad;
 };
 
-var _li_vi=new Vector3();
+var _li_vi = new Vector3();
 
 //calc_t is optional, false
 export function line_isect(v1, v2, v3, v4, calc_t) {
-  if (calc_t==undefined) {
-      calc_t = false;
+  if (calc_t == undefined) {
+    calc_t = false;
   }
-  var div=(v2[0]-v1[0])*(v4[1]-v3[1])-(v2[1]-v1[1])*(v4[0]-v3[0]);
-  if (div==0.0)
+  var div = (v2[0] - v1[0])*(v4[1] - v3[1]) - (v2[1] - v1[1])*(v4[0] - v3[0]);
+  if (div == 0.0)
     return [new Vector3(), COLINEAR, 0.0];
-  var vi=_li_vi;
+  var vi = _li_vi;
   vi[0] = 0;
   vi[1] = 0;
   vi[2] = 0;
-  vi[0] = ((v3[0]-v4[0])*(v1[0]*v2[1]-v1[1]*v2[0])-(v1[0]-v2[0])*(v3[0]*v4[1]-v3[1]*v4[0]))/div;
-  vi[1] = ((v3[1]-v4[1])*(v1[0]*v2[1]-v1[1]*v2[0])-(v1[1]-v2[1])*(v3[0]*v4[1]-v3[1]*v4[0]))/div;
-  if (calc_t||v1.length==3) {
-      var n1=new Vector2(v2).sub(v1);
-      var n2=new Vector2(vi).sub(v1);
-      var t=n2.vectorLength()/n1.vectorLength();
-      n1.normalize();
-      n2.normalize();
-      if (n1.dot(n2)<0.0) {
-          t = -t;
-      }
-      if (v1.length==3) {
-          vi[2] = v1[2]+(v2[2]-v1[2])*t;
-      }
-      return [vi, LINECROSS, t];
+  vi[0] = ((v3[0] - v4[0])*(v1[0]*v2[1] - v1[1]*v2[0]) - (v1[0] - v2[0])*(v3[0]*v4[1] - v3[1]*v4[0]))/div;
+  vi[1] = ((v3[1] - v4[1])*(v1[0]*v2[1] - v1[1]*v2[0]) - (v1[1] - v2[1])*(v3[0]*v4[1] - v3[1]*v4[0]))/div;
+  if (calc_t || v1.length == 3) {
+    var n1 = new Vector2(v2).sub(v1);
+    var n2 = new Vector2(vi).sub(v1);
+    var t = n2.vectorLength()/n1.vectorLength();
+    n1.normalize();
+    n2.normalize();
+    if (n1.dot(n2) < 0.0) {
+      t = -t;
+    }
+    if (v1.length == 3) {
+      vi[2] = v1[2] + (v2[2] - v1[2])*t;
+    }
+    return [vi, LINECROSS, t];
   }
   return [vi, LINECROSS];
 };
@@ -1600,9 +1916,9 @@ var dt2l_v3 = new Vector2();
 var dt2l_v4 = new Vector2();
 var dt2l_v5 = new Vector2();
 
-export function dist_to_line_2d(p, v1, v2, clip, closest_co_out=undefined, t_out=undefined) {
+export function dist_to_line_2d(p, v1, v2, clip, closest_co_out = undefined, t_out = undefined) {
   if (clip == undefined) {
-      clip = true;
+    clip = true;
   }
 
   v1 = dt2l_v4.load(v1);
@@ -1639,28 +1955,42 @@ var dt3l_v3 = new Vector3();
 var dt3l_v4 = new Vector3();
 var dt3l_v5 = new Vector3();
 
-export function dist_to_line(p, v1, v2, clip) {
-  if (clip == undefined) {
-      clip = true;
+export function dist_to_line_sqr(p, v1, v2, clip=true) {
+  let px = p[0] - v1[0];
+  let py = p[1] - v1[1];
+  let pz = p.length < 3 ? 0.0 : p[2] - v1[2];
+
+  pz = pz === undefined ? 0.0 : pz;
+
+  let v2x = v2[0] - v1[0];
+  let v2y = v2[1] - v1[1];
+  let v2z = v2.length < 3 ? 0.0 : v2[2] - v1[2];
+
+  let len = v2x*v2x + v2y*v2y + v2z*v2z;
+
+  if (len === 0.0) {
+    return Math.sqrt(px*px + py*py + pz*pz);
   }
 
-  v1 = dt3l_v4.load(v1);
-  v2 = dt3l_v5.load(v2);
+  let len2 = 1.0 / len;
+  v2x *= len2;
+  v2y *= len2;
+  v2z *= len2;
 
-  var n = dt3l_v1;
-  var vec = dt3l_v3;
-
-  n.load(v2).sub(v1).normalize();
-  vec.load(p).sub(v1);
-
-  var t = vec.dot(n);
+  let t = px*v2x + py*v2y + pz*v2z;
   if (clip) {
-    t = Math.min(Math.max(t, 0.0), v1.vectorDistance(v2));
+    t = Math.min(Math.max(t, 0.0), len);
   }
 
-  n.mulScalar(t).add(v1);
+  v2x *= t;
+  v2y *= t;
+  v2z *= t;
 
-  return n.vectorDistance(p);
+  return (v2x-px)*(v2x-px) + (v2y-py)*(v2y-py) + (v2z-pz)*(v2z-pz);
+}
+
+export function dist_to_line(p, v1, v2, clip=true) {
+  return Math.sqrt(dist_to_line_sqr(p, v1, v2, clip));
 }
 
 //p cam be 2d, 3d, or 4d point, v1/v2 however must be full homogenous coordinates
@@ -1670,17 +2000,17 @@ var _cplw_vs2 = util.cachering.fromConstructor(Vector2, 64);
 
 function wclip(x1, x2, w1, w2, near) {
   var r1 = near*w1 - x1;
-  var r2 = (w1-w2)*near - (x1-x2);
+  var r2 = (w1 - w2)*near - (x1 - x2);
 
   if (r2 == 0.0) return 0.0;
 
-  return r1 / r2;
+  return r1/r2;
 }
 
 function clip(a, b, znear) {
-  if (a-b == 0.0) return 0.0;
+  if (a - b == 0.0) return 0.0;
 
-  return (a - znear) / (a - b);
+  return (a - znear)/(a - b);
 }
 
 /*clips v1 and v2 to lie within homogenous projection range
@@ -1725,7 +2055,7 @@ export function clip_line_w(_v1, _v2, znear, zfar) {
   doclip(v1, v2, 0);
   doclip(v1, v2, 1);
 
-  for (var i=0; i<4; i++) {
+  for (var i = 0; i < 4; i++) {
     _v1[i] = v1[i];
     _v2[i] = v2[i];
   }
@@ -1735,12 +2065,13 @@ export function clip_line_w(_v1, _v2, znear, zfar) {
 
 //clip is optional, true.  clip point to lie within line segment v1->v2
 var _closest_point_on_line_cache = util.cachering.fromConstructor(Vector3, 64);
-var _closest_point_rets = new util.cachering(function() {
+var _closest_point_rets = new util.cachering(function () {
   return [0, 0];
 }, 64);
 
 var _closest_tmps = [new Vector3(), new Vector3(), new Vector3()];
-export function closest_point_on_line(p, v1, v2, clip=true) {
+
+export function closest_point_on_line(p, v1, v2, clip = true) {
   var l1 = _closest_tmps[0], l2 = _closest_tmps[1];
   var len;
 
@@ -1779,9 +2110,10 @@ export function closest_point_on_line(p, v1, v2, clip=true) {
   note that t need not be normalized, this function
   does that itself*/
 var _circ_from_line_tan_vs = util.cachering.fromConstructor(Vector3, 32);
-var _circ_from_line_tan_ret = new util.cachering(function() {
+var _circ_from_line_tan_ret = new util.cachering(function () {
   return [new Vector3(), 0];
 });
+
 export function circ_from_line_tan(a, b, t) {
   var p1 = _circ_from_line_tan_vs.next();
   var t2 = _circ_from_line_tan_vs.next();
@@ -1791,8 +2123,8 @@ export function circ_from_line_tan(a, b, t) {
   t2.load(t).normalize();
   n1.load(p1).normalize().cross(t2).cross(t2).normalize();
 
-  var ax = p1[0], ay = p1[1], az=p1[2], nx = n1[0], ny=n1[1], nz=n1[2];
-  var r = -(ax*ax + ay*ay + az*az) / (2*(ax*nx + ay*ny +az*nz));
+  var ax = p1[0], ay = p1[1], az = p1[2], nx = n1[0], ny = n1[1], nz = n1[2];
+  var r = -(ax*ax + ay*ay + az*az)/(2*(ax*nx + ay*ny + az*nz));
 
   var ret = _circ_from_line_tan_ret.next();
   ret[0].load(n1).mulScalar(r).add(a)
@@ -1801,35 +2133,37 @@ export function circ_from_line_tan(a, b, t) {
   return ret;
 }
 
-var _gtc_e1=new Vector3();
-var _gtc_e2=new Vector3();
-var _gtc_e3=new Vector3();
-var _gtc_p1=new Vector3();
-var _gtc_p2=new Vector3();
-var _gtc_v1=new Vector3();
-var _gtc_v2=new Vector3();
-var _gtc_p12=new Vector3();
-var _gtc_p22=new Vector3();
-var _get_tri_circ_ret = new util.cachering(function() { return [0, 0]});
+var _gtc_e1 = new Vector3();
+var _gtc_e2 = new Vector3();
+var _gtc_e3 = new Vector3();
+var _gtc_p1 = new Vector3();
+var _gtc_p2 = new Vector3();
+var _gtc_v1 = new Vector3();
+var _gtc_v2 = new Vector3();
+var _gtc_p12 = new Vector3();
+var _gtc_p22 = new Vector3();
+var _get_tri_circ_ret = new util.cachering(function () {
+  return [0, 0]
+});
 
 export function get_tri_circ(a, b, c) {
-  var v1=_gtc_v1;
-  var v2=_gtc_v2;
-  var e1=_gtc_e1;
-  var e2=_gtc_e2;
-  var e3=_gtc_e3;
-  var p1=_gtc_p1;
-  var p2=_gtc_p2;
+  var v1 = _gtc_v1;
+  var v2 = _gtc_v2;
+  var e1 = _gtc_e1;
+  var e2 = _gtc_e2;
+  var e3 = _gtc_e3;
+  var p1 = _gtc_p1;
+  var p2 = _gtc_p2;
 
-  for (var i=0; i<3; i++) {
-      e1[i] = b[i]-a[i];
-      e2[i] = c[i]-b[i];
-      e3[i] = a[i]-c[i];
+  for (var i = 0; i < 3; i++) {
+    e1[i] = b[i] - a[i];
+    e2[i] = c[i] - b[i];
+    e3[i] = a[i] - c[i];
   }
 
-  for (var i=0; i<3; i++) {
-      p1[i] = (a[i]+b[i])*0.5;
-      p2[i] = (c[i]+b[i])*0.5;
+  for (var i = 0; i < 3; i++) {
+    p1[i] = (a[i] + b[i])*0.5;
+    p2[i] = (c[i] + b[i])*0.5;
   }
 
   e1.normalize();
@@ -1847,12 +2181,12 @@ export function get_tri_circ(a, b, c) {
 
   var cent;
   var type;
-  for (var i=0; i<3; i++) {
-      _gtc_p12[i] = p1[i]+v1[i];
-      _gtc_p22[i] = p2[i]+v2[i];
+  for (var i = 0; i < 3; i++) {
+    _gtc_p12[i] = p1[i] + v1[i];
+    _gtc_p22[i] = p2[i] + v2[i];
   }
 
-  var ret=line_isect(p1, _gtc_p12, p2, _gtc_p22);
+  var ret = line_isect(p1, _gtc_p12, p2, _gtc_p22);
   cent = ret[0];
   type = ret[1];
 
@@ -1860,10 +2194,10 @@ export function get_tri_circ(a, b, c) {
   e2.load(b);
   e3.load(c);
 
-  var r=e1.sub(cent).vectorLength();
-  if (r<feps)
+  var r = e1.sub(cent).vectorLength();
+  if (r < feps)
     r = e2.sub(cent).vectorLength();
-  if (r<feps)
+  if (r < feps)
     r = e3.sub(cent).vectorLength();
 
   var ret = _get_tri_circ_ret.next();
@@ -1874,131 +2208,131 @@ export function get_tri_circ(a, b, c) {
 };
 
 export function gen_circle(m, origin, r, stfeps) {
-  var pi=Math.PI;
-  var f=-pi/2;
-  var df=(pi*2)/stfeps;
-  var verts=new Array();
-  for (var i=0; i<stfeps; i++) {
-      var x=origin[0]+r*Math.sin(f);
-      var y=origin[1]+r*Math.cos(f);
-      var v=m.make_vert(new Vector3([x, y, origin[2]]));
-      verts.push(v);
-      f+=df;
+  var pi = Math.PI;
+  var f = -pi/2;
+  var df = (pi*2)/stfeps;
+  var verts = new Array();
+  for (var i = 0; i < stfeps; i++) {
+    var x = origin[0] + r*Math.sin(f);
+    var y = origin[1] + r*Math.cos(f);
+    var v = m.make_vert(new Vector3([x, y, origin[2]]));
+    verts.push(v);
+    f += df;
   }
-  for (var i=0; i<verts.length; i++) {
-      var v1=verts[i];
-      var v2=verts[(i+1)%verts.length];
-      m.make_edge(v1, v2);
+  for (var i = 0; i < verts.length; i++) {
+    var v1 = verts[i];
+    var v2 = verts[(i + 1)%verts.length];
+    m.make_edge(v1, v2);
   }
   return verts;
 };
 
 var cos = Math.cos;
 var sin = Math.sin;
+
 //axis is optional, 0
 export function rot2d(v1, A, axis) {
   var x = v1[0];
   var y = v1[1];
 
   if (axis == 1) {
-    v1[0] = x * cos(A) + y*sin(A);
-    v1[2] = y * cos(A) - x*sin(A);
+    v1[0] = x*cos(A) + y*sin(A);
+    v1[2] = y*cos(A) - x*sin(A);
   } else {
-    v1[0] = x * cos(A) - y*sin(A);
-    v1[1] = y * cos(A) + x*sin(A);
+    v1[0] = x*cos(A) - y*sin(A);
+    v1[1] = y*cos(A) + x*sin(A);
   }
 }
 
 export function makeCircleMesh(gl, radius, stfeps) {
-  var mesh=new Mesh();
-  var verts1=gen_circle(mesh, new Vector3(), radius, stfeps);
-  var verts2=gen_circle(mesh, new Vector3(), radius/1.75, stfeps);
+  var mesh = new Mesh();
+  var verts1 = gen_circle(mesh, new Vector3(), radius, stfeps);
+  var verts2 = gen_circle(mesh, new Vector3(), radius/1.75, stfeps);
   mesh.make_face_complex([verts1, verts2]);
   return mesh;
 };
+
 export function minmax_verts(verts) {
-  var min=new Vector3([1000000000000.0, 1000000000000.0, 1000000000000.0]);
-  var max=new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
-  var __iter_v=__get_iter(verts);
+  var min = new Vector3([1000000000000.0, 1000000000000.0, 1000000000000.0]);
+  var max = new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
+  var __iter_v = __get_iter(verts);
   var v;
   while (1) {
-    var __ival_v=__iter_v.next();
+    var __ival_v = __iter_v.next();
     if (__ival_v.done) {
-        break;
+      break;
     }
     v = __ival_v.value;
-    for (var i=0; i<3; i++) {
-        min[i] = Math.min(min[i], v.co[i]);
-        max[i] = Math.max(max[i], v.co[i]);
+    for (var i = 0; i < 3; i++) {
+      min[i] = Math.min(min[i], v.co[i]);
+      max[i] = Math.max(max[i], v.co[i]);
     }
   }
   return [min, max];
 };
 
 export function unproject(vec, ipers, iview) {
-  var newvec=new Vector3(vec);
+  var newvec = new Vector3(vec);
   newvec.multVecMatrix(ipers);
   newvec.multVecMatrix(iview);
   return newvec;
 };
 
 export function project(vec, pers, view) {
-  var newvec=new Vector3(vec);
+  var newvec = new Vector3(vec);
   newvec.multVecMatrix(pers);
   newvec.multVecMatrix(view);
   return newvec;
 };
 
-var _sh_minv=new Vector3();
-var _sh_maxv=new Vector3();
-var _sh_start=[];
-var _sh_end=[];
+var _sh_minv = new Vector3();
+var _sh_maxv = new Vector3();
+var _sh_start = [];
+var _sh_end = [];
 
 var static_cent_gbw = new Vector3();
+
 export function get_boundary_winding(points) {
-  var cent=static_cent_gbw.zero();
-  if (points.length==0)
+  var cent = static_cent_gbw.zero();
+  if (points.length == 0)
     return false;
-  for (var i=0; i<points.length; i++) {
-      cent.add(points[i]);
+  for (var i = 0; i < points.length; i++) {
+    cent.add(points[i]);
   }
   cent.divideScalar(points.length);
-  var w=0, totw=0;
-  for (var i=0; i<points.length; i++) {
-      var v1=points[i];
-      var v2=points[(i+1)%points.length];
-      if (!colinear(v1, v2, cent)) {
-          w+=winding(v1, v2, cent);
-          totw+=1;
-      }
+  var w = 0, totw = 0;
+  for (var i = 0; i < points.length; i++) {
+    var v1 = points[i];
+    var v2 = points[(i + 1)%points.length];
+    if (!colinear(v1, v2, cent)) {
+      w += winding(v1, v2, cent);
+      totw += 1;
+    }
   }
-  if (totw>0)
-    w/=totw;
-  return Math.round(w)==1;
+  if (totw > 0)
+    w /= totw;
+  return Math.round(w) == 1;
 };
 
 export class PlaneOps {
   constructor(normal) {
-    var no=normal;
+    var no = normal;
     this.axis = [0, 0, 0];
     this.reset_axis(normal);
   }
 
   reset_axis(no) {
     var ax, ay, az;
-    var nx=Math.abs(no[0]), ny=Math.abs(no[1]), nz=Math.abs(no[2]);
-    if (nz>nx&&nz>ny) {
-        ax = 0;
-        ay = 1;
-        az = 2;
-    }
-    else
-      if (nx>ny&&nx>nz) {
-        ax = 2;
-        ay = 1;
-        az = 0;
-    }
-    else {
+    var nx = Math.abs(no[0]), ny = Math.abs(no[1]), nz = Math.abs(no[2]);
+    if (nz > nx && nz > ny) {
+      ax = 0;
+      ay = 1;
+      az = 2;
+    } else if (nx > ny && nx > nz) {
+      ax = 2;
+      ay = 1;
+      az = 0;
+    } else {
       ax = 0;
       ay = 2;
       az = 1;
@@ -2007,7 +2341,7 @@ export class PlaneOps {
   }
 
   convex_quad(v1, v2, v3, v4) {
-    var ax=this.axis;
+    var ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], v1[ax[2]]]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], v2[ax[2]]]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], v3[ax[2]]]);
@@ -2016,23 +2350,23 @@ export class PlaneOps {
   }
 
   line_isect(v1, v2, v3, v4) {
-    var ax=this.axis;
-    var orig1=v1, orig2=v2;
+    var ax = this.axis;
+    var orig1 = v1, orig2 = v2;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], v1[ax[2]]]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], v2[ax[2]]]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], v3[ax[2]]]);
     v4 = new Vector3([v4[ax[0]], v4[ax[1]], v4[ax[2]]]);
-    var ret=line_isect(v1, v2, v3, v4, true);
-    var vi=ret[0];
-    if (ret[1]==LINECROSS) {
-        ret[0].load(orig2).sub(orig1).mulScalar(ret[2]).add(orig1);
+    var ret = line_isect(v1, v2, v3, v4, true);
+    var vi = ret[0];
+    if (ret[1] == LINECROSS) {
+      ret[0].load(orig2).sub(orig1).mulScalar(ret[2]).add(orig1);
     }
     return ret;
   }
 
   line_line_cross(l1, l2) {
-    var ax=this.axis;
-    var v1=l1[0], v2=l1[1], v3=l2[0], v4=l2[1];
+    var ax = this.axis;
+    var v1 = l1[0], v2 = l1[1], v3 = l2[0], v4 = l2[1];
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], 0.0]);
@@ -2041,8 +2375,8 @@ export class PlaneOps {
   }
 
   winding(v1, v2, v3) {
-    var ax=this.axis;
-    if (v1==undefined)
+    var ax = this.axis;
+    if (v1 == undefined)
       console.trace();
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
@@ -2051,7 +2385,7 @@ export class PlaneOps {
   }
 
   colinear(v1, v2, v3) {
-    var ax=this.axis;
+    var ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], 0.0]);
@@ -2059,26 +2393,26 @@ export class PlaneOps {
   }
 
   get_boundary_winding(points) {
-    var ax=this.axis;
-    var cent=new Vector3();
-    if (points.length==0)
+    var ax = this.axis;
+    var cent = new Vector3();
+    if (points.length == 0)
       return false;
-    for (var i=0; i<points.length; i++) {
-        cent.add(points[i]);
+    for (var i = 0; i < points.length; i++) {
+      cent.add(points[i]);
     }
     cent.divideScalar(points.length);
-    var w=0, totw=0;
-    for (var i=0; i<points.length; i++) {
-        var v1=points[i];
-        var v2=points[(i+1)%points.length];
-        if (!this.colinear(v1, v2, cent)) {
-            w+=this.winding(v1, v2, cent);
-            totw+=1;
-        }
+    var w = 0, totw = 0;
+    for (var i = 0; i < points.length; i++) {
+      var v1 = points[i];
+      var v2 = points[(i + 1)%points.length];
+      if (!this.colinear(v1, v2, cent)) {
+        w += this.winding(v1, v2, cent);
+        totw += 1;
+      }
     }
-    if (totw>0)
-      w/=totw;
-    return Math.round(w)==1;
+    if (totw > 0)
+      w /= totw;
+    return Math.round(w) == 1;
   }
 }
 
@@ -2096,30 +2430,30 @@ part(ff, 1, 2);
 off fort;
 
 * */
-var _isrp_ret=new Vector3();
+var _isrp_ret = new Vector3();
 let isect_ray_plane_rets = util.cachering.fromConstructor(Vector3, 256);
 
 export function isect_ray_plane(planeorigin, planenormal, rayorigin, raynormal) {
   let po = planeorigin, pn = planenormal, ro = rayorigin, rn = raynormal;
 
-  let div = (pn[1]*rn[1]+pn[2]*rn[2]+pn[0]*rn[0]);
+  let div = (pn[1]*rn[1] + pn[2]*rn[2] + pn[0]*rn[0]);
 
   if (Math.abs(div) < 0.000001) {
     return undefined;
   }
 
-  let t = ((po[1]-ro[1])*pn[1]+(po[2]-ro[2])*pn[2]+(po[0]-ro[0])*pn[0])/div;
+  let t = ((po[1] - ro[1])*pn[1] + (po[2] - ro[2])*pn[2] + (po[0] - ro[0])*pn[0])/div;
   _isrp_ret.load(ro).addFac(rn, t);
 
   return isect_ray_plane_rets.next().load(_isrp_ret);
 }
 
 export function _old_isect_ray_plane(planeorigin, planenormal, rayorigin, raynormal) {
-  var p=planeorigin, n=planenormal;
-  var r=rayorigin, v=raynormal;
+  var p = planeorigin, n = planenormal;
+  var r = rayorigin, v = raynormal;
 
-  var d=p.vectorLength();
-  var t=-(r.dot(n)-p.dot(n))/v.dot(n);
+  var d = p.vectorLength();
+  var t = -(r.dot(n) - p.dot(n))/v.dot(n);
   _isrp_ret.load(v);
   _isrp_ret.mulScalar(t);
   _isrp_ret.add(r);
@@ -2127,54 +2461,54 @@ export function _old_isect_ray_plane(planeorigin, planenormal, rayorigin, raynor
 };
 
 export function mesh_find_tangent(mesh, viewvec, offvec, projmat, verts) {
-  if (verts==undefined)
+  if (verts == undefined)
     verts = mesh.verts.selected;
-  var vset=new set();
-  var eset=new set();
-  var __iter_v=__get_iter(verts);
+  var vset = new set();
+  var eset = new set();
+  var __iter_v = __get_iter(verts);
   var v;
   while (1) {
-    var __ival_v=__iter_v.next();
+    var __ival_v = __iter_v.next();
     if (__ival_v.done) {
-        break;
+      break;
     }
     v = __ival_v.value;
     vset.add(v);
   }
-  var __iter_v=__get_iter(vset);
+  var __iter_v = __get_iter(vset);
   var v;
   while (1) {
-    var __ival_v=__iter_v.next();
+    var __ival_v = __iter_v.next();
     if (__ival_v.done) {
-        break;
+      break;
     }
     v = __ival_v.value;
-    var __iter_e=__get_iter(v.edges);
+    var __iter_e = __get_iter(v.edges);
     var e;
     while (1) {
-      var __ival_e=__iter_e.next();
+      var __ival_e = __iter_e.next();
       if (__ival_e.done) {
-          break;
+        break;
       }
       e = __ival_e.value;
       if (vset.has(e.other_vert(v))) {
-          eset.add(e);
+        eset.add(e);
       }
     }
   }
-  if (eset.length==0) {
-      return new Vector3(offvec);
+  if (eset.length == 0) {
+    return new Vector3(offvec);
   }
-  var tanav=new Vector3();
-  var evec=new Vector3();
-  var tan=new Vector3();
-  var co2=new Vector3();
-  var __iter_e=__get_iter(eset);
+  var tanav = new Vector3();
+  var evec = new Vector3();
+  var tan = new Vector3();
+  var co2 = new Vector3();
+  var __iter_e = __get_iter(eset);
   var e;
   while (1) {
-    var __ival_e=__iter_e.next();
+    var __ival_e = __iter_e.next();
     if (__ival_e.done) {
-        break;
+      break;
     }
     e = __ival_e.value;
     evec.load(e.v1.co).multVecMatrix(projmat);
@@ -2184,7 +2518,7 @@ export function mesh_find_tangent(mesh, viewvec, offvec, projmat, verts) {
     tan[0] = evec[1];
     tan[1] = -evec[0];
     tan[2] = 0.0;
-    if (tan.dot(offvec)<0.0)
+    if (tan.dot(offvec) < 0.0)
       tan.mulScalar(-1.0);
     tanav.add(tan);
   }
@@ -2208,41 +2542,41 @@ export class Mat4Stack {
   reset(mat) {
     this.matrix.load(mat);
     this.stack = [];
-    if (this.update_func!=undefined)
+    if (this.update_func != undefined)
       this.update_func();
   }
 
   load(mat) {
     this.matrix.load(mat);
-    if (this.update_func!=undefined)
+    if (this.update_func != undefined)
       this.update_func();
   }
 
   multiply(mat) {
     this.matrix.multiply(mat);
-    if (this.update_func!=undefined)
+    if (this.update_func != undefined)
       this.update_func();
   }
 
   identity() {
     this.matrix.loadIdentity();
-    if (this.update_func!=undefined)
+    if (this.update_func != undefined)
       this.update_func();
   }
 
   push(mat2) {
     this.stack.push(new Matrix4(this.matrix));
-    if (mat2!=undefined) {
-        this.matrix.load(mat2);
-        if (this.update_func!=undefined)
-          this.update_func();
+    if (mat2 != undefined) {
+      this.matrix.load(mat2);
+      if (this.update_func != undefined)
+        this.update_func();
     }
   }
 
   pop() {
-    var mat=this.stack.pop(this.stack.length-1);
+    var mat = this.stack.pop(this.stack.length - 1);
     this.matrix.load(mat);
-    if (this.update_func!=undefined)
+    if (this.update_func != undefined)
       this.update_func();
     return mat;
   }

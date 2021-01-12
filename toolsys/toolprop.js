@@ -83,6 +83,25 @@ export class ToolProperty extends ToolPropertyIF {
     this.callbacks = {};
   }
 
+  calcMemSize() {
+    function strlen(s) {
+      //length of string plus an assumed member pointer
+      return s !== undefined ? s.length + 8 : 8;
+    }
+
+    let tot = 0;
+
+    tot += strlen(this.apiname) + strlen(this.uiname);
+    tot += strlen(this.description);
+
+    tot += 11*8; //assumed member pointers
+    for (let k in this.callbacks) {
+      tot += 24;
+    }
+
+    return tot;
+  }
+
   static makeUIName(name) {
     let parts = [""];
     let lastc = undefined;
@@ -425,6 +444,10 @@ export class StringProperty extends ToolProperty {
     this.wasSet = false;
   }
 
+  calcMemSize() {
+    return super.calcMemSize() + (this.data !== undefined ? this.data.length*4 : 0) + 8;
+  }
+
   equals(b) {
     return this.data === b.data;
   }
@@ -535,8 +558,12 @@ export class _NumberPropertyBase extends ToolProperty {
     }
   }
 
+  calcMemSize() {
+    return super.calcMemSize() + 8*8;
+  }
+
   equals(b) {
-    return this.data == b.data;
+    return this.data === b.data;
   }
 
   get ui_range() {
@@ -784,6 +811,7 @@ FloatProperty.STRUCT = nstructjs.inherit(FloatProperty, _NumberPropertyBase) + `
   data          : float;
 }
 `;
+nstructjs.register(FloatProperty);
 
 export class EnumKeyPair {
   constructor(key, val) {
@@ -858,6 +886,22 @@ export class EnumProperty extends ToolProperty {
 
     this.iconmap = {};
     this.wasSet = false;
+  }
+
+  calcMemSize() {
+    let tot = super.calcMemSize();
+
+    for (let k in this.values) {
+      tot += (k.length*4 + 16)*4;
+    }
+
+    if (this.descriptions) {
+      for (let k in this.descriptions) {
+        tot += (k.length + this.descriptions[k].length) * 4;
+      }
+    }
+
+    return tot + 64;
   }
 
   equals(b) {
@@ -966,19 +1010,22 @@ export class EnumProperty extends ToolProperty {
     reader(this);
     super.loadSTRUCT(reader);
 
-    this.keys = this._loadMap(obj.keys);
-    this.values = this._loadMap(obj.values);
-    this.ui_value_names = this._loadMap(obj.ui_value_names);
-    this.iconmap = this._loadMap(obj.iconmap);
-    this.descriptions = this._loadMap(obj.descriptions);
+    this.keys = this._loadMap(this._keys);
+    this.values = this._loadMap(this._values);
+    this.ui_value_names = this._loadMap(this._ui_value_names);
+    this.iconmap = this._loadMap(this._iconmap);
+    this.descriptions = this._loadMap(this._descriptions);
 
     if (this.data_is_int) {
       this.data = parseInt(this.data);
+      delete this.data_is_int;
+    } else if (this.data in this.keys) {
+      this.data = this.keys[this.data];
     }
   }
 
   _is_data_int() {
-    return typeof (this.data) !== "string";
+    return typeof this.data === "number";
   }
 }
 
@@ -987,7 +1034,7 @@ EnumProperty.STRUCT = nstructjs.inherit(EnumProperty, ToolProperty) + `
   data            : string             | ""+this.data;
   data_is_int     : bool               | this._is_data_int();
   _keys           : array(EnumKeyPair) | this._saveMap(this.keys) ;
-  _values         : array(EnumKeyPair) | this._saveMap(this.keys) ;
+  _values         : array(EnumKeyPair) | this._saveMap(this.values) ;
   _ui_value_names : array(EnumKeyPair) | this._saveMap(this.ui_value_names) ;
   _iconmap        : array(EnumKeyPair) | this._saveMap(this.iconmap) ;
   _descriptions   : array(EnumKeyPair) | this._saveMap(this.descriptions) ;  
@@ -1026,6 +1073,10 @@ export class VecPropertyBase extends FloatProperty {
     super(undefined, apiname, uiname, description);
 
     this.hasUniformSlider = false;
+  }
+
+  calcMemSize() {
+    return super.calcMemSize() + this.data.length*8;
   }
 
   equals(b) {
@@ -1203,6 +1254,10 @@ export class Mat4Property extends ToolProperty {
     this.data = new Matrix4(data);
   }
 
+  calcMemSize() {
+    return super.calcMemSize() + 16*8 + 32;
+  }
+
   equals(b) {
     let m1 = this.data.$matrix;
     let m2 = b.data.$matrix;
@@ -1281,11 +1336,27 @@ export class ListProperty extends ToolProperty {
     this.prop = prop;
     this.value = [];
 
-    for (let val of list) {
-      this.push(val);
+    if (list) {
+      for (let val of list) {
+        this.push(val);
+      }
     }
 
     this.wasSet = false;
+  }
+
+  calcMemSize() {
+    let tot = super.calcMemSize();
+
+    let psize = this.prop ? this.prop.calcMemSize() + 8 : 8;
+    if (!this.prop && this.value.length > 0) {
+      psize = this.value[0].calcMemSize();
+    }
+
+    tot += psize*this.value.length + 8;
+    tot += 16;
+
+    return tot;
   }
 
   equals(b) {
@@ -1396,8 +1467,14 @@ export class ListProperty extends ToolProperty {
     this.value.length = val;
   }
 }
+ListProperty.STRUCT = nstructjs.inherit(ListProperty, ToolProperty) + `
+  prop  : abstract(ToolProperty);
+  value : array(abstract(ToolProperty));
+}`;
+nstructjs.register(ListProperty);
 
 _addClass(ListProperty);
+
 
 //like FlagsProperty but uses strings
 export class StringSetProperty extends ToolProperty {
@@ -1438,6 +1515,22 @@ export class StringSetProperty extends ToolProperty {
     }
 
     this.wasSet = false;
+  }
+
+  calcMemSize() {
+    let tot = super.calcMemSize();
+
+    for (let k in this.values) {
+      tot += (k.length + 16)*5;
+    }
+
+    if (this.descriptions) {
+      for (let k in this.descriptions) {
+        tot += (k.length + this.descriptions[k].length + 8)*4;
+      }
+    }
+
+    return tot + 64;
   }
 
   equals(b) {
@@ -1566,7 +1659,25 @@ export class StringSetProperty extends ToolProperty {
       b.descriptions[k] = this.descriptions[k];
     }
   }
+
+  loadSTRUCT(reader) {
+    reader(this);
+
+    let values = this.values;
+    this.values = {};
+
+    for (let s of values) {
+      this.values[s] = s;
+    }
+
+    this.value = new util.set(this.value);
+  }
 }
+StringSetProperty.STRUCT = nstructjs.inherit(StringSetProperty, ToolProperty) + `
+  value  : iter(string);
+  values : iterkeys(string);  
+}`;
+nstructjs.register(StringSetProperty);
 
 _addClass(StringSetProperty);
 
@@ -1583,6 +1694,11 @@ export class Curve1DProperty extends ToolProperty {
     }
 
     this.wasSet = false;
+  }
+
+  calcMemSize() {
+    //bleh, just return a largish block size
+    return 1024;
   }
 
   equals(b) {

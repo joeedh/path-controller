@@ -1,4 +1,6 @@
 "use strict";
+import '../util/nstructjs.js';
+
 /**
 
 ToolOps are base operators for modifying application state.
@@ -292,6 +294,30 @@ export class ToolOp extends events.EventHandler {
     return {};
   }
 
+  calcMemSize(ctx) {
+    if (this.__memsize !== undefined) {
+      return this.__memsize;
+    }
+
+    let tot = 0;
+
+    for (let step=0; step<2; step++) {
+      let props = step ? this.outputs : this.inputs;
+
+      for (let k in props) {
+        let prop = props[k];
+
+        tot += prop.calcMemSize();
+      }
+    }
+
+    tot += this.calcUndoMem(ctx);
+
+    this.__memsize = tot;
+
+    return tot;
+  }
+
   getDefault(toolprop) {
     //return SavedToolDefaults.get(this.constructor,
   }
@@ -399,6 +425,24 @@ export class ToolOp extends events.EventHandler {
     ToolClasses.push(cls);
   }
 
+  static _regWithNstructjs(cls, structName=cls.name) {
+    if (nstructjs.isRegistered(cls)) {
+      return;
+    }
+
+    let parent = cls.prototype.__proto__.constructor;
+
+    if (!cls.hasOwnProperty("STRUCT")) {
+      if (parent !== ToolOp && parent !== ToolMacro && parent !== Object) {
+        this._regWithNstructjs(parent);
+      }
+
+      cls.STRUCT = nstructjs.inherit(cls, parent) + '}\n';
+    }
+
+    nstructjs.register(cls);
+  }
+
   static isRegistered(cls) {
     return ToolClasses.indexOf(cls) >= 0;
   }
@@ -478,6 +522,7 @@ export class ToolOp extends events.EventHandler {
     super();
 
     this._overdraw = undefined;
+    this.__memsize = undefined;
 
     var def = this.constructor.tooldef();
 
@@ -605,16 +650,24 @@ export class ToolOp extends events.EventHandler {
     return ret;
   }
 
-  static canRun(ctx) {
+  //toolop is an optional instance of this class, may be undefined
+  static canRun(ctx, toolop=undefined) {
     return true;
   }
 
+  //called after undoPre
+  calcUndoMem(ctx) {
+    console.warn("ToolOp.prototype.calcUndoMem: implement me!");
+    return 0;
+  }
+
   undoPre(ctx) {
-    this._undo = _appstate.genUndoFile();
+    throw new Error("implement me!");
   }
   
   undo(ctx) {
-    _appstate.loadUndoFile(this._undo);
+    throw new Error("implement me!");
+    //_appstate.loadUndoFile(this._undo);
   }
 
   //for compatibility with fairmotion
@@ -734,44 +787,155 @@ export class ToolOp extends events.EventHandler {
 
     this.saveDefaultInputs();
   }
+
+  loadSTRUCT(reader) {
+    reader(this);
+
+    let outs = this.outputs;
+    let ins = this.inputs;
+
+    this.inputs = {};
+    this.outputs = {};
+
+    for (let pair of ins) {
+      this.inputs[pair.key] = pair.val;
+    }
+
+    for (let pair of outs) {
+      this.outputs[pair.key] = pair.val;
+    }
+  }
+
+  _save_inputs() {
+    let ret = [];
+    for (let k in this.inputs) {
+      ret.push(new PropKey(k, this.inputs[k]));
+    }
+
+    return ret;
+  }
+
+  _save_outputs() {
+    let ret = [];
+    for (let k in this.outputs) {
+      ret.push(new PropKey(k, this.outputs[k]));
+    }
+
+    return ret;
+  }
 }
 
+ToolOp.STRUCT = `
+toolsys.ToolOp {
+  inputs  : array(toolsys.PropKey) | this._save_inputs();
+  outputs : array(toolsys.PropKey) | this._save_outputs();
+}
+`;
+nstructjs.register(ToolOp);
+
+class PropKey {
+  constructor(key, val) {
+    this.key = key;
+    this.val = val;
+  }
+}
+PropKey.STRUCT = `
+toolsys.PropKey {
+  key : string;
+  val : abstract(ToolProperty);
+}
+`;
+nstructjs.register(PropKey);
+
+export class MacroLink {
+  constructor(sourcetool_idx, srckey, srcprops="outputs", desttool_idx, dstkey, dstprops="inputs") {
+    this.source = sourcetool_idx;
+    this.dest = desttool_idx;
+
+    this.sourceProps = srcprops;
+    this.destProps = dstprops;
+
+    this.sourcePropKey = srckey;
+    this.destPropKey = dstkey;
+  }
+}
+MacroLink.STRUCT = `
+toolsys.MacroLink {
+  source         : int;
+  dest           : int;
+  sourcePropKey  : string;
+  destPropKey    : string;
+  sourceProps    : string;
+  destProps      : string; 
+}
+`;
+nstructjs.register(MacroLink);
+
 export class ToolMacro extends ToolOp {
-  static tooldef() {return {
-    uiname : "Tool Macro"
-  }}
-  
+  static tooldef() {
+    return {
+      uiname: "Tool Macro"
+    }
+  }
+
   constructor() {
     super();
-    
+
     this.tools = [];
     this.curtool = 0;
     this.has_modal = false;
     this.connects = [];
+    this.connectLinks = [];
   }
-  
-  connect(srctool, dsttool, callback, thisvar) {
-    this.connects.push({
-      srctool  : srctool,
-      dsttool  : dsttool,
-      callback : callback,
-      thisvar  : thisvar
-    });
-    
+
+  connect(srctool, srcoutput, dsttool, dstinput, srcprops="outputs", dstprops="inputs") {
+    if (typeof dsttool === "function") {
+      return this.connectCB(...arguments);
+    }
+
+    let i1 = this.tools.indexOf(srctool);
+    let i2 = this.tools.indexOf(dsttool);
+
+    if (i1 < 0 || i2 < 0) {
+      throw new Error("tool not in macro");
+    }
+
+    this.connectLinks.push(new MacroLink(i1, srcoutput, srcprops, i2, dstinput, dstprops));
     return this;
   }
-  
+
+  connectCB(srctool, dsttool, callback, thisvar) {
+    this.connects.push({
+      srctool : srctool,
+      dsttool : dsttool,
+      callback: callback,
+      thisvar : thisvar
+    });
+
+    return this;
+  }
+
   add(tool) {
     if (tool.is_modal) {
       this.is_modal = true;
     }
-    
+
     this.tools.push(tool);
-    
+
     return this;
   }
-  
+
   _do_connections(tool) {
+    let i = this.tools.indexOf(tool);
+
+    for (let c of this.connectLinks) {
+      if (c.source === i) {
+        let tool2 = this.tools[c.dest];
+
+        tool2[c.destProps][c.destPropKey].setValue(tool[c.sourceProps][c.sourcePropKey].getValue());
+      }
+    }
+
     for (var c of this.connects) {
       if (c.srctool === tool) {
         c.callback.call(c.thisvar, c.srctool, c.dsttool);
@@ -779,7 +943,8 @@ export class ToolMacro extends ToolOp {
     }
   }
 
-  static canRun(ctx) {
+  //toolop is an optional instance of this class, may be undefined
+  static canRun(ctx, toolop=undefined) {
     return true;
   }
 
@@ -791,63 +956,62 @@ export class ToolMacro extends ToolOp {
     //poll first tool only in list
     return this.tools[0].constructor.canRun(ctx);
   }//*/
-  
+
   modalStart(ctx) {
-    this._promise = new Promise((function(accept, reject) {
+    this._promise = new Promise((function (accept, reject) {
       this._accept = accept;
       this._reject = reject;
     }).bind(this));
-    
+
     this.curtool = 0;
 
     let i;
 
-    for (i=0; i<this.tools.length; i++) {
+    for (i = 0; i < this.tools.length; i++) {
       if (this.tools[i].is_modal)
         break;
-      
+
       this.tools[i].undoPre(ctx);
       this.tools[i].execPre(ctx);
       this.tools[i].exec(ctx);
       this.tools[i].execPost(ctx);
       this._do_connections(this.tools[i]);
     }
-    
+
     var on_modal_end = (function on_modal_end() {
+      this._do_connections(this.tools[this.curtool]);
+      this.curtool++;
+
+      while (this.curtool < this.tools.length &&
+      !this.tools[this.curtool].is_modal) {
+        this.tools[this.curtool].undoPre(ctx);
+        this.tools[this.curtool].execPre(ctx);
+        this.tools[this.curtool].exec(ctx);
+        this.tools[this.curtool].execPost(ctx);
         this._do_connections(this.tools[this.curtool]);
+
         this.curtool++;
-        
-        while (this.curtool < this.tools.length && 
-               !this.tools[this.curtool].is_modal) 
-        {
-            this.tools[this.curtool].undoPre(ctx);
-            this.tools[this.curtool].execPre(ctx);
-            this.tools[this.curtool].exec(ctx);
-            this.tools[this.curtool].execPost(ctx);
-            this._do_connections(this.tools[this.curtool]);
-            
-            this.curtool++;
-        }
-        
-        if (this.curtool < this.tools.length) {
-          this.tools[this.curtool].undoPre(ctx);
-          this.tools[this.curtool].modalStart(ctx).then(on_modal_end);
-        } else {
-          this._accept(this, false);
-        }
+      }
+
+      if (this.curtool < this.tools.length) {
+        this.tools[this.curtool].undoPre(ctx);
+        this.tools[this.curtool].modalStart(ctx).then(on_modal_end);
+      } else {
+        this._accept(this, false);
+      }
     }).bind(this);
-    
+
     if (i < this.tools.length) {
       this.curtool = i;
       this.tools[this.curtool].undoPre(ctx);
       this.tools[this.curtool].modalStart(ctx).then(on_modal_end);
     }
-    
+
     return this._promise;
   }
-  
+
   exec(ctx) {
-    for (var i=0; i<this.tools.length; i++) {
+    for (var i = 0; i < this.tools.length; i++) {
       this.tools[i].undoPre(ctx);
       this.tools[i].execPre(ctx);
       this.tools[i].exec(ctx);
@@ -855,21 +1019,33 @@ export class ToolMacro extends ToolOp {
       this._do_connections(this.tools[i]);
     }
   }
-  
+
   undoPre() {
     return; //undoPre is handled in exec() or modalStart()
   }
-  
+
   undo(ctx) {
-    for (var i=this.tools.length-1; i >= 0; i--) {
+    for (var i = this.tools.length - 1; i >= 0; i--) {
       this.tools[i].undo(ctx);
     }
   }
+
+
 }
+
+ToolMacro.STRUCT = nstructjs.inherit(ToolMacro, ToolOp, "toolsys.ToolMacro") + `
+  tools        : array(abstract(toolsys.ToolOp));
+  connectLinks : array(toolsys.MacroLink);
+}
+`;
+nstructjs.register(ToolMacro);
 
 export class ToolStack extends Array {
   constructor(ctx) {
     super();
+
+    this.memLimit = 512*1024*1024;
+    this.enforceMemLimit = false;
 
     this.cur = -1;
     this.ctx = ctx;
@@ -878,6 +1054,47 @@ export class ToolStack extends Array {
 
   get head() {
     return this[this.cur];
+  }
+
+
+  limitMemory(maxmem=this.memLimit, ctx=this.ctx) {
+    if (maxmem === undefined) {
+      throw new Error("maxmem cannot be undefined");
+    }
+
+    let size = this.calcMemSize();
+
+    let start = 0;
+
+    while (start < this.cur - 2 && size > maxmem) {
+      size -= this[start].calcMemSize(ctx);
+      start++;
+    }
+
+    console.log("start", start);
+
+    if (start === 0) {
+      return size;
+    }
+    
+    this.cur -= start;
+
+    for (let i=0; i<this.length-start; i++) {
+      this[i] = this[i+start];
+    }
+    this.length -= start;
+
+    return this.calcMemSize(ctx);
+  }
+
+  calcMemSize(ctx=this.ctx) {
+    let tot = 0;
+
+    for (let tool of this) {
+      tot += tool.calcMemSize();
+    }
+
+    return tot;
   }
 
   setRestrictedToolContext(ctx) {
@@ -906,6 +1123,8 @@ export class ToolStack extends Array {
 
     let ok = compareInputs ? ToolOp.Equals(head, tool) : head && head.constructor === tool.constructor;
 
+    tool.__memsize = undefined; //reset cache memsize
+
     if (ok) {
       //console.warn("Same tool detected");
 
@@ -926,11 +1145,17 @@ export class ToolStack extends Array {
   }
 
   execTool(ctx, toolop) {
+    if (this.enforceMemLimit) {
+      this.limitMemory(this.memLimit);
+    }
+
+    toolop.__memsize = undefined; //reset cache memsize
+
     if (this.ctx === undefined) {
       this.ctx = ctx;
     }
 
-    if (!toolop.constructor.canRun(ctx)) {
+    if (!toolop.constructor.canRun(ctx, toolop)) {
       console.log("toolop.constructor.canRun returned false");
       return;
     }
@@ -973,18 +1198,27 @@ export class ToolStack extends Array {
   undo() {
     if (this.cur >= 0 && !(this[this.cur].undoflag & UndoFlags.IS_UNDO_ROOT)) {
       let tool = this[this.cur];
+
+      tool.__memsize = undefined; //reset cached memsize
+
       tool.undo(tool._execCtx);
       this.cur--;
     }
   }
   
   redo() {
+    if (this.enforceMemLimit) {
+      this.limitMemory(this.memLimit);
+    }
+
     if (this.cur >= -1 && this.cur+1 < this.length) {
       this.cur++;
 
       let tool = this[this.cur];
-      let ctx = tool._execCtx;
+      let ctx = tool._execCtx || this.ctx;
       //ctx = this.ctx;
+
+      tool.__memsize = undefined; //reset cache memsize
 
       tool.undoPre(ctx);
       tool.execPre(ctx);
@@ -992,6 +1226,109 @@ export class ToolStack extends Array {
       tool.execPost(ctx);
     }
   }
+
+  save() {
+    let data = [];
+    nstructjs.writeObject(data, this);
+    return data;
+  }
+
+  rewind() {
+    while (this.cur >= 0) {
+      let last = this.cur;
+      this.undo();
+
+      //prevent infinite loops
+      if (last === this.cur) {
+        break;
+      }
+    }
+
+    return this;
+  }
+
+  replay(cb) {
+    let cur = this.cur;
+
+    this.rewind();
+
+    let last = this.cur;
+
+    let timer = window.setInterval(() => {
+      //if (this.cur >= cur) {
+      //  window.clearInterval(timer);
+      //  return;
+      //}
+
+      last = this.cur;
+
+      this.redo();
+
+      if (cb) {
+        cb();
+      }
+
+      if (last === this.cur) {
+        window.clearInterval(timer);
+
+        if (this.enforceMemLimit) {
+          this.limitMemory(this.memLimit);
+        }
+      }
+    }, 50);
+
+    return timer;
+  }
+
+  loadSTRUCT(reader) {
+    reader(this);
+
+    for (let item of this._stack) {
+      this.push(item);
+    }
+
+    delete this._stack;
+  }
+
+  //note that this makes sure tool classes are registered with nstructjs
+  //during save
+  _save() {
+    for (let tool of this) {
+      let cls = tool.constructor;
+
+      if (!nstructjs.isRegistered(cls)) {
+        cls._regWithNstructjs(cls);
+      }
+    }
+
+    return this;
+  }
+}
+
+ToolStack.STRUCT = `
+toolsys.ToolStack {
+  cur    : int;
+  _stack : array(abstract(toolsys.ToolOp)) | this._save();
+}
+`;
+nstructjs.register(ToolStack);
+
+window._testToolStackIO = function() {
+  let data = [];
+  let cls = _appstate.toolstack.constructor;
+
+  nstructjs.writeObject(data, _appstate.toolstack);
+  data = new DataView(new Uint8Array(data).buffer);
+
+  let toolstack = nstructjs.readObject(data, cls);
+
+  _appstate.toolstack.rewind();
+
+  toolstack.cur = -1;
+  toolstack.ctx = _appstate.toolstack.ctx;
+  _appstate.toolstack = toolstack;
+
+  return toolstack;
 }
 
 export function buildToolSysAPI(api) {
@@ -1007,6 +1344,17 @@ export function buildToolSysAPI(api) {
         SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
       }
     }
+  }
 
+  //register tools with nstructjs
+  for (let cls of ToolClasses) {
+    try {
+      if (!nstructjs.isRegistered(cls)) {
+        ToolOp._regWithNstructjs(cls);
+      }
+    } catch (error) {
+      console.log(error.stack);
+      console.error("Failed to register a tool with nstructjs");
+    }
   }
 }
