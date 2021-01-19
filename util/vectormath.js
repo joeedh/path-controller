@@ -362,6 +362,14 @@ export class BaseVector extends Array {
     return sqrt(this.dot(this));
   }
 
+  swapAxes(axis1, axis2) {
+    let t = this[axis1];
+    this[axis1] = this[axis2];
+    this[axis2] = t;
+
+    return this;
+  }
+
   normalize() {
     var l = this.vectorLength();
     if (l > 0.00000001) {
@@ -672,6 +680,13 @@ export class Vector3 extends BaseVector {
     $_v3nd4_n2_normalizedDot4.load(v4).sub(v3).normalize();
 
     return $_v3nd4_n1_normalizedDot4.dot($_v3nd4_n2_normalizedDot4);
+  }
+
+  static normalizedDot3(v1, center, v2) {
+    $_v3nd4_n1_normalizedDot3.load(v1).sub(center).normalize();
+    $_v3nd4_n2_normalizedDot3.load(v2).sub(center).normalize();
+
+    return $_v3nd4_n1_normalizedDot3.dot($_v3nd4_n2_normalizedDot3);
   }
 
   multVecMatrix(matrix, ignore_w) {
@@ -1167,6 +1182,8 @@ var $_v3nd_n1_normalizedDot = new Vector3();
 var $_v3nd_n2_normalizedDot = new Vector3();
 var $_v3nd4_n1_normalizedDot4 = new Vector3();
 var $_v3nd4_n2_normalizedDot4 = new Vector3();
+var $_v3nd4_n1_normalizedDot3 = new Vector3();
+var $_v3nd4_n2_normalizedDot3 = new Vector3();
 
 var M_SQRT2=Math.sqrt(2.0);
 var FLT_EPSILON=2.22e-16;

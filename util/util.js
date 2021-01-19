@@ -1978,6 +1978,10 @@ export class MinHeapQueue {
       p *= HTOT;
 
       if (heap[p] === undefined || heap[p] > w) {
+        if (n === this.end) {
+          this.end = p;
+        }
+
         heap[n] = heap[p];
         heap[n+1] = heap[p+1];
 
@@ -2003,6 +2007,8 @@ export class MinHeapQueue {
       let ret = heap[1];
       this.freelist.push(0);
       heap[0] = undefined;
+
+      this.length = 0;
 
       return ret;
     }

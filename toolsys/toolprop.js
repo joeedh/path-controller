@@ -176,6 +176,11 @@ export class ToolProperty extends ToolPropertyIF {
     return this;
   }
 
+  saveLastValue() {
+    this.flag |= PropFlags.SAVE_LAST_VALUE;
+    return this;
+  }
+
   report() {
     console.warn(...arguments);
   }

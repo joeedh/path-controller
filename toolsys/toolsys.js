@@ -307,19 +307,32 @@ export class ToolOp extends events.EventHandler {
       for (let k in props) {
         let prop = props[k];
 
-        tot += prop.calcMemSize();
+        let size = prop.calcMemSize();
+
+        if (isNaN(size) || !isFinite(size)) {
+          console.warn("Got NaN when calculating mem size for property", prop);
+          continue;
+        }
+
+        tot += size;
       }
     }
 
-    tot += this.calcUndoMem(ctx);
+    let size = this.calcUndoMem(ctx);
+
+    if (isNaN(size) || !isFinite(size)) {
+      console.warn("Got NaN in calcMemSize", this);
+    } else {
+      tot += size;
+    }
 
     this.__memsize = tot;
 
     return tot;
   }
 
-  getDefault(toolprop) {
-    //return SavedToolDefaults.get(this.constructor,
+  getDefault(toolprop, key=toolprop.apiname) {
+    return SavedToolDefaults.get(this, key, toolprop);
   }
 
   static Equals(a, b) {
@@ -1076,7 +1089,7 @@ export class ToolStack extends Array {
     if (start === 0) {
       return size;
     }
-    
+
     this.cur -= start;
 
     for (let i=0; i<this.length-start; i++) {
@@ -1224,6 +1237,7 @@ export class ToolStack extends Array {
       tool.execPre(ctx);
       tool.exec(ctx);
       tool.execPost(ctx);
+      tool.saveDefaultInputs();
     }
   }
 
