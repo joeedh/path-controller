@@ -3,36 +3,36 @@ import '../util/nstructjs.js';
 
 /**
 
-ToolOps are base operators for modifying application state.
-They operate on Contexts and can use the datapath API.
-They make up the undo stack.
+ ToolOps are base operators for modifying application state.
+ They operate on Contexts and can use the datapath API.
+ They make up the undo stack.
 
-ToolOp subclasses handle undo with their undoPre (run before tool execution)
-and undo methods.  You can set default handlers (most commonly this is just
-saving/reloading the app state) with setDefaultUndoHandlers.
+ ToolOp subclasses handle undo with their undoPre (run before tool execution)
+ and undo methods.  You can set default handlers (most commonly this is just
+ saving/reloading the app state) with setDefaultUndoHandlers.
 
-ToolOps have inputs and outputs (which are ToolProperties) and can also
-be modal.
+ ToolOps have inputs and outputs (which are ToolProperties) and can also
+ be modal.
 
-## Rules
+ ## Rules
 
-Tools are never, EVER allowed to store direct pointers to the application state,
-with one exception: tools in modal mode may store such pointers, but they must
-delete them when existing modal mode by overriding modalEnd.
+ Tools are never, EVER allowed to store direct pointers to the application state,
+ with one exception: tools in modal mode may store such pointers, but they must
+ delete them when existing modal mode by overriding modalEnd.
 
-This is to prevent very evil and difficult to debug bugs in the undo stack
-and nasty memory leaks.
+ This is to prevent very evil and difficult to debug bugs in the undo stack
+ and nasty memory leaks.
 
-## Example
+ ## Example
 
-<pre>
+ <pre>
 
-const ExampleEnum = {
+ const ExampleEnum = {
   ITEM1 : 0,
   ITEM2 : 1
 }
 
-class MyTool extends ToolOp {
+ class MyTool extends ToolOp {
   static tooldef() {return {
     uiname     : "Tool Name",
     toolpath   : "my.tool",
@@ -63,10 +63,10 @@ class MyTool extends ToolOp {
     //run right after exec
   }
 }
-ToolOp.register(MyTool);
+ ToolOp.register(MyTool);
 
-</pre>
-*/
+ </pre>
+ */
 
 import * as events from '../util/events.js';
 import {keymap} from '../util/simple_events.js';
@@ -265,11 +265,11 @@ export const SavedToolDefaults = new ToolPropertyCache();
 
 export class ToolOp extends events.EventHandler {
   /**
-  ToolOp definition.
+   ToolOp definition.
 
-  An example:
-  <pre>
-  static tooldef() {return {
+   An example:
+   <pre>
+   static tooldef() {return {
       uiname   : "Tool Name",
       toolpath : "logical_module.tool", //logical_module need not match up to a real module
       icon     : -1, //tool's icon, or -1 if there is none
@@ -284,13 +284,13 @@ export class ToolOp extends events.EventHandler {
       }),
       outputs  : {}
   }}
-  </pre>
-  */
+   </pre>
+   */
   static tooldef() {
     if (this === ToolOp) {
       throw new Error("Tools must implemented static tooldef() methods!");
     }
-    
+
     return {};
   }
 
@@ -369,7 +369,7 @@ export class ToolOp extends events.EventHandler {
   static inherit(slots={}) {
     return new InheritFlag(slots);
   }
-  
+
   /**
 
    Creates a new instance of this toolop from args and a context.
@@ -420,7 +420,7 @@ export class ToolOp extends events.EventHandler {
       } else {
         path += prop.getValue();
       }
-      
+
       if (prop.type === PropTypes.STRING)
         path += "'";
       path += " ";
@@ -428,7 +428,7 @@ export class ToolOp extends events.EventHandler {
     path +=")";
     return path;
   }
-  
+
   static register(cls) {
     if (ToolClasses.indexOf(cls) >= 0) {
       console.warn("Tried to register same ToolOp class twice:", cls.name, cls);
@@ -549,7 +549,7 @@ export class ToolOp extends events.EventHandler {
 
     this._accept = this._reject = undefined;
     this._promise = undefined;
-    
+
     for (var k in def) {
       this[k] = def[k];
     }
@@ -600,7 +600,7 @@ export class ToolOp extends events.EventHandler {
 
     this.inputs = {};
     this.outputs = {};
-    
+
     if (dinputs) {
       for (let k in dinputs) {
         let prop = dinputs[k].copy();
@@ -618,7 +618,7 @@ export class ToolOp extends events.EventHandler {
         this.inputs[k] = prop;
       }
     }
-    
+
     if (doutputs) {
       for (let k in doutputs) {
         let prop = doutputs[k].copy();
@@ -642,7 +642,7 @@ export class ToolOp extends events.EventHandler {
   }
 
   /**default on_keydown implementation for modal tools,
-  no need to call super() to execute this if you don't want to*/
+   no need to call super() to execute this if you don't want to*/
   on_keydown(e) {
     switch (e.keyCode) {
       case keymap["Enter"]:
@@ -677,7 +677,7 @@ export class ToolOp extends events.EventHandler {
   undoPre(ctx) {
     throw new Error("implement me!");
   }
-  
+
   undo(ctx) {
     throw new Error("implement me!");
     //_appstate.loadUndoFile(this._undo);
@@ -699,14 +699,14 @@ export class ToolOp extends events.EventHandler {
   /**for use in modal mode only*/
   resetTempGeom() {
     var ctx = this.modal_ctx;
-    
+
     for (var dl of this.drawlines) {
       dl.remove();
     }
-    
+
     this.drawlines.length = 0;
   }
-  
+
   error(msg) {
     console.warn(msg);
   }
@@ -741,9 +741,9 @@ export class ToolOp extends events.EventHandler {
       console.warn("Warning, tool is already in modal mode consuming events");
       return this._promise;
     }
-    
+
     //console.warn("tool modal start");
-    
+
     this.modal_ctx = ctx;
     this.modalRunning = true
 
@@ -766,7 +766,7 @@ export class ToolOp extends events.EventHandler {
   */
   toolCancel() {
   }
-  
+
   modalEnd(was_cancelled) {
     if (this._modalstate) {
       modalstack.pop();
@@ -778,22 +778,22 @@ export class ToolOp extends events.EventHandler {
     }
 
     //console.log("tool modal end");
-    
+
     if (was_cancelled && this._on_cancel !== undefined) {
       this._accept(this.modal_ctx, true);
       this._on_cancel(this);
     }
-    
+
     this.resetTempGeom();
-    
+
     var ctx = this.modal_ctx;
-    
+
     this.modal_ctx = undefined;
     this.modalRunning = false;
     this.is_modal = false;
-    
+
     super.popModal();
-    
+
     this._promise = undefined;
     this._accept(ctx, false); //Context, was_cancelled
     this._accept = this._reject = undefined;
@@ -965,7 +965,7 @@ export class ToolMacro extends ToolOp {
   canRun(ctx) {
     if (this.tools.length == 0)
       return false;
-    
+
     //poll first tool only in list
     return this.tools[0].constructor.canRun(ctx);
   }//*/
@@ -1033,6 +1033,26 @@ export class ToolMacro extends ToolOp {
     }
   }
 
+  calcUndoMem(ctx) {
+    let tot = 0;
+
+    for (let tool of this.tools) {
+      tot += tool.calcUndoMem(ctx);
+    }
+
+    return tot;
+  }
+
+  calcMemSize(ctx) {
+    let tot = 0;
+
+    for (let tool of this.tools) {
+      tot += tool.calcMemSize(ctx);
+    }
+
+    return tot;
+  }
+
   undoPre() {
     return; //undoPre is handled in exec() or modalStart()
   }
@@ -1042,8 +1062,6 @@ export class ToolMacro extends ToolOp {
       this.tools[i].undo(ctx);
     }
   }
-
-
 }
 
 ToolMacro.STRUCT = nstructjs.inherit(ToolMacro, ToolOp, "toolsys.ToolMacro") + `
@@ -1062,13 +1080,15 @@ export class ToolStack extends Array {
 
     this.cur = -1;
     this.ctx = ctx;
+
     this.modalRunning = 0;
+
+    this._undo_branch = undefined; //used to save undo branch in case of tool cancel
   }
 
   get head() {
     return this[this.cur];
   }
-
 
   limitMemory(maxmem=this.memLimit, ctx=this.ctx) {
     if (maxmem === undefined) {
@@ -1159,13 +1179,7 @@ export class ToolStack extends Array {
 
   execTool(ctx, toolop) {
     if (this.enforceMemLimit) {
-      this.limitMemory(this.memLimit);
-    }
-
-    toolop.__memsize = undefined; //reset cache memsize
-
-    if (this.ctx === undefined) {
-      this.ctx = ctx;
+      this.limitMemory(this.memLimit, ctx);
     }
 
     if (!toolop.constructor.canRun(ctx, toolop)) {
@@ -1173,33 +1187,47 @@ export class ToolStack extends Array {
       return;
     }
 
-    let tctx = this.toolctx !== undefined ? this.toolctx : ctx;
-    tctx = tctx.toLocked();
+    let tctx = ctx.toLocked();
 
-    toolop._execCtx = tctx;
+    let undoflag = toolop.constructor.tooldef().undoflag;
+    if (toolop.undoflag !== undefined) {
+      undoflag = toolop.undoflag;
+    }
+    undoflag = undoflag === undefined ? 0 : undoflag;
 
-    if (!(toolop.undoflag & UndoFlags.NO_UNDO)) {
+    //if (!(undoflag & UndoFlags.IS_UNDO_ROOT) && !(undoflag & UndoFlags.NO_UNDO)) {
+    //tctx = new SavedContext(ctx, ctx.datalib);
+    //}
+
+    toolop.execCtx = tctx;
+
+    if (!(undoflag & UndoFlags.NO_UNDO)) {
       this.cur++;
+
+      //save branch for if tool cancel
+      this._undo_branch = this.slice(this.cur+1, this.length);
 
       //truncate
       this.length = this.cur+1;
-      
+
       this[this.cur] = toolop;
-      //let undoPre use full context
-      //needed by DataPathSetOp
-      toolop.undoPre(ctx.toLocked());
+      toolop.undoPre(tctx);
     }
-    
+
     if (toolop.is_modal) {
-      this.modalRunning = true;
-      
+      ctx = toolop.modal_ctx = ctx;
+
+      this.modal_running = true;
+
       toolop._on_cancel = (function(toolop) {
-        this.pop_i(this.cur);
-        this.cur--;
+        if (!(toolop.undoflag & UndoFlags.NO_UNDO)) {
+          this.pop_i(this.cur);
+          this.cur--;
+        }
       }).bind(this);
-      
+
       //will handle calling .exec itself
-      toolop.modalStart(ctx.toLocked());
+      toolop.modalStart(ctx);
     } else {
       toolop.execPre(tctx);
       toolop.exec(tctx);
@@ -1207,36 +1235,78 @@ export class ToolStack extends Array {
       toolop.saveDefaultInputs();
     }
   }
-  
+
+  toolCancel(ctx, tool) {
+    if (tool._was_redo) {
+      //ignore tool cancel requests on redo
+      return;
+    }
+
+    if (tool !== this[this.cur]) {
+      console.warn("toolCancel called in error", this, tool);
+      return;
+    }
+
+    this.undo();
+    this.length = this.cur+1;
+
+    if (this._undo_branch !== undefined) {
+      for (let item of this._undo_branch) {
+        this.push(item);
+      }
+    }
+  }
+
   undo() {
+    if (this.enforceMemLimit) {
+      this.limitMemory(this.memLimit);
+    }
+
     if (this.cur >= 0 && !(this[this.cur].undoflag & UndoFlags.IS_UNDO_ROOT)) {
       let tool = this[this.cur];
 
-      tool.__memsize = undefined; //reset cached memsize
+      tool.undo(tool.execCtx);
 
-      tool.undo(tool._execCtx);
       this.cur--;
     }
   }
-  
+
+  //reruns a tool if it's at the head of the stack
+  rerun(tool) {
+    if (this.enforceMemLimit) {
+      this.limitMemory(this.memLimit);
+    }
+
+    if (tool === this[this.cur]) {
+      this.undo();
+      this.redo();
+    } else {
+      console.warn("Tool wasn't at head of stack", tool);
+    }
+  }
+
   redo() {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
 
     if (this.cur >= -1 && this.cur+1 < this.length) {
+      //console.log("redo!", this.cur, this.length);
+
       this.cur++;
-
       let tool = this[this.cur];
-      let ctx = tool._execCtx || this.ctx;
-      //ctx = this.ctx;
 
-      tool.__memsize = undefined; //reset cache memsize
+      if (!tool.execCtx) {
+        tool.execCtx = this.ctx;
+      }
 
-      tool.undoPre(ctx);
-      tool.execPre(ctx);
-      tool.exec(ctx);
-      tool.execPost(ctx);
+      tool._was_redo = true;
+
+      tool.undoPre(tool.execCtx);
+      tool.execPre(tool.execCtx);
+      tool.exec(tool.execCtx);
+      tool.execPost(tool.execCtx);
+
       tool.saveDefaultInputs();
     }
   }
@@ -1345,7 +1415,7 @@ window._testToolStackIO = function() {
   return toolstack;
 }
 
-export function buildToolSysAPI(api) {
+export function buildToolSysAPI(api, registerWithNStructjs=true) {
   let datastruct = api.mapStruct(ToolPropertyCache, true);
 
   for (let cls of ToolClasses) {
@@ -1358,6 +1428,10 @@ export function buildToolSysAPI(api) {
         SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
       }
     }
+  }
+
+  if (!registerWithNStructjs) {
+    return;
   }
 
   //register tools with nstructjs

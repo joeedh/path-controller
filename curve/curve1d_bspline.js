@@ -456,10 +456,10 @@ class BSplineCurve extends CurveTypeData {
   }
 
   regen_hermite(steps) {
-    //console.log("building spline approx");
+    console.warn("building spline approx");
 
     if (steps === undefined) {
-      steps = this.fastmode ? 180 : 340;
+      steps = this.fastmode ? 120 : 340;
     }
 
     if (this.interpolating) {
@@ -1227,6 +1227,8 @@ function makeSplineTemplateIcons(size = 64) {
     let curve = new BSplineCurve();
     curve.loadTemplate(SplineTemplates[k])
 
+    curve.fastmode = true;
+
     let canvas = document.createElement("canvas");
     canvas.width = canvas.height = size;
 
@@ -1235,10 +1237,12 @@ function makeSplineTemplateIcons(size = 64) {
 
     curve.update();
 
-    g.strokeStyle = "orange";
-    g.lineWidth = 4.0*dpi/size;
+    let scale = 0.75;
 
-    g.scale(size, size);
+    g.strokeStyle = "orange";
+    g.lineWidth = 4.0*dpi/(size*scale);
+
+    g.scale(size*scale, size*scale);
 
     //margin
     let m = 0.05;
