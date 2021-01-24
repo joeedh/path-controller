@@ -83,6 +83,16 @@ export class ToolProperty extends ToolPropertyIF {
     this.callbacks = {};
   }
 
+  setDescription(s) {
+    this.description = s;
+    return this;
+  }
+
+  setUIName(s) {
+    this.uiname = s;
+    return this;
+  }
+
   calcMemSize() {
     function strlen(s) {
       //length of string plus an assumed member pointer
@@ -193,6 +203,11 @@ export class ToolProperty extends ToolPropertyIF {
     for (let cb of this.callbacks[type]) {
       cb.call(this, arg1, arg2);
     }
+    return this;
+  }
+
+  clearEventCallbacks() {
+    this.callbacks = {}
     return this;
   }
 
@@ -710,6 +725,19 @@ nstructjs.register(IntProperty);
 
 _addClass(IntProperty);
 
+export class ReportProperty extends StringProperty {
+  constructor(value, apiname, uiname, description, flag, icon) {
+    super(value, apiname, uiname, description, flag, icon);
+
+    this.type = PropTypes.REPORT;
+  }
+}
+ReportProperty.STRUCT = nstructjs.inherit(ReportProperty, StringProperty) + `
+}
+`;
+nstructjs.register(ReportProperty);
+_addClass(ReportProperty);
+
 export class BoolProperty extends ToolProperty {
   constructor(value, apiname,
               uiname, description, flag, icon) {
@@ -731,6 +759,8 @@ export class BoolProperty extends ToolProperty {
 
   setValue(val) {
     this.data = !!val;
+    super.setValue(val);
+
     return this;
   }
 
@@ -1115,6 +1145,8 @@ export class Vec2Property extends FloatProperty {
 
   setValue(v) {
     this.data.load(v);
+
+    //do not trigger parent classes's setValue
     ToolProperty.prototype.setValue.call(this, v);
     return this;
   }
@@ -1150,6 +1182,8 @@ export class Vec3Property extends VecPropertyBase {
 
   setValue(v) {
     this.data.load(v);
+
+    //do not trigger parent classes's setValue
     ToolProperty.prototype.setValue.call(this, v);
     return this;
   }
@@ -1184,6 +1218,8 @@ export class Vec4Property extends FloatProperty {
 
   setValue(v, w = 1.0) {
     this.data.load(v);
+
+    //do not trigger parent classes's setValue
     ToolProperty.prototype.setValue.call(this, v);
 
     if (v.length < 3) {
@@ -1724,6 +1760,7 @@ export class Curve1DProperty extends ToolProperty {
     }
 
     this.data.load(curve);
+    super.setValue(curve);
   }
 
   copyTo(b) {

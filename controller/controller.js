@@ -480,6 +480,14 @@ export class DataStruct {
     return dpath;
   }
 
+  report(path, apiname, uiname, description) {
+    let prop = new toolprop.ReportProperty(undefined, apiname, uiname, description);
+
+    let dpath = new DataPath(path, apiname, prop);
+    this.add(dpath);
+    return dpath;
+  }
+
   string(path, apiname, uiname, description) {
     let prop = new toolprop.StringProperty(undefined, apiname, uiname, description);
 
@@ -598,7 +606,13 @@ const CLS_API_KEY = Symbol("__dp_map_id");
 export class DataAPI extends ModelInterface {
   constructor() {
     super();
+
     this.rootContextStruct = undefined;
+    this.structs = [];
+  }
+
+  getStructs() {
+    return this.structs;
   }
 
   get list() {
@@ -648,6 +662,8 @@ export class DataAPI extends ModelInterface {
   _addClass(cls, dstruct) {
     let key =  _map_struct_idgen++;
     cls[CLS_API_KEY] = key;
+
+    this.structs.push(dstruct);
 
     _map_structs[key] = dstruct;
   }

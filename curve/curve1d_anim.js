@@ -32,6 +32,8 @@ ParamKey {
 nstructjs.register(ParamKey);
 let BOOL_FLAG = 1e17;
 
+let _udigest = new util.HashDigest();
+
 export class SimpleCurveBase extends CurveTypeData {
   constructor() {
     super();
@@ -47,13 +49,25 @@ export class SimpleCurveBase extends CurveTypeData {
     }
   }
 
+  calcHashKey(digest = _udigest.reset()) {
+    let d = digest;
+    super.calcHashKey(d);
+
+    for (let k in this.params) {
+      digest.add(k);
+      digest.add(this.params[k]);
+    }
+
+    return d.get();
+  }
+
   equals(b) {
     if (this.type !== b.type) {
       return false;
     }
 
     for (let k in this.params) {
-      if (this.params[k] !== b.params[k]) {
+      if (Math.abs(this.params[k]-b.params[k]) > 0.000001) {
         return false;
       }
     }

@@ -1309,7 +1309,16 @@ export function seed(n) {
   _mt.seed(n);
 }
 
+let smallstr_hashes = {};
 export function strhash(str) {
+  if (str.length <= 64) {
+    let hash = smallstr_hashes[str];
+
+    if (hash !== undefined) {
+      return hash;
+    }
+  }
+
   var hash = 0;
 
   for (var i = 0; i < str.length; i++) {
@@ -1318,6 +1327,10 @@ export function strhash(str) {
     hash = hash < 0 ? -hash : hash;
 
     hash ^= (ch*524287 + 4323543) & ((1<<19) - 1);
+  }
+
+  if (str.length <= 64) {
+    smallstr_hashes[str] = hash;
   }
 
   return hash;
@@ -1527,6 +1540,20 @@ export class HashDigest {
   }
 
   add(v) {
+    if (typeof v === "string") {
+      v = strhash(v);
+    }
+
+    if (v >= -5 && v <= 5) {
+      v *= 32;
+    }
+
+    //try to deal with subdecimal floating point error
+
+    let f = Math.fract(v)*(1024*512);
+    f = (~~f)/(1024*512);
+    v = Math.floor(v) + f;
+
     //glibc linear congruel generator
     this.i = ((this.i + (~~v))*1103515245 + 12345) & ((1<<29) - 1);
     //according to wikipedia only the top 16 bits are random
@@ -1538,6 +1565,8 @@ export class HashDigest {
     v = ~~v;
 
     this.hash ^= v ^ this.i;
+
+    return this;
   }
 }
 

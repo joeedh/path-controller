@@ -1,4 +1,5 @@
 import {nstructjs} from "../util/struct.js";
+import * as util from '../util/util.js';
 
 export const CurveConstructors = [];
 export const CURVE_VERSION = 1.0;
@@ -29,6 +30,8 @@ export function getCurve(type, throw_on_error=true) {
   }
 }
 
+let _udigest = new util.HashDigest();
+
 export class CurveTypeData {
   constructor() {
     this.type = this.constructor.name;
@@ -46,6 +49,14 @@ export class CurveTypeData {
 
 
     CurveConstructors.push(cls);
+  }
+
+  calcHashKey(digest=_udigest.reset()) {
+    let d = digest;
+
+    d.add(this.type);
+
+    return d.get();
   }
 
   toJSON() {

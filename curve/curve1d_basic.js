@@ -2,6 +2,13 @@ import {nstructjs} from "../util/struct.js";
 import {CurveFlags, TangentModes, CurveTypeData} from './curve1d_base.js';
 import {Vector2, Vector3, Vector4, Quat, Matrix4} from '../util/vectormath.js';
 import {genHermiteTable, evalHermiteTable} from './curve1d_base.js';
+import * as util from '../util/util.js';
+
+let _udigest = new util.HashDigest();
+
+function feq(a, b) {
+  return Math.abs(a-b) < 0.00001;
+}
 
 class EquationCurve extends CurveTypeData {
   constructor(type) {
@@ -10,6 +17,16 @@ class EquationCurve extends CurveTypeData {
     this.equation = "x";
     this._last_equation = "";
     this.hermite = undefined;
+  }
+
+  calcHashKey(digest = _udigest.reset()) {
+    let d = digest;
+
+    super.calcHashKey(d);
+
+    d.add(this.equation);
+
+    return d.get();
   }
 
   static define() {return {
@@ -221,8 +238,26 @@ class GuassianCurve extends CurveTypeData {
     this.deviation = 0.3; //standard deviation
   }
 
+  calcHashKey(digest = _udigest.reset()) {
+    super.calcHashKey(digest);
+
+    let d = digest;
+
+    d.add(this.height);
+    d.add(this.offset);
+    d.add(this.deviation);
+
+    return d.get();
+  }
+
   equals(b) {
-    return super.equals(b) && this.height === b.height && this.offset === b.offset && this.deviation === b.deviation;
+    let r = super.equals(b);
+
+    r = r && feq(this.height, b.height);
+    r = r && feq(this.offset, b.offset);
+    r = r && feq(this.deviation, b.deviation);
+
+    return r;
   }
 
   static define() {return {

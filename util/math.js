@@ -1859,7 +1859,16 @@ export function normal_tri(v1, v2, v3) {
 
 var $n2_normal_quad = new Vector3();
 
+let _q1 = new Vector3(), _q2 = new Vector3(), _q3 = new Vector3();
 export function normal_quad(v1, v2, v3, v4) {
+  _q1.load(normal_tri(v1, v2, v3));
+  _q2.load(normal_tri(v2, v3, v4));
+
+  _q1.add(_q2).normalize();
+  return _q1;
+}
+
+export function normal_quad_old(v1, v2, v3, v4) {
   var n = normal_tri(v1, v2, v3);
   $n2_normal_quad[0] = n[0];
   $n2_normal_quad[1] = n[1];

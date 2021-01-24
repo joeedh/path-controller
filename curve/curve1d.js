@@ -43,6 +43,8 @@ window.mySafeJSONStringify = mySafeJSONStringify;
 export {CurveConstructors, CURVE_VERSION, CurveTypeData} from './curve1d_base.js';
 import {CurveConstructors, CURVE_VERSION, CurveTypeData} from './curve1d_base.js';
 
+let _udigest = new util.HashDigest();
+
 export class Curve1D extends EventDispatcher {
   constructor() {
     super();
@@ -61,6 +63,16 @@ export class Curve1D extends EventDispatcher {
 
     //this.generators.active = this.generators[0];
     this.setGenerator("bspline");
+  }
+
+  calcHashKey(digest=_udigest.reset()) {
+    let d = digest;
+
+    for (let g of this.generators) {
+      g.calcHashKey(d);
+    }
+
+    return d.get();
   }
 
   equals(b) {
@@ -194,13 +206,6 @@ export class Curve1D extends EventDispatcher {
     }
 
     return gen;
-  }
-
-  equals(b) {
-    let a = mySafeJSONStringify(this).trim();
-    let b2 = mySafeJSONStringify(b).trim();
-
-    return a === b2;
   }
 
   destroy() {

@@ -156,7 +156,9 @@ export class Curve1DPoint extends Vector2 {
     var ret = new Curve1DPoint(this);
 
     ret.tangent = this.tangent;
-    ret.rco.load(ret);
+    ret.flag = this.flag;
+    ret.rco.load(this.rco);
+    ret.sco.load(this.sco);
 
     return ret;
   }
@@ -165,9 +167,12 @@ export class Curve1DPoint extends Vector2 {
     return {
       0      : this[0],
       1      : this[1],
+
       eid    : this.eid,
       flag   : this.flag,
-      tangent: this.tangent
+      tangent: this.tangent,
+
+      rco    : this.rco
     };
   }
 
@@ -177,6 +182,8 @@ export class Curve1DPoint extends Vector2 {
     ret.eid = obj.eid;
     ret.flag = obj.flag;
     ret.tangent = obj.tangent;
+
+    ret.rco.load(obj.rco);
 
     return ret;
   }
@@ -195,12 +202,13 @@ Curve1DPoint {
   1       : float;
   eid     : int;
   flag    : int;
-  deg     : int;
   tangent : int;
   rco     : vec2;
 }
 `;
 nstructjs.register(Curve1DPoint);
+
+let _udigest = new util.HashDigest();
 
 class BSplineCurve extends CurveTypeData {
   constructor() {
@@ -235,6 +243,26 @@ class BSplineCurve extends CurveTypeData {
     this.on_touchcancel = this.on_touchcancel.bind(this);
   }
 
+  calcHashKey(digest = _udigest.reset()) {
+    let d = digest;
+
+    super.calcHashKey(d);
+
+    d.add(this.deg);
+    d.add(this.interpolating);
+
+    for (let p of this.points) {
+      let x = ~~(p[0]*1024);
+      let y = ~~(p[1]*1024);
+
+      d.add(x);
+      d.add(y);
+      d.add(p.tangent); //is an enum
+    }
+
+    return d.get();
+  }
+
   equals(b) {
     if (b.type !== this.type) {
       return false;
@@ -253,7 +281,13 @@ class BSplineCurve extends CurveTypeData {
       let p1 = this.points[i];
       let p2 = b.points[i];
 
+      let dist = p1.vectorDistance(p2);
+
       if (p1.vectorDistance(p2) > 0.00001) {
+        return false;
+      }
+
+      if (p1.tangent !== p2.tangent) {
         return false;
       }
     }
@@ -301,11 +335,7 @@ class BSplineCurve extends CurveTypeData {
     super.update();
   }
 
-  updateKnots(recalc = true) {
-    if (recalc) {
-      this.recalc = RecalcFlags.ALL;
-    }
-
+  _sortPoints() {
     if (!this.interpolating) {
       for (var i = 0; i < this.points.length; i++) {
         this.points[i].rco.load(this.points[i]);
@@ -315,6 +345,16 @@ class BSplineCurve extends CurveTypeData {
     this.points.sort(function (a, b) {
       return a[0] - b[0];
     });
+
+    return this;
+  }
+
+  updateKnots(recalc = true) {
+    if (recalc) {
+      this.recalc = RecalcFlags.ALL;
+    }
+
+    this._sortPoints();
 
     this._ps = [];
     if (this.points.length < 2) {
@@ -371,15 +411,12 @@ class BSplineCurve extends CurveTypeData {
   }
 
   toJSON() {
+    this._sortPoints();
+
     let ret = super.toJSON();
 
-    var ps = [];
-    for (var i = 0; i < this.points.length; i++) {
-      ps.push(this.points[i].toJSON());
-    }
-
     ret = Object.assign(ret, {
-      points       : ps,
+      points       : this.points.map(p => p.toJSON()),
       deg          : this.deg,
       interpolating: this.interpolating,
       eidgen       : this.eidgen.toJSON()
@@ -392,6 +429,8 @@ class BSplineCurve extends CurveTypeData {
     super.loadJSON(obj);
 
     this.interpolating = obj.interpolating;
+    this.deg = obj.deg;
+
     this.length = 0;
     this.points = [];
     this._ps = [];
@@ -405,10 +444,9 @@ class BSplineCurve extends CurveTypeData {
       this.points.push(Curve1DPoint.fromJSON(obj.points[i]));
     }
 
-    this.deg = obj.deg;
-
     this.updateKnots();
     this.redraw();
+
     return this;
   }
 

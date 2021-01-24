@@ -23,7 +23,8 @@ export let PropTypes = {
   PROPLIST   : 4096,
   STRSET     : 8192,
   CURVE      : 8192<<1,
-  FLOAT_ARRAY: 8192<<2
+  FLOAT_ARRAY: 8192<<2,
+  REPORT     : 8192<<3
   //ITER : 8192<<1
 };
 

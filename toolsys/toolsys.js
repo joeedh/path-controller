@@ -223,6 +223,10 @@ export class ToolPropertyCache {
   }
 
   get(cls, key, prop) {
+    if (cls === ToolMacro) {
+      return;
+    }
+
     let obj = this._getAccessor(cls);
     key = this.constructor.getPropKey(cls, key, prop);
 
@@ -234,6 +238,10 @@ export class ToolPropertyCache {
   }
 
   set(cls, key, prop) {
+    if (cls === ToolMacro) {
+      return;
+    }
+
     let toolpath = cls.tooldef().toolpath.trim();
     let obj = this._getAccessor(cls);
 
@@ -331,8 +339,35 @@ export class ToolOp extends events.EventHandler {
     return tot;
   }
 
+  loadDefaults(force=true) {
+    for (let k in this.inputs) {
+      let prop = this.inputs[k];
+
+      if (!force && prop.wasSet) {
+        continue;
+      }
+
+      if (this.hasDefault(prop, k)) {
+        prop.setValue(this.getDefault(prop, k));
+        prop.wasSet = false;
+      }
+    }
+
+    return this;
+  }
+
+  hasDefault(toolprop, key=toolprop.apiname) {
+    return SavedToolDefaults.has(this.constructor, key, toolprop);
+  }
+
   getDefault(toolprop, key=toolprop.apiname) {
-    return SavedToolDefaults.get(this, key, toolprop);
+    let cls = this.constructor;
+
+    if (SavedToolDefaults.has(cls, key, toolprop)) {
+      return SavedToolDefaults.get(cls, key, toolprop);
+    } else {
+      return toolprop.getValue();
+    }
   }
 
   static Equals(a, b) {
@@ -606,15 +641,19 @@ export class ToolOp extends events.EventHandler {
         let prop = dinputs[k].copy();
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : k;
 
-        if (SavedToolDefaults.has(this.constructor, k, prop)) {
-          try {
-            prop.setValue(SavedToolDefaults.get(this.constructor, k, prop));
-          } catch (error) {
-            console.log(error.stack);
-            console.log(error.message);
-          }
+        if (!this.hasDefault(prop, k)) {
+          this.inputs[k] = prop;
+          continue;
         }
 
+        try {
+          prop.setValue(this.getDefault(prop, k));
+        } catch (error) {
+          console.log(error.stack);
+          console.log(error.message);
+        }
+
+        prop.wasSet = false;
         this.inputs[k] = prop;
       }
     }
@@ -742,8 +781,6 @@ export class ToolOp extends events.EventHandler {
       return this._promise;
     }
 
-    //console.warn("tool modal start");
-
     this.modal_ctx = ctx;
     this.modalRunning = true
 
@@ -776,8 +813,6 @@ export class ToolOp extends events.EventHandler {
       this._overdraw.end();
       this._overdraw = undefined;
     }
-
-    //console.log("tool modal end");
 
     if (was_cancelled && this._on_cancel !== undefined) {
       this._accept(this.modal_ctx, true);
@@ -884,6 +919,11 @@ toolsys.MacroLink {
 `;
 nstructjs.register(MacroLink);
 
+export const MacroClasses = {};
+window._MacroClasses = MacroClasses;
+
+let macroidgen = 0;
+
 export class ToolMacro extends ToolOp {
   static tooldef() {
     return {
@@ -901,6 +941,109 @@ export class ToolMacro extends ToolOp {
     this.connectLinks = [];
   }
 
+  _getTypeClass() {
+    let key = "";
+    for (let tool of this.tools) {
+      key = tool.constructor.name + ":";
+    }
+
+    for (let k in this.inputs) {
+      key += k + ":";
+    }
+
+    if (key in MacroClasses) {
+      return MacroClasses[key];
+    }
+
+    let name = "Macro("
+    let i = 0;
+    let is_modal;
+
+    for (let tool of this.tools) {
+      let def = tool.constructor.tooldef();
+
+      if (i > 0) {
+        name += ", ";
+      } else {
+        is_modal = def.is_modal;
+      }
+
+      if (def.uiname) {
+        name += def.uiname;
+      } else if (def.toolpath) {
+        name += def.toolpath;
+      } else {
+        name += tool.constructor.name;
+      }
+
+      i++;
+    }
+
+    let inputs = {};
+
+    for (let k in this.inputs) {
+      inputs[k] = this.inputs[k].copy().clearEventCallbacks();
+      inputs[k].wasSet = false;
+    }
+
+    let tdef = {
+      uiname : name,
+      toolpath : key,
+      inputs,
+      outputs : {},
+      is_modal
+    };
+
+    let cls = class MacroTypeClass extends ToolOp {
+      static tooldef() {
+        return tdef;
+      }
+    }
+
+    cls._macroTypeId = macroidgen++;
+
+    /*
+    let cls = {
+      name : key,
+      tooldef() {
+        return tdef
+      },
+      _getFinalToolDef() {
+        return this.tooldef();
+      }
+    };//*/
+
+    MacroClasses[key] = cls;
+
+    return cls;
+  }
+
+  saveDefaultInputs() {
+    for (let k in this.inputs) {
+      let prop = this.inputs[k];
+
+      if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
+        SavedToolDefaults.set(this._getTypeClass(), k, prop);
+      }
+    }
+
+    return this;
+  }
+
+  hasDefault(toolprop, key=toolprop.apiname) {
+    return SavedToolDefaults.has(this._getTypeClass(), key, toolprop);
+  }
+
+  getDefault(toolprop, key=toolprop.apiname) {
+    let cls = this._getTypeClass();
+
+    if (SavedToolDefaults.has(cls, key, toolprop)) {
+      return SavedToolDefaults.get(cls, key, toolprop);
+    } else {
+      return toolprop.getValue();
+    }
+  }
+
   connect(srctool, srcoutput, dsttool, dstinput, srcprops="outputs", dstprops="inputs") {
     if (typeof dsttool === "function") {
       return this.connectCB(...arguments);
@@ -911,6 +1054,25 @@ export class ToolMacro extends ToolOp {
 
     if (i1 < 0 || i2 < 0) {
       throw new Error("tool not in macro");
+    }
+
+    //remove linked properties from this.inputs
+    if (srcprops === "inputs") {
+      let tool = this.tools[i1];
+
+      let prop = tool.inputs[srcoutput];
+      if (prop === this.inputs[srcoutput]) {
+        delete this.inputs[srcoutput];
+      }
+    }
+
+    if (dstprops === "inputs"){
+      let tool = this.tools[i2];
+      let prop = tool.inputs[dstinput];
+
+      if (this.inputs[dstinput] === prop) {
+        delete this.inputs[dstinput];
+      }
     }
 
     this.connectLinks.push(new MacroLink(i1, srcoutput, srcprops, i2, dstinput, dstprops));
@@ -931,6 +1093,14 @@ export class ToolMacro extends ToolOp {
   add(tool) {
     if (tool.is_modal) {
       this.is_modal = true;
+    }
+
+    for (let k in tool.inputs) {
+      let prop = tool.inputs[k];
+
+      if (!(prop.flag & PropFlags.PRIVATE)) {
+        this.inputs[k] = prop;
+      }
     }
 
     this.tools.push(tool);
@@ -971,6 +1141,10 @@ export class ToolMacro extends ToolOp {
   }//*/
 
   modalStart(ctx) {
+    //macros obviously can't call loadDefaults in the constructor
+    //like normal tool ops can.
+    this.loadDefaults(false);
+
     this._promise = new Promise((function (accept, reject) {
       this._accept = accept;
       this._reject = reject;
@@ -1023,7 +1197,17 @@ export class ToolMacro extends ToolOp {
     return this._promise;
   }
 
+  loadDefaults(force = true) {
+    return super.loadDefaults(force);
+  }
+
   exec(ctx) {
+    //macros obviously can't call loadDefaults in the constructor
+    //like normal tool ops can.
+    //note that this will detect if the user changes property values
+
+    this.loadDefaults(false);
+
     for (var i = 0; i < this.tools.length; i++) {
       this.tools[i].undoPre(ctx);
       this.tools[i].execPre(ctx);
