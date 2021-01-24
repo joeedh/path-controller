@@ -1,5 +1,6 @@
 export * from './controller/context.js';
 export * from './controller/controller.js';
+export * from './controller/controller_abstract.js';
 export * from './controller/controller_ops.js';
 export * from './controller/controller_abstract.js';
 export * from './controller/controller_base.js';
