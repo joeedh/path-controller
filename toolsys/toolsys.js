@@ -72,6 +72,7 @@ import * as events from '../util/events.js';
 import {keymap} from '../util/simple_events.js';
 import {PropFlags, PropTypes} from './toolprop.js';
 import {DataPath} from '../controller/controller_base.js';
+import * as util from '../util/util.js';
 
 export let ToolClasses = [];
 window._ToolClasses = ToolClasses;
@@ -1308,7 +1309,12 @@ export class ToolStack extends Array {
     let tot = 0;
 
     for (let tool of this) {
-      tot += tool.calcMemSize();
+      try {
+        tot += tool.calcMemSize();
+      } catch (error) {
+        util.print_stack(error);
+        console.error("Failed to execute a calcMemSize method");
+      }
     }
 
     return tot;
@@ -1515,6 +1521,8 @@ export class ToolStack extends Array {
     return this;
   }
 
+  //cb is a function(ctx), if it returns the value false then playback stops
+  //promise will still be fulfilled.
   replay(cb) {
     let cur = this.cur;
 
@@ -1522,30 +1530,31 @@ export class ToolStack extends Array {
 
     let last = this.cur;
 
-    let timer = window.setInterval(() => {
-      //if (this.cur >= cur) {
-      //  window.clearInterval(timer);
-      //  return;
-      //}
+    let start = util.time_ms();
 
-      last = this.cur;
+    return new Promise((accept, reject) => {
+      let next = () => {
+        last = this.cur;
 
-      this.redo();
+        if (cb && cb(ctx) === false) {
+          accept();
+          return;
+        }
 
-      if (cb) {
-        cb();
-      }
+        this.redo();
 
-      if (last === this.cur) {
-        window.clearInterval(timer);
-
-        if (this.enforceMemLimit) {
-          this.limitMemory(this.memLimit);
+        if (last === this.cur) {
+          console.warn("time:", (util.time_ms() - start)/1000.0);
+          accept(this);
+        } else {
+          window.redraw_viewport_p(true).then(() => {
+            next();
+          });
         }
       }
-    }, 50);
 
-    return timer;
+      next();
+    });
   }
 
   loadSTRUCT(reader) {

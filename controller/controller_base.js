@@ -191,6 +191,11 @@ export class DataPath {
     return this;
   }
 
+  editAsBaseUnit() {
+    this.data.flag |= PropFlags.EDIT_AS_BASE_UNIT;
+    return this;
+  }
+
   range(min, max) {
     this.data.setRange(min, max);
     return this;

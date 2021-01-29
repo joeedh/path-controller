@@ -26,6 +26,70 @@ off fort;
 let barycentric_v2_rets = util.cachering.fromConstructor(Vector2, 2048);
 let calc_proj_refs = new util.cachering(() => [0, 0], 64);
 
+/*
+  a b c d
+     b
+
+  a------c
+
+     d
+
+  on factor;
+  load_package avector;
+
+  ax := 0;
+  ay := 0;
+  az := 0;
+
+  a := avec(ax, ay, az);
+  b := avec(bx, by, bz);
+  c := avec(cx, cy, cz);
+  d := avec(dx, dy, dz);
+
+  n1 := d cross c;
+  n2 := c cross b;
+
+  n1 := n1 / (VMOD n1);
+  n2 := n2 / (VMOD n2);
+
+  d := n1 dot n2;
+  on fort;
+
+  d*d;
+
+  off fort;
+
+
+  */
+
+/**
+
+    v2
+
+v1------v3
+
+    v4
+
+*/
+export function dihedral_v3_sqr(v1, v2, v3, v4) {
+  let bx = v2[0] - v1[0];
+  let by = v2[1] - v1[1];
+  let bz = v2[2] - v1[2];
+
+  let cx = v3[0] - v1[0];
+  let cy = v3[1] - v1[1];
+  let cz = v3[2] - v1[2];
+
+  let dx = v4[0] - v1[0];
+  let dy = v4[1] - v1[1];
+  let dz = v4[2] - v1[2];
+
+
+  return ((bx*cz-bz*cx)*(cx*dz-cz*dx)+(by*cz-bz*cy)*(cy*dz-cz*dy)+(bx*cy-by*cx)*
+         (cx*dy-cy*dx))**2/(((bx*cz-bz*cx)**2+(by*cz-bz*cy)**2
+          +(bx*cy-by*cx)**2)*((cx*dz-cz*dx)**2+(cy*dz-cz*dy)**2+(cx*dy-cy*dx)**2));
+}
+
 export function calc_projection_axes(no) {
   let ax = Math.abs(no[0]), ay = Math.abs(no[1]), az = Math.abs(no[2]);
 
@@ -1424,12 +1488,13 @@ export function expand_line(l, margin) {
   return l;
 };
 
-export function colinear(a, b, c) {
+//stupidly ancient function, todo: rewrite
+export function colinear(a, b, c, limit=2.2e-16) {
   for (var i = 0; i < 3; i++) {
     _cross_vec1[i] = b[i] - a[i];
     _cross_vec2[i] = c[i] - a[i];
   }
-  var limit = 2.2e-16;
+
   if (a.vectorDistance(b) < feps*100 && a.vectorDistance(c) < feps*100) {
     return true;
   }
@@ -1837,24 +1902,60 @@ var $e1_normal_tri = new Vector3();
 var $e3_normal_tri = new Vector3();
 var $e2_normal_tri = new Vector3();
 
-export function normal_tri(v1, v2, v3) {
-  $e1_normal_tri[0] = v2[0] - v1[0];
-  $e1_normal_tri[1] = v2[1] - v1[1];
-  $e1_normal_tri[2] = v2[2] - v1[2];
-  $e2_normal_tri[0] = v3[0] - v1[0];
-  $e2_normal_tri[1] = v3[1] - v1[1];
-  $e2_normal_tri[2] = v3[2] - v1[2];
-  $e3_normal_tri[0] = $e1_normal_tri[1]*$e2_normal_tri[2] - $e1_normal_tri[2]*$e2_normal_tri[1];
-  $e3_normal_tri[1] = $e1_normal_tri[2]*$e2_normal_tri[0] - $e1_normal_tri[0]*$e2_normal_tri[2];
-  $e3_normal_tri[2] = $e1_normal_tri[0]*$e2_normal_tri[1] - $e1_normal_tri[1]*$e2_normal_tri[0];
+export function isNum(f) {
+  let ok = typeof f === "number";
 
-  var _len = Math.sqrt(($e3_normal_tri[0]*$e3_normal_tri[0] + $e3_normal_tri[1]*$e3_normal_tri[1] + $e3_normal_tri[2]*$e3_normal_tri[2]));
-  if (_len > 1e-05)
-    _len = 1.0/_len;
-  $e3_normal_tri[0] *= _len;
-  $e3_normal_tri[1] *= _len;
-  $e3_normal_tri[2] *= _len;
-  return $e3_normal_tri;
+  ok = ok && !isNaN(f) && isFinite(f);
+
+  return ok;
+}
+
+const _normal_tri_rets = util.cachering.fromConstructor(Vector3, 64);
+
+export function normal_tri(v1, v2, v3) {
+  let x1 = v2[0] - v1[0];
+  let y1 = v2[1] - v1[1];
+  let z1 = v2[2] - v1[2];
+  let x2 = v3[0] - v1[0];
+  let y2 = v3[1] - v1[1];
+  let z2 = v3[2] - v1[2];
+
+  if (!isNum(x1+y1+z1+z2+y2+z2)) {
+    throw new Error("NaN in normal_tri");
+  }
+
+  let x3, y3, z3;
+
+  x1 = v2[0] - v1[0];
+  y1 = v2[1] - v1[1];
+  z1 = v2[2] - v1[2];
+  x2 = v3[0] - v1[0];
+  y2 = v3[1] - v1[1];
+  z2 = v3[2] - v1[2];
+  x3 = y1*z2 - z1*y2;
+  y3 = z1*x2 - x1*z2;
+  z3 = x1*y2 - y1*x2;
+
+  let len = Math.sqrt((x3*x3 + y3*y3 + z3*z3));
+
+  if (len > 1e-05)
+    len = 1.0/len;
+
+  x3 *= len;
+  y3 *= len;
+  z3 *= len;
+
+  let n = _normal_tri_rets.next();
+
+  if (!isNum(x3+y3+z3)) {
+    throw new Error("NaN!");
+  }
+
+  n[0] = x3;
+  n[1] = y3;
+  n[2] = z3;
+
+  return n;
 };
 
 var $n2_normal_quad = new Vector3();

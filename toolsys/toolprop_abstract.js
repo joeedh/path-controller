@@ -41,9 +41,10 @@ export const PropFlags = {
   USE_CUSTOM_GETSET  : 128, //used by controller.js interface
   SAVE_LAST_VALUE    : 256,
   READ_ONLY          : 512,
-  SIMPLE_SLIDER      : 1024,
-  FORCE_ROLLER_SLIDER: 2048,
-  USE_BASE_UNDO      : 1<<12 //internal to simple_controller.js
+  SIMPLE_SLIDER      : 1<<10,
+  FORCE_ROLLER_SLIDER: 1<<11,
+  USE_BASE_UNDO      : 1<<12, //internal to simple_controller.js
+  EDIT_AS_BASE_UNIT  : 1<<13 //user textbox input should be interpreted in display unit
 };
 
 export class ToolPropertyIF {
@@ -210,6 +211,12 @@ export class ListPropertyIF extends ToolPropertyIF {
     this.prop = prop;
   }
 
+  get length() {
+  }
+
+  set length(val) {
+  }
+
   copyTo(b) {
   }
 
@@ -227,12 +234,6 @@ export class ListPropertyIF extends ToolPropertyIF {
   }
 
   [Symbol.iterator]() {
-  }
-
-  get length() {
-  }
-
-  set length(val) {
   }
 }
 

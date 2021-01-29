@@ -215,8 +215,8 @@ export function isMobile() {
 
 //window._isMobile = isMobile;
 
-let SmartConsoleTag = Symbol("SmartConsoleTag");
-let tagid = 0;
+//let SmartConsoleTag = Symbol("SmartConsoleTag");
+//let tagid = 0;
 
 export class SmartConsoleContext {
   constructor(name, console) {
@@ -260,7 +260,7 @@ export class SmartConsoleContext {
       sum = sum ^ h;
     }
 
-    let visit = new Set();
+    let visit = new WeakSet();
 
     let recurse = (n) => {
       if (typeof n === "string") {
@@ -268,15 +268,15 @@ export class SmartConsoleContext {
       } else if (typeof n === "undefined" || n === null) {
         dohash(0);
       } else if (typeof n === "object") {
-        if (n[SmartConsoleTag] === undefined) {
-          n[SmartConsoleTag] = tagid++;
+        if (n === undefined) {
+          //n[SmartConsoleTag] = tagid++;
         }
 
-        if (visit.has(n[SmartConsoleTag])) {
+        if (visit.has(n)) {
           return;
         }
 
-        visit.add(n[SmartConsoleTag]);
+        visit.add(n); //[SmartConsoleTag]);
 
         let keys = getAllKeys(n);
 
@@ -2142,4 +2142,87 @@ window.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
   window.console.log(h.heap.concat([]));
 
   return list;
+}
+
+export class Queue {
+  constructor(n=32) {
+    n = Math.max(n, 2);
+
+    this.initialSize = n;
+
+    this.queue = new Array(n);
+    this.a = 0;
+    this.b = 0;
+    this.length = 0;
+  }
+
+  enqueue(item) {
+    let qlen = this.queue.length;
+
+    let b = this.b;
+
+    this.queue[b] = item;
+    this.b = (this.b + 1) % qlen;
+
+    if (this.length >= qlen || this.a === this.b) {
+      let newsize = qlen<<1;
+      let queue = new Array(newsize);
+
+      for (let i=0; i<qlen; i++) {
+        let i2 = (i + this.a) % qlen;
+
+        queue[i] = this.queue[i2];
+      }
+
+      this.a = 0;
+      this.b = qlen;
+      this.queue = queue;
+    }
+
+    this.length++;
+  }
+
+  clear() {
+    this.queue.length = this.initialSize;
+
+    for (let i=0; i<this.queue.length; i++) {
+      this.queue[i] = undefined;
+    }
+
+    this.a = this.b = 0;
+    this.length = 0;
+
+    return this;
+  }
+
+  dequeue() {
+    if (this.length === 0) {
+      return undefined;
+    }
+    this.length--;
+
+    let ret = this.queue[this.a];
+    this.a = (this.a + 1) % this.queue.length;
+    return ret;
+  }
+}
+
+window._testQueue = function() {
+  let q = new Queue(2);
+
+  for (let i=0; i<15; i++) {
+    if (i === 1) {
+      window.console.log("i:", q.dequeue(), q.length);
+    }
+
+    q.enqueue(i);
+  }
+
+  window.console.log(q.queue.concat([]));
+
+  for (let i=0; i<15; i++) {
+    window.console.log("i:", q.dequeue(), q.length);
+  }
+
+  window.console.log(q.queue.concat([]));
 }
