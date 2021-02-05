@@ -7,6 +7,101 @@ import {Vector2, Vector3, Vector4, Matrix4, Quat} from './vectormath.js';
 
 let dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 
+
+export const ClosestModes = {
+  CLOSEST  : 0,
+  START    : 1,
+  END      : 2,
+  ENDPOINTS: 3,
+  ALL      : 4
+};
+
+let advs = util.cachering.fromConstructor(Vector4, 128);
+
+export class AbstractCurve {
+  evaluate(t) {
+    throw new Error("implement me");
+  }
+
+  derivative(t) {
+  }
+
+  curvature(t) {
+
+  }
+
+  normal(t) {
+
+  }
+
+  width(t) {
+
+  }
+}
+
+export class ClosestCurveRets {
+  constructor() {
+    this.p = new Vector3();
+    this.t = 0;
+  }
+}
+
+let cvrets = util.cachering.fromConstructor(ClosestCurveRets, 2048);
+let cvarrays = new util.ArrayPool();
+let cvtmp = new Array(1024);
+
+export function closestPoint(p, curve, mode) {
+  let steps = 5;
+  let s=0, ds = 1.0 / steps;
+
+  let ri = 0;
+
+  for (let i=0; i<steps; i++, s += ds) {
+     let c1 = curve.evaluate(s);
+     let c2 = curve.evaluate(s+ds);
+
+
+  }
+}
+
+let poly_normal_tmps = util.cachering.fromConstructor(Vector3, 64);
+let pncent = new Vector3();
+
+export function normal_poly(vs) {
+  if (vs.length === 3) {
+    return poly_normal_tmps.next().load(normal_tri(vs[0], vs[1], vs[2]));
+  } else if (vs.length === 4) {
+    return poly_normal_tmps.next().load(normal_quad(vs[0], vs[1], vs[2], vs[3]));
+  }
+
+  if (vs.length === 0) {
+    return poly_normal_tmps.next().zero();
+  }
+
+  let cent = pncent.zero();
+  let tot = 0;
+
+  for (let v of vs) {
+    cent.add(v);
+    tot++;
+  }
+
+  cent.mulScalar(1.0 / tot);
+  let n = poly_normal_tmps.next().zero();
+
+  for (let i=0; i<vs.length; i++) {
+    let a = vs[i];
+    let b = vs[(i+1)%vs.length];
+    let c = cent;
+
+    let n2 = normal_tri(a, b, c);
+    n.add(n2);
+  }
+
+  n.normalize();
+  return n;
+}
+
 /*
 on factor;
 off period;
@@ -88,6 +183,21 @@ export function dihedral_v3_sqr(v1, v2, v3, v4) {
   return ((bx*cz-bz*cx)*(cx*dz-cz*dx)+(by*cz-bz*cy)*(cy*dz-cz*dy)+(bx*cy-by*cx)*
          (cx*dy-cy*dx))**2/(((bx*cz-bz*cx)**2+(by*cz-bz*cy)**2
           +(bx*cy-by*cx)**2)*((cx*dz-cz*dx)**2+(cy*dz-cz*dy)**2+(cx*dy-cy*dx)**2));
+}
+
+let tet_area_tmps = util.cachering.fromConstructor(Vector3, 64);
+export function tet_volume(a, b, c, d) {
+  a = tet_area_tmps.next().load(a);
+  b = tet_area_tmps.next().load(b);
+  c = tet_area_tmps.next().load(c);
+  d = tet_area_tmps.next().load(d);
+
+  a.sub(d);
+  b.sub(d);
+  c.sub(d);
+
+  b.cross(c);
+  return a.dot(b) / 6.0;
 }
 
 export function calc_projection_axes(no) {

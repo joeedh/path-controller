@@ -2,6 +2,29 @@ import './polyfill.js';
 import './struct.js';
 import './mobile-detect.js';
 
+let f64tmp = new Float64Array(1);
+let u16tmp = new Uint16Array(f64tmp.buffer);
+
+export function isDenormal(f) {
+  f64tmp[0] = f;
+
+  let a = u16tmp[0], b = u16tmp[1], c = u16tmp[2], d = u16tmp[3];
+
+  //zero? check both positive and negative zero
+  if (a === 0 && b === 0 && c === 0 && (d === 0 || d === 32768)) {
+    return false;
+  }
+
+  let test = d & ~(1<<15);
+  test = test >> 4;
+
+  //window.console.log(u16tmp[0], u16tmp[1], u16tmp[2], u16tmp[3], "|", test);
+
+  return test === 0;
+}
+window._isDenormal = isDenormal;
+
+
 let colormap = {
   "black"   : 30,
   "red"     : 31,
@@ -237,7 +260,7 @@ export class SmartConsoleContext {
     this.timeInterval = 375;
 
     //minimum time in general
-    this.timeIntervalAll = 0;
+    this.timeIntervalAll = 175;
 
     this._last = 0;
     this.last = 0;
@@ -341,6 +364,8 @@ export class SmartConsoleContext {
       return false;
     }
 
+    return true;
+    /*
     this.last2 = time_ms();
 
     let d = this._getData(args);
@@ -359,7 +384,7 @@ export class SmartConsoleContext {
       return true;
     }
 
-    return false;
+    return false;*/
   }
 
   log() {
@@ -380,6 +405,11 @@ export class SmartConsoleContext {
     }
   }
 
+  error() {
+    if (this._check(arguments)) {
+      window.console.error(...arguments);
+    }
+  }
 }
 
 export class SmartConsole {
@@ -2225,4 +2255,60 @@ window._testQueue = function() {
   }
 
   window.console.log(q.queue.concat([]));
+}
+
+
+export class ArrayPool {
+  constructor() {
+    this.pools = new Map();
+    this.map = new Array(1024);
+  }
+
+  get(n, clear) {
+    let pool;
+
+    if (n < 1024) {
+      pool = this.map[n];
+    } else {
+      pool = this.pools.get(n);
+    }
+
+    if (!pool) {
+      let tot;
+
+      if (n > 512) {
+        tot = 32;
+      } else if (n > 256) {
+        tot = 64;
+      } else if (n > 128) {
+        tot = 256;
+      } else if (n > 64) {
+        tot = 512;
+      } else {
+        tot = 1024;
+      }
+
+      pool = new cachering(() => new Array(n), tot);
+      if (n < 1024) {
+        this.map[n] = pool;
+      }
+      this.pools.set(n, pool);
+
+      return this.get(n, clear);
+    }
+
+    let ret = pool.next();
+    if (ret.length !== n) {
+      console.warn("Array length was set", n, ret);
+      ret.length = n;
+    }
+
+    if (clear) {
+      for (let i = 0; i < n; i++) {
+        ret[i] = undefined;
+      }
+    }
+
+    return ret;
+  }
 }

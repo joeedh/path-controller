@@ -84,9 +84,17 @@ class EquationCurve extends CurveTypeData {
     this.uidata = undefined;
   }
 
+  updateTextBox() {
+    if (this.uidata && this.uidata.textbox) {
+      this.uidata.textbox.text = this.equation;
+    }
+  }
+
   evaluate(s) {
     if (!this.hermite || this._last_equation !== this.equation) {
       this._last_equation = this.equation;
+
+      this.updateTextBox();
 
       this._evaluate(0.0);
 

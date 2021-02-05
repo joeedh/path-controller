@@ -327,8 +327,8 @@ function make_norm_safe_dot(cls) {
 
 function getBaseVector(parent) {
   return class BaseVector extends parent {
-    constructor(n) {
-      super(n);
+    constructor() {
+      super(...arguments);
 
       //this.xyzw = this.init_swizzle(4);
       //this.xyz = this.init_swizzle(3);
@@ -470,7 +470,23 @@ function getBaseVector(parent) {
     }
 
     normalize() {
-      var l = this.vectorLength();
+      /*
+      for (let i=0; i<this.length; i++) {
+        if (util.isDenormal(this[i])) {
+          console.error("Denormal error", i, this[i]);
+          this[i] = 0.0;
+        }
+      }
+      //*/
+
+      let l = this.vectorLength();
+
+      /*
+      if (util.isDenormal(l)) {
+        console.error("Denormal error", l);
+      }
+      //*/
+
       if (l > 0.00000001) {
         this.mulScalar(1.0/l);
       }
@@ -1181,7 +1197,7 @@ _v3nd_n1_normalizedDot = new Vector3();
 _v3nd_n2_normalizedDot = new Vector3();
 
 BaseVector.inherit(Vector4, 4);
-BaseVector.inherit(Vector3, 3);
+F32BaseVector.inherit(Vector3, 3);
 BaseVector.inherit(Vector2, 2);
 
 lookat_cache_vs3 = util.cachering.fromConstructor(Vector3, 64);

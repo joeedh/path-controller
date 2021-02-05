@@ -816,7 +816,9 @@ export class ToolOp extends events.EventHandler {
     }
 
     if (was_cancelled && this._on_cancel !== undefined) {
-      this._accept(this.modal_ctx, true);
+      if (this._accept) {
+        this._accept(this.modal_ctx, true);
+      }
       this._on_cancel(this);
     }
 
@@ -831,8 +833,11 @@ export class ToolOp extends events.EventHandler {
     super.popModal();
 
     this._promise = undefined;
-    this._accept(ctx, false); //Context, was_cancelled
-    this._accept = this._reject = undefined;
+
+    if (this._accept) {
+      this._accept(ctx, false);//Context, was_cancelled
+      this._accept = this._reject = undefined;
+    }
 
     this.saveDefaultInputs();
   }

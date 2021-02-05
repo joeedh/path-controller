@@ -86,7 +86,28 @@ export function copyMouseEvent(e) {
     
     ret[k] = v;
   }
-  
+
+  ret.ctrlKey = e.ctrlKey;
+  ret.shiftKey = e.shiftKey;
+  ret.altKey = e.altKey;
+
+  for (let i=0; i<2; i++) {
+    let key = i ? "targetTouches" : "touches";
+
+    if (e[key]) {
+      ret[key] = [];
+
+      for (let t of e[key]) {
+        let t2 = {};
+        ret[key].push(t2);
+
+        for (let k in t) {
+          t2[k] = t[k];
+        }
+      }
+    }
+  }
+
   return ret;
 }
 
