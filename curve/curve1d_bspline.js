@@ -18,7 +18,8 @@ export const SplineTemplates = {
   SMOOTHER      : 5,
   SHARPER       : 6,
   SPHERE        : 7,
-  REVERSE_LINEAR: 8
+  REVERSE_LINEAR: 8,
+  GUASSIAN      : 9
 };
 
 const templates = {
@@ -38,7 +39,7 @@ const templates = {
     "DEG", 2, [0, 0], [1.0/3.0, 0], [2.0/3.0, 1.0], [1, 1]
   ],
   [SplineTemplates.SMOOTHER]      : [
-    "DEG", 6, [0, 0], [1.0/3.0, 0], [2.0/3.0, 1.0], [1, 1]
+    "DEG", 6, [0, 0], [1.0/2.25, 0], [2.0/3.0, 1.0], [1, 1]
   ],
   [SplineTemplates.SHARPER]       : [
     [0, 0], [0.3, 0.03], [0.7, 0.065], [0.9, 0.16], [1, 1]
@@ -49,6 +50,9 @@ const templates = {
   [SplineTemplates.REVERSE_LINEAR]: [
     [0, 1], [1, 0]
   ],
+  [SplineTemplates.GUASSIAN]: [
+    "DEG", 5, [0, 0], [0.17969, 0.007], [0.48958, 0.01172], [0.77995, 0.99609], [1, 1]
+  ]
 };
 
 //is initialized below

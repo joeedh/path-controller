@@ -938,17 +938,35 @@ export function aabb_overlap_area(pos1, size1, pos2, size2) {
  */
 
 export function aabb_isect_2d(pos1, size1, pos2, size2) {
-  var ret = 0;
-  for (var i = 0; i < 2; i++) {
-    var a = pos1[i];
-    var b = pos1[i] + size1[i];
-    var c = pos2[i];
-    var d = pos2[i] + size2[i];
+  let ret = 0;
+  for (let i = 0; i < 2; i++) {
+    let a = pos1[i];
+    let b = pos1[i] + size1[i];
+    let c = pos2[i];
+    let d = pos2[i] + size2[i];
     if (b >= c && a <= d)
       ret += 1;
   }
-  return ret == 2;
+  return ret === 2;
 };
+
+
+export function aabb_isect_3d(pos1, size1, pos2, size2) {
+  let ret = 0;
+
+  for (let i = 0; i < 3; i++) {
+    let a = pos1[i];
+    let b = pos1[i] + size1[i];
+
+    let c = pos2[i];
+    let d = pos2[i] + size2[i];
+
+    if (b >= c && a <= d)
+      ret += 1;
+  }
+  return ret === 3;
+}
+
 
 let aabb_intersect_vs = util.cachering.fromConstructor(Vector2, 32);
 let aabb_intersect_rets = new util.cachering(() => {
