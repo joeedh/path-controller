@@ -219,6 +219,63 @@ export function calc_projection_axes(no) {
   return ret;
 }
 
+let _avtmps = util.cachering.fromConstructor(Vector3, 128);
+
+function inrect_3d(p, min, max) {
+  let ok = p[0] >= min[0] && p[0] <= max[0];
+  ok = ok && p[1] >= min[1] && p[1] <= max[1];
+  ok = ok && p[2] >= min[2] && p[2] <= max[2];
+
+  return ok;
+}
+
+export function aabb_isect_line_3d(v1, v2, min, max) {
+  let inside = inrect_3d(v1, min, max);
+  inside = inside || inrect_3d(v2, min, max);
+
+  if (inside) {
+    return true;
+  }
+
+  let cent = _avtmps.next().load(min).interp(max, 0.5);
+
+  let p = closest_point_on_line(cent, v1, v2, true);
+  if (!p) {
+    return false;
+  }
+
+  p = p[0];
+
+  return inrect_3d(p, min, max);
+}
+
+export function aabb_isect_cylinder_3d(v1, v2, radius, min, max) {
+  let inside = inrect_3d(v1, min, max);
+  inside = inside || inrect_3d(v2, min, max);
+
+  if (inside) {
+    return true;
+  }
+
+  let cent = _avtmps.next().load(min).interp(max, 0.5);
+
+  let p = closest_point_on_line(cent, v1, v2, true);
+  if (!p) {
+    return false;
+  }
+
+  p = p[0];
+
+  let size = _avtmps.next().load(max).sub(min);
+
+  size.mulScalar(0.5);
+  size.addScalar(radius); //*(3**0.5));
+
+  p.sub(cent).abs();
+
+  return p[0] <= size[0] && p[1] <= size[1] && p[2] <= size[2];
+}
+
 export function barycentric_v2(p, v1, v2, v3, axis1 = 0, axis2 = 1, out = undefined) {
   let div = (v2[axis1]*v3[axis2] - v2[axis2]*v3[axis1] + (v2[axis2] - v3[axis2])*v1[axis1] - (v2[axis1] - v3[axis1])*v1[axis2]);
 

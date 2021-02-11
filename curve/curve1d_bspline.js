@@ -262,8 +262,6 @@ class BSplineCache {
     curve2.regen_basis();
     curve2.regen_hermite();
 
-    console.log("adding curve to cache");
-
     this.map.set(curve2);
     this.curves.push(curve2);
 
@@ -621,7 +619,7 @@ class BSplineCurve extends CurveTypeData {
       return;
     }
 
-    console.warn("building spline approx");
+    //console.warn("building spline approx");
 
     if (steps === undefined) {
       steps = this.fastmode ? 120 : 340;
