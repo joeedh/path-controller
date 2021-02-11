@@ -1,11 +1,10 @@
 /**
-see doc_src/context.md
-*/
+ see doc_src/context.md
+ */
 
 import * as util from '../util/util.js';
 
 import cconst from '../config/config.js';
-import {getLastToolStruct} from '../../../example/pathux.js';
 
 let notifier = undefined;
 
@@ -132,9 +131,9 @@ export class ContextOverlay {
 }
 
 export const excludedKeys = new Set(["onRemove", "reset", "toString", "_fix",
-  "valueOf", "copy", "next", "save", "load", "clear", "hasOwnProperty",
-  "toLocaleString", "constructor", "propertyIsEnumerable", "isPrototypeOf",
-  "state", "saveProperty", "loadProperty", "getOwningOverlay", "_props"]);
+                                     "valueOf", "copy", "next", "save", "load", "clear", "hasOwnProperty",
+                                     "toLocaleString", "constructor", "propertyIsEnumerable", "isPrototypeOf",
+                                     "state", "saveProperty", "loadProperty", "getOwningOverlay", "_props"]);
 
 export class LockedContext {
   constructor(ctx) {
@@ -260,7 +259,7 @@ export class Context {
   }
 
   /** chrome's debug console corrupts this._inside_map,
-      this method fixes it*/
+   this method fixes it*/
   _fix() {
     this._inside_map = {};
   }
@@ -422,13 +421,13 @@ export class Context {
     for (let i=stack.length-1; i >= 0; i--) {
       let overlay = stack[i];
       let ret = next_key;
-      
+
       if (overlay[Symbol.ContextID] === undefined) {
         throw new Error("context corruption");
       }
-      
+
       let ikey = overlay[Symbol.ContextID];
-      
+
       if (cconst.DEBUG.contextSystem) {
         console.log(ikey, overlay);
       }

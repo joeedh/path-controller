@@ -112,6 +112,8 @@ var DOT_NORM_SNAP_LIMIT = 0.00000000001;
 ${doExports("BaseVector")} class BaseVector extends Array {
   constructor() {
     super();
+    
+    this.vec = undefined; //for compatibility with old files
   }
 
   copy() {
@@ -193,6 +195,8 @@ ${doExports("BaseVector")} class BaseVector extends Array {
         s += `  constructor(data) {
     super(${l});
         
+    this.vec = undefined; //for compatibility with old files
+    
     if (arguments.length > 1) {
       throw new Error("unexpected argument");
     }
@@ -329,6 +333,8 @@ function getBaseVector(parent) {
   return class BaseVector extends parent {
     constructor() {
       super(...arguments);
+
+      this.vec = undefined; //for compatibility with old nstructjs-saved files
 
       //this.xyzw = this.init_swizzle(4);
       //this.xyz = this.init_swizzle(3);
@@ -611,7 +617,7 @@ export class Vector4 extends BaseVector {
 
     if (typeof this.vec !== "undefined") {
       this.load(this.vec);
-      delete this.vec;
+      this.vec = undefined;
     }
   }
 };
@@ -777,7 +783,7 @@ export class Vector3 extends F32BaseVector {
 
     if (typeof this.vec !== "undefined") {
       this.load(this.vec);
-      delete this.vec;
+      this.vec = undefined;
     }
   }
 }
@@ -924,7 +930,7 @@ export class Vector2 extends BaseVector {
 
     if (typeof this.vec !== undefined) {
       this.load(this.vec);
-      delete this.vec;
+      this.vec = undefined;
     }
   }
 };
