@@ -1613,7 +1613,7 @@ window._testToolStackIO = function() {
   return toolstack;
 }
 
-export function buildToolSysAPI(api, registerWithNStructjs=true) {
+export function buildToolSysAPI(api, registerWithNStructjs=true, rootCtxStruct=undefined) {
   let datastruct = api.mapStruct(ToolPropertyCache, true);
 
   for (let cls of ToolClasses) {
@@ -1626,6 +1626,10 @@ export function buildToolSysAPI(api, registerWithNStructjs=true) {
         SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
       }
     }
+  }
+
+  if (rootCtxStruct) {
+    rootCtxStruct.struct("toolDefaults", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
   }
 
   if (!registerWithNStructjs) {

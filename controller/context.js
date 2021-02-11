@@ -5,6 +5,7 @@ see doc_src/context.md
 import * as util from '../util/util.js';
 
 import cconst from '../config/config.js';
+import {getLastToolStruct} from '../../../example/pathux.js';
 
 let notifier = undefined;
 
@@ -45,6 +46,16 @@ export class ContextOverlay {
   get state() {
     return this._state;
   }
+
+  /*
+  Ugly hack, ui_lasttool.js saves
+  a DataStruct wrapping the most recently executed ToolOp
+  in this.state._last_tool.
+  */
+  get last_tool() {
+    return this.state._last_tool;
+  }
+
 
   onRemove(have_new_file=false) {
   }
