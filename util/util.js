@@ -260,7 +260,7 @@ export class SmartConsoleContext {
     this.timeInterval = 375;
 
     //minimum time in general
-    this.timeIntervalAll = 175;
+    this.timeIntervalAll = 245;
 
     this._last = 0;
     this.last = 0;
@@ -363,6 +363,8 @@ export class SmartConsoleContext {
     if (this.timeIntervalAll > 0 && time_ms() - this.last2 < this.timeIntervalAll) {
       return false;
     }
+
+    this.last2 = time_ms();
 
     return true;
     /*
