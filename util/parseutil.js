@@ -9,6 +9,11 @@ export class token {
     this.parser = parser;
   }
 
+  setValue(val) {
+    this.value = val;
+    return this;
+  }
+
   toString() {
     if (this.value !== undefined)
       return "token(type=" + this.type + ", value='" + this.value + "')"
@@ -225,6 +230,7 @@ export class parser {
     this.lexer = lexer;
     this.errfunc = errfunc;
     this.start = undefined;
+    this.userdata = undefined;
   }
 
   copy() {
@@ -243,6 +249,7 @@ export class parser {
       this.lexer.input(data);
 
     var ret = this.start(this);
+
     if (err_on_unconsumed && !this.lexer.at_end() && this.lexer.next() !== undefined) {
       //console.log(this.lexer.lexdata.slice(this.lexer.lexpos-1, this.lexer.lexdata.length));
       this.error(undefined, "parser did not consume entire input");

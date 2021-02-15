@@ -1294,8 +1294,6 @@ export class ToolStack extends Array {
       start++;
     }
 
-    console.log("start", start);
-
     if (start === 0) {
       return size;
     }
