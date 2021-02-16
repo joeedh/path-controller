@@ -1091,7 +1091,7 @@ let IDGenInternalIDGen = 0;
 
 export class IDGen {
   constructor() {
-    this._cur = 1;
+    this.__cur = 1;
 
     this._debug = false;
     this._internalID = IDGenInternalIDGen++;
@@ -1112,31 +1112,54 @@ export class IDGen {
 
   // */
 
+  get cur() {
+    return this.__cur;
+  }
+
+  set cur(v) {
+    if (isNaN(v) || !isFinite(v)) {
+      throw new Error("NaN error in util.IDGen");
+    }
+
+    this.__cur = v;
+  }
+
   next() {
-    return this._cur++;
+    return this.cur++;
   }
 
   copy() {
     let ret = new IDGen();
-    ret._cur = this._cur;
+    ret.cur = this.cur;
 
     return ret;
   }
 
   max_cur(id) {
-    this._cur = Math.max(this._cur, id + 1);
+    this.cur = Math.max(this.cur, id + 1);
   }
 
   toJSON() {
     return {
-      _cur: this._cur
+      cur: this.cur
     };
   }
 
   static fromJSON(obj) {
-    var ret = new IDGen();
-    ret._cur = obj._cur;
+    let ret = new IDGen();
+
+    ret.cur = obj.cur === undefined ? obj._cur : obj.cur;
+
     return ret;
+  }
+
+  set _cur(v) {
+    window.console.warn("Deprecated use of IDGen._cur");
+    this.cur = v;
+  }
+
+  get _cur() {
+    return this.cur;
   }
 
   loadSTRUCT(reader) {
@@ -1146,7 +1169,7 @@ export class IDGen {
 
 IDGen.STRUCT = `
 IDGen {
-  _cur : int;
+  cur : int;
 }
 `;
 nstructjs.register(IDGen);
@@ -2178,7 +2201,7 @@ window.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
 
 export class Queue {
   constructor(n=32) {
-    n = Math.max(n, 2);
+    n = Math.max(n, 8);
 
     this.initialSize = n;
 
@@ -2234,29 +2257,45 @@ export class Queue {
     this.length--;
 
     let ret = this.queue[this.a];
+
+    this.queue[this.a] = undefined;
+
     this.a = (this.a + 1) % this.queue.length;
     return ret;
   }
 }
 
-window._testQueue = function() {
-  let q = new Queue(2);
+window._testQueue = function(steps=15, samples=15) {
+  let queue = new Queue(3);
 
-  for (let i=0; i<15; i++) {
-    if (i === 1) {
-      window.console.log("i:", q.dequeue(), q.length);
+  for (let i=0; i<steps; i++) {
+    let list = [];
+
+    for (let j=0; j<samples; j++) {
+      let item = {f : Math.random()};
+      list.push(item);
+
+      queue.enqueue(item);
     }
 
-    q.enqueue(i);
+    let j = 0;
+
+    while (queue.length > 0) {
+      let item = queue.dequeue();
+
+      if (item !== list[j]) {
+        console.log(item, list);
+        throw new Error("got wrong item", item);
+      }
+
+      j++;
+
+      if (j > 10000) {
+        console.error("Infinite loop error");
+        break;
+      }
+    }
   }
-
-  window.console.log(q.queue.concat([]));
-
-  for (let i=0; i<15; i++) {
-    window.console.log("i:", q.dequeue(), q.length);
-  }
-
-  window.console.log(q.queue.concat([]));
 }
 
 
