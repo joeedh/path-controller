@@ -1248,6 +1248,9 @@ function get_callstack(err) {
 }
 
 export function print_stack(err) {
+  console.log(err.stack);
+  return;
+
   try {
     var cs = get_callstack(err);
   } catch (err2) {
