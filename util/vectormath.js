@@ -503,7 +503,8 @@ function getBaseVector(parent) {
 }
 
 export const BaseVector = getBaseVector(Array);
-export const F32BaseVector = getBaseVector(Float64Array);
+export const F64BaseVector = getBaseVector(Float64Array);
+export const F32BaseVector = getBaseVector(Float32Array);
 
 function myclamp(f, a, b) {
   return Math.min(Math.max(f, a), b);
@@ -635,7 +636,7 @@ nstructjs.manager.add_class(Vector4);
 var _v3nd_n1_normalizedDot, _v3nd_n2_normalizedDot;
 var _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4;
 
-export class Vector3 extends F32BaseVector {
+export class Vector3 extends F64BaseVector {
   constructor(data) {
     super(3);
 
@@ -1203,7 +1204,7 @@ _v3nd_n1_normalizedDot = new Vector3();
 _v3nd_n2_normalizedDot = new Vector3();
 
 BaseVector.inherit(Vector4, 4);
-F32BaseVector.inherit(Vector3, 3);
+F64BaseVector.inherit(Vector3, 3);
 BaseVector.inherit(Vector2, 2);
 
 lookat_cache_vs3 = util.cachering.fromConstructor(Vector3, 64);
