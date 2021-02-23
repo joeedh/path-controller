@@ -276,6 +276,8 @@ export class Curve1D extends EventDispatcher {
   draw(canvas, g, draw_transform) {
     var w=canvas.width, h=canvas.height;
 
+    console.warn("draw");
+
     g.save();
 
     let sz = draw_transform[0], pan = draw_transform[1];

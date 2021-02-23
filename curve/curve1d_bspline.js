@@ -1001,6 +1001,7 @@ class BSplineCurve extends CurveTypeData {
     this.recalc = 1;
     this.updateKnots();
     this.update();
+    this.redraw();
   }
 
   on_touchmove(e) {
