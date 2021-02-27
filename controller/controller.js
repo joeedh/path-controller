@@ -579,8 +579,10 @@ export class DataStruct {
 
   add(m) {
     if (m.apiname in this.pathmap) {
+      if (window.DEBUG.datapaths) {
+        console.warn("Overriding existing member '" + m.apiname + "' in datapath struct", this.name);
+      }
 
-      console.warn("Overriding existing member '"+m.apiname+"' in datapath struct", this.name);
       this.remove(this.pathmap[m.apiname]);
     }
 
@@ -735,11 +737,32 @@ export class DataAPI extends ModelInterface {
     let paths = [];
 
     let list = rdef.prop;
+    let api = ctx.api;
 
     function applyFilter(obj) {
-      let $ = obj;
+      //console.log(filter, obj, obj.constructor.name);
 
-      return eval(filter);
+      if (obj === undefined) {
+        return undefined;
+      } else if (typeof obj === "object" || typeof obj === "function") {
+        let st = api.mapStruct(obj.constructor, false);
+
+        let path = filter;
+        if (path.startsWith("$")) {
+          path = path.slice(1, filter.length).trim();
+        }
+        if (path.startsWith(".")) {
+          path = path.slice(1, filter.length).trim();
+        }
+
+        console.log(st);
+        console.log("-", api.getValue(obj, path, st));
+
+        return api.getValue(obj, path, st);
+      } else {
+        let $ = obj;
+        return eval(filter);
+      }
     }
 
     for (let obj of list.getIter(this, rdef.value)) {
@@ -756,12 +779,12 @@ export class DataAPI extends ModelInterface {
     return paths;
   }
 
-  resolvePath(ctx, inpath, ignoreExistence = false) {
+  resolvePath(ctx, inpath, ignoreExistence = false, dstruct=undefined) {
     let parser = parserStack[parserStack.cur++];
     let ret = undefined;
 
     try {
-      ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser)
+      ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser, dstruct)
     } catch (error) {
       //throw new DataPathError("bad path " + path);
       if (!(error instanceof DataPathError)) {
@@ -799,12 +822,13 @@ export class DataAPI extends ModelInterface {
    @param ignoreExistence: don't try to get actual data associated with path,
    just want meta information
    */
-  resolvePath_intern(ctx, inpath, ignoreExistence = false, p=pathParser) {
+  resolvePath_intern(ctx, inpath, ignoreExistence = false, p=pathParser, dstruct=undefined) {
     inpath = inpath.replace("==", "=");
 
     p.input(inpath);
 
-    let dstruct = this.rootContextStruct;
+    dstruct = dstruct || this.rootContextStruct;
+
     let obj = ctx;
     let lastobj = ctx;
     let subkey;

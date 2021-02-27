@@ -53,6 +53,9 @@ let wordmap = {
 
 };
 
+export var defaultRadix = 10;
+export var defaultDecimalPlaces = 4;
+
 export class ToolProperty extends ToolPropertyIF {
   constructor(type, subtype, apiname, uiname, description, flag, icon) {
     super();
@@ -76,11 +79,19 @@ export class ToolProperty extends ToolPropertyIF {
     this.flag = flag;
     this.icon = icon;
 
-    this.decimalPlaces = 4;
-    this.radix = 10;
+    this.decimalPlaces = defaultDecimalPlaces;
+    this.radix = defaultRadix;
     this.step = 0.05;
 
     this.callbacks = {};
+  }
+
+  static setDefaultRadix(n) {
+    defaultRadix = n;
+  }
+
+  static setDefaultDecimalPlaces(n) {
+    defaultDecimalPlaces = n;
   }
 
   setDescription(s) {

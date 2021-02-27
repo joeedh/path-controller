@@ -111,11 +111,11 @@ export class ModelInterface {
    *   mass_set : mass setter string, if controller implementation supports it
    * }
    */
-  resolvePath(ctx, path, ignoreExistence) {
+  resolvePath(ctx, path, ignoreExistence, rootStruct) {
   }
 
-  setValue(ctx, path, val) {
-    let res = this.resolvePath(ctx, path);
+  setValue(ctx, path, val, rootStruct) {
+    let res = this.resolvePath(ctx, path, undefined,  rootStruct);
     let prop = res.prop;
 
     if (prop !== undefined && (prop.flag & PropFlags.READ_ONLY)) {
@@ -227,9 +227,9 @@ export class ModelInterface {
     return rdef.prop.description ? rdef.prop.description : rdef.prop.uiname;
   }
 
-  validPath(ctx, path) {
+  validPath(ctx, path, rootStruct) {
     try {
-      this.getValue(ctx, path);
+      this.getValue(ctx, path, rootStruct);
       return true;
     } catch (error) {
       if (!(error instanceof DataPathError)) {
@@ -240,12 +240,34 @@ export class ModelInterface {
     return false;
   }
 
-  getValue(ctx, path) {
+  getPropName(ctx, path) {
+    let i = path.length-1;
+    while (i >= 0 && path[i] !== ".") {
+      i--;
+    }
+
+    path = path.slice(i+1, path.length).trim();
+
+    if (path.endsWith("]")) {
+      i = path.length - 1;
+      while (i >= 0 && path[i] !== "[") {
+        i--;
+      }
+
+      path = path.slice(0, i).trim();
+
+      return this.getPropName(ctx, path);
+    }
+
+    return path;
+  }
+
+  getValue(ctx, path, rootStruct=undefined) {
     if (typeof ctx == "string") {
       throw new Error("You forgot to pass context to getValue");
     }
 
-    let ret = this.resolvePath(ctx, path);
+    let ret = this.resolvePath(ctx, path, undefined, rootStruct);
 
     if (ret === undefined) {
       throw new DataPathError("invalid path " + path);
@@ -266,6 +288,6 @@ export class ModelInterface {
 
     }
 
-    return this.resolvePath(ctx, path).value;
+    return ret.value;
   }
 }
