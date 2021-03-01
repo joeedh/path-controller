@@ -755,9 +755,6 @@ export class DataAPI extends ModelInterface {
           path = path.slice(1, filter.length).trim();
         }
 
-        console.log(st);
-        console.log("-", api.getValue(obj, path, st));
-
         return api.getValue(obj, path, st);
       } else {
         let $ = obj;
