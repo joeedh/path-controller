@@ -1049,7 +1049,8 @@ export class Quat extends Vector4 {
   }
 
   matrixToQuat(wmat) {
-    var mat = new Matrix4(wmat);
+    var mat = temp_mats.next();
+    mat.load(wmat);
 
     mat.$matrix.m41 = mat.$matrix.m42 = mat.$matrix.m43 = 0;
     mat.$matrix.m44 = 1.0;
@@ -1209,6 +1210,7 @@ BaseVector.inherit(Vector2, 2);
 
 lookat_cache_vs3 = util.cachering.fromConstructor(Vector3, 64);
 lookat_cache_vs4 = util.cachering.fromConstructor(Vector4, 64);
+
 makenormalcache = util.cachering.fromConstructor(Vector3, 64);
 
 var $_v3nd_n1_normalizedDot = new Vector3();
@@ -1244,7 +1246,10 @@ class internal_matrix {
 
 var lookat_cache_vs3;
 var lookat_cache_vs4;
+var lookat_cache_ms;
+var euler_rotate_mats;
 var makenormalcache;
+var temp_mats;
 
 let preMultTemp;
 
@@ -1603,7 +1608,7 @@ export class Matrix4 {
     y = y === undefined ? 0 : y;
     z = z === undefined ? 0 : z;
 
-    var matrix = new Matrix4();
+    var matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m41 = x;
     matrix.$matrix.m42 = y;
@@ -1626,7 +1631,7 @@ export class Matrix4 {
     y = y === undefined ? 0 : y;
     z = z === undefined ? 0 : z;
 
-    var matrix = new Matrix4();
+    var matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m41 = x;
     matrix.$matrix.m42 = y;
@@ -1659,7 +1664,7 @@ export class Matrix4 {
     }
 
 
-    var matrix = new Matrix4();
+    var matrix = temp_mats.next().makeIdentity();
     matrix.$matrix.m11 = x;
     matrix.$matrix.m22 = y;
     matrix.$matrix.m33 = z;
@@ -1669,7 +1674,7 @@ export class Matrix4 {
   }
 
   preScale(x, y, z, w = 1.0) {
-    let mat = new Matrix4();
+    let mat = temp_mats.next().makeIdentity();
     mat.scale(x, y, z, w);
 
     this.preMultiply(mat);
@@ -1770,7 +1775,8 @@ export class Matrix4 {
     y = -y;
     z = -z;
 
-    let xmat = new Matrix4();
+    let xmat = euler_rotate_mats.next().makeIdentity();
+
     let m = xmat.$matrix;
 
     let c = Math.cos(x), s = Math.sin(x);
@@ -1780,7 +1786,7 @@ export class Matrix4 {
     m.m32 = -s;
     m.m33 = c;
 
-    let ymat = new Matrix4();
+    let ymat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(y);
     s = Math.sin(y);
     m = ymat.$matrix;
@@ -1790,7 +1796,7 @@ export class Matrix4 {
     m.m31 = s;
     m.m33 = c;
 
-    let zmat = new Matrix4();
+    let zmat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(z);
     s = Math.sin(z);
     m = zmat.$matrix;
@@ -1852,7 +1858,7 @@ export class Matrix4 {
     }
     window.Matrix4 = Matrix4;
 
-    var xmat = new Matrix4();
+    var xmat = euler_rotate_mats.next().makeIdentity();
     var m = xmat.$matrix;
 
     var c = Math.cos(x), s = Math.sin(x);
@@ -1862,7 +1868,7 @@ export class Matrix4 {
     m.m32 = -s;
     m.m33 = c;
 
-    var ymat = new Matrix4();
+    var ymat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(y);
     s = Math.sin(y);
     var m = ymat.$matrix;
@@ -1874,7 +1880,7 @@ export class Matrix4 {
 
     ymat.multiply(xmat);
 
-    var zmat = new Matrix4();
+    var zmat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(z);
     s = Math.sin(z);
     var m = zmat.$matrix;
@@ -1947,7 +1953,8 @@ export class Matrix4 {
       z /= len;
     }
 
-    var mat = new Matrix4();
+    var mat = temp_mats.next().makeIdentity();
+
     if (x === 1 && y === 0 && z === 0) {
       mat.$matrix.m11 = 1;
       mat.$matrix.m12 = 0;
@@ -2193,7 +2200,7 @@ export class Matrix4 {
     var tx = (left + right)/(left - right);
     var ty = (top + bottom)/(top - bottom);
     var tz = (far + near)/(far - near);
-    var matrix = new Matrix4();
+    var matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m11 = 2/(left - right);
     matrix.$matrix.m12 = 0;
@@ -2218,7 +2225,8 @@ export class Matrix4 {
   }
 
   frustum(left, right, bottom, top, near, far) {
-    var matrix = new Matrix4();
+    var matrix = temp_mats.next().makeIdentity();
+
     var A = (right + left)/(right - left);
     var B = (top + bottom)/(top - bottom);
     var C = -(far + near)/(far - near);
@@ -2248,7 +2256,7 @@ export class Matrix4 {
   }
 
   orthographic(scale, aspect, near, far) {
-    let mat = new Matrix4();
+    let mat = temp_mats.next().makeIdentity();
 
     let zscale = far - near;
 
@@ -2273,7 +2281,8 @@ export class Matrix4 {
   }
 
   lookat(pos, target, up) {
-    var matrix = new Matrix4();
+    var matrix = lookat_cache_ms.next();
+    matrix.makeIdentity();
 
     var vec = lookat_cache_vs3.next().load(pos).sub(target);
     var len = vec.vectorLength();
@@ -2357,7 +2366,7 @@ export class Matrix4 {
     if (this.$matrix.m44 === 0)
       return false;
 
-    let mat = new Matrix4(this);
+    let mat = temp_mats.next().load(this);
     let m = mat.$matrix;
 
     let t = _translate, r = _rotate, s = _scale;
@@ -2396,7 +2405,7 @@ export class Matrix4 {
     if (r) { //THREE.js code
       let clamp = myclamp;
 
-      let rmat = new Matrix4(this);
+      let rmat = temp_mats.next().load(this);
       rmat.normalize();
 
       m = rmat.$matrix;
@@ -2622,3 +2631,7 @@ window.testmat = (x = 0, y = 0, z = Math.PI*0.5) => {
   console.log(mat.toString());
   return r;
 }
+
+lookat_cache_ms = util.cachering.fromConstructor(Matrix4, 64);
+euler_rotate_mats = util.cachering.fromConstructor(Matrix4, 64);
+temp_mats = util.cachering.fromConstructor(Matrix4, 64);
