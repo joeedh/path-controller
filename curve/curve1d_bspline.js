@@ -158,6 +158,10 @@ export class Curve1DPoint extends Vector2 {
     Object.seal(this);
   }
 
+  set deg(v) {
+    console.warn("old file data detected");
+  }
+
   copy() {
     let ret = new Curve1DPoint(this);
 
