@@ -934,6 +934,54 @@ export class EnumProperty extends ToolProperty {
     this.wasSet = false;
   }
 
+  updateDefinition(enumdef_or_prop) {
+    let descriptions = this.descriptions;
+    let ui_value_names = this.ui_value_names;
+
+    this.values = {};
+    this.keys = {};
+    this.ui_value_names = {};
+    this.descriptions = {};
+
+    let enumdef;
+
+    if (enumdef_or_prop instanceof EnumProperty) {
+      enumdef = enumdef_or_prop.values;
+    } else {
+      enumdef = enumdef_or_prop;
+    }
+
+    for (let k in enumdef) {
+      let v = enumdef[k];
+
+      this.values[k] = v;
+      this.keys[v] = k;
+    }
+
+    if (enumdef_or_prop instanceof EnumProperty) {
+      let prop = enumdef_or_prop;
+      this.iconmap = Object.assign({}, prop.iconmap);
+      this.ui_value_names = Object.assign({}, prop.ui_value_names);
+      this.descriptions = Object.assign({}, prop.descriptions);
+    } else {
+      for (let k in this.values) {
+        if (k in ui_value_names) {
+          this.ui_value_names[k] = ui_value_names[k];
+        } else {
+          this.ui_value_names[k] = ToolProperty.makeUIName(k);
+        }
+
+        if (k in descriptions) {
+          this.descriptions[k] = descriptions[k];
+        } else {
+          this.descriptions[k] = ToolProperty.makeUIName(k);
+        }
+      }
+    }
+
+    return this;
+  }
+
   calcMemSize() {
     let tot = super.calcMemSize();
 
