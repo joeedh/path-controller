@@ -52,13 +52,13 @@ let cvtmp = new Array(1024);
 
 export function closestPoint(p, curve, mode) {
   let steps = 5;
-  let s=0, ds = 1.0 / steps;
+  let s = 0, ds = 1.0/steps;
 
   let ri = 0;
 
-  for (let i=0; i<steps; i++, s += ds) {
-     let c1 = curve.evaluate(s);
-     let c2 = curve.evaluate(s+ds);
+  for (let i = 0; i < steps; i++, s += ds) {
+    let c1 = curve.evaluate(s);
+    let c2 = curve.evaluate(s + ds);
 
 
   }
@@ -86,12 +86,12 @@ export function normal_poly(vs) {
     tot++;
   }
 
-  cent.mulScalar(1.0 / tot);
+  cent.mulScalar(1.0/tot);
   let n = poly_normal_tmps.next().zero();
 
-  for (let i=0; i<vs.length; i++) {
+  for (let i = 0; i < vs.length; i++) {
     let a = vs[i];
-    let b = vs[(i+1)%vs.length];
+    let b = vs[(i + 1)%vs.length];
     let c = cent;
 
     let n2 = normal_tri(a, b, c);
@@ -159,13 +159,13 @@ let calc_proj_refs = new util.cachering(() => [0, 0], 64);
 
 /**
 
-    v2
+ v2
 
-v1------v3
+ v1------v3
 
-    v4
+ v4
 
-*/
+ */
 export function dihedral_v3_sqr(v1, v2, v3, v4) {
   let bx = v2[0] - v1[0];
   let by = v2[1] - v1[1];
@@ -180,12 +180,13 @@ export function dihedral_v3_sqr(v1, v2, v3, v4) {
   let dz = v4[2] - v1[2];
 
 
-  return ((bx*cz-bz*cx)*(cx*dz-cz*dx)+(by*cz-bz*cy)*(cy*dz-cz*dy)+(bx*cy-by*cx)*
-         (cx*dy-cy*dx))**2/(((bx*cz-bz*cx)**2+(by*cz-bz*cy)**2
-          +(bx*cy-by*cx)**2)*((cx*dz-cz*dx)**2+(cy*dz-cz*dy)**2+(cx*dy-cy*dx)**2));
+  return ((bx*cz - bz*cx)*(cx*dz - cz*dx) + (by*cz - bz*cy)*(cy*dz - cz*dy) + (bx*cy - by*cx)*
+    (cx*dy - cy*dx))**2/(((bx*cz - bz*cx)**2 + (by*cz - bz*cy)**2
+    + (bx*cy - by*cx)**2)*((cx*dz - cz*dx)**2 + (cy*dz - cz*dy)**2 + (cx*dy - cy*dx)**2));
 }
 
 let tet_area_tmps = util.cachering.fromConstructor(Vector3, 64);
+
 export function tet_volume(a, b, c, d) {
   a = tet_area_tmps.next().load(a);
   b = tet_area_tmps.next().load(b);
@@ -197,7 +198,7 @@ export function tet_volume(a, b, c, d) {
   c.sub(d);
 
   b.cross(c);
-  return a.dot(b) / 6.0;
+  return a.dot(b)/6.0;
 }
 
 export function calc_projection_axes(no) {
@@ -343,10 +344,18 @@ function _linedis2(co, v1, v2) {
 
 let closest_p_tri_rets = new util.cachering(() => {
   return {
-    co: new Vector3(),
-    uv: new Vector2()
+    co  : new Vector3(),
+    uv  : new Vector2(),
+    dist: 0
   }
 }, 512);
+
+export function closest_point_on_quad(p, v1, v2, v3, v4, n, uvw) {
+  let a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
+  let b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
+
+  return a.dist <= b.dist ? a : b;
+}
 
 let cpt_v1 = new Vector3();
 let cpt_v2 = new Vector3();
@@ -356,6 +365,9 @@ let cpt_v5 = new Vector3();
 let cpt_v6 = new Vector3();
 let cpt_p = new Vector3();
 let cpt_n = new Vector3();
+let cpt_mat = new Matrix4();
+let cpt_mat2 = new Matrix4();
+let cpt_b = new Vector3();
 
 export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
   let op = p;
@@ -393,8 +405,14 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
   let ax1, ax2;
   let ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);
   if (ax === 0.0 && ay === 0.0 && az === 0.0) {
-    console.log("eek1");
-    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0/3.0).add(op);
+    console.log("eek1", n, v1, v2, v3);
+    let ret = closest_p_tri_rets.next();
+
+    ret.dist = 1e17;
+    ret.co.zero();
+    ret.uv.zero();
+
+    return ret;
   }
 
   let ax3;
@@ -456,7 +474,13 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
 
   if (mat.invert() === null) {
     console.log("eek2", mat.determinant(), ax1, ax2, n);
-    return cpt_rets.next().load(v1).add(v2).add(v3).mulScalar(1.0/3.0).add(op);
+    let ret = closest_p_tri_rets.next();
+
+    ret.dist = 1e17;
+    ret.co.zero();
+    ret.uv.zero();
+
+    return ret;
   }
 
   mat.multiply(mat2);
@@ -497,12 +521,12 @@ export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
 
   let ret = closest_p_tri_rets.next();
 
-  ret.p.loadXYZ(x, y, z);
+  ret.co.loadXYZ(x, y, z);
   ret.uv[0] = u;
   ret.uv[1] = v;
 
-  ret.dist = ret.p.vectorLength();
-  ret.p.add(op);
+  ret.dist = ret.co.vectorLength();
+  ret.co.add(op);
 
   return ret;
 }
@@ -757,22 +781,22 @@ export function dist_to_tri_v3_sqr(p, v1, v2, v3, n) {
     s1 = !s1;
     s2 = !s2;
     s3 = !s3;
-/*
-    bx = v3[axis1];
-    by = v3[axis2];
-    bz = v3[axis3];
+    /*
+        bx = v3[axis1];
+        by = v3[axis2];
+        bz = v3[axis3];
 
-    cx = v2[axis1];
-    cy = v2[axis2];
-    cz = v2[axis3];
+        cx = v2[axis1];
+        cy = v2[axis2];
+        cz = v2[axis3];
 
-    bx2 = bx*bx;
-    by2 = by*by;
-    bz2 = bz*bz;
+        bx2 = bx*bx;
+        by2 = by*by;
+        bz2 = bz*bz;
 
-    cx2 = cx*cx;
-    cy2 = cy*cy;
-    cz2 = cz*cz;*/
+        cx2 = cx*cx;
+        cy2 = cy*cy;
+        cz2 = cz*cz;*/
   }
 
   let mask = (s1 & 1) | (s2<<1) | (s3<<2);
@@ -1464,6 +1488,12 @@ export class MinMax {
     this._static_mr_cs = new Array(this.totaxis*this.totaxis);
   }
 
+  static fromSTRUCT(reader) {
+    var ret = new MinMax();
+    reader(ret);
+    return ret;
+  }
+
   load(mm) {
     if (this.totaxis == 1) {
       this.min = mm.min;
@@ -1543,12 +1573,6 @@ export class MinMax {
         this._max[i] = this.max[i] = Math.max(this._max[i], p[i]);
       }
     }
-  }
-
-  static fromSTRUCT(reader) {
-    var ret = new MinMax();
-    reader(ret);
-    return ret;
   }
 };
 MinMax.STRUCT = "\n  math.MinMax {\n    min     : vec3;\n    max     : vec3;\n    _min    : vec3;\n    _max    : vec3;\n    totaxis : int;\n  }\n";
@@ -1674,7 +1698,7 @@ export function expand_line(l, margin) {
 };
 
 //stupidly ancient function, todo: rewrite
-export function colinear(a, b, c, limit=2.2e-16) {
+export function colinear(a, b, c, limit = 2.2e-16) {
   for (var i = 0; i < 3; i++) {
     _cross_vec1[i] = b[i] - a[i];
     _cross_vec2[i] = c[i] - a[i];
@@ -2105,7 +2129,7 @@ export function normal_tri(v1, v2, v3) {
   let y2 = v3[1] - v1[1];
   let z2 = v3[2] - v1[2];
 
-  if (!isNum(x1+y1+z1+z2+y2+z2)) {
+  if (!isNum(x1 + y1 + z1 + z2 + y2 + z2)) {
     throw new Error("NaN in normal_tri");
   }
 
@@ -2132,7 +2156,7 @@ export function normal_tri(v1, v2, v3) {
 
   let n = _normal_tri_rets.next();
 
-  if (!isNum(x3+y3+z3)) {
+  if (!isNum(x3 + y3 + z3)) {
     throw new Error("NaN!");
   }
 
@@ -2146,6 +2170,7 @@ export function normal_tri(v1, v2, v3) {
 var $n2_normal_quad = new Vector3();
 
 let _q1 = new Vector3(), _q2 = new Vector3(), _q3 = new Vector3();
+
 export function normal_quad(v1, v2, v3, v4) {
   _q1.load(normal_tri(v1, v2, v3));
   _q2.load(normal_tri(v2, v3, v4));
@@ -2250,7 +2275,7 @@ var dt3l_v3 = new Vector3();
 var dt3l_v4 = new Vector3();
 var dt3l_v5 = new Vector3();
 
-export function dist_to_line_sqr(p, v1, v2, clip=true) {
+export function dist_to_line_sqr(p, v1, v2, clip = true) {
   let px = p[0] - v1[0];
   let py = p[1] - v1[1];
   let pz = p.length < 3 ? 0.0 : p[2] - v1[2];
@@ -2267,7 +2292,7 @@ export function dist_to_line_sqr(p, v1, v2, clip=true) {
     return Math.sqrt(px*px + py*py + pz*pz);
   }
 
-  let len2 = 1.0 / len;
+  let len2 = 1.0/len;
   v2x *= len2;
   v2y *= len2;
   v2z *= len2;
@@ -2281,10 +2306,10 @@ export function dist_to_line_sqr(p, v1, v2, clip=true) {
   v2y *= t;
   v2z *= t;
 
-  return (v2x-px)*(v2x-px) + (v2y-py)*(v2y-py) + (v2z-pz)*(v2z-pz);
+  return (v2x - px)*(v2x - px) + (v2y - py)*(v2y - py) + (v2z - pz)*(v2z - pz);
 }
 
-export function dist_to_line(p, v1, v2, clip=true) {
+export function dist_to_line(p, v1, v2, clip = true) {
   return Math.sqrt(dist_to_line_sqr(p, v1, v2, clip));
 }
 
