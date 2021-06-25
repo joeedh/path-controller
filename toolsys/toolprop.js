@@ -56,6 +56,12 @@ let wordmap = {
 export var defaultRadix = 10;
 export var defaultDecimalPlaces = 4;
 
+class OnceTag {
+  constructor(cb) {
+    this.cb = cb;
+  }
+}
+
 export class ToolProperty extends ToolPropertyIF {
   constructor(type, subtype, apiname, uiname, description, flag, icon) {
     super();
@@ -211,14 +217,56 @@ export class ToolProperty extends ToolPropertyIF {
       return;
     }
 
-    for (let cb of this.callbacks[type]) {
-      cb.call(this, arg1, arg2);
+    let stack = this.callbacks[type];
+    stack = stack.concat([]); //copy
+
+    for (let i=0; i<stack.length; i++) {
+      let cb = stack[i];
+
+      if (cb instanceof OnceTag) {
+        let j = i;
+
+        //remove callback;
+        while (j < stack.length-1) {
+          stack[j] = stack[j+1];
+          j++;
+        }
+
+        stack[j] = undefined;
+        stack.length--;
+
+        i--;
+
+        cb.cb.call(this, arg1, arg2);
+      } else {
+        cb.call(this, arg1, arg2);
+      }
     }
+
     return this;
   }
 
   clearEventCallbacks() {
     this.callbacks = {}
+    return this;
+  }
+
+  once(type, cb) {
+    if (this.callbacks[type] === undefined) {
+      this.callbacks[type] = [];
+    }
+
+    //check if cb is already in callback list inside a OnceTag
+    for (let cb2 of this.callbacks[type]) {
+      if (cb2 instanceof OnceTag && cb2.cb === cb) {
+        return;
+      }
+    }
+
+    cb = new OnceTag(cb);
+
+    this.callbacks[type].push(cb);
+
     return this;
   }
 

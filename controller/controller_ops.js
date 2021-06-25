@@ -30,7 +30,13 @@ export class DataPathSetOp extends ToolOp {
     prop.ctx = ctx;
     prop.datapath = path;
 
-    prop.setValue(val);
+    try {
+      prop.setValue(val);
+      this.hadError = false;
+    } catch (error) {
+      console.error("Error setting datapath", path);
+      this.hadError = true;
+    }
   }
 
   static create(ctx, datapath, value, id, massSetPath) {
@@ -250,9 +256,27 @@ export class DataPathSetOp extends ToolOp {
     let path = this.inputs.dataPath.getValue();
     let massSetPath = this.inputs.massSetPath.getValue().trim();
 
-    ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
+    try {
+      ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
+      this.hadError = false;
+    } catch (error) {
+      console.log(error.stack);
+      console.log(error.message);
+      console.log("error setting " + path);
+
+      this.hadError = true;
+    }
+
     if (massSetPath) {
-      ctx.api.massSetProp(ctx, massSetPath, this.inputs.prop.getValue());
+      try {
+        ctx.api.massSetProp(ctx, massSetPath, this.inputs.prop.getValue());
+      } catch (error) {
+        console.log(error.stack);
+        console.log(error.message);
+        console.log("error setting " + path);
+
+        this.hadError = true;
+      }
     }
   }
 

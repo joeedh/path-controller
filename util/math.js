@@ -8,6 +8,120 @@ import {Vector2, Vector3, Vector4, Matrix4, Quat} from './vectormath.js';
 let dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 
 
+let quad_co_rets2 = util.cachering.fromConstructor(Vector2, 512);
+
+export function quad_bilinear(v1, v2, v3, v4, u, v) {
+  return -((v1-v2)*u-v1-(u*v1-u*v2+u*v3-u*v4-v1+v4)*v);
+}
+/*
+
+ on factor;
+ off period;
+
+ a1 := v1 + (v2 - v1) * u;
+ a2 := v4 + (v3 - v4) * u;
+ bilin := a1 + (a2 - a1) * v;
+
+ v1x := 0;
+ v1y := 0;
+
+ bx := sub(v1=v1x, v2=v2x, v3=v3x, v4=v4x, bilin);
+ by := sub(v1=v1y, v2=v2y, v3=v3y, v4=v4y, bilin);
+
+ f1 := bx - x;
+ f2 := by - y;
+
+ ff := solve({f1, f2}, {u, v});
+
+ */
+function quad_uv_2d(p, v1, v2, v3, v4) {
+  let u, v;
+
+  let v2x = v2[0] - v1[0];
+  let v2y = v2[1] - v1[1];
+  let v3x = v3[0] - v1[0];
+  let v3y = v3[1] - v1[1];
+  let v4x = v4[0] - v1[0];
+  let v4y = v4[1] - v1[1];
+
+  let x = p[0] - v1[0];
+  let y = p[1] - v1[1];
+  let sqrt = Math.sqrt;
+
+  let A = 2*(((v4y+y)*x-2*v4x*y)*
+    v3y+(v4x*y-v4y*x)*(v4y+y)-((v4x-x)*v2y-v3x*y)*(v4y-y))*v2x-2*(
+    (v4x*y-v4y*x)*(v4x+x)-(v4x-x)*v3y*x+((2*v4y-y)*x-v4x*y)*v3x)*
+    v2y+(v4x*y-v4y*x+v3y*x-v3x*y)**2+(v4x-x)**2*v2y**2+(v4y-y)**2*
+    v2x**2;
+
+  let B = v4x*y-v4y*x+v3y*x-v3x*y;
+
+  let C1 = (2*(v3x-v4x)*v2y-2*(v3y-v4y)*v2x);
+  let C2 = (2*(v3x*v4y-v3y*v4x+v2y*v4x)-2*v2x*v4y);
+
+  let u1, u2;
+
+  if (A < 0.0) {
+    console.log("A was < 0", A);
+    A = -A;
+    C1 = C2 = 0.0;
+  }
+
+  if (Math.abs(C1) < 0.00001) { //perfectly 90 degrees?
+    let dx = v2x;
+    let dy = v2y;
+
+    console.log("C1 bad");
+
+    let l = Math.sqrt(dx*dx + dy*dy);
+    if (l > 0.000001) {
+      dx /= l*l;
+      dy /= l*l;
+    }
+
+    u1 = u2 = dx*x + dy*y;
+  } else {
+    u1=(-(B+sqrt(A)-(v4y-y)*v2x)-(v4x-x)*v2y)/C1;
+    u2=(-(B-sqrt(A)-(v4y-y)*v2x)-(v4x-x)*v2y)/C1;
+  }
+
+  if (Math.abs(C2) < 0.00001) { //perfectly 90 degrees?
+    let dx, dy;
+
+    dx = v3x - v2x;
+    dy = v3y - v2y;
+
+    console.log("C2 bad");
+
+    let l = Math.sqrt(dx**2 + dy**2);
+    if (l > 0.00001) {
+      dx /= l*l;
+      dy /= l*l;
+    }
+
+    v1 = v2 = x*dx + y*dy;
+  } else {
+    v1=(-(B-sqrt(A)+(v4y+y)*v2x)+(v4x+x)*v2y)/C2;
+    v2=(-(B+sqrt(A)+(v4y+y)*v2x)+(v4x+x)*v2y)/C2;
+  }
+
+  let ret = quad_co_rets2.next();
+
+  let d1 = (u1-0.5)**2 + (v1-0.5)**2;
+  let d2 = (u2-0.5)**2 + (v2-0.5)**2;
+
+  if (d1 < d2) {
+    ret[0] = u1;
+    ret[1] = v1;
+  } else {
+    ret[0] = u2;
+    ret[1] = v2;
+  }
+
+  return ret;
+}
+
+
 export const ClosestModes = {
   CLOSEST  : 0,
   START    : 1,
@@ -368,6 +482,13 @@ let cpt_n = new Vector3();
 let cpt_mat = new Matrix4();
 let cpt_mat2 = new Matrix4();
 let cpt_b = new Vector3();
+
+export function closest_point_on_quad(p, v1, v2, v3, v4, n, uvw) {
+  let a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
+  let b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
+
+  return a.dist <= b.dist ? a : b;
+}
 
 export function closest_point_on_tri(p, v1, v2, v3, n, uvw) {
   let op = p;
