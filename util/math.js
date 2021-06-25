@@ -464,13 +464,6 @@ let closest_p_tri_rets = new util.cachering(() => {
   }
 }, 512);
 
-export function closest_point_on_quad(p, v1, v2, v3, v4, n, uvw) {
-  let a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
-  let b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
-
-  return a.dist <= b.dist ? a : b;
-}
-
 let cpt_v1 = new Vector3();
 let cpt_v2 = new Vector3();
 let cpt_v3 = new Vector3();
