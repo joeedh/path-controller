@@ -723,6 +723,15 @@ export class ToolOp extends events.EventHandler {
     //_appstate.loadUndoFile(this._undo);
   }
 
+  redo(ctx) {
+    this._was_redo = true; //also set by toolstack.redo
+
+    this.undoPre(ctx);
+    this.execPre(ctx);
+    this.exec(ctx);
+    this.execPost(ctx);
+  }
+
   //for compatibility with fairmotion
   exec_pre(ctx) {
     this.execPre(ctx);
@@ -1360,7 +1369,7 @@ export class ToolStack extends Array {
       if (!compareInputs) {
         this.execTool(ctx, tool);
       } else {
-        this.redo();
+        this.rerun();
       }
 
       return false;
@@ -1430,7 +1439,7 @@ export class ToolStack extends Array {
   }
 
   toolCancel(ctx, tool) {
-    if (tool._was_redo) {
+    if (tool._was_redo) { //also set by toolstack.redo
       //ignore tool cancel requests on redo
       return;
     }
@@ -1471,8 +1480,20 @@ export class ToolStack extends Array {
     }
 
     if (tool === this[this.cur]) {
-      this.undo();
-      this.redo();
+      tool._was_redo = false;
+
+      if (!tool.execCtx) {
+        tool.execCtx = this.ctx;
+      }
+
+      tool.undo(tool.execCtx);
+
+      tool._was_redo = true; //also set by toolstack.redo
+
+      tool.undoPre(tool.execCtx);
+      tool.execPre(tool.execCtx);
+      tool.exec(tool.execCtx);
+      tool.execPost(tool.execCtx);
     } else {
       console.warn("Tool wasn't at head of stack", tool);
     }
@@ -1489,16 +1510,13 @@ export class ToolStack extends Array {
       this.cur++;
       let tool = this[this.cur];
 
+
       if (!tool.execCtx) {
         tool.execCtx = this.ctx;
       }
 
       tool._was_redo = true;
-
-      tool.undoPre(tool.execCtx);
-      tool.execPre(tool.execCtx);
-      tool.exec(tool.execCtx);
-      tool.execPost(tool.execCtx);
+      tool.redo(tool.execCtx);
 
       tool.saveDefaultInputs();
     }
@@ -1524,9 +1542,13 @@ export class ToolStack extends Array {
     return this;
   }
 
-  //cb is a function(ctx), if it returns the value false then playback stops
-  //promise will still be fulfilled.
-  replay(cb) {
+  /**cb is a function(ctx), if it returns the value false then playback stops
+    promise will still be fulfilled.
+
+    onstep is a callback, if it returns a promise that promise will be
+    waited on, otherwise execution is queue with window.setTimeout().
+   */
+  replay(cb, onStep) {
     let cur = this.cur;
 
     this.rewind();
@@ -1544,15 +1566,28 @@ export class ToolStack extends Array {
           return;
         }
 
-        this.redo();
+        if (this.cur < this.length) {
+          this.cur++;
+          this.rerun();
+        }
 
         if (last === this.cur) {
           console.warn("time:", (util.time_ms() - start)/1000.0);
           accept(this);
         } else {
-          window.redraw_viewport_p(true).then(() => {
-            next();
-          });
+          if (onStep) {
+            let ret = onStep();
+
+            if (ret && ret instanceof Promise) {
+              ret.then(() => {
+                next();
+              });
+            } else {
+              window.setTimeout(()=> {
+                next();
+              })
+            }
+          }
         }
       }
 

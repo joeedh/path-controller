@@ -3015,3 +3015,420 @@ export class Mat4Stack {
     return mat;
   }
 }
+
+
+/*
+
+on factor;
+off period;
+
+load_package "avector";
+
+
+a1 := avec(a1x, a1y, a1z);
+b1 := avec(b1x, b1y, b1z);
+c1 := avec(c1x, c1y, c1z);
+d1 := avec(d1x, d1y, d1z);
+
+a1x := 0;
+a1y := 0;
+a1z := 0;
+
+a2 := avec(a2x, a2y, a2z);
+b2 := avec(b2x, b2y, b2z);
+c2 := avec(c2x, c2y, c2z);
+d2 := avec(d2x, d2y, d2z);
+
+p1 := a1 + (b1 - a1) * v;
+p2 := d1 + (c1 - d1) * v;
+p3 := p1 + (p2 - p1) * u;
+
+p4 := a2 + (b2 - a2) * v;
+p5 := d2 + (c2 - d2) * v;
+p6 := p4 + (p5 - p4) * u;
+
+p7 := p3 + (p6 - p3) * w;
+
+f1 := p7[0] - goalx;
+f2 := p7[1] - goaly;
+f3 := p7[2] - goalz;
+
+comment: solve({f1, f2, f3}, {u, v, w});
+
+on fort;
+p7;
+off fort;
+
+sub(u=0, v=1, w=0, p7[0]);
+
+*/
+
+const tril_rets = util.cachering.fromConstructor(Vector3, 128);
+
+function lreport() {
+  //console.log(...arguments);
+}
+
+export function trilinear_v3(uvw, boxverts) {
+  let [u, v, w] = uvw;
+
+  const a1x = boxverts[0][0], a1y = boxverts[0][1], a1z = boxverts[0][2];
+
+  const b1x = boxverts[1][0] - a1x, b1y = boxverts[1][1] - a1y, b1z = boxverts[1][2] - a1z;
+  const c1x = boxverts[2][0] - a1x, c1y = boxverts[2][1] - a1y, c1z = boxverts[2][2] - a1z;
+  const d1x = boxverts[3][0] - a1x, d1y = boxverts[3][1] - a1y, d1z = boxverts[3][2] - a1z;
+
+  const a2x = boxverts[4][0] - a1x, a2y = boxverts[4][1] - a1y, a2z = boxverts[4][2] - a1z;
+  const b2x = boxverts[5][0] - a1x, b2y = boxverts[5][1] - a1y, b2z = boxverts[5][2] - a1z;
+  const c2x = boxverts[6][0] - a1x, c2y = boxverts[6][1] - a1y, c2z = boxverts[6][2] - a1z;
+  const d2x = boxverts[7][0] - a1x, d2y = boxverts[7][1] - a1y, d2z = boxverts[7][2] - a1z;
+
+  const x = (((a2x - b2x)*v - a2x + (c2x - d2x)*v + d2x)*u - ((a2x - b2x)*v - a2x) - (
+    ((c1x - d1x)*v + d1x - b1x*v)*u + b1x*v))*w + ((c1x - d1x)*v + d1x - b1x*v)*u +
+    b1x*v;
+  const y = (((a2y - b2y)*v - a2y + (c2y - d2y)*v + d2y)*u - ((a2y - b2y)*v - a2y) - (
+    ((c1y - d1y)*v + d1y - b1y*v)*u + b1y*v))*w + ((c1y - d1y)*v + d1y - b1y*v)*u +
+    b1y*v;
+  const z = (((a2z - b2z)*v - a2z + (c2z - d2z)*v + d2z)*u - ((a2z - b2z)*v - a2z) - (
+    ((c1z - d1z)*v + d1z - b1z*v)*u + b1z*v))*w + ((c1z - d1z)*v + d1z - b1z*v)*u +
+    b1z*v;
+
+  let p = tril_rets.next();
+
+  p[0] = x + a1x;
+  p[1] = y + a1y;
+  p[2] = z + a1z;
+
+  return p;
+}
+
+let tril_co_rets = util.cachering.fromConstructor(Vector3, 128);
+let tril_co_tmps = util.cachering.fromConstructor(Vector3, 16);
+let tril_mat_1 = new Matrix4();
+let tril_mat_2 = new Matrix4();
+
+let wtable = [
+  [
+    [0.5, 0.5, 0], //u triplet
+    [0.5, 0.5, 0], //v triplet
+    [0.5, 0.5, 0]  //w triplet
+  ],
+  [
+    [0.5, 0.5, 0],
+    [0.0, 0.5, 0.5],
+    [0.5, 0.5, 0]
+  ],
+  [
+    [0.0, 0.5, 0.5],
+    [0.0, 0.5, 0.5],
+    [0.5, 0.5, 0]
+  ],
+  [
+    [0.0, 0.5, 0.5],
+    [0.5, 0.5, 0],
+    [0.5, 0.5, 0]
+  ],
+];
+
+for (let i = 0; i < 4; i++) {
+  let w = wtable[i];
+  w = [w[0], w[1], [0.0, 0.5, 0.5]];
+  wtable.push(w);
+}
+
+const pih_tmps = util.cachering.fromConstructor(Vector3, 16);
+const boxfaces_table = [
+  [0, 1, 2, 3],
+  [7, 6, 5, 4],
+  [0, 4, 5, 1],
+  [1, 5, 6, 2],
+  [2, 6, 7, 3],
+  [3, 7, 4, 0]
+];
+
+let boxfaces_tmp = new Array(6);
+for (let i = 0; i < 6; i++) {
+  boxfaces_tmp[i] = new Vector3();
+}
+
+let boxfacenormals_tmp = new Array(6);
+for (let i = 0; i < 6; i++) {
+  boxfacenormals_tmp[i] = new Vector3();
+}
+
+export function point_in_hex(p, boxverts, boxfacecents = undefined, boxfacenormals = undefined) {
+  if (!boxfacecents) {
+    boxfacecents = boxfaces_tmp;
+
+    for (let i = 0; i < 6; i++) {
+      let [v1, v2, v3, v4] = boxfaces_table[i];
+      v1 = boxverts[v1];
+      v2 = boxverts[v2];
+      v3 = boxverts[v3];
+      v4 = boxverts[v4];
+
+      boxfacecents[i].load(v1).add(v2).add(v3).add(v4).mulScalar(0.25);
+    }
+  }
+
+  if (!boxfacenormals) {
+    boxfacenormals = boxfacenormals_tmp;
+    for (let i = 0; i < 6; i++) {
+      let [v1, v2, v3, v4] = boxfaces_table[i];
+      v1 = boxverts[v1];
+      v2 = boxverts[v2];
+      v3 = boxverts[v3];
+      v4 = boxverts[v4];
+
+      let n = normal_quad(v1, v2, v3, v4);
+      boxfacenormals[i].load(n).negate();
+    }
+  }
+
+  let t1 = pih_tmps.next();
+  let t2 = pih_tmps.next();
+
+  let cent = pih_tmps.next().zero();
+  for (let i = 0; i < 6; i++) {
+    cent.add(boxfacecents[i]);
+  }
+  cent.mulScalar(1.0/6.0);
+
+  let ret = true;
+
+  for (let i = 0; i < 6; i++) {
+    t1.load(p).sub(boxfacecents[i]);
+    t2.load(cent).sub(boxfacecents[i]);
+    let n = boxfacenormals[i];
+
+    if (1) {
+      t1.normalize();
+      t2.normalize();
+
+      //console.log(i, "DOT", n.dot(t1).toFixed(5), n, t1);
+    }
+
+    if (t1.dot(t2) < 0) {
+      //console.log("\n");
+      ret = false;
+      return false;
+    }
+  }
+
+  //console.log("\n");
+  return ret;
+  //return true;
+}
+
+const boxverts_tmp = new Array(8);
+for (let i = 0; i < 8; i++) {
+  boxverts_tmp[i] = new Vector3();
+}
+
+export function trilinear_co(p, boxverts) {
+  let uvw = tril_co_rets.next();
+
+  uvw.zero();
+
+  let u = tril_co_tmps.next();
+  let v = tril_co_tmps.next();
+  let w = tril_co_tmps.next();
+
+  u.loadXYZ(0.0, 0.5, 1.0);
+  v.loadXYZ(0.0, 0.5, 1.0);
+  w.loadXYZ(0.0, 0.5, 1.0);
+
+  let uvw2 = tril_co_tmps.next();
+
+  for (let step = 0; step < 4; step++) {
+    uvw.loadXYZ(u[1], v[1], w[1]);
+
+    let mini = undefined;
+    let mindis = trilinear_v3(uvw, boxverts).vectorDistanceSqr(p);
+
+    for (let i = 0; i < 8; i++) {
+      let [t1, t2, t3] = wtable[i];
+
+      let u2 = t1[0]*u[0] + t1[1]*u[1] + t1[2]*u[2];
+      let v2 = t2[0]*v[0] + t2[1]*v[1] + t2[2]*v[2];
+      let w2 = t3[0]*w[0] + t3[1]*w[1] + t3[2]*w[2];
+
+      let du = Math.abs(u2 - u[1]);
+      let dv = Math.abs(v2 - v[1]);
+      let dw = Math.abs(w2 - w[1]);
+
+      uvw.loadXYZ(u2, v2, w2);
+      let dis = trilinear_v3(uvw, boxverts).vectorDistanceSqr(p);
+
+      if (mindis === undefined || dis < mindis) {
+        //mindis = dis;
+        //mini = i;
+      }
+
+      if (1) {
+        let bv = boxverts_tmp;
+
+        /*
+        let dd = 1.0 - 0.001;
+
+        du *= dd;
+        dv *= dd;
+        dw *= dd;
+        //*/
+
+        bv[0].loadXYZ(u2 - du, v2 - dv, w2 - dw);
+        bv[1].loadXYZ(u2 - du, v2 + dv, w2 - dw);
+        bv[2].loadXYZ(u2 + du, v2 + dv, w2 - dw);
+        bv[3].loadXYZ(u2 + du, v2 - dv, w2 - dw);
+
+        bv[4].loadXYZ(u2 - du, v2 - dv, w2 + dw);
+        bv[5].loadXYZ(u2 - du, v2 + dv, w2 + dw);
+        bv[6].loadXYZ(u2 + du, v2 + dv, w2 + dw);
+        bv[7].loadXYZ(u2 + du, v2 - dv, w2 + dw);
+
+        for (let j = 0; j < 8; j++) {
+          bv[j].load(trilinear_v3(bv[j], boxverts));
+        }
+
+        if (point_in_hex(p, bv)) {
+          mini = i;
+          mindis = dis;
+          //console.log("DIS", (dis**0.5).toFixed(3));
+          break;
+        }
+
+        //console.log("\n");
+      }
+    }
+
+    if (mini === undefined) {
+      lreport("mindis:", (mindis**0.5).toFixed(3));
+      break;
+    }
+
+    let [t1, t2, t3] = wtable[mini];
+
+    let u2 = t1[0]*u[0] + t1[1]*u[1] + t1[2]*u[2];
+    let v2 = t2[0]*v[0] + t2[1]*v[1] + t2[2]*v[2];
+    let w2 = t3[0]*w[0] + t3[1]*w[1] + t3[2]*w[2];
+
+    let du = Math.abs(u2 - u[1]);
+    let dv = Math.abs(v2 - v[1]);
+    let dw = Math.abs(w2 - w[1]);
+
+    u[0] = u2 - du;
+    v[0] = v2 - dv;
+    w[0] = w2 - dw;
+
+    u[1] = u2;
+    v[1] = v2;
+    w[1] = w2;
+
+    u[2] = u2 + du;
+    v[2] = v2 + dv;
+    w[2] = w2 + dw;
+
+    lreport("mindis:", (mindis**0.5).toFixed(3), u2, v2, w2);
+  }
+
+  uvw.loadXYZ(u[1], v[1], w[1]);
+
+  //console.log("uvw", uvw);
+
+  //return uvw;
+
+  return trilinear_co2(p, boxverts, uvw);
+}
+
+//newton-raphson
+export function trilinear_co2(p, boxverts, uvw) {
+  //let uvw = tril_co_rets.next();
+  let grad = tril_co_tmps.next();
+
+  //uvw[0] = uvw[1] = uvw[2] = 0.5;
+
+  let df = 0.00001;
+
+  let mat = tril_mat_1;
+  let m = mat.$matrix;
+  let mat2 = tril_mat_2;
+
+  let r1 = tril_co_tmps.next();
+
+  for (let step = 0; step < 55; step++) {
+    //let r1 = trilinear_v3(uvw, boxverts).vectorDistance(p);
+    let totg = 0;
+
+    for (let i = 0; i < 3; i++) {
+      let axis_error = 0.0;
+
+      if (uvw[i] < 0) {
+        axis_error = -uvw[i];
+      } else if (uvw[i] > 1.0) {
+        axis_error = uvw[i] - 1.0;
+      }
+      //r1[i] = trilinear_v3(uvw, boxverts)[i] - p[i];
+      r1[i] = trilinear_v3(uvw, boxverts).vectorDistance(p) + 10.0*axis_error;
+
+      let orig = uvw[i];
+
+      uvw[i] += df;
+      //let r2 = trilinear_v3(uvw, boxverts)[i] - p[i];
+
+      if (uvw[i] < 0) {
+        axis_error = -uvw[i];
+      } else if (uvw[i] > 1.0) {
+        axis_error = uvw[i] - 1.0;
+      } else {
+        axis_error = 0.0;
+      }
+      let r2 = trilinear_v3(uvw, boxverts).vectorDistance(p) + 10.0*axis_error;
+      uvw[i] = orig;
+
+      grad[i] = (r2 - r1[i])/df;
+      totg += grad[i]**2;
+    }
+
+    if (totg === 0.0) {
+      break;
+    }
+
+    let err = trilinear_v3(uvw, boxverts).vectorDistance(p);
+
+    if (1) {
+      //grad.normalize();
+      uvw.addFac(grad, -err/totg*0.85);
+    } else {
+      mat.makeIdentity();
+      m.m11 = grad[0];
+      m.m12 = grad[1];
+      m.m13 = grad[2];
+      m.m22 = m.m33 = m.m44 = 0.0;
+
+      mat.transpose();
+      mat2.load(mat).transpose();
+
+      //right-indepdenent pseudo inverse
+      //mat.multiply(mat2).invert();
+      //mat.preMultiply(mat2);
+
+      //left-independent
+      mat.preMultiply(mat2).invert();
+      mat.multiply(mat2);
+
+      grad.load(r1);
+      grad.multVecMatrix(mat);
+      uvw.addFac(grad, -1.0);
+    }
+
+    lreport("error:", err.toFixed(3), uvw);
+
+    if (r1.dot(r1)**0.5 < 0.0001) {
+      break;
+    }
+  }
+
+  lreport("\n");
+
+  return uvw;
+}
