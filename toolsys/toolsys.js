@@ -1232,6 +1232,14 @@ export class ToolMacro extends ToolOp {
     }
   }
 
+  redo(ctx) {
+    for (let tool of this.tools) {
+      let ctx2 = tool.execCtx ? tool.execCtx : ctx;
+
+      tool.redo(ctx2);
+    }
+  }
+
   calcUndoMem(ctx) {
     let tot = 0;
 
