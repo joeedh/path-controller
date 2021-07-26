@@ -1113,7 +1113,10 @@ export class DataAPI extends ModelInterface {
 
         subkey = num;
 
-        lastobj = obj;
+        if (prop !== undefined && !(prop.type & (PropTypes.VEC2|PropTypes.VEC3|PropTypes.VEC4|PropTypes.QUAT))) {
+          lastobj = obj;
+        }
+
         obj = obj[num];
       } else if (t.type === "LSBRACKET") {
         p.expect("LSBRACKET")

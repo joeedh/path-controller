@@ -127,6 +127,12 @@ export class ModelInterface {
       prop.ctx = ctx;
       prop.datapath = path;
 
+      if (res.subkey !== undefined) {
+        let val2 = prop.getValue().copy();
+        val2[prop.subkey] = val;
+        val = val2;
+      }
+
       prop.setValue(val);
       return;
     }
@@ -141,6 +147,7 @@ export class ModelInterface {
       use_range = use_range || (res.subkey && (prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4)));
       use_range = use_range && prop.range;
       use_range = use_range && !(prop.range[0] === 0.0 && prop.range[1] === 0.0);
+      use_range = use_range && typeof val === "number";
 
       if (use_range) {
         val = Math.min(Math.max(val, prop.range[0]), prop.range[1]);
@@ -273,7 +280,13 @@ export class ModelInterface {
       throw new DataPathError("invalid path " + path);
     }
 
-    if (ret.prop !== undefined && (ret.prop.flag & PropFlags.USE_CUSTOM_GETSET)) {
+    let exec = ret.prop !== undefined && (ret.prop.flag & PropFlags.USE_CUSTOM_GETSET);
+
+    //resolvePath handles the case of vector properties with custom callbacks for us
+    //(and possibly all the other cases too, need to check)
+    exec = exec && !(ret.prop !== undefined && (ret.prop.type & (PropTypes.VEC2|PropTypes.VEC3|PropTypes.VEC4|PropTypes.QUAT)));
+
+    if (exec) {
       ret.prop.dataref = ret.obj;
       ret.prop.datapath = path;
       ret.prop.ctx = ctx;

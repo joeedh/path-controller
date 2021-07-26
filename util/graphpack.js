@@ -137,13 +137,41 @@ export function graphGetIslands(nodes) {
   return islands;
 }
 
-export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
+export function graphPack(nodes, margin_or_args=15, steps=10, updateCb=undefined) {
+  let margin = margin_or_args;
+  let speed = 1.0;
+
+  if (typeof margin === "object") {
+    let args = margin;
+
+    margin = args.margin ?? 15;
+    steps = args.steps ?? 10;
+    updateCb = args.updateCb;
+    speed = args.speed ?? 1.0;
+  }
+
   let orignodes = nodes;
   nodes = copyGraph(nodes);
 
+  let decay = 1.0;
+  let decayi = 0;
+
+
+  let min = new Vector2().addScalar(1e17);
+  let max = new Vector2().addScalar(-1e17);
+
+  let tmp = new Vector2();
   for (let n of nodes) {
-    n.pos[0] += (Math.random()-0.5)*5.0;
-    n.pos[1] += (Math.random()-0.5)*5.0;
+    min.min(n.pos);
+    tmp.load(n.pos).add(n.size);
+    max.max(tmp);
+  }
+
+  let size = new Vector2(max).sub(min);
+
+  for (let n of nodes) {
+    n.pos[0] += (Math.random()-0.5)*5.0/size[0]*speed;
+    n.pos[1] += (Math.random()-0.5)*5.0/size[1]*speed;
   }
 
   let nodemap = {};
@@ -162,11 +190,11 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
   let disableEdges = false;
 
   function edge_c(params) {
-    let [v1, v2] = params;
+    let [v1, v2, restlen] = params;
 
     if (disableEdges) return 0;
 
-    return v1.absPos.vectorDistance(v2.absPos);
+    return Math.abs(v1.absPos.vectorDistance(v2.absPos) - restlen);
   }
 
   let p1 = new Vector2();
@@ -225,7 +253,9 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
         let v1 = fakeVerts[0];
         let v2 = fakeVerts[i];
 
-        let con = new Constraint("edge_c", edge_c, [v1.node.pos, v2.node.pos], [v1, v2]);
+        let rlen = 1.0;
+
+        let con = new Constraint("edge_c", edge_c, [v1.node.pos, v2.node.pos], [v1, v2, rlen]);
         con.k = 0.25;
         solver.add(con);
       }
@@ -238,7 +268,9 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
           //hueristic to avoid adding same constraint twice
           if (v2._id < v._id) continue;
 
-          let con = new Constraint("edge_c", edge_c, [v.node.pos, v2.node.pos], [v, v2]);
+          let rlen = n1.size.vectorLength()*0.0;
+
+          let con = new Constraint("edge_c", edge_c, [v.node.pos, v2.node.pos], [v, v2, rlen]);
           con.k = 1.0;
           solver.add(con);
         }
@@ -253,6 +285,14 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
         let area = math.aabb_overlap_area(p1, s1, p2, s2);
 
         if (area > 0.01) {
+          let size = decay*(n1.size.vectorLength() + n2.size.vectorLength())*speed;
+          //*
+          n1.pos[0] += (Math.random() - 0.5)*size;
+          n1.pos[1] += (Math.random() - 0.5)*size;
+          n2.pos[0] += (Math.random() - 0.5)*size;
+          n2.pos[1] += (Math.random() - 0.5)*size;
+          //*/
+
           isect.push([n1, n2]);
           visit.add(key);
         }
@@ -280,8 +320,8 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
       if (best) loadGraph(nodes, best);
 
       for (let n of nodes) {
-        n.pos[0] += (Math.random() - 0.5) * rfac;
-        n.pos[1] += (Math.random() - 0.5) * rfac;
+        n.pos[0] += (Math.random() - 0.5) * rfac * speed;
+        n.pos[1] += (Math.random() - 0.5) * rfac * speed;
         n.vel.zero();
       }
 
@@ -310,7 +350,7 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
 
     for (let j=0; j<10; j++) {
       solver = solveStep1();
-      err = solver.solve(10, gk);
+      err = solver.solve(10, gk*speed);
     }
 
     for (let n of nodes) {
@@ -353,6 +393,22 @@ export function graphPack(nodes, margin=15, steps=10, updateCb=undefined) {
 
   for (let j=0; j<steps; j++) {
     solveStep();
+
+    decayi++;
+    decay = Math.exp(-decayi*0.1);
+  }
+
+  min.zero().addScalar(1e17);
+  max.zero().addScalar(-1e17);
+
+  for (let node of (best ? best : nodes)) {
+    min.min(node.pos);
+    p2.load(node.pos).add(node.size);
+    max.max(p2);
+  }
+
+  for (let node of (best ? best : nodes)) {
+    node.pos.sub(min);
   }
 
   loadGraph(orignodes, best ? best : nodes);
