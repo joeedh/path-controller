@@ -293,6 +293,7 @@ export class DataStruct {
 
     return ret;
   }
+
   /**
    * Like .struct, but the type of struct is looked up
    * for objects at runtime.  Note that to work correctly each object

@@ -81,6 +81,13 @@ export class DataPath {
     return ret;
   }
 
+  /** this property should not be treated as something
+   *  that should be kept track off in the undo stack*/
+  noUndo() {
+    this.data.flag |= PropFlags.NO_UNDO;
+    return this;
+  }
+
   setProp(prop) {
     this.data = prop;
   }
@@ -269,8 +276,18 @@ export class DataPath {
     return this;
   }
 
+  icon2(i) {
+    this.data.setIcon2(i);
+    return this;
+  }
+
   icons(icons) { //for enum/flag properties
     this.data.addIcons(icons);
+    return this;
+  }
+
+  icons2(icons) { //for enum/flag properties
+    this.data.addIcons2(icons);
     return this;
   }
 

@@ -2362,6 +2362,47 @@ export class Matrix4 {
     return this;
   }
 
+  alignAxis(axis, vec) {
+    vec = new Vector3(vec);
+    vec.normalize();
+
+    let mat = this.inputs.transformMatrix.getValue();
+    let m = mat.$matrix;
+
+    let mat2 = new Matrix4(mat);
+    let loc = new Vector3(), scale = new Vector3(), rot = new Vector3();
+
+    //we don't use rot
+    mat2.decompose(loc, rot, scale);
+
+    mat2.makeRotationOnly();
+    let axes = mat2.getAsVecs();
+
+    let axis2 = (axis + 1) % 3;
+    let axis3 = (axis + 2) % 3;
+
+    axes[axis].load(vec)
+    axes[axis2].cross(axes[axis]).cross(axes[axis])
+    axes[axis3].load(axes[axis]).cross(axes[axis2])
+
+    axes[0][3] = 1.0;
+    axes[1][3] = 1.0;
+    axes[2][3] = 1.0;
+
+    axes[0].normalize();
+    axes[1].normalize();
+    axes[2].normalize();
+
+    this.loadFromVecs(axes);
+    this.scale(scale[0], scale[1], scale[2]);
+
+    m.m41 = loc[0];
+    m.m42 = loc[1];
+    m.m43 = loc[2];
+
+    return this;
+  }
+
   decompose(_translate, _rotate, _scale, _skew, _perspective, order = EulerOrders.XYZ) {
     if (this.$matrix.m44 === 0)
       return false;

@@ -44,7 +44,8 @@ export const PropFlags = {
   SIMPLE_SLIDER      : 1<<10,
   FORCE_ROLLER_SLIDER: 1<<11,
   USE_BASE_UNDO      : 1<<12, //internal to simple_controller.js
-  EDIT_AS_BASE_UNIT  : 1<<13 //user textbox input should be interpreted in display unit
+  EDIT_AS_BASE_UNIT  : 1<<13, //user textbox input should be interpreted in display unit
+  NO_UNDO            : 1<<14
 };
 
 export class ToolPropertyIF {

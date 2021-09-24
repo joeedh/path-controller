@@ -84,6 +84,7 @@ export class ToolProperty extends ToolPropertyIF {
     this.description = description;
     this.flag = flag;
     this.icon = icon;
+    this.icon2 = icon; //another icon, e.g. unchecked state
 
     this.decimalPlaces = defaultDecimalPlaces;
     this.radix = defaultRadix;
@@ -333,6 +334,7 @@ export class ToolProperty extends ToolPropertyIF {
     b.uiname = this.uiname;
     b.description = this.description;
     b.icon = this.icon;
+    b.icon2 = this.icon2;
 
     b.baseUnit = this.baseUnit;
     b.subtype = this.subtype;
@@ -423,6 +425,12 @@ export class ToolProperty extends ToolPropertyIF {
     return this;
   }
 
+  setIcon2(icon) {
+    this.icon2 = icon;
+
+    return this;
+  }
+
   loadSTRUCT(reader) {
     reader(this);
   }
@@ -434,6 +442,7 @@ ToolProperty {
   flag           : int;
   subtype        : int;
   icon           : int;
+  icon2          : int;
   baseUnit       : string | ""+this.baseUnit;
   displayUnit    : string | ""+this.displayUnit;
   range          : array(float) | this.range ? this.range : [-1e17, 1e17];
@@ -979,7 +988,18 @@ export class EnumProperty extends ToolProperty {
     }
 
     this.iconmap = {};
+    this.iconmap2 = {};
+
     this.wasSet = false;
+  }
+
+  calcHash(digest = new util.HashDigest()) {
+    for (let key in this.keys) {
+      digest.add(key);
+      digest.add(this.keys[key]);
+    }
+
+    return digest.get();
   }
 
   updateDefinition(enumdef_or_prop) {
@@ -1009,6 +1029,8 @@ export class EnumProperty extends ToolProperty {
     if (enumdef_or_prop instanceof EnumProperty) {
       let prop = enumdef_or_prop;
       this.iconmap = Object.assign({}, prop.iconmap);
+      this.iconmap2 = Object.assign({}, prop.iconmap2);
+
       this.ui_value_names = Object.assign({}, prop.ui_value_names);
       this.descriptions = Object.assign({}, prop.descriptions);
     } else {
@@ -1026,6 +1048,8 @@ export class EnumProperty extends ToolProperty {
         }
       }
     }
+
+    this._fire('metaChange', this);
 
     return this;
   }
@@ -1066,11 +1090,23 @@ export class EnumProperty extends ToolProperty {
     return this;
   }
 
+  addIcons2(iconmap2) {
+    if (this.iconmap2 === undefined) {
+      this.iconmap2 = {};
+    }
+
+    for (let k in iconmap2) {
+      this.iconmap2[k] = iconmap2[k];
+    }
+
+    return this;
+  }
+
   addIcons(iconmap) {
     if (this.iconmap === undefined) {
       this.iconmap = {};
     }
-    for (var k in iconmap) {
+    for (let k in iconmap) {
       this.iconmap[k] = iconmap[k];
     }
 
@@ -1089,6 +1125,7 @@ export class EnumProperty extends ToolProperty {
     p.api_update = this.api_update;
 
     p.iconmap = this.iconmap;
+    p.iconmap2 = this.iconmap2;
     p.descriptions = this.descriptions;
 
     return p;
@@ -1156,6 +1193,7 @@ export class EnumProperty extends ToolProperty {
     this.values = this._loadMap(this._values);
     this.ui_value_names = this._loadMap(this._ui_value_names);
     this.iconmap = this._loadMap(this._iconmap);
+    this.iconmap2 = this._loadMap(this._iconmap2);
     this.descriptions = this._loadMap(this._descriptions);
 
     if (this.data_is_int) {
@@ -1179,6 +1217,7 @@ EnumProperty.STRUCT = nstructjs.inherit(EnumProperty, ToolProperty) + `
   _values         : array(EnumKeyPair) | this._saveMap(this.values) ;
   _ui_value_names : array(EnumKeyPair) | this._saveMap(this.ui_value_names) ;
   _iconmap        : array(EnumKeyPair) | this._saveMap(this.iconmap) ;
+  _iconmap2       : array(EnumKeyPair) | this._saveMap(this.iconmap2) ;
   _descriptions   : array(EnumKeyPair) | this._saveMap(this.descriptions) ;  
 }
 `;
@@ -1650,6 +1689,7 @@ export class StringSetProperty extends ToolProperty {
     this.ui_value_names = {};
     this.descriptions = {};
     this.iconmap = {};
+    this.iconmap2 = {};
 
     for (let v of values) {
       this.values[v] = v;
@@ -1755,6 +1795,17 @@ export class StringSetProperty extends ToolProperty {
     return this.value;
   }
 
+  addIcons2(iconmap2) {
+    if (iconmap2 === undefined)
+      return;
+
+    for (let k in iconmap2) {
+      this.iconmap2[k] = iconmap2[k];
+    }
+
+    return this;
+  }
+
   addIcons(iconmap) {
     if (iconmap === undefined)
       return;
@@ -1765,7 +1816,6 @@ export class StringSetProperty extends ToolProperty {
 
     return this;
   }
-
 
   addUINames(map) {
     for (let k in map) {
@@ -1795,14 +1845,23 @@ export class StringSetProperty extends ToolProperty {
       b.values[k] = this.values[k];
     }
 
+    b.ui_value_names = {};
     for (let k in this.ui_value_names) {
       b.ui_value_names[k] = this.ui_value_names[k];
     }
+
+    b.iconmap = {};
+    b.iconmap2 = {};
 
     for (let k in this.iconmap) {
       b.iconmap[k] = this.iconmap[k];
     }
 
+    for (let k in this.iconmap2) {
+      b.iconmap2[k] = this.iconmap2[k];
+    }
+
+    b.descriptions = {};
     for (let k in this.descriptions) {
       b.descriptions[k] = this.descriptions[k];
     }

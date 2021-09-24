@@ -159,7 +159,13 @@ export class DataPathSetOp extends ToolOp {
     paths.add(this.inputs.dataPath.getValue());
 
     for (let path of paths) {
-      this._undo[path] = ctx.api.getValue(ctx, path);
+      let val = ctx.api.getValue(ctx, path);
+
+      if (typeof val === "object") {
+        val = val.copy();
+      }
+
+      this._undo[path] = val;
     }
 
     /*

@@ -128,9 +128,25 @@ export class ModelInterface {
       prop.datapath = path;
 
       if (res.subkey !== undefined) {
-        let val2 = prop.getValue().copy();
-        val2[prop.subkey] = val;
-        val = val2;
+        let val2 = prop.getValue();
+        if (typeof val2 === "object") {
+          val2 = val2.copy();
+        }
+
+        if (prop.type === PropTypes.FLAG) {
+          if (val) {
+            val2 |= prop.values[res.subkey];
+          } else {
+            val2 &= ~prop.values[res.subkey];
+          }
+
+          val = val2;
+        } else if (prop.type === PropTypes.ENUM) {
+          val = prop.values[res.subkey];
+        } else {
+          val2[res.subkey] = val;
+          val = val2;
+        }
       }
 
       prop.setValue(val);
@@ -295,6 +311,12 @@ export class ModelInterface {
 
       if (typeof val === "string" && (ret.prop.type & (PropTypes.FLAG|PropTypes.ENUM))) {
         val = ret.prop.values[val];
+      }
+
+      if (ret.subkey && ret.prop.type === PropTypes.ENUM) {
+        val = val === ret.prop.values[ret.subkey];
+      } else if (ret.subkey && ret.prop.type === PropTypes.FLAG) {
+        val = val & ret.prop.values[ret.subkey];
       }
 
       return val;
