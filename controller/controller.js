@@ -267,6 +267,8 @@ export class DataStruct {
     this.pathmap = {};
     this.flag = 0;
 
+    this.inheritFlag = 0;
+
     for (let m of members) {
       this.add(m);
     }
@@ -277,6 +279,7 @@ export class DataStruct {
 
     ret.name = this.name;
     ret.flag = this.flag;
+    ret.inheritFlag = this.inheritFlag;
 
     for (let m of this.members) {
       let m2 = m.copy();
@@ -293,7 +296,6 @@ export class DataStruct {
 
     return ret;
   }
-
   /**
    * Like .struct, but the type of struct is looked up
    * for objects at runtime.  Note that to work correctly each object
@@ -309,6 +311,7 @@ export class DataStruct {
     let ret = default_struct ? default_struct : new DataStruct();
 
     let dpath = new DataPath(path, apiname, ret, DataTypes.DYNAMIC_STRUCT);
+    ret.inheritFlag |= this.inheritFlag;
 
     this.add(dpath);
     return ret;
@@ -318,6 +321,7 @@ export class DataStruct {
     let ret = existing_struct ? existing_struct : new DataStruct();
 
     let dpath = new DataPath(path, apiname, ret, DataTypes.STRUCT);
+    ret.inheritFlag |= this.inheritFlag;
 
     this.add(dpath);
     return ret;
@@ -558,6 +562,10 @@ export class DataStruct {
   }
 
   remove(m) {
+    if (typeof m === "string") {
+      m = this.pathmap[m];
+    }
+
     if (!(m.apiname in this.pathmap)) {
       throw new Error("Member not in struct " + m.apiname);
     }
@@ -586,6 +594,8 @@ export class DataStruct {
 
       this.remove(this.pathmap[m.apiname]);
     }
+
+    m.flag |= this.inheritFlag;
 
     this.members.push(m);
     m.parent = this;
@@ -982,7 +992,13 @@ export class DataAPI extends ModelInterface {
             prop.dataref = obj;
             prop.datapath = inpath;
 
-            obj = prop.getValue();
+            try {
+              obj = prop.getValue();
+            } catch (error) {
+              util.print_stack(error);
+              obj = undefined;
+            }
+
             if (typeof obj === "string" && (prop.type & (PropTypes.ENUM|PropTypes.FLAG))) {
               obj = prop.values[obj];
             }
@@ -1093,7 +1109,13 @@ export class DataAPI extends ModelInterface {
           prop.datapath = inpath;
           prop.ctx = ctx;
 
-          bitfield = prop.getValue();
+          try {
+            bitfield = prop.getValue();
+          } catch (error) {
+            util.print_stack(error);
+
+            bitfield = NaN;
+          }
         }
 
         if (lastobj === undefined && !ignoreExistence) {
@@ -1541,6 +1563,11 @@ export class DataAPI extends ModelInterface {
     } else {
       cls = path;
       args = {};
+    }
+
+    if (!cls) {
+      debugger;
+      console.error("Unknown tool " + path);
     }
 
     let tool = cls.invoke(ctx, args);

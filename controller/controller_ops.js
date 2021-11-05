@@ -85,7 +85,7 @@ export class DataPathSetOp extends ToolOp {
 
       if (prop.type === PropTypes.ENUM) {
         value = subkey;
-      } else {
+      } else if (prop.type === PropTypes.FLAG) {
         let value2 = ctx.api.getValue(ctx, datapath);
 
         if (typeof value2 !== "number") {
