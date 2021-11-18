@@ -567,15 +567,18 @@ export class Vector4 extends BaseVector {
   }
 
   mulVecQuat(q) {
-    var t0 = -this[1]*this[0] - this[2]*this[1] - this[3]*this[2];
-    var t1 = this[0]*this[0] + this[2]*this[2] - this[3]*this[1];
-    var t2 = this[0]*this[1] + this[3]*this[0] - this[1]*this[2];
-    this[2] = this[0]*this[2] + this[1]*this[1] - this[2]*this[0];
+    let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
+    let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
+    let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
+
+    this[2] = q[0] * this[2] + q[1] * this[1] - q[2] * this[0];
     this[0] = t1;
     this[1] = t2;
-    t1 = t0* -this[1] + this[0]*this[0] - this[1]*this[3] + this[2]*this[2];
-    t2 = t0* -this[2] + this[1]*this[0] - this[2]*this[1] + this[0]*this[3];
-    this[2] = t0* -this[3] + this[2]*this[0] - this[0]*this[2] + this[1]*this[1];
+
+    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + this[2] * q[2];
+    t2 = t0 * -q[2] + this[1] * q[0] - this[2] * q[1] + this[0] * q[3];
+
+    this[2] = t0 * -q[3] + this[2] * q[0] - this[0] * q[2] + this[1] * q[1];
     this[0] = t1;
     this[1] = t2;
 
@@ -724,6 +727,25 @@ export class Vector3 extends F64BaseVector {
     $_v3nd_n1_normalizedDot.normalize();
     $_v3nd_n2_normalizedDot.normalize();
     return $_v3nd_n1_normalizedDot.dot($_v3nd_n2_normalizedDot);
+  }
+
+  mulVecQuat(q) {
+    let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
+    let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
+    let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
+
+    this[2] = q[0] * this[2] + q[1] * this[1] - q[2] * this[0];
+    this[0] = t1;
+    this[1] = t2;
+
+    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + this[2] * q[2];
+    t2 = t0 * -q[2] + this[1] * q[0] - this[2] * q[1] + this[0] * q[3];
+
+    this[2] = t0 * -q[3] + this[2] * q[0] - this[0] * q[2] + this[1] * q[1];
+    this[0] = t1;
+    this[1] = t2;
+
+    return this;
   }
 
   multVecMatrix(matrix, ignore_w) {
@@ -900,21 +922,16 @@ export class Vector2 extends BaseVector {
   }
 
   mulVecQuat(q) {
-    let w = 1.0;
-    let z = 0.0;
+    let t0 = -q[1] * this[0] - q[2] * this[1];
+    let t1 = q[0] * this[0] - q[3] * this[1];
+    let t2 = q[0] * this[1] + q[3] * this[0];
 
-    var t0 = -this[1]*this[0] - z*this[1] - w*z;
-    var t1 = this[0]*this[0] + z*z - w*this[1];
-    var t2 = this[0]*this[1] + w*this[0] - this[1]*z;
-
-    z = this[0]*z + this[1]*this[1] - z*this[0];
-
+    let z  = q[1] * this[1] - q[2] * this[0];
     this[0] = t1;
     this[1] = t2;
 
-    t1 = t0* -this[1] + this[0]*this[0] - this[1]*w + z*z;
-    t2 = t0* -z + this[1]*this[0] - z*this[1] + this[0]*w;
-    z = t0* -w + z*this[0] - this[0]*z + this[1]*this[1];
+    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + z * q[2];
+    t2 = t0 * -q[2] + this[1] * q[0] - z * q[1] + this[0] * q[3];
 
     this[0] = t1;
     this[1] = t2;

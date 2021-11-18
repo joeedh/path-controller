@@ -3452,3 +3452,32 @@ export function trilinear_co2(p, boxverts, uvw) {
 
   return uvw;
 }
+
+let angle_tri_v3_rets = util.cachering.fromConstructor(Vector3, 32);
+let angle_tri_v3_vs = util.cachering.fromConstructor(Vector3, 32);
+
+export function tri_angles(v1, v2, v3) {
+  let t1 = angle_tri_v3_vs.next().load(v1).sub(v2);
+  let t2 = angle_tri_v3_vs.next().load(v3).sub(v2);
+  let t3 = angle_tri_v3_vs.next().load(v2).sub(v3);
+
+  t1.normalize();
+  t2.normalize();
+  t3.normalize();
+
+  let th1 = Math.acos(t1.dot(t2)*0.99999);
+  t2.negate();
+
+  let th2 = Math.acos(t2.dot(t3)*0.99999);
+  let th3 = Math.PI - (th1 + th2);
+
+  let ret = angle_tri_v3_rets.next();
+
+  ret[0] = th1;
+  ret[1] = th2;
+  ret[2] = th3;
+
+  return ret;
+}
+
+
