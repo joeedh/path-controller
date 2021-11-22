@@ -2240,11 +2240,13 @@ export class Queue {
     this.length++;
   }
 
-  clear() {
+  clear(clearData=true) {
     this.queue.length = this.initialSize;
 
-    for (let i=0; i<this.queue.length; i++) {
-      this.queue[i] = undefined;
+    if (clearData) {
+      for (let i = 0; i < this.queue.length; i++) {
+        this.queue[i] = undefined;
+      }
     }
 
     this.a = this.b = 0;
