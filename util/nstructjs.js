@@ -3346,8 +3346,6 @@ let STRUCT = _module_exports_$1.STRUCT = class STRUCT {
 
       let json2;
 
-      console.log(stt.name, f, use_helper_js(f));
-
       if (use_helper_js(f)) {
         if (f.get !== undefined) {
           val = thestruct._env_call(f.get, obj);

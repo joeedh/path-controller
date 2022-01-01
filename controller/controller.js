@@ -59,11 +59,11 @@ let tokens = [
     t.value = parseInt(t.value);
     return t;
   }),
-  tk("STRLIT", /'.*'/, (t) => {
+  tk("STRLIT", /'.*?'/, (t) => {
     t.value = t.value.slice(1, t.value.length - 1);
     return t;
   }),
-  tk("STRLIT", /".*"/, (t) => {
+  tk("STRLIT", /".*?"/, (t) => {
     t.value = t.value.slice(1, t.value.length - 1);
     return t;
   }),
@@ -1566,8 +1566,8 @@ export class DataAPI extends ModelInterface {
     }
 
     if (!cls) {
+      console.error("Unknown tool " + path, "did you forget to pass in a context?");
       debugger;
-      console.error("Unknown tool " + path);
     }
 
     let tool = cls.invoke(ctx, args);
