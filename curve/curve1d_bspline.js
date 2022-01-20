@@ -1,6 +1,7 @@
 "use strict";
 
 import {nstructjs} from "../util/struct.js";
+import config from '../config/config.js';
 
 import * as util from '../util/util.js';
 //import * as ui_base from './ui_base.js';
@@ -623,8 +624,6 @@ class BSplineCurve extends CurveTypeData {
       return;
     }
 
-    //console.warn("building spline approx");
-
     if (steps === undefined) {
       steps = this.fastmode ? 120 : 340;
     }
@@ -671,9 +670,9 @@ class BSplineCurve extends CurveTypeData {
     for (let p of this._ps) {
       p.rco.load(p);
     }
-    
+
     let points = this.points.concat(this.points);
-    
+
 
     this._evaluate2(0.5);
 
@@ -710,7 +709,7 @@ class BSplineCurve extends CurveTypeData {
         err += Math.abs(r1);
 
         if (p === this._ps[this._ps.length - 1]) {
-            continue;
+          continue;
         }
 
         g.zero();
@@ -725,7 +724,6 @@ class BSplineCurve extends CurveTypeData {
         }
 
         let totgs = g.dot(g);
-        //console.log(totgs);
 
         if (totgs < 0.00000001) {
           continue;
@@ -755,7 +753,6 @@ class BSplineCurve extends CurveTypeData {
       return;
     }
 
-    //console.log("building basis functions");
     //let steps = this.fastmode && !this.interpolating ? 64 : 128;
     let steps = this.fastmode ? 64 : 128;
 
@@ -820,19 +817,7 @@ class BSplineCurve extends CurveTypeData {
         let a = (s - ps[ki].rco[0])*safe_inv(ps[knn].rco[0] - ps[ki].rco[0] + 0.0001);
         let b = (ps[knn1].rco[0] - s)*safe_inv(ps[knn1].rco[0] - ps[kn].rco[0] + 0.0001);
 
-        let ret = a*bas(s, i, n - 1) + b*bas(s, i + 1, n - 1);
-
-        /*
-        if (isNaN(ret)) {
-          console.log(a, b, s, i, n, len);
-          throw new Error();
-        }
-        //*/
-
-        //if (Math.random() > 0.99) {
-        //console.log(ret, a, b, n, i);
-        //}
-        return ret;
+        return a*bas(s, i, n - 1) + b*bas(s, i + 1, n - 1);
       }
     }
 
@@ -1077,8 +1062,6 @@ class BSplineCurve extends CurveTypeData {
     let Icons = row.constructor.getIconEnum();
 
     row.iconbutton(Icons.TINY_X, "Delete Point", () => {
-      console.log("delete point");
-
       for (let i = 0; i < this.points.length; i++) {
         let p = this.points[i];
 
@@ -1099,8 +1082,6 @@ class BSplineCurve extends CurveTypeData {
       this.deg = Math.floor(slider.value);
 
       fullUpdate();
-      console.log(this.deg);
-
     });
 
     slider.baseUnit = "none";
@@ -1112,7 +1093,6 @@ class BSplineCurve extends CurveTypeData {
 
     check.onchange = () => {
       this.interpolating = check.value;
-      console.log(check.value);
       fullUpdate();
     }
 
@@ -1163,8 +1143,6 @@ class BSplineCurve extends CurveTypeData {
       let ud = this.uidata;
       this.uidata = undefined;
 
-      console.log("removing event handlers for bspline curve");
-
       canvas.removeEventListener("touchstart", this.on_touchstart);
       canvas.removeEventListener("touchmove", this.on_touchmove);
       canvas.removeEventListener("touchend", this.on_touchend);
@@ -1191,12 +1169,8 @@ class BSplineCurve extends CurveTypeData {
   }
 
   on_mousedown(e) {
-    console.log("bspline mdown", e.x, e.y);
-
     this.uidata.start_mpos.load(this.transform_mpos(e.x, e.y));
     this.fastmode = true;
-
-    console.log(this.uidata.start_mpos, this.uidata.draw_trans);
 
     let mpos = this.transform_mpos(e.x, e.y);
     let x = mpos[0], y = mpos[1];
@@ -1257,7 +1231,6 @@ class BSplineCurve extends CurveTypeData {
       this.points.highlight = minp;
       this.redraw()
     }
-    //console.log(x, y, minp);
   }
 
   do_transform(x, y) {
@@ -1326,8 +1299,6 @@ class BSplineCurve extends CurveTypeData {
   }
 
   on_keydown(e) {
-    console.log(e.keyCode);
-
     switch (e.keyCode) {
       case 88: //xkeey
       case 46: //delete
@@ -1421,17 +1392,6 @@ class BSplineCurve extends CurveTypeData {
     reader(this);
     super.loadSTRUCT(reader);
 
-    if (this.basis_tables.length === 0) {
-      this.recalc = RecalcFlags.ALL;
-
-      //console.warn("Regenerating bspline data . . .");
-      //this.updateKnots();
-      //this.regen_basis();
-    } else {
-      this.updateKnots();
-      this.recalc = RecalcFlags.ALL;
-    }
-
     this.updateKnots();
     this.recalc = RecalcFlags.ALL;
   }
@@ -1504,11 +1464,21 @@ function makeSplineTemplateIcons(size = 64) {
   }
 }
 
-for (let k in SplineTemplates) {
-  let curve = new BSplineCurve();
-  curve.loadTemplate(SplineTemplates[k]);
-  splineCache.get(curve);
+export function initSplineTemplates() {
+  for (let k in SplineTemplates) {
+    let curve = new BSplineCurve();
+    curve.loadTemplate(SplineTemplates[k]);
+    splineCache.get(curve);
+  }
+
+  makeSplineTemplateIcons();
+  window._SplineTemplateIcons = SplineTemplateIcons;
 }
 
-makeSplineTemplateIcons();
-window._SplineTemplateIcons = SplineTemplateIcons;
+//delay to ensure config is fully loaded
+window.setTimeout(() => {
+  if (config.autoLoadSplineTemplates) {
+    initSplineTemplates();
+  }
+}, 0);
+
