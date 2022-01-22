@@ -1509,14 +1509,16 @@ export class DataAPI extends ModelInterface {
     let areacls = screen.sareas[0].area.constructor;
     let area = areacls.getActiveArea();
 
-    for (let keymap of area.getKeyMaps()) {
-      let ret = searchKeymap(keymap);
+    if (area) {
+      for (let keymap of area.getKeyMaps()) {
+        let ret = searchKeymap(keymap);
 
-      if (ret !== undefined) {
-        return ret;
+        if (ret !== undefined) {
+          return ret;
+        }
       }
     }
-
+    
     //search all other areas
     for (let sarea of screen.sareas) {
       if (!sarea.area) continue;
