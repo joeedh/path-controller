@@ -3364,7 +3364,7 @@ let STRUCT = _module_exports_$1.STRUCT = class STRUCT {
         json2 = toJSON$1(this, val, obj, f, t1);
       }
 
-      if (val !== obj) {
+      if (f.name !== 'this') {
         json[f.name] = json2;
       } else { //f.name was 'this'?
         let isArray = Array.isArray(json2);
