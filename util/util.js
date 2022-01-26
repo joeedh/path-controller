@@ -51,7 +51,7 @@ for (let k in colormap) {
   termColorMap[colormap[k]] = k;
 }
 
-export function termColor(s, c) {
+export function termColor(s, c, d=0) {
   if (typeof s === "symbol") {
     s = s.toString();
   } else {
@@ -63,10 +63,10 @@ export function termColor(s, c) {
 
   if (c > 107) {
     let s2 = '\u001b[38;5;' + c + "m"
-    return s2 + s + '\u001b[0m'
+    return s2 + s + '\u001b[39m'
   }
 
-  return '\u001b[' + c + 'm' + s + '\u001b[0m'
+  return '\u001b[' + c + 'm' + s + '\u001b[39m';
 };
 
 export function termPrint() {
@@ -82,9 +82,9 @@ export function termPrint() {
 
   let re1a = /\u001b\[[1-9][0-9]?m/;
   let re1b = /\u001b\[[1-9][0-9];[0-9][0-9]?;[0-9]+m/
-  let re2 = /\u001b\[0m/;
+  let re2 = /\u001b\[39m/;
 
-  let endtag = '\u001b[0m';
+  let endtag = '\u001b[39m';
 
   function tok(s, type) {
     return {
