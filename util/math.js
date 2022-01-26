@@ -1942,7 +1942,7 @@ export function line_line_cross(v1, v2, v3, v4) {
   //l1[0].load(v1), l1[1].load(v2), l2[0].load(v3), l2[1].load(v4);
 
   {
-    let a = l1[0], b = l1[1], c = l2[0], d = l2[1];
+    var a = l1[0], b = l1[1], c = l2[0], d = l2[1];
 
     a[0] = v1[0];
     a[1] = v1[1];
