@@ -334,6 +334,8 @@ export class DataStruct {
     ret.range(0, 1);
     ret.simpleSlider();
 
+    ret.noUnits();
+
     return ret;
   }
 
@@ -343,6 +345,8 @@ export class DataStruct {
     ret.data.subtype = toolprop.PropSubTypes.COLOR;
     ret.range(0, 1);
     ret.simpleSlider();
+
+    ret.noUnits();
 
     return ret;
   }
@@ -1122,7 +1126,7 @@ export class DataAPI extends ModelInterface {
           throw new DataPathError("no data for path " + inpath);
         } else if (lastobj !== undefined) {
           if (prop.type === PropTypes.ENUM) {
-            obj = !!(bitfield == val);
+            obj = !!(bitfield === val);
           } else {
             obj = !!(bitfield & val);
           }
@@ -1518,7 +1522,7 @@ export class DataAPI extends ModelInterface {
         }
       }
     }
-    
+
     //search all other areas
     for (let sarea of screen.sareas) {
       if (!sarea.area) continue;
@@ -1568,8 +1572,8 @@ export class DataAPI extends ModelInterface {
     }
 
     if (!cls) {
-      console.error("Unknown tool " + path, "did you forget to pass in a context?");
       debugger;
+      console.error("Unknown tool " + path);
     }
 
     let tool = cls.invoke(ctx, args);

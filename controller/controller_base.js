@@ -165,13 +165,14 @@ export class DataPath {
   }
 
   off(type, cb) {
-    if (this.type == DataTypes.PROP) {
+    if (this.type === DataTypes.PROP) {
       this.data.off(type, cb);
     }
   }
 
   simpleSlider() {
     this.data.flag |= PropFlags.SIMPLE_SLIDER;
+    this.data.flag &= ~PropFlags.FORCE_ROLLER_SLIDER;
     return this;
   }
 
@@ -196,6 +197,10 @@ export class DataPath {
   displayUnit(unit) {
     this.data.setDisplayUnit(unit);
     return this;
+  }
+
+  unit(unit) {
+    return this.baseUnit(unit).displayUnit(unit);
   }
 
   editAsBaseUnit() {
@@ -286,7 +291,8 @@ export class DataPath {
     return this;
   }
 
-  icons2(icons) { //for enum/flag properties
+  /** secondary icons (e.g. disabled states) */
+  icons2(icons) {
     this.data.addIcons2(icons);
     return this;
   }

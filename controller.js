@@ -33,9 +33,7 @@ export const parseutil = parseutil1;
 import * as config1 from './config/config.js';
 export const config = config1;
 
-import './util/nstructjs.js';
-
-import * as nstructjs1 from './util/struct.js';
+import nstructjs1 from './util/struct.js';
 export const nstructjs = nstructjs1;
 
 export * from './util/vectormath.js';

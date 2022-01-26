@@ -195,7 +195,7 @@ export class ModelInterface {
         throw new DataPathError("Expected a number for a bitmask property");
       }
     } else if (res.subkey !== undefined && isVecProperty(res.prop)) {
-      res.obj[res.subkey] = val;
+      res.obj[res.key][res.subkey] = val;
     } else if (!(prop !== undefined && prop instanceof ListIface)) {
       res.obj[res.key] = val;
     }

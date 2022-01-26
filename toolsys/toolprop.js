@@ -1,7 +1,7 @@
 import * as util from '../util/util.js';
 import {Vector2, Vector3, Vector4, Quat, Matrix4} from '../util/vectormath.js';
 import {ToolPropertyIF, PropTypes, PropFlags} from "./toolprop_abstract.js";
-import * as nstructjs from '../util/struct.js';
+import nstructjs from '../util/struct.js';
 
 export {PropTypes, PropFlags} from './toolprop_abstract.js';
 

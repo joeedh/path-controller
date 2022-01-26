@@ -1,5 +1,5 @@
 import * as util from './util.js';
-import './struct.js';
+import nstructjs from './struct.js';
 
 export const EulerOrders = {
   XYZ: 0,

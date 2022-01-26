@@ -1,5 +1,5 @@
 "use strict";
-import '../util/nstructjs.js';
+import nstructjs from '../util/struct.js';
 
 /**
 
