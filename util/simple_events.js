@@ -730,8 +730,6 @@ export class KeyMap extends Array {
       }
 
       if (ok) {
-        console.log("handling hotkey", hk, this);
-
         try {
           hk.exec(ctx);
         } catch (error) {
