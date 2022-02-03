@@ -1,6 +1,6 @@
 "use strict";
 
-import {nstructjs} from "../util/struct.js";
+import nstructjs from "../util/struct.js";
 import config from '../config/config.js';
 
 import * as util from '../util/util.js';
@@ -51,7 +51,7 @@ const templates = {
   [SplineTemplates.REVERSE_LINEAR]: [
     [0, 1], [1, 0]
   ],
-  [SplineTemplates.GUASSIAN]: [
+  [SplineTemplates.GUASSIAN]      : [
     "DEG", 5, [0, 0], [0.17969, 0.007], [0.48958, 0.01172], [0.77995, 0.99609], [1, 1]
   ]
 };
@@ -163,6 +163,18 @@ export class Curve1DPoint extends Vector2 {
     console.warn("old file data detected");
   }
 
+  static fromJSON(obj) {
+    let ret = new Curve1DPoint(obj);
+
+    ret.eid = obj.eid;
+    ret.flag = obj.flag;
+    ret.tangent = obj.tangent;
+
+    ret.rco.load(obj.rco);
+
+    return ret;
+  }
+
   copy() {
     let ret = new Curve1DPoint(this);
 
@@ -179,27 +191,15 @@ export class Curve1DPoint extends Vector2 {
 
   toJSON() {
     return {
-      0      : this[0],
-      1      : this[1],
+      0: this[0],
+      1: this[1],
 
       eid    : this.eid,
       flag   : this.flag,
       tangent: this.tangent,
 
-      rco    : this.rco
+      rco: this.rco
     };
-  }
-
-  static fromJSON(obj) {
-    let ret = new Curve1DPoint(obj);
-
-    ret.eid = obj.eid;
-    ret.flag = obj.flag;
-    ret.tangent = obj.tangent;
-
-    ret.rco.load(obj.rco);
-
-    return ret;
   }
 
   loadSTRUCT(reader) {
@@ -336,6 +336,18 @@ class BSplineCurve extends CurveTypeData {
     this.on_touchcancel = this.on_touchcancel.bind(this);
   }
 
+  get hasGUI() {
+    return this.uidata !== undefined;
+  }
+
+  static define() {
+    return {
+      uiname  : "B-Spline",
+      name    : "bspline",
+      typeName: "BSplineCurve"
+    }
+  }
+
   calcHashKey(digest = _udigest.reset()) {
     let d = digest;
 
@@ -413,13 +425,6 @@ class BSplineCurve extends CurveTypeData {
     return true;
   }
 
-  static define() {
-    return {
-      uiname: "B-Spline",
-      name  : "bspline"
-    }
-  }
-
   remove(p) {
     let ret = this.points.remove(p);
     this.length = this.points.length;
@@ -467,7 +472,7 @@ class BSplineCurve extends CurveTypeData {
     return this;
   }
 
-  updateKnots(recalc = true, points=this.points) {
+  updateKnots(recalc = true, points = this.points) {
     if (recalc) {
       this.recalc = RecalcFlags.ALL;
     }
@@ -933,10 +938,6 @@ class BSplineCurve extends CurveTypeData {
     ret[1] = sumy;
 
     return ret;
-  }
-
-  get hasGUI() {
-    return this.uidata !== undefined;
   }
 
   _wrapTouchEvent(e) {

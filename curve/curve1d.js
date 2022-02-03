@@ -1,7 +1,7 @@
 "use strict";
 
 /*FIXME: not sure this works anymore*/
-import {nstructjs} from "../util/struct.js";
+import nstructjs from "../util/struct.js";
 
 import * as util from '../util/util.js';
 //import * as ui_base from './ui_base.js';
@@ -18,7 +18,7 @@ import './curve1d_bspline.js';
 import './curve1d_anim.js';
 
 export function mySafeJSONStringify(obj) {
-  return JSON.stringify(obj.toJSON(), function(key) {
+  return JSON.stringify(obj.toJSON(), function (key) {
     let v = this[key];
 
     if (typeof v === "number") {
@@ -32,6 +32,7 @@ export function mySafeJSONStringify(obj) {
     return v;
   });
 }
+
 export function mySafeJSONParse(buf) {
   return JSON.parse(buf, (key, val) => {
 
@@ -65,7 +66,23 @@ export class Curve1D extends EventDispatcher {
     this.setGenerator("bspline");
   }
 
-  calcHashKey(digest=_udigest.reset()) {
+  get generatorType() {
+    return this.generators.active ? this.generators.active.type : undefined;
+  }
+
+  get fastmode() {
+    return this._fastmode;
+  }
+
+  set fastmode(val) {
+    this._fastmode = val;
+
+    for (let gen of this.generators) {
+      gen.fastmode = val;
+    }
+  }
+
+  calcHashKey(digest = _udigest.reset()) {
     let d = digest;
 
     for (let g of this.generators) {
@@ -84,10 +101,6 @@ export class Curve1D extends EventDispatcher {
     }
 
     return gen1.equals(gen2);
-  }
-
-  get generatorType() {
-    return this.generators.active ? this.generators.active.type : undefined;
   }
 
   load(b) {
@@ -125,7 +138,10 @@ export class Curve1D extends EventDispatcher {
 
   setGenerator(type) {
     for (let gen of this.generators) {
-      if (gen.constructor.define().name === type || gen.type === type || gen.constructor.name === type || gen.constructor === type) {
+      if (gen.constructor.define().name === type
+        || gen.type === type
+        || gen.constructor.define().typeName === type
+        || gen.constructor === type) {
         if (this.generators.active) {
           this.generators.active.onInactive();
         }
@@ -140,24 +156,12 @@ export class Curve1D extends EventDispatcher {
     throw new Error("unknown curve type " + type);
   }
 
-  get fastmode() {
-    return this._fastmode;
-  }
-
-  set fastmode(val) {
-    this._fastmode = val;
-
-    for (let gen of this.generators) {
-      gen.fastmode = val;
-    }
-  }
-
   toJSON() {
     let ret = {
-      generators       : [],
-      uiZoom           : this.uiZoom,
-      VERSION          : this.VERSION,
-      active_generator : this.generatorType
+      generators      : [],
+      uiZoom          : this.uiZoom,
+      VERSION         : this.VERSION,
+      active_generator: this.generatorType
     };
 
     for (let gen of this.generators) {
@@ -169,7 +173,7 @@ export class Curve1D extends EventDispatcher {
     return ret;
   }
 
-  getGenerator(type, throw_on_error=true) {
+  getGenerator(type, throw_on_error = true) {
     for (let gen of this.generators) {
       if (gen.type === type) {
         return gen;
@@ -178,7 +182,7 @@ export class Curve1D extends EventDispatcher {
 
     //was a new generator registerd?
     for (let cls of CurveConstructors) {
-      if (cls.name === type) {
+      if (cls.define().typeName === type) {
         let gen = new cls();
         gen.type = type;
         this.generators.push(gen);
@@ -274,7 +278,7 @@ export class Curve1D extends EventDispatcher {
   }
 
   draw(canvas, g, draw_transform) {
-    var w=canvas.width, h=canvas.height;
+    var w = canvas.width, h = canvas.height;
 
     console.warn("draw");
 
@@ -298,17 +302,17 @@ export class Curve1D extends EventDispatcher {
     //g.fillStyle = "rgb(50, 50, 50)";
     //g.fill();
 
-    var f=0, steps=64;
-    var df = 1/(steps-1);
+    var f = 0, steps = 64;
+    var df = 1/(steps - 1);
     var w = 6.0/sz;
 
     let curve = this.generators.active;
 
     g.beginPath();
-    for (var i=0; i<steps; i++, f += df) {
+    for (var i = 0; i < steps; i++, f += df) {
       var val = curve.evaluate(f);
 
-      (i==0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
+      (i == 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
     }
 
     g.strokeStyle = "grey";
@@ -318,10 +322,10 @@ export class Curve1D extends EventDispatcher {
       g.beginPath();
       f = 0.0;
 
-      for (var i=0; i<steps; i++, f += df) {
+      for (var i = 0; i < steps; i++, f += df) {
         var val = this.overlay_curvefunc(f);
 
-        (i==0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
+        (i == 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
       }
 
       g.strokeStyle = "green";
