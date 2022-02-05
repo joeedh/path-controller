@@ -1,5 +1,6 @@
 import * as util from '../util/util.js';
 import * as vectormath from '../util/vectormath.js';
+import {Vector3, Vector4} from '../util/vectormath.js';
 
 let rgb_to_hsv_rets = new util.cachering(() => [0, 0, 0], 64);
 
@@ -97,4 +98,59 @@ export function rgb_to_hsv (r,g,b) {
   
     return color;
   }
-  
+
+let rgb_to_cmyk_rets = util.cachering.fromConstructor(Vector4, 512);
+let cmyk_to_rgb_rets = util.cachering.fromConstructor(Vector3, 512);
+
+export function cmyk_to_rgb(c, m, y, k) {
+  let ret = cmyk_to_rgb_rets.next();
+
+  if (k === 1.0) {
+    ret.zero();
+    return ret;
+  }
+
+  c = c - c*k + k;
+  m = m - m*k + k;
+  y = y - y*k + k;
+
+  ret[0] = 1.0 - c;
+  ret[1] = 1.0 - m;
+  ret[2] = 1.0 - y;
+
+  return ret;
+}
+
+export function rgb_to_cmyk(r, g, b) {
+  //CMYK and CMY values from 0 to 1
+  let ret = rgb_to_cmyk_rets.next();
+
+  let C = 1.0 - r;
+  let M = 1.0 - g;
+  let Y = 1.0 - b;
+
+  let var_K = 1
+
+  if (C < var_K) var_K = C
+  if (M < var_K) var_K = M
+  if (Y < var_K) var_K = Y
+  if (var_K === 1) { //Black
+    C = 0
+    M = 0
+    Y = 0
+  } else {
+    C = (C - var_K)/(1 - var_K)
+    M = (M - var_K)/(1 - var_K)
+    Y = (Y - var_K)/(1 - var_K)
+  }
+
+  let K = var_K
+
+  ret[0] = C;
+  ret[1] = M;
+  ret[2] = Y;
+  ret[3] = K;
+
+  return ret;
+}
+
