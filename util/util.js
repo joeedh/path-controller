@@ -17,12 +17,13 @@ export function isDenormal(f) {
   }
 
   let test = d & ~(1<<15);
-  test = test >> 4;
+  test = test>>4;
 
   //window.console.log(u16tmp[0], u16tmp[1], u16tmp[2], u16tmp[3], "|", test);
 
   return test === 0;
 }
+
 globalThis._isDenormal = isDenormal;
 
 
@@ -52,7 +53,7 @@ for (let k in colormap) {
   termColorMap[colormap[k]] = k;
 }
 
-export function termColor(s, c, d=0) {
+export function termColor(s, c, d = 0) {
   if (typeof s === "symbol") {
     s = s.toString();
   } else {
@@ -132,7 +133,7 @@ export function termPrint() {
       tokens.push(tok(chunk, "chunk"));
     }
 
-    s2 = s2.slice(mini+minslice.length, s2.length);
+    s2 = s2.slice(mini + minslice.length, s2.length);
     let t = tok(minslice, mintype);
 
     tokens.push(t);
@@ -178,6 +179,12 @@ export class MovingAvg extends Array {
     this.cur = 0;
     this.used = 0;
     this.sum = 0;
+  }
+
+  reset() {
+    this.cur = this.used = this.sum = 0.0;
+
+    return this;
   }
 
   add(val) {
@@ -621,12 +628,12 @@ export function merge(obja, objb) {
   //*/
 };
 
-let debug_cacherings = false;
+const debug_cacherings = false;
 
 if (debug_cacherings) {
   window._cacherings = [];
 
-  window._clear_all_cacherings = function(kill_all=false) {
+  window._clear_all_cacherings = function (kill_all = false) {
     function copy(obj) {
       if (typeof obj.copy === "function") {
         return obj.copy();
@@ -666,13 +673,13 @@ if (debug_cacherings) {
         continue;
       }
 
-      for (let i=0; i<len; i++) {
+      for (let i = 0; i < len; i++) {
         ch.push(copy(obj));
       }
     }
   }
 
-  window._nonvector_cacherings = function() {
+  window._nonvector_cacherings = function () {
     for (let ch of window._cacherings) {
       if (ch.length === 0) {
         continue;
@@ -691,7 +698,7 @@ if (debug_cacherings) {
     }
   }
 
-  window._stale_cacherings = function() {
+  window._stale_cacherings = function () {
     let ret = _cacherings.concat([]);
 
     ret.sort((a, b) => a.gen - b.gen);
@@ -700,7 +707,7 @@ if (debug_cacherings) {
 }
 
 export class cachering extends Array {
-  constructor(func, size, isprivate=false) {
+  constructor(func, size, isprivate = false) {
     super()
 
     this.private = isprivate;
@@ -716,7 +723,7 @@ export class cachering extends Array {
     }
   }
 
-  static fromConstructor(cls, size, isprivate=false) {
+  static fromConstructor(cls, size, isprivate = false) {
     var func = function () {
       return new cls();
     }
@@ -728,7 +735,8 @@ export class cachering extends Array {
     if (debug_cacherings) {
       this.gen++;
     }
-    var ret = this[this.cur];
+
+    let ret = this[this.cur];
     this.cur = (this.cur + 1)%this.length;
 
     return ret;
@@ -802,6 +810,10 @@ export class set {
         }
       }
     }
+  }
+
+  get size() {
+    return this.length;
   }
 
   [Symbol.iterator]() {
@@ -902,10 +914,6 @@ export class set {
     }
 
     this.length++;
-  }
-
-  get size() {
-    return this.length;
   }
 
   delete(item, ignore_existence = true) {
@@ -1125,6 +1133,23 @@ export class IDGen {
     this.__cur = v;
   }
 
+  get _cur() {
+    return this.cur;
+  }
+
+  set _cur(v) {
+    window.console.warn("Deprecated use of IDGen._cur");
+    this.cur = v;
+  }
+
+  static fromJSON(obj) {
+    let ret = new IDGen();
+
+    ret.cur = obj.cur === undefined ? obj._cur : obj.cur;
+
+    return ret;
+  }
+
   next() {
     return this.cur++;
   }
@@ -1144,23 +1169,6 @@ export class IDGen {
     return {
       cur: this.cur
     };
-  }
-
-  static fromJSON(obj) {
-    let ret = new IDGen();
-
-    ret.cur = obj.cur === undefined ? obj._cur : obj.cur;
-
-    return ret;
-  }
-
-  set _cur(v) {
-    window.console.warn("Deprecated use of IDGen._cur");
-    this.cur = v;
-  }
-
-  get _cur() {
-    return this.cur;
   }
 
   loadSTRUCT(reader) {
@@ -1369,6 +1377,7 @@ export function seed(n) {
 }
 
 let smallstr_hashes = {};
+
 export function strhash(str) {
   if (str.length <= 64) {
     let hash = smallstr_hashes[str];
@@ -1950,7 +1959,7 @@ export class IDMap extends Array {
 
   keys() {
     let this2 = this;
-    return (function*() {
+    return (function* () {
       for (let id of this2._keys) {
         yield id;
       }
@@ -1959,7 +1968,7 @@ export class IDMap extends Array {
 
   values() {
     let this2 = this;
-    return (function*() {
+    return (function* () {
       for (let id of this2._keys) {
         yield this2[id];
       }
@@ -1970,7 +1979,7 @@ export class IDMap extends Array {
     let this2 = this;
     let iteritem = [0, 0];
 
-    return (function*() {
+    return (function* () {
       for (let id of this2._keys) {
         iteritem[0] = id;
         iteritem[1] = this2[id];
@@ -1985,10 +1994,10 @@ export class IDMap extends Array {
   }
 }
 
-globalThis._test_idmap = function() {
+globalThis._test_idmap = function () {
   let map = new IDMap();
 
-  for (let i=0; i<5; i++) {
+  for (let i = 0; i < 5; i++) {
     let id = ~~(Math.random()*55);
 
     map.set(id, "yay" + i);
@@ -2001,14 +2010,14 @@ globalThis._test_idmap = function() {
   return map;
 }
 
-let HW=0, HELEM=1, HTOT = 2;
+let HW = 0, HELEM = 1, HTOT = 2;
 
 function heaplog() {
   //window.console.log(...arguments);
 }
 
 export class MinHeapQueue {
-  constructor(iter, iterw=iter) {
+  constructor(iter, iterw = iter) {
     this.heap = [];
     this.freelist = [];
     this.length = 0;
@@ -2034,7 +2043,7 @@ export class MinHeapQueue {
     }
 
     this.length++;
-    let depth = Math.ceil(Math.log(this.length) / Math.log(2.0));
+    let depth = Math.ceil(Math.log(this.length)/Math.log(2.0));
     let tot = Math.pow(2, depth) + 1;
 
     heaplog(depth, tot);
@@ -2042,7 +2051,7 @@ export class MinHeapQueue {
     if (this.heap.length < tot*HTOT) {
       let start = this.heap.length/HTOT;
 
-      for (let i=start; i<tot; i++) {
+      for (let i = start; i < tot; i++) {
         this.freelist.push(i*HTOT);
       }
     }
@@ -2056,12 +2065,12 @@ export class MinHeapQueue {
     this.end = Math.max(this.end, n);
 
     heap[n] = w;
-    heap[n+1] = e;
+    heap[n + 1] = e;
 
     while (n > 0) {
       n /= HTOT;
 
-      let p = (n-1)>>1;
+      let p = (n - 1)>>1;
       n *= HTOT;
       p *= HTOT;
 
@@ -2071,10 +2080,10 @@ export class MinHeapQueue {
         }
 
         heap[n] = heap[p];
-        heap[n+1] = heap[p+1];
+        heap[n + 1] = heap[p + 1];
 
         heap[p] = w;
-        heap[p+1] = e;
+        heap[p + 1] = e;
 
         n = p;
       } else {
@@ -2110,18 +2119,18 @@ export class MinHeapQueue {
       heap[n1] = heap[n2];
       heap[n2] = t;
 
-      t = heap[n1+1];
-      heap[n1+1] = heap[n2+1];
-      heap[n2+1] = t;
+      t = heap[n1 + 1];
+      heap[n1 + 1] = heap[n2 + 1];
+      heap[n2 + 1] = t;
     }
 
     heaplog("end", end);
     heaplog(heap.concat([]));
 
     heap[0] = heap[end];
-    heap[1] = heap[end+1];
+    heap[1] = heap[end + 1];
     heap[end] = undefined;
-    heap[end+1] = undefined;
+    heap[end + 1] = undefined;
 
     let n = 0;
     while (n < heap.length) {
@@ -2154,8 +2163,8 @@ export class MinHeapQueue {
         }
       } else if (heap[n1] !== undefined) {
         if (heap[n] > heap[n1]) {
-         swap(n, n1);
-         n = n1;
+          swap(n, n1);
+          n = n1;
         } else {
           break;
         }
@@ -2174,7 +2183,7 @@ export class MinHeapQueue {
     this.freelist.push(this.end);
 
     heap[this.end] = undefined;
-    heap[this.end+1] = undefined;
+    heap[this.end + 1] = undefined;
 
     while (this.end > 0 && heap[this.end] === undefined) {
       this.end -= HTOT;
@@ -2186,7 +2195,7 @@ export class MinHeapQueue {
   }
 }
 
-globalThis.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
+globalThis.testHeapQueue = function (list1 = [1, 8, -3, 11, 33]) {
   let h = new MinHeapQueue(list1);
 
   window.console.log(h.heap.concat([]));
@@ -2194,7 +2203,7 @@ globalThis.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
   let list = [];
   let len = h.length;
 
-  for (let i=0; i<len; i++) {
+  for (let i = 0; i < len; i++) {
     list.push(h.pop());
   }
 
@@ -2204,7 +2213,7 @@ globalThis.testHeapQueue = function(list1=[1, 8, -3, 11, 33]) {
 }
 
 export class Queue {
-  constructor(n=32) {
+  constructor(n = 32) {
     n = Math.max(n, 8);
 
     this.initialSize = n;
@@ -2221,14 +2230,14 @@ export class Queue {
     let b = this.b;
 
     this.queue[b] = item;
-    this.b = (this.b + 1) % qlen;
+    this.b = (this.b + 1)%qlen;
 
     if (this.length >= qlen || this.a === this.b) {
       let newsize = qlen<<1;
       let queue = new Array(newsize);
 
-      for (let i=0; i<qlen; i++) {
-        let i2 = (i + this.a) % qlen;
+      for (let i = 0; i < qlen; i++) {
+        let i2 = (i + this.a)%qlen;
 
         queue[i] = this.queue[i2];
       }
@@ -2241,7 +2250,7 @@ export class Queue {
     this.length++;
   }
 
-  clear(clearData=true) {
+  clear(clearData = true) {
     this.queue.length = this.initialSize;
 
     if (clearData) {
@@ -2266,19 +2275,19 @@ export class Queue {
 
     this.queue[this.a] = undefined;
 
-    this.a = (this.a + 1) % this.queue.length;
+    this.a = (this.a + 1)%this.queue.length;
     return ret;
   }
 }
 
-globalThis._testQueue = function(steps=15, samples=15) {
+globalThis._testQueue = function (steps = 15, samples = 15) {
   let queue = new Queue(3);
 
-  for (let i=0; i<steps; i++) {
+  for (let i = 0; i < steps; i++) {
     let list = [];
 
-    for (let j=0; j<samples; j++) {
-      let item = {f : Math.random()};
+    for (let j = 0; j < samples; j++) {
+      let item = {f: Math.random()};
       list.push(item);
 
       queue.enqueue(item);
