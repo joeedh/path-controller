@@ -63,7 +63,7 @@ class OnceTag {
 }
 
 export class ToolProperty extends ToolPropertyIF {
-  constructor(type, subtype, apiname, uiname, description, flag, icon) {
+  constructor(type, subtype, apiname, uiname="", description="", flag=0, icon=-1) {
     super();
 
     this.data = undefined;
@@ -631,11 +631,13 @@ NumProperty.STRUCT = nstructjs.inherit(NumProperty, ToolProperty) + `
 export class _NumberPropertyBase extends ToolProperty {
   constructor(type, value, apiname,
               uiname, description, flag, icon) {
-    super(type, undefined, apiname, uiname, description, flag, icon);
+    super(type, null, apiname, uiname, description, flag, icon);
 
     this.data = 0.0;
     this.expRate = 1.33;
     this.step = 0.1;
+
+    this.stepIsRelative = false;
 
     this.range = [-1e17, 1e17];
     this.uiRange = undefined; //if undefined, this.range will be used
