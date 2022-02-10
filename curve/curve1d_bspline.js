@@ -1428,15 +1428,14 @@ function makeSplineTemplateIcons(size = 64) {
 
     curve.update();
 
-    let scale = 0.75;
+    let scale = 0.5;
 
-    g.strokeStyle = "orange";
-    g.lineWidth = 4.0*dpi/(size*scale);
-
+    g.translate(-0.5, -0.5);
     g.scale(size*scale, size*scale);
+    g.translate(0.5, 0.5);
 
     //margin
-    let m = 0.05;
+    let m = 0.0;
 
     let tent = f => 1.0 - Math.abs(Math.fract(f) - 0.5)*2.0;
 
@@ -1447,6 +1446,9 @@ function makeSplineTemplateIcons(size = 64) {
       s = s*(1.0 - m*2.0) + m;
       f = f*(1.0 - m*2.0) + m;
 
+      //s += 0.5;
+      //f += 0.5;
+
       if (i === 0) {
         g.moveTo(s, f);
       } else {
@@ -1454,6 +1456,15 @@ function makeSplineTemplateIcons(size = 64) {
       }
     }
 
+    const ls = 7.0;
+
+    g.lineCap = "round";
+    g.strokeStyle = "black";
+    g.lineWidth = ls*3*dpi/(size*scale);
+    g.stroke();
+
+    g.strokeStyle = "white";
+    g.lineWidth = ls*dpi/(size*scale);
     g.stroke();
 
     let url = canvas.toDataURL();
@@ -1465,7 +1476,15 @@ function makeSplineTemplateIcons(size = 64) {
   }
 }
 
+let splineTemplatesLoaded = false;
+
 export function initSplineTemplates() {
+  if (splineTemplatesLoaded) {
+    return;
+  }
+
+  splineTemplatesLoaded = true;
+  
   for (let k in SplineTemplates) {
     let curve = new BSplineCurve();
     curve.loadTemplate(SplineTemplates[k]);

@@ -317,6 +317,11 @@ function findScreen() {
 
 window._findScreen = findScreen;
 
+let ContextAreaClass;
+
+export function _setModalAreaClass(cls) {
+  ContextAreaClass = cls;
+}
 
 export function pushModalLight(obj, autoStopPropagation=true) {
   if (cconst.DEBUG.modalEvents) {
@@ -487,6 +492,7 @@ export function pushModalLight(obj, autoStopPropagation=true) {
   }
 
   modalstack.push(ret);
+  ContextAreaClass.lock();
 
   return ret;
 }
@@ -562,6 +568,7 @@ export function popModalLight(state) {
 
   state.handlers = {};
   modalstack.remove(state);
+  ContextAreaClass.unlock();
 
   if (cconst.DEBUG.modalEvents) {
     console.warn("popModalLight", modalstack);
