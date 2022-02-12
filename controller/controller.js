@@ -384,7 +384,15 @@ export class DataStruct {
     return ret;
   }
 
-  vectorList(size, path, apiname, uiname, description) {
+  color3List(path, apiname, uiname, description) {
+    return this.vectorList(3, path, apiname, uiname, description, toolprop.PropSubTypes.COLOR);
+  }
+
+  color4List(path, apiname, uiname, description) {
+    return this.vectorList(4, path, apiname, uiname, description, toolprop.PropSubTypes.COLOR);
+  }
+
+  vectorList(size, path, apiname, uiname, description, subtype) {
     let type;
 
     switch (size) {

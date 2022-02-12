@@ -11,8 +11,9 @@ let dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 let quad_co_rets2 = util.cachering.fromConstructor(Vector2, 512);
 
 export function quad_bilinear(v1, v2, v3, v4, u, v) {
-  return -((v1-v2)*u-v1-(u*v1-u*v2+u*v3-u*v4-v1+v4)*v);
+  return -((v1 - v2)*u - v1 - (u*v1 - u*v2 + u*v3 - u*v4 - v1 + v4)*v);
 }
+
 /*
 
  on factor;
@@ -48,16 +49,16 @@ function quad_uv_2d(p, v1, v2, v3, v4) {
   let y = p[1] - v1[1];
   let sqrt = Math.sqrt;
 
-  let A = 2*(((v4y+y)*x-2*v4x*y)*
-    v3y+(v4x*y-v4y*x)*(v4y+y)-((v4x-x)*v2y-v3x*y)*(v4y-y))*v2x-2*(
-    (v4x*y-v4y*x)*(v4x+x)-(v4x-x)*v3y*x+((2*v4y-y)*x-v4x*y)*v3x)*
-    v2y+(v4x*y-v4y*x+v3y*x-v3x*y)**2+(v4x-x)**2*v2y**2+(v4y-y)**2*
+  let A = 2*(((v4y + y)*x - 2*v4x*y)*
+      v3y + (v4x*y - v4y*x)*(v4y + y) - ((v4x - x)*v2y - v3x*y)*(v4y - y))*v2x - 2*(
+      (v4x*y - v4y*x)*(v4x + x) - (v4x - x)*v3y*x + ((2*v4y - y)*x - v4x*y)*v3x)*
+    v2y + (v4x*y - v4y*x + v3y*x - v3x*y)**2 + (v4x - x)**2*v2y**2 + (v4y - y)**2*
     v2x**2;
 
-  let B = v4x*y-v4y*x+v3y*x-v3x*y;
+  let B = v4x*y - v4y*x + v3y*x - v3x*y;
 
-  let C1 = (2*(v3x-v4x)*v2y-2*(v3y-v4y)*v2x);
-  let C2 = (2*(v3x*v4y-v3y*v4x+v2y*v4x)-2*v2x*v4y);
+  let C1 = (2*(v3x - v4x)*v2y - 2*(v3y - v4y)*v2x);
+  let C2 = (2*(v3x*v4y - v3y*v4x + v2y*v4x) - 2*v2x*v4y);
 
   let u1, u2;
 
@@ -81,8 +82,8 @@ function quad_uv_2d(p, v1, v2, v3, v4) {
 
     u1 = u2 = dx*x + dy*y;
   } else {
-    u1=(-(B+sqrt(A)-(v4y-y)*v2x)-(v4x-x)*v2y)/C1;
-    u2=(-(B-sqrt(A)-(v4y-y)*v2x)-(v4x-x)*v2y)/C1;
+    u1 = (-(B + sqrt(A) - (v4y - y)*v2x) - (v4x - x)*v2y)/C1;
+    u2 = (-(B - sqrt(A) - (v4y - y)*v2x) - (v4x - x)*v2y)/C1;
   }
 
   if (Math.abs(C2) < 0.00001) { //perfectly 90 degrees?
@@ -101,14 +102,14 @@ function quad_uv_2d(p, v1, v2, v3, v4) {
 
     v1 = v2 = x*dx + y*dy;
   } else {
-    v1=(-(B-sqrt(A)+(v4y+y)*v2x)+(v4x+x)*v2y)/C2;
-    v2=(-(B+sqrt(A)+(v4y+y)*v2x)+(v4x+x)*v2y)/C2;
+    v1 = (-(B - sqrt(A) + (v4y + y)*v2x) + (v4x + x)*v2y)/C2;
+    v2 = (-(B + sqrt(A) + (v4y + y)*v2x) + (v4x + x)*v2y)/C2;
   }
 
   let ret = quad_co_rets2.next();
 
-  let d1 = (u1-0.5)**2 + (v1-0.5)**2;
-  let d2 = (u2-0.5)**2 + (v2-0.5)**2;
+  let d1 = (u1 - 0.5)**2 + (v1 - 0.5)**2;
+  let d2 = (u2 - 0.5)**2 + (v2 - 0.5)**2;
 
   if (d1 < d2) {
     ret[0] = u1;
@@ -2566,23 +2567,123 @@ export function closest_point_on_line(p, v1, v2, clip = true) {
 var _circ_from_line_tan_vs = util.cachering.fromConstructor(Vector3, 32);
 var _circ_from_line_tan_ret = new util.cachering(function () {
   return [new Vector3(), 0];
-});
+}, 64);
 
 export function circ_from_line_tan(a, b, t) {
-  var p1 = _circ_from_line_tan_vs.next();
-  var t2 = _circ_from_line_tan_vs.next();
-  var n1 = _circ_from_line_tan_vs.next();
+  let p1 = _circ_from_line_tan_vs.next();
+  let t2 = _circ_from_line_tan_vs.next();
+  let n1 = _circ_from_line_tan_vs.next();
 
   p1.load(a).sub(b);
   t2.load(t).normalize();
   n1.load(p1).normalize().cross(t2).cross(t2).normalize();
 
-  var ax = p1[0], ay = p1[1], az = p1[2], nx = n1[0], ny = n1[1], nz = n1[2];
-  var r = -(ax*ax + ay*ay + az*az)/(2*(ax*nx + ay*ny + az*nz));
+  let ax = p1[0], ay = p1[1], az = p1[2], nx = n1[0], ny = n1[1], nz = n1[2];
+  let r = -(ax*ax + ay*ay + az*az);
+  let div = (2*(ax*nx + ay*ny + az*nz));
 
-  var ret = _circ_from_line_tan_ret.next();
+  if (Math.abs(div) > 0.000001) {
+    r /= div;
+  } else {
+    r = 1000000.0;
+  }
+
+  let ret = _circ_from_line_tan_ret.next();
   ret[0].load(n1).mulScalar(r).add(a)
   ret[1] = r;
+
+  return ret;
+}
+
+/*given input line (a,d) and tangent t,
+  returns a circle that goes through both
+  a and d, whose normalized tangent at a is the same
+  as normalized t.
+
+  note that t need not be normalized, this function
+  does that itself*/
+var _circ_from_line_tan2d_vs = util.cachering.fromConstructor(Vector3, 32);
+var _circ_from_line_tan2d_ret = new util.cachering(function () {
+  return [new Vector2(), 0];
+}, 64);
+
+export function circ_from_line_tan_2d(a, b, t) {
+  a = _circ_from_line_tan2d_vs.next().load(a);
+  b = _circ_from_line_tan2d_vs.next().load(b);
+  t = _circ_from_line_tan2d_vs.next().load(t);
+
+  a[2] = b[2] = t[2] = 0.0;
+
+  let p1 = _circ_from_line_tan2d_vs.next();
+  let t2 = _circ_from_line_tan2d_vs.next();
+  let n1 = _circ_from_line_tan2d_vs.next();
+
+  p1.load(a).sub(b);
+  t2.load(t).normalize();
+  n1.load(p1).normalize().cross(t2).cross(t2).normalize();
+
+  if (1) {
+    let cx, cy, r;
+    let x1 = a[0], y1 = a[1];
+    let x2 = b[0], y2 = b[1];
+    let tanx1 = t[0], tany1 = t[1];
+
+    let div = (4.0*((x1 - x2)*tany1 - (y1 - y2)*tanx1)**2);
+    let div2 = (2.0*(x1 - x2)*tany1 - 2.0*(y1 - y2)*tanx1);
+
+    if (Math.abs(div) < 0.0001 || Math.abs(div2) < 0.0001) {
+      let ret = _circ_from_line_tan2d_ret.next();
+
+      ret[0].load(a).interp(b, 0.5);
+      let dx = a[1] - b[1];
+      let dy = b[0] - a[0];
+
+      r = 1000000.0;
+
+      ret[0][0] += dx*r;
+      ret[0][1] += dy*r;
+      ret[1] = r;
+
+      return ret;
+    }
+    cx = (((x1 + x2)*(x1 - x2) - (y1 - y2)**2)*tany1 - 2.0*(y1 - y2)*tanx1*x1
+    )/div2;
+
+    cy = (-((y1 + y2)*(y1 - y2) - x2**2 - (x1 - 2.0*x2)*x1)*tanx1 + 2.0*(x1 -
+      x2)*tany1*y1)/div2;
+
+    r = (((y1 - y2)**2 + x2**2 + (x1 - 2.0*x2)*x1)**2*(tanx1**2 + tany1**2)
+    )/div;
+
+    let midx = a[0]*0.5 + b[0]*0.5;
+    let midy = a[1]*0.5 + b[1]*0.5;
+
+    //mirror
+    cx = 2.0*midx - cx;
+    cy = 2.0*midy - cy;
+
+    let ret = _circ_from_line_tan2d_ret.next();
+    ret[0].loadXY(cx, cy);
+    ret[1] = Math.sqrt(r);
+
+    return ret;
+  } else {
+    let ax = p1[0], ay = p1[1], az = p1[2], nx = n1[0], ny = n1[1], nz = n1[2];
+    let r = -(ax*ax + ay*ay + az*az);
+    let div = (2*(ax*nx + ay*ny + az*nz));
+
+    if (Math.abs(div) > 0.000001) {
+      r /= div;
+    } else {
+      r = 1000000.0;
+    }
+
+    let ret = _circ_from_line_tan2d_ret.next();
+    ret[0].load(n1).mulScalar(r).add(a)
+    ret[1] = r;
+
+    return ret;
+  }
 
   return ret;
 }
@@ -3104,13 +3205,13 @@ export function trilinear_v3(uvw, boxverts) {
   const d2x = boxverts[7][0] - a1x, d2y = boxverts[7][1] - a1y, d2z = boxverts[7][2] - a1z;
 
   const x = (((a2x - b2x)*v - a2x + (c2x - d2x)*v + d2x)*u - ((a2x - b2x)*v - a2x) - (
-    ((c1x - d1x)*v + d1x - b1x*v)*u + b1x*v))*w + ((c1x - d1x)*v + d1x - b1x*v)*u +
+      ((c1x - d1x)*v + d1x - b1x*v)*u + b1x*v))*w + ((c1x - d1x)*v + d1x - b1x*v)*u +
     b1x*v;
   const y = (((a2y - b2y)*v - a2y + (c2y - d2y)*v + d2y)*u - ((a2y - b2y)*v - a2y) - (
-    ((c1y - d1y)*v + d1y - b1y*v)*u + b1y*v))*w + ((c1y - d1y)*v + d1y - b1y*v)*u +
+      ((c1y - d1y)*v + d1y - b1y*v)*u + b1y*v))*w + ((c1y - d1y)*v + d1y - b1y*v)*u +
     b1y*v;
   const z = (((a2z - b2z)*v - a2z + (c2z - d2z)*v + d2z)*u - ((a2z - b2z)*v - a2z) - (
-    ((c1z - d1z)*v + d1z - b1z*v)*u + b1z*v))*w + ((c1z - d1z)*v + d1z - b1z*v)*u +
+      ((c1z - d1z)*v + d1z - b1z*v)*u + b1z*v))*w + ((c1z - d1z)*v + d1z - b1z*v)*u +
     b1z*v;
 
   let p = tril_rets.next();

@@ -278,9 +278,7 @@ export class Curve1D extends EventDispatcher {
   }
 
   draw(canvas, g, draw_transform) {
-    var w = canvas.width, h = canvas.height;
-
-    console.warn("draw");
+    let w = canvas.width, h = canvas.height;
 
     g.save();
 
@@ -302,17 +300,17 @@ export class Curve1D extends EventDispatcher {
     //g.fillStyle = "rgb(50, 50, 50)";
     //g.fill();
 
-    var f = 0, steps = 64;
-    var df = 1/(steps - 1);
-    var w = 6.0/sz;
+    let f = 0, steps = 64;
+    let df = 1/(steps - 1);
+    w = 6.0/sz;
 
     let curve = this.generators.active;
 
     g.beginPath();
-    for (var i = 0; i < steps; i++, f += df) {
-      var val = curve.evaluate(f);
+    for (let i = 0; i < steps; i++, f += df) {
+      let val = curve.evaluate(f);
 
-      (i == 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
+      (i === 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
     }
 
     g.strokeStyle = "grey";
@@ -322,10 +320,10 @@ export class Curve1D extends EventDispatcher {
       g.beginPath();
       f = 0.0;
 
-      for (var i = 0; i < steps; i++, f += df) {
-        var val = this.overlay_curvefunc(f);
+      for (let i = 0; i < steps; i++, f += df) {
+        let val = this.overlay_curvefunc(f);
 
-        (i == 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
+        (i === 0 ? g.moveTo : g.lineTo).call(g, f, val, w, w);
       }
 
       g.strokeStyle = "green";
