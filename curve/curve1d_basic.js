@@ -70,13 +70,18 @@ class EquationCurve extends CurveTypeData {
       draw_trans: drawTransform,
     };
 
-    let text = this.uidata.textbox = container.textbox(undefined, this.equation);
+    let row = container.row();
+
+    let text = this.uidata.textbox = row.textbox(undefined, ""+this.equation);
     text.onchange = (val) => {
       console.log(val);
       this.equation = val;
       this.update();
       this.redraw();
     }
+
+    container.label("Equation");
+
   }
 
   killGUI(dom, gui, canvas, g, draw_transform) {

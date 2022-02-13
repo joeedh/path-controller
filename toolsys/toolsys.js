@@ -303,6 +303,13 @@ export class ToolOp extends events.EventHandler {
     return {};
   }
 
+  /** Called when the undo system needs to destroy
+   *  this toolop to save memory*/
+  onUndoDestroy() {
+
+  }
+
+  /** Used by undo system to limit memory */
   calcMemSize(ctx) {
     if (this.__memsize !== undefined) {
       return this.__memsize;
@@ -1313,6 +1320,10 @@ export class ToolStack extends Array {
 
     if (start === 0) {
       return size;
+    }
+
+    for (let i=0; i<start; i++) {
+      this[i].onUndoDestroy();
     }
 
     this.cur -= start;
