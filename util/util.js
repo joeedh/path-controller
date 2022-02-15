@@ -1314,6 +1314,17 @@ export class MersenneRandom {
     return this.extract_number()/(1<<30);
   }
 
+  /** normal-ish distribution */
+  nrandom(n=3) {
+    let ret = 0.0;
+
+    for (let i=0; i<n; i++) {
+      ret += this.random();
+    }
+
+    return ret / n;
+  }
+
   seed(seed) {
     seed = ~~(seed*8192);
 
