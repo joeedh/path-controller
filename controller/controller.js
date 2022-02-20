@@ -48,6 +48,7 @@ import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as util from '../util/util.js';
 
 import {DataPath, DataFlags, DataTypes, DataPathError, StructFlags} from './controller_base.js';
+
 export * from './controller_base.js';
 
 let PUTLParseError = parseutil.PUTLParseError;
@@ -83,7 +84,7 @@ let lexer = new parseutil.lexer(tokens, (t) => {
 export let pathParser = new parseutil.parser(lexer);
 
 let parserStack = new Array(32);
-for (let i=0; i<parserStack.length; i++) {
+for (let i = 0; i < parserStack.length; i++) {
   parserStack[i] = pathParser.copy();
 }
 parserStack.cur = 0;
@@ -118,6 +119,7 @@ let lastmsg = undefined;
 let lcount = 0;
 
 let reportstack = ["api"];
+
 export function pushReportName(name) {
   if (reportstack.length > 1024) {
     console.trace("eerk, reportstack overflowed");
@@ -129,7 +131,7 @@ export function pushReportName(name) {
 }
 
 function report(msg) {
-  let name = reportstack.length === 0 ? "api" : reportstack[reportstack.length-1];
+  let name = reportstack.length === 0 ? "api" : reportstack[reportstack.length - 1];
 
   util.console.context(name).warn(msg);
 }
@@ -139,7 +141,33 @@ export function popReportName() {
 }
 
 
-export class  DataList extends ListIface {
+export class DataList extends ListIface {
+  constructor(callbacks) {
+    super();
+
+    if (callbacks === undefined) {
+      throw new DataPathError("missing callbacks argument to DataList");
+    }
+
+    this.cb = {};
+
+    if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
+      for (let k in callbacks) {
+        this.cb[k] = callbacks[k];
+      }
+    } else {
+      for (let cb of callbacks) {
+        this.cb[cb.name] = cb;
+      }
+    }
+
+    let check = (key) => {
+      if (!(key in this.cbs)) {
+        throw new DataPathError(`Missing ${key} callback in DataList`);
+      }
+    }
+  }
+
   /**
    Okay, this is a simple interface for the controller api to access lists,
    whether it's {} object maps, [] arrays, util.set's, or whatever.
@@ -170,32 +198,6 @@ export class  DataList extends ListIface {
     }
 
     return ret;
-  }
-
-  constructor(callbacks) {
-    super();
-
-    if (callbacks === undefined) {
-      throw new DataPathError("missing callbacks argument to DataList");
-    }
-
-    this.cb = {};
-
-    if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
-      for (let k in callbacks) {
-        this.cb[k] = callbacks[k];
-      }
-    } else {
-      for (let cb of callbacks) {
-        this.cb[cb.name] = cb;
-      }
-    }
-
-    let check = (key) => {
-      if (!(key in this.cbs)) {
-        throw new DataPathError(`Missing ${key} callback in DataList`);
-      }
-    }
   }
 
   get(api, list, key) {
@@ -266,6 +268,7 @@ export class DataStruct {
     this.name = name;
     this.pathmap = {};
     this.flag = 0;
+    this.dpath = undefined; //owning DataPath
 
     this.inheritFlag = 0;
 
@@ -296,6 +299,7 @@ export class DataStruct {
 
     return ret;
   }
+
   /**
    * Like .struct, but the type of struct is looked up
    * for objects at runtime.  Note that to work correctly each object
@@ -313,6 +317,8 @@ export class DataStruct {
     let dpath = new DataPath(path, apiname, ret, DataTypes.DYNAMIC_STRUCT);
     ret.inheritFlag |= this.inheritFlag;
 
+    ret.dpath = dpath;
+
     this.add(dpath);
     return ret;
   }
@@ -323,8 +329,22 @@ export class DataStruct {
     let dpath = new DataPath(path, apiname, ret, DataTypes.STRUCT);
     ret.inheritFlag |= this.inheritFlag;
 
+    ret.dpath = dpath;
+
     this.add(dpath);
     return ret;
+  }
+
+  customGet(getter) {
+    this.dpath.customGet(getter);
+
+    return this;
+  }
+
+  customGetSet(getter, setter) {
+    this.dpath.customGetSet(getter, setter);
+
+    return this;
   }
 
   color3(path, apiname, uiname, description) {
@@ -339,7 +359,7 @@ export class DataStruct {
     return ret;
   }
 
-  color4(path, apiname, uiname, description=uiname) {
+  color4(path, apiname, uiname, description = uiname) {
     let ret = this.vec4(path, apiname, uiname, description);
 
     ret.data.subtype = toolprop.PropSubTypes.COLOR;
@@ -513,7 +533,7 @@ export class DataStruct {
     return dpath;
   }
 
-  int(path, apiname, uiname, description, prop=undefined) {
+  int(path, apiname, uiname, description, prop = undefined) {
     if (!prop) {
       prop = new toolprop.IntProperty(0, apiname, uiname, description);
     }
@@ -636,12 +656,30 @@ export class DataAPI extends ModelInterface {
     this.structs = [];
   }
 
-  getStructs() {
-    return this.structs;
-  }
-
   get list() {
     return undefined;
+  }
+
+  static toolRegistered(cls) {
+    return ToolOp.isRegistered(cls);
+    //let key = toolkey(cls);
+    //return key in tool_classes;
+  }
+
+  static registerTool(cls) {
+    console.warn("Outdated function simple_controller.DataAPI.registerTool called");
+
+    return ToolOp.register(cls);
+
+    //let key = toolkey(cls);
+    //
+    //if (!(key in tool_classes)) {
+    //  tool_classes[key] = cls;
+    //}
+  }
+
+  getStructs() {
+    return this.structs;
   }
 
   setRoot(sdef) {
@@ -685,7 +723,7 @@ export class DataAPI extends ModelInterface {
    */
 
   _addClass(cls, dstruct) {
-    let key =  _map_struct_idgen++;
+    let key = _map_struct_idgen++;
     cls[CLS_API_KEY] = key;
 
     this.structs.push(dstruct);
@@ -693,7 +731,7 @@ export class DataAPI extends ModelInterface {
     _map_structs[key] = dstruct;
   }
 
-  mapStruct(cls, auto_create = true, name=cls.name) {
+  mapStruct(cls, auto_create = true, name = cls.name) {
     let key;
 
     if (!cls.hasOwnProperty(CLS_API_KEY)) {
@@ -723,7 +761,6 @@ export class DataAPI extends ModelInterface {
     popReportName();
   }
 
-
   /*
   massSetProp operate on lists.  The idea is to
   write a filter str inside a data path, e.g.
@@ -747,9 +784,9 @@ export class DataAPI extends ModelInterface {
       return;
     }
 
-    let prefix = massSetPath.slice(0, start-1);
-    let filter = massSetPath.slice(start+1, end);
-    let suffix = massSetPath.slice(end+2, massSetPath.length);
+    let prefix = massSetPath.slice(0, start - 1);
+    let filter = massSetPath.slice(start + 1, end);
+    let suffix = massSetPath.slice(end + 2, massSetPath.length);
 
     let rdef = this.resolvePath(ctx, prefix);
 
@@ -790,7 +827,7 @@ export class DataAPI extends ModelInterface {
         continue;
       }
 
-      let key = ""+list.getKey(this, rdef.value, obj);
+      let key = "" + list.getKey(this, rdef.value, obj);
       let path = `${prefix}[${key}]${suffix}`;
 
       paths.push(path);
@@ -799,7 +836,7 @@ export class DataAPI extends ModelInterface {
     return paths;
   }
 
-  resolvePath(ctx, inpath, ignoreExistence = false, dstruct=undefined) {
+  resolvePath(ctx, inpath, ignoreExistence = false, dstruct = undefined) {
     let parser = parserStack[parserStack.cur++];
     let ret = undefined;
 
@@ -823,9 +860,9 @@ export class DataAPI extends ModelInterface {
 
     if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.ui_name_get) {
       let dummy = {
-        datactx  : ctx,
-        datapath : inpath,
-        dataref  : ret.obj
+        datactx : ctx,
+        datapath: inpath,
+        dataref : ret.obj
       };
 
       let name = ret.dpath.ui_name_get.call(dummy);
@@ -842,7 +879,7 @@ export class DataAPI extends ModelInterface {
    @param ignoreExistence: don't try to get actual data associated with path,
    just want meta information
    */
-  resolvePath_intern(ctx, inpath, ignoreExistence = false, p=pathParser, dstruct=undefined) {
+  resolvePath_intern(ctx, inpath, ignoreExistence = false, p = pathParser, dstruct = undefined) {
     inpath = inpath.replace("==", "=");
 
     p.input(inpath);
@@ -1011,7 +1048,7 @@ export class DataAPI extends ModelInterface {
               obj = undefined;
             }
 
-            if (typeof obj === "string" && (prop.type & (PropTypes.ENUM|PropTypes.FLAG))) {
+            if (typeof obj === "string" && (prop.type & (PropTypes.ENUM | PropTypes.FLAG))) {
               obj = prop.values[obj];
             }
 
@@ -1148,7 +1185,7 @@ export class DataAPI extends ModelInterface {
 
         subkey = num;
 
-        if (prop !== undefined && !(prop.type & (PropTypes.VEC2|PropTypes.VEC3|PropTypes.VEC4|PropTypes.QUAT))) {
+        if (prop !== undefined && !(prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT))) {
           lastobj = obj;
         }
 
@@ -1182,14 +1219,14 @@ export class DataAPI extends ModelInterface {
     }
 
     return {
-      dpath : lastdpath,
-      parent: lastobj2,
-      obj: lastobj,
-      value: obj,
-      key: lastkey,
+      dpath  : lastdpath,
+      parent : lastobj2,
+      obj    : lastobj,
+      value  : obj,
+      key    : lastkey,
       dstruct: dstruct,
-      prop: prop,
-      subkey: subkey
+      prop   : prop,
+      subkey : subkey
     };
   }
 
@@ -1374,16 +1411,16 @@ export class DataAPI extends ModelInterface {
     }
 
     return {
-      parent: parent2,
-      obj: parent1,
-      value: obj,
-      key: key,
+      parent : parent2,
+      obj    : parent1,
+      value  : obj,
+      key    : key,
       dstruct: dstruct,
-      subkey: subkey,
-      prop: prop,
-      arg: arg,
-      type: type,
-      _path: retpath
+      subkey : subkey,
+      prop   : prop,
+      arg    : arg,
+      type   : type,
+      _path  : retpath
     };
   }
 
@@ -1438,19 +1475,19 @@ export class DataAPI extends ModelInterface {
     }
 
     return {
-      parent: parent2,
-      obj: parent1,
-      value: obj,
-      key: key,
+      parent : parent2,
+      obj    : parent1,
+      value  : obj,
+      key    : key,
       dstruct: dstruct,
-      prop: prop
+      prop   : prop
     };
   }
 
-  _stripToolUIName(path, uiNameOut=undefined) {
+  _stripToolUIName(path, uiNameOut = undefined) {
     if (path.search(/\|/) >= 0) {
       if (uiNameOut) {
-        uiNameOut[0] = path.slice(path.search(/\|/)+1, path.length).trim();
+        uiNameOut[0] = path.slice(path.search(/\|/) + 1, path.length).trim();
       }
       path = path.slice(0, path.search(/\|/)).trim();
     }
@@ -1599,24 +1636,6 @@ export class DataAPI extends ModelInterface {
 
     return tool;
   }
-
-  static toolRegistered(cls) {
-    return ToolOp.isRegistered(cls);
-    //let key = toolkey(cls);
-    //return key in tool_classes;
-  }
-
-  static registerTool(cls) {
-    console.warn("Outdated function simple_controller.DataAPI.registerTool called");
-
-    return ToolOp.register(cls);
-
-    //let key = toolkey(cls);
-    //
-    //if (!(key in tool_classes)) {
-    //  tool_classes[key] = cls;
-    //}
-  }
 }
 
 export function registerTool(cls) {
@@ -1628,6 +1647,7 @@ export function initSimpleController() {
 }
 
 import {DataPathSetOp} from "./controller_ops.js";
+
 let dpt = DataPathSetOp;
 
 export function getDataPathToolOp() {
