@@ -47,7 +47,7 @@ import {Vec2Property, Vec3Property, Vec4Property, PropTypes, PropFlags} from '..
 import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as util from '../util/util.js';
 
-import {DataPath, DataFlags, DataTypes, DataPathError, StructFlags} from './controller_base.js';
+import {DataPath, DataFlags, DataTypes, DataPathError, StructFlags, getTempProp} from './controller_base.js';
 
 export * from './controller_base.js';
 
@@ -858,18 +858,6 @@ export class DataAPI extends ModelInterface {
 
     parserStack.cur--;
 
-    if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.ui_name_get) {
-      let dummy = {
-        datactx : ctx,
-        datapath: inpath,
-        dataref : ret.obj
-      };
-
-      let name = ret.dpath.ui_name_get.call(dummy);
-
-      ret.prop.uiname = "" + name;
-    }
-
     if (ret !== undefined && ret.prop && ret.dpath && (ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
       let prop = ret.prop;
 
@@ -884,6 +872,18 @@ export class DataAPI extends ModelInterface {
       ret.prop = newprop;
 
       prop.ctx = prop.datapath = prop.dataref = undefined;
+    }
+
+    if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.ui_name_get) {
+      let dummy = {
+        datactx : ctx,
+        datapath: inpath,
+        dataref : ret.obj
+      };
+
+      let name = ret.dpath.ui_name_get.call(dummy);
+
+      ret.prop.uiname = "" + name;
     }
 
     return ret;

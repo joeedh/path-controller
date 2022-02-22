@@ -2,7 +2,7 @@ import {PropFlags, PropTypes} from '../toolsys/toolprop_abstract.js';
 import {Quat, Vector2, Vector3, Vector4} from '../util/vectormath.js';
 import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as toolprop from '../toolsys/toolprop.js';
-import {print_stack} from '../util/util.js';
+import {print_stack, cachering} from '../util/util.js';
 
 export const DataFlags = {
   READ_ONLY             : 1,
@@ -19,6 +19,15 @@ export const DataTypes = {
   ARRAY         : 3
 };
 
+let propCacheRings = {};
+
+export function getTempProp(type) {
+  if (!(type in propCacheRings)) {
+    propCacheRings[type] = cachering.fromConstructor(ToolProperty.getClass(type), 32);
+  }
+
+  return propCacheRings[type].next();
+}
 
 export class DataPathError extends Error {
 };

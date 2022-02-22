@@ -5,6 +5,10 @@ import nstructjs from '../util/struct.js';
 
 export {PropTypes, PropFlags} from './toolprop_abstract.js';
 
+export const PropSubTypes = {
+  COLOR: 1
+};
+
 let first = (iter) => {
   if (iter === undefined) {
     return undefined;
@@ -30,17 +34,8 @@ export function setPropTypes(types) {
   }
 }
 
-export const PropSubTypes = {
-  COLOR: 1
-};
-
 export let customPropertyTypes = [];
-
 export let PropClasses = {};
-
-function _addClass(cls) {
-  PropClasses[new cls().type] = cls;
-}
 
 let customPropTypeBase = 17;
 
@@ -91,6 +86,14 @@ export class ToolProperty extends ToolPropertyIF {
     this.step = 0.05;
 
     this.callbacks = {};
+  }
+
+  static internalRegister(cls) {
+    PropClasses[new cls().type] = cls;
+  }
+
+  static getClass(type) {
+    return PropClasses[type];
   }
 
   static setDefaultRadix(n) {
@@ -565,7 +568,7 @@ StringProperty.STRUCT = nstructjs.inherit(StringProperty, ToolProperty) + `
 }
 `;
 nstructjs.register(StringProperty);
-_addClass(StringProperty);
+ToolProperty.internalRegister(StringProperty);
 
 let num_res = [
   /([0-9]+)/,
@@ -793,7 +796,7 @@ IntProperty.STRUCT = nstructjs.inherit(IntProperty, _NumberPropertyBase) + `
 }`;
 nstructjs.register(IntProperty);
 
-_addClass(IntProperty);
+ToolProperty.internalRegister(IntProperty);
 
 export class ReportProperty extends StringProperty {
   constructor(value, apiname, uiname, description, flag, icon) {
@@ -806,7 +809,7 @@ ReportProperty.STRUCT = nstructjs.inherit(ReportProperty, StringProperty) + `
 }
 `;
 nstructjs.register(ReportProperty);
-_addClass(ReportProperty);
+ToolProperty.internalRegister(ReportProperty);
 
 export class BoolProperty extends ToolProperty {
   constructor(value, apiname,
@@ -851,7 +854,7 @@ export class BoolProperty extends ToolProperty {
   }
 }
 
-_addClass(BoolProperty);
+ToolProperty.internalRegister(BoolProperty);
 BoolProperty.STRUCT = nstructjs.inherit(BoolProperty, ToolProperty) + `
   data : bool;
 }
@@ -910,7 +913,7 @@ export class FloatProperty extends _NumberPropertyBase {
   }
 }
 
-_addClass(FloatProperty);
+ToolProperty.internalRegister(FloatProperty);
 FloatProperty.STRUCT = nstructjs.inherit(FloatProperty, _NumberPropertyBase) + `
   decimalPlaces : int;
   data          : float;
@@ -1211,7 +1214,7 @@ export class EnumProperty extends ToolProperty {
   }
 }
 
-_addClass(EnumProperty);
+ToolProperty.internalRegister(EnumProperty);
 EnumProperty.STRUCT = nstructjs.inherit(EnumProperty, ToolProperty) + `
   data            : string             | ""+this.data;
   data_is_int     : bool               | this._is_data_int();
@@ -1244,7 +1247,7 @@ export class FlagProperty extends EnumProperty {
   }
 }
 
-_addClass(FlagProperty);
+ToolProperty.internalRegister(FlagProperty);
 FlagProperty.STRUCT = nstructjs.inherit(FlagProperty, EnumProperty) + `
 }
 `;
@@ -1318,7 +1321,7 @@ Vec2Property.STRUCT = nstructjs.inherit(Vec2Property, VecPropertyBase) + `
 `;
 nstructjs.register(Vec2Property);
 
-_addClass(Vec2Property);
+ToolProperty.internalRegister(Vec2Property);
 
 export class Vec3Property extends VecPropertyBase {
   constructor(data, apiname, uiname, description) {
@@ -1354,7 +1357,7 @@ Vec3Property.STRUCT = nstructjs.inherit(Vec3Property, VecPropertyBase) + `
 }
 `;
 nstructjs.register(Vec3Property);
-_addClass(Vec3Property);
+ToolProperty.internalRegister(Vec3Property);
 
 export class Vec4Property extends FloatProperty {
   constructor(data, apiname, uiname, description) {
@@ -1398,7 +1401,7 @@ Vec4Property.STRUCT = nstructjs.inherit(Vec4Property, VecPropertyBase) + `
 }
 `;
 nstructjs.register(Vec4Property);
-_addClass(Vec4Property);
+ToolProperty.internalRegister(Vec4Property);
 
 export class QuatProperty extends ToolProperty {
   constructor(data, apiname, uiname, description) {
@@ -1435,7 +1438,7 @@ QuatProperty.STRUCT = nstructjs.inherit(QuatProperty, VecPropertyBase) + `
 `;
 nstructjs.register(QuatProperty);
 
-_addClass(QuatProperty);
+ToolProperty.internalRegister(QuatProperty);
 
 export class Mat4Property extends ToolProperty {
   constructor(data, apiname, uiname, description) {
@@ -1493,7 +1496,7 @@ Mat4Property.STRUCT = nstructjs.inherit(Mat4Property, FloatProperty) + `
 }
 `;
 nstructjs.register(Mat4Property);
-_addClass(Mat4Property);
+ToolProperty.internalRegister(Mat4Property);
 
 /**
  * List of other tool props (all of one type)
@@ -1662,7 +1665,7 @@ ListProperty.STRUCT = nstructjs.inherit(ListProperty, ToolProperty) + `
 }`;
 nstructjs.register(ListProperty);
 
-_addClass(ListProperty);
+ToolProperty.internalRegister(ListProperty);
 
 
 //like FlagsProperty but uses strings
@@ -1888,7 +1891,7 @@ StringSetProperty.STRUCT = nstructjs.inherit(StringSetProperty, ToolProperty) + 
 }`;
 nstructjs.register(StringSetProperty);
 
-_addClass(StringSetProperty);
+ToolProperty.internalRegister(StringSetProperty);
 
 import {Curve1D} from '../curve/curve1d.js';
 
@@ -1944,5 +1947,5 @@ Curve1DProperty.STRUCT = nstructjs.inherit(Curve1DProperty, ToolProperty) + `
 `;
 
 nstructjs.register(Curve1DProperty);
-_addClass(Curve1DProperty);
+ToolProperty.internalRegister(Curve1DProperty);
 
