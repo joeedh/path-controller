@@ -870,6 +870,22 @@ export class DataAPI extends ModelInterface {
       ret.prop.uiname = "" + name;
     }
 
+    if (ret !== undefined && ret.prop && ret.dpath && (ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
+      let prop = ret.prop;
+
+      prop.ctx = ctx;
+      prop.datapath = inpath;
+      prop.dataref = ret.obj;
+
+      let newprop = getTempProp(prop.type);
+      prop.copyTo(newprop);
+
+      ret.dpath.propGetter.call(prop, newprop);
+      ret.prop = newprop;
+
+      prop.ctx = prop.datapath = prop.dataref = undefined;
+    }
+
     return ret;
   }
 

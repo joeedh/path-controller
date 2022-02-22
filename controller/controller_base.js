@@ -5,17 +5,18 @@ import * as toolprop from '../toolsys/toolprop.js';
 import {print_stack} from '../util/util.js';
 
 export const DataFlags = {
-  READ_ONLY         : 1,
-  USE_CUSTOM_GETSET : 2,
-  USE_FULL_UNDO     : 4 //DataPathSetOp in controller_ops.js saves/loads entire file for undo/redo
+  READ_ONLY             : 1,
+  USE_CUSTOM_GETSET     : 2,
+  USE_FULL_UNDO         : 4, //DataPathSetOp in controller_ops.js saves/loads entire file for undo/redo
+  USE_CUSTOM_PROP_GETTER: 8,
 };
 
 
 export const DataTypes = {
-  STRUCT: 0,
+  STRUCT        : 0,
   DYNAMIC_STRUCT: 1,
-  PROP: 2,
-  ARRAY: 3
+  PROP          : 2,
+  ARRAY         : 3
 };
 
 
@@ -37,6 +38,7 @@ export function getVecClass(proptype) {
       throw new Error("bad prop type " + proptype);
   }
 }
+
 export function isVecProperty(prop) {
   if (!prop || typeof prop !== "object" || prop === null)
     return false;
@@ -105,6 +107,28 @@ export class DataPath {
   read_only() {
     console.warn("DataPath.read_only is deprecated; use readOnly");
     return this.readOnly();
+  }
+
+  /** used to override tool property settings,
+   *  e.g. ranges, units, etc; returns a
+   *  base class instance of ToolProperty.
+   *
+   *  The this context points to the original ToolProperty and contains
+   *  a few useful references:
+   *
+   *  this.dataref - an object instance of this struct type
+   *  this.ctx - a context
+   *
+   *  callback takes one argument, a new (freshly copied of original)
+   *  tool property to modify
+   *
+   * */
+  customPropCallback(callback) {
+    this.flag |= DataFlags.USE_CUSTOM_PROP_GETTER;
+    this.data.flag |= PropFlags.USE_CUSTOM_PROP_GETTER;
+    this.propGetter = callback;
+
+    return this;
   }
 
   /**
@@ -243,7 +267,7 @@ export class DataPath {
   }
 
   /**adds a slider for moving vector component sliders simultaneously*/
-  uniformSlider(state=true) {
+  uniformSlider(state = true) {
     this.data.uniformSlider(state);
 
     return this;
@@ -322,6 +346,7 @@ export class ListIface {
   getStruct(api, list, key) {
 
   }
+
   get(api, list, key) {
 
   }
@@ -355,19 +380,22 @@ export class ToolOpIface {
   constructor() {
   }
 
-  static tooldef() {return {
-    uiname      : "!untitled tool",
-    icon        : -1,
-    toolpath    : "logical_module.tool", //logical_module need not match up to real module name
-    description : undefined,
-    is_modal    : false,
-    inputs      : {}, //tool properties
-    outputs     : {}  //tool properties
-  }}
+  static tooldef() {
+    return {
+      uiname     : "!untitled tool",
+      icon       : -1,
+      toolpath   : "logical_module.tool", //logical_module need not match up to real module name
+      description: undefined,
+      is_modal   : false,
+      inputs     : {}, //tool properties
+      outputs    : {}  //tool properties
+    }
+  }
 };
 
 
 let DataAPIClass = undefined;
+
 export function setImplementationClass(cls) {
   DataAPIClass = cls;
 }
