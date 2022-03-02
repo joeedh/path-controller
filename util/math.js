@@ -679,104 +679,74 @@ export function dist_to_tri_v3_old(co, v1, v2, v3, no = undefined) {
   pp[1] = co[axis2];
   pp[2] = 0.0;
 
+  let dis = 1e17;
+
+  function linedis2d(a, b, c) {
+    let dx1 = a[0] - b[0];
+    let dy1 = a[1] - b[1];
+    let dx2 = c[0] - b[0];
+    let dy2 = c[1] - b[1];
+
+    let len = dx2*dx2 + dy2*dy2;
+    len = len > 0.000001 ? 1.0 / len : 0.0;
+
+    dx2 *= len;
+    dy2 *= len;
+
+    return Math.abs(dx1*dy2 - dx2*dy1);
+  }
+
+  let tmp = dtvtmps.next();
+  let tmp2 = dtvtmps.next();
+
+  function linedis3d(a, b, c) {
+    tmp.load(a).sub(b);
+    tmp2.load(c).sub(b).normalize();
+
+    let t = tmp.dot(tmp2);
+    t = Math.min(Math.max(t, 0.0), b.vectorDistance(c));
+
+    tmp2.mulScalar(t).add(b);
+
+    return tmp2.vectorDistance(a);
+  }
+
+
+  /* are we above the triangle? if so use plane distance */
   if (point_in_tri(pp, p1, p2, p3)) {
     return Math.abs(planedis);
-  } else {
-    let dis = 1e17;
-
-    if (0) {
-      dis = Math.min(dis, _linedis2(co, v1, v2));
-      dis = Math.min(dis, _linedis2(co, v2, v3));
-      dis = Math.min(dis, _linedis2(co, v3, v1));
-      dis = Math.sqrt(dis);
-    } else {
-      dis = Math.min(dis, dist_to_line_sqr(co, v1, v2, true));
-      dis = Math.min(dis, dist_to_line_sqr(co, v2, v3, true));
-      dis = Math.min(dis, dist_to_line_sqr(co, v3, v1, true));
-      dis = Math.sqrt(dis);
-    }
-
-    return dis;
   }
 
+  /* get distance to the closest edge */
+  dis = Math.min(dis, linedis3d(co, v1, v2));
+  dis = Math.min(dis, linedis3d(co, v2, v3));
+  dis = Math.min(dis, linedis3d(co, v3, v1));
 
   if (0) {
-    p.add(a).addFac(no, planedis);
+    let uv = barycentric_v2(pp, p1, p2, p3);
 
-    if (Math.abs(p.dot(no)) > 0.000001) {
-      console.log(p.dot(no), p, no);
-      throw new Error("");
-    }
+    let w = 1.0 - uv[0] - uv[1];
+    uv[0] = Math.min(Math.max(uv[0], 0.0), 1.0);
+    uv[1] = Math.min(Math.max(uv[1], 0.0), 1.0);
+    w = Math.min(Math.max(w, 0.0), 1.0);
 
-    a.add(co);
-    b.add(co);
-    c.add(co);
+    let sum = (uv[0] + uv[1] + w);
+    sum = sum !== 0.0 ? 1.0/sum : 0.0;
 
-    let ax = a[0], bx = b[0], cx = c[0];
-    let ay = a[1], by = b[1], cy = c[1];
-    let az = a[2], bz = b[2], cz = c[2];
+    w *= sum;
+    uv[0] *= sum;
+    uv[1] *= sum;
 
-    let div = ((bx*cz - bz*cx)*ay - (by*cz - bz*cy)*ax - (bx*cy - by*cx)*az);
-    //let div2 = ((bx*cz-bz*cx)*ay - (by*cz-bz*cy)*ax - (bx*cy-by*cx)*az);
-    //let div3 = ((bx*cz-bz*cx)*ay - (by*cz-bz*cy)*ax - (bx*cy-by*cx)*az);
+    pp.zero();
 
-    if (div === 0.0) {
-      return 0.0;
-    }
+    pp.addFac(v1, uv[0]);
+    pp.addFac(v2, uv[1]);
+    pp.addFac(v3, 1.0 - uv[0] - uv[1]);
 
-    let x1 = co[0], y1 = co[1], z1 = co[2];
-
-    let u = ((cx*z1 - cz*x1)*by - (cy*z1 - cz*y1)*bx - (cx*y1 - cy*x1)*bz)/div;
-    let v = (-((cx*z1 - cz*x1)*ay - (cy*z1 - cz*y1)*ax) + (cx*y1 - cy*x1)*az)/div
-    let w = ((bx*z1 - bz*x1)*ay - (by*z1 - bz*y1)*ax - (bx*y1 - by*x1)*az)/div;
-
-    if (isNaN(u) || isNaN(v) || isNaN(w)) {
-      console.log(u, v, w, co, a, b, c, div);
-      throw new Error("NaN!");
-    }
-
-    //let p2 = dtvtmps.next();
-    u = Math.min(Math.max(u, 0), 1.0);
-    v = Math.min(Math.max(v, 0), 1.0);
-    w = Math.min(Math.max(w, 0), 1.0);
-
-    let tot = u + v + w;
-
-    if (tot > 0) {
-      tot = 1.0/tot;
-      u *= tot;
-      v *= tot;
-      w *= tot;
-    }
-
-    p2.addFac(v1, u);
-    p2.addFac(v2, v);
-    p2.addFac(v3, w);
-
-    return p2.vectorDistance(co);
+    dis = Math.min(dis, pp.vectorDistance(co));
   }
 
-  /*
- on factor;
-
- x2 := ax*u + bx*v + cx*w;
- y2 := ay*u + by*v + cy*w;
- z2 := az*u + bz*v + cz*w;
-
- f1 := x2 - x1;
- f2 := y2 - y1;
- f3 := z2 - z1;
-
- ff := solve({f1, f2, f3}, {u, v, w});
-
- on fort;
- part(ff, 1, 1);
- part(ff, 1, 2);
- part(ff, 1, 3);
- off fort;
-
-
-  */
+  return dis;
 }
 
 
