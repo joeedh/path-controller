@@ -169,15 +169,7 @@ export class DataList extends ListIface {
   }
 
   /**
-   Okay, this is a simple interface for the controller api to access lists,
-   whether it's {} object maps, [] arrays, util.set's, or whatever.
-
-   In fairmotion I used a lambda-type filter system, but that was problematic as it
-   didn't support any sort of abstraction or composition, so the lamba strings ended up
-   like this:
-   "($.flag & SELECT) && !($.flag & HIDE) && !($.flag & GHOST) && (ctx.spline.layers.active.id in $.layers)
-
-   Hopefully this new bitmask system will work better.
+   Generic list API.
 
    * Callbacks is an array of name functions, like so:
    - function getStruct(api, list, key) //return DataStruct type of object in key, key is optional if omitted return base type of all objects?
@@ -776,6 +768,10 @@ export class DataAPI extends ModelInterface {
   }
 
   resolveMassSetPaths(ctx, massSetPath) {
+    if (massSetPath.startsWith("/")) {
+      massSetPath = massSetPath.slice(1, massSetPath.length);
+    }
+
     let start = massSetPath.search("{");
     let end = massSetPath.search("}");
 
@@ -815,7 +811,16 @@ export class DataAPI extends ModelInterface {
           path = path.slice(1, filter.length).trim();
         }
 
-        return api.getValue(obj, path, st);
+        try {
+          return api.getValue(obj, path, st);
+        } catch (error) {
+          if (!(error instanceof DataPathError)) {
+            util.print_stack(error);
+            console.error("Error in datapath callback");
+          }
+
+          return false;
+        }
       } else {
         let $ = obj;
         return eval(filter);
@@ -830,6 +835,18 @@ export class DataAPI extends ModelInterface {
       let key = "" + list.getKey(this, rdef.value, obj);
       let path = `${prefix}[${key}]${suffix}`;
 
+      /* validate the final path */
+      try {
+        this.getValue(ctx, path);
+      } catch (error) {
+        if (!(error instanceof DataPathError)) {
+          util.print_stack(error);
+          console.error(path + ": Error in datapath API");
+        }
+
+        continue;
+      }
+
       paths.push(path);
     }
 
@@ -839,6 +856,10 @@ export class DataAPI extends ModelInterface {
   resolvePath(ctx, inpath, ignoreExistence = false, dstruct = undefined) {
     let parser = parserStack[parserStack.cur++];
     let ret = undefined;
+
+    if (inpath[0] === "/") {
+      inpath = inpath.slice(1, inpath.length).trim();
+    }
 
     try {
       ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser, dstruct)
@@ -1222,6 +1243,10 @@ export class DataAPI extends ModelInterface {
 
         obj = prop.get(this, lastobj, lastkey);
         dstruct = prop.getStruct(this, lastobj, lastkey);
+
+        if (!dstruct) {
+          throw new DataPathError(inpath + ": list has no entry " + lastkey);
+        }
 
         if (p.peeknext() !== undefined && p.peeknext().type === "DOT") {
           p.next();

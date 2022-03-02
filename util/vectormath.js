@@ -688,6 +688,13 @@ export class Vector3 extends F64BaseVector {
     return this;
   }
 
+  loadXY(x, y) {
+    this[0] = x;
+    this[1] = y;
+
+    return this;
+  }
+
   toJSON() {
     return [this[0], this[1], this[2]];
   }
@@ -1289,6 +1296,10 @@ export class Matrix4 {
     mat.load(json.items);
     mat.isPersp = json.isPersp;
     return mat;
+  }
+
+  copy() {
+    return this.clone();
   }
 
   clone() {
