@@ -5,6 +5,21 @@ import nstructjs from '../util/struct.js';
 
 export {PropTypes, PropFlags} from './toolprop_abstract.js';
 
+export const NumberConstraintsBase = new Set([
+  'range', 'expRate', 'step', 'uiRange', 'baseUnit', 'displayUnit', 'stepIsRelative',
+  'slideSpeed'
+]);
+
+export const IntegerConstraints = new Set([
+  'radix'
+].concat(util.list(NumberConstraintsBase)));
+
+export const FloatConstrinats = new Set([
+  'decimalPlaces'
+].concat(util.list(NumberConstraintsBase)));
+
+export const NumberConstraints = new Set(util.list(IntegerConstraints).concat(util.list(FloatConstrinats)));
+
 export const PropSubTypes = {
   COLOR: 1
 };
@@ -43,8 +58,8 @@ let wordmap = {
   sel  : "select",
   unsel: "deselect",
   eid  : "id",
-  props : "properties",
-  res : "resource",
+  props: "properties",
+  res  : "resource",
 
 };
 
@@ -58,7 +73,7 @@ class OnceTag {
 }
 
 export class ToolProperty extends ToolPropertyIF {
-  constructor(type, subtype, apiname, uiname="", description="", flag=0, icon=-1) {
+  constructor(type, subtype, apiname, uiname = "", description = "", flag = 0, icon = -1) {
     super();
 
     this.data = undefined;
@@ -81,6 +96,9 @@ export class ToolProperty extends ToolPropertyIF {
     this.icon = icon;
     this.icon2 = icon; //another icon, e.g. unchecked state
 
+    //remember to update NumberConstraintsBase et al when adding new number
+    //constraints
+
     this.decimalPlaces = defaultDecimalPlaces;
     this.radix = defaultRadix;
     this.step = 0.05;
@@ -102,35 +120,6 @@ export class ToolProperty extends ToolPropertyIF {
 
   static setDefaultDecimalPlaces(n) {
     defaultDecimalPlaces = n;
-  }
-
-  setDescription(s) {
-    this.description = s;
-    return this;
-  }
-
-  setUIName(s) {
-    this.uiname = s;
-    return this;
-  }
-
-  calcMemSize() {
-    function strlen(s) {
-      //length of string plus an assumed member pointer
-      return s !== undefined ? s.length + 8 : 8;
-    }
-
-    let tot = 0;
-
-    tot += strlen(this.apiname) + strlen(this.uiname);
-    tot += strlen(this.description);
-
-    tot += 11*8; //assumed member pointers
-    for (let k in this.callbacks) {
-      tot += 24;
-    }
-
-    return tot;
   }
 
   static makeUIName(name) {
@@ -186,10 +175,6 @@ export class ToolProperty extends ToolPropertyIF {
     return parts;
   }
 
-  equals(b) {
-    throw new Error("implement me");
-  }
-
   static register(cls) {
     cls.PROP_TYPE_ID = (1<<customPropTypeBase);
     PropTypes[cls.name] = cls.PROP_TYPE_ID;
@@ -200,6 +185,47 @@ export class ToolProperty extends ToolPropertyIF {
     PropClasses[new cls().type] = cls;
 
     return cls.PROP_TYPE_ID;
+  }
+
+  static calcRelativeStep(step, value, logBase = 1.5) {
+    value = Math.log(Math.abs(value) + 1.0)/Math.log(logBase);
+    value = Math.max(value, step);
+
+    this.report(util.termColor("STEP", "red"), value);
+    return value;
+  }
+
+  setDescription(s) {
+    this.description = s;
+    return this;
+  }
+
+  setUIName(s) {
+    this.uiname = s;
+    return this;
+  }
+
+  calcMemSize() {
+    function strlen(s) {
+      //length of string plus an assumed member pointer
+      return s !== undefined ? s.length + 8 : 8;
+    }
+
+    let tot = 0;
+
+    tot += strlen(this.apiname) + strlen(this.uiname);
+    tot += strlen(this.description);
+
+    tot += 11*8; //assumed member pointers
+    for (let k in this.callbacks) {
+      tot += 24;
+    }
+
+    return tot;
+  }
+
+  equals(b) {
+    throw new Error("implement me");
   }
 
   private() {
@@ -224,15 +250,15 @@ export class ToolProperty extends ToolPropertyIF {
     let stack = this.callbacks[type];
     stack = stack.concat([]); //copy
 
-    for (let i=0; i<stack.length; i++) {
+    for (let i = 0; i < stack.length; i++) {
       let cb = stack[i];
 
       if (cb instanceof OnceTag) {
         let j = i;
 
         //remove callback;
-        while (j < stack.length-1) {
-          stack[j] = stack[j+1];
+        while (j < stack.length - 1) {
+          stack[j] = stack[j + 1];
           j++;
         }
 
@@ -361,14 +387,6 @@ export class ToolProperty extends ToolPropertyIF {
   setStep(step) {
     this.step = step;
     return this;
-  }
-
-  static calcRelativeStep(step, value, logBase = 1.5) {
-    value = Math.log(Math.abs(value) + 1.0)/Math.log(logBase);
-    value = Math.max(value, step);
-
-    this.report(util.termColor("STEP", "red"), value);
-    return value;
   }
 
   getStep(value = 1.0) {
@@ -637,18 +655,38 @@ export class _NumberPropertyBase extends ToolProperty {
     super(type, null, apiname, uiname, description, flag, icon);
 
     this.data = 0.0;
+
+    //remember to update NumberConstraintsBase et al when adding new number
+    //constraints
+
+    /** controls roller slider rate */
+    this.slideSpeed = 1.0;
+
+    /** exponential rate, used by roller sliders */
     this.expRate = 1.33;
     this.step = 0.1;
 
     this.stepIsRelative = false;
 
     this.range = [-1e17, 1e17];
-    this.uiRange = undefined; //if undefined, this.range will be used
+
+    /** if undefined this.range will be used */
+    this.uiRange = undefined;
 
     if (value !== undefined && value !== null) {
       this.setValue(value);
       this.wasSet = false;
     }
+  }
+
+  get ui_range() {
+    this.report("NumberProperty.ui_range is deprecated");
+    return this.uiRange;
+  }
+
+  set ui_range(val) {
+    this.report("NumberProperty.ui_range is deprecated");
+    this.uiRange = val;
   }
 
   calcMemSize() {
@@ -657,11 +695,6 @@ export class _NumberPropertyBase extends ToolProperty {
 
   equals(b) {
     return this.data === b.data;
-  }
-
-  get ui_range() {
-    this.report("NumberProperty.ui_range is deprecated");
-    return this.uiRange;
   }
 
   toJSON() {
@@ -682,11 +715,6 @@ export class _NumberPropertyBase extends ToolProperty {
     return this;
   }
 
-  set ui_range(val) {
-    this.report("NumberProperty.ui_range is deprecated");
-    this.uiRange = val;
-  }
-
   copyTo(b) {
     super.copyTo(b);
 
@@ -700,6 +728,12 @@ export class _NumberPropertyBase extends ToolProperty {
     b.data = this.data;
   }
 
+
+  setSlideSpeed(f) {
+    this.slideSpeed = f;
+
+    return this;
+  }
 
   /*
   * non-linear exponent for number sliders
@@ -742,10 +776,11 @@ export class _NumberPropertyBase extends ToolProperty {
   }
 };
 _NumberPropertyBase.STRUCT = nstructjs.inherit(_NumberPropertyBase, ToolProperty) + `
-  range    : array(float);
-  expRate  : float;
-  data     : float;
-  step     : float;
+  range      : array(float);
+  expRate    : float;
+  data       : float;
+  step       : float;
+  slideSpeed : float;
 }
 `;
 nstructjs.register(_NumberPropertyBase);
@@ -754,6 +789,9 @@ export class IntProperty extends _NumberPropertyBase {
   constructor(value, apiname,
               uiname, description, flag, icon) {
     super(PropTypes.INT, value, apiname, uiname, description, flag, icon);
+
+    //remember to update NumberConstraintsBase et al when adding new number
+    //constraints
 
     this.radix = 10;
   }
@@ -805,6 +843,7 @@ export class ReportProperty extends StringProperty {
     this.type = PropTypes.REPORT;
   }
 }
+
 ReportProperty.STRUCT = nstructjs.inherit(ReportProperty, StringProperty) + `
 }
 `;
@@ -861,10 +900,14 @@ BoolProperty.STRUCT = nstructjs.inherit(BoolProperty, ToolProperty) + `
 `;
 nstructjs.register(BoolProperty);
 
+
 export class FloatProperty extends _NumberPropertyBase {
   constructor(value, apiname,
               uiname, description, flag, icon) {
     super(PropTypes.FLOAT, value, apiname, uiname, description, flag, icon);
+
+    //remember to update NumberConstraintsBase et al when adding new number
+    //constraints
 
     this.decimalPlaces = 4;
   }
@@ -1068,7 +1111,7 @@ export class EnumProperty extends ToolProperty {
 
     if (this.descriptions) {
       for (let k in this.descriptions) {
-        tot += (k.length + this.descriptions[k].length) * 4;
+        tot += (k.length + this.descriptions[k].length)*4;
       }
     }
 
@@ -1537,6 +1580,14 @@ export class ListProperty extends ToolProperty {
     this.wasSet = false;
   }
 
+  get length() {
+    return this.value.length;
+  }
+
+  set length(val) {
+    this.value.length = val;
+  }
+
   calcMemSize() {
     let tot = super.calcMemSize();
 
@@ -1650,15 +1701,8 @@ export class ListProperty extends ToolProperty {
       }
     })();
   }
-
-  get length() {
-    return this.value.length;
-  }
-
-  set length(val) {
-    this.value.length = val;
-  }
 }
+
 ListProperty.STRUCT = nstructjs.inherit(ListProperty, ToolProperty) + `
   prop  : abstract(ToolProperty);
   value : array(abstract(ToolProperty));
@@ -1885,6 +1929,7 @@ export class StringSetProperty extends ToolProperty {
     this.value = new util.set(this.value);
   }
 }
+
 StringSetProperty.STRUCT = nstructjs.inherit(StringSetProperty, ToolProperty) + `
   value  : iter(string);
   values : iterkeys(string);  

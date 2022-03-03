@@ -275,6 +275,11 @@ export class DataPath {
     return this;
   }
 
+  slideSpeed(speed) {
+    this.data.setSlideSpeed(speed);
+    return this;
+  }
+
   /**adds a slider for moving vector component sliders simultaneously*/
   uniformSlider(state = true) {
     this.data.uniformSlider(state);
