@@ -246,14 +246,17 @@ export function pathDebugEvent(e, extra) {
     return this.__stopprop();
   }
 }
-/*
-stupid DOM event system.  I hate it.
-*/
 
+/** Returns true if event came from a touchscreen or pen device */
 export function eventWasTouch(e) {
   let ret = e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents;
   ret = ret || e.was_touch;
+  ret = ret || e instanceof TouchEvent;
   ret = ret || e.touches !== undefined;
+
+  if (e instanceof PointerEvent) {
+    ret = ret || (e.pointerType === "pen" || e.pointerType === "touch");
+  }
 
   return ret;
 }
