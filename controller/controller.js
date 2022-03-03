@@ -60,6 +60,10 @@ let tokens = [
     t.value = parseInt(t.value);
     return t;
   }),
+  tk('NUMBER', /-?[0-9]+\.[0-9]*/, (t) => {
+    t.value = parseFloat(t.value);
+    return t;
+  }),
   tk("STRLIT", /'.*?'/, (t) => {
     t.value = t.value.slice(1, t.value.length - 1);
     return t;
