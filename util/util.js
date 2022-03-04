@@ -484,6 +484,27 @@ export function list(iterable) {
   return ret;
 }
 
+
+/** Count items in list; if searchItem is not undefined then a count
+ *  of the number of times searchItem occurs will be returned.*/
+export function count(iterable, searchItem=undefined) {
+  let count = 0;
+
+  if (searchItem !== undefined) {
+    for (let item of iterable) {
+      if (item === searchItem) {
+        count++;
+      }
+    }
+  } else {
+    for (let item of iterable) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 /*
 * returns all object keys, including
 * inherited ones
