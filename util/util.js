@@ -2325,8 +2325,6 @@ export class ArrayPool {
   }
 }
 
-import * as pathux from "https://joeedh.github.io/path.ux/dist/pathux.js";
-
 /** jsFiddle-friendly */
 export class DivLogger {
   constructor(elemId, maxLines=16) {
