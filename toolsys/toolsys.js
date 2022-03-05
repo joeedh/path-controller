@@ -320,8 +320,9 @@ export class ToolOp extends events.EventHandler {
 
       slots = {};
       let p = this.constructor;
+      let lastp = undefined;
 
-      while (p !== undefined && p !== Object && p !== ToolOp) {
+      while (p !== undefined && p !== Object && p !== ToolOp && p !== lastp) {
         if (p.tooldef) {
           let def = p.tooldef();
 
@@ -343,8 +344,9 @@ export class ToolOp extends events.EventHandler {
               break;
             }
           }
-
         }
+
+        lastp = p;
         p = p.prototype.__proto__.constructor;
       }
 

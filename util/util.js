@@ -2324,3 +2324,157 @@ export class ArrayPool {
     return ret;
   }
 }
+
+import * as pathux from "https://joeedh.github.io/path.ux/dist/pathux.js";
+
+/** jsFiddle-friendly */
+export class DivLogger {
+  constructor(elemId, maxLines=16) {
+    this.elemId = elemId;
+    this.elem = undefined;
+    this.lines = new Array();
+    this.maxLines = maxLines;
+  }
+
+  push(line) {
+    if (this.lines.length > this.maxLines) {
+      this.lines.shift();
+      this.lines.push(line);
+    } else {
+      this.lines.push(line);
+    }
+
+    this.update();
+  }
+
+  update() {
+    let buf = this.lines.join(`<br>`);
+    buf = buf.replace(/[ \t]/g, "&nbsp;");
+
+    if (!this.elem) {
+      this.elem = document.getElementById(this.elemId);
+    }
+
+    this.elem.innerHTML = buf;
+  }
+
+  toString(obj, depth=0) {
+    let s = '';
+
+    let tab = '';
+    for (let i=0; i<depth; i++) {
+      tab += '$TAB';
+    }
+
+    if (typeof obj === "symbol") {
+      return `[${obj.description}]`;
+    }
+
+    const DEPTH_LIMIT = 1;
+    const CHAR_LIMIT = 100;
+
+    if (typeof obj === "object" && Array.isArray(obj)) {
+      s = "[$NL";
+      for (let i=0; i<obj.length; i++) {
+        let v = obj[i];
+
+        if (depth >= DEPTH_LIMIT) {
+          v = typeof v;
+        } else {
+          v = this.toString(v, depth+1);
+        }
+
+        s += tab + "$TAB";
+        s += v + (i !== obj.length - 1 ? "," : "") + "$NL";
+      }
+
+      let keys = Reflect.ownKeys(obj);
+      for (let i=0; i<keys.length; i++) {
+        let k = keys[i];
+        let n;
+
+        let k2 = this.toString(k);
+
+        if (typeof k !== "symbol" && !isNaN(n = parseInt(k))) {
+          if (n >= 0 && n < obj.length) {
+            continue;
+          }
+        }
+
+        let v;
+        try {
+          v = obj[k];
+        } catch (error) {
+          v = "(error)";
+        }
+
+        s += tab + `$TAB${k2} : ${v}`;
+
+        if (i < keys.length-1) {
+          s += ",";
+        }
+
+        if (!s.endsWith("$NL") && !s.endsWith("\n")) {
+          s += "$NL";
+        }
+      }
+      s += "$TAB]$NL";
+
+      if (s.length < CHAR_LIMIT) {
+        s = s.replace(/\$NL/g, "");
+        s = s.replace(/(\$TAB)+/g, " ");
+      } else {
+        s = s.replace(/\$NL/g, "\n");
+        s = s.replace(/\$TAB/g, "  ");
+      }
+    } else if (typeof obj === "object") {
+      s = '{$NL';
+
+      let keys = Reflect.ownKeys(obj);
+      for (let i=0; i<keys.length; i++) {
+        let k = keys[i];
+        let k2 = this.toString(k);
+
+        let v;
+        try {
+          v = obj[k];
+        } catch (error) {
+          v = '(error)';
+        }
+
+        if (depth >= DEPTH_LIMIT) {
+          v = typeof v;
+        } else {
+          v = this.toString(v, depth+1);
+        }
+
+        s += tab + `$TAB${k2} : ${v}`;
+
+        if (i < keys.length-1) {
+          s += ",";
+        }
+
+        if (!s.endsWith("$NL") && !s.endsWith("\n")) {
+          s += "$NL";
+        }
+      }
+      s += tab + "}$NL";
+
+      if (s.length < CHAR_LIMIT) {
+        s = s.replace(/\$NL/g, "");
+        s = s.replace(/(\$TAB)+/g, " ");
+      } else {
+        s = s.replace(/\$NL/g, "\n");
+        s = s.replace(/\$TAB/g, "  ");
+      }
+    } else if (typeof obj === "undefined") {
+      s = 'undefined';
+    } else if (typeof obj === "function") {
+      s = 'function ' + obj.name;
+    } else {
+      s = "" + obj;
+    }
+
+    return s;
+  }
+}

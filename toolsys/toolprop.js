@@ -588,6 +588,7 @@ StringProperty.STRUCT = nstructjs.inherit(StringProperty, ToolProperty) + `
 nstructjs.register(StringProperty);
 ToolProperty.internalRegister(StringProperty);
 
+/*
 let num_res = [
   /([0-9]+)/,
   /((0x)?[0-9a-fA-F]+(h?))/,
@@ -595,9 +596,11 @@ let num_res = [
   /([0-9]*\.[0-9]+)/,
   /(\.[0-9]+)/
 ];
-
 //num_re = /([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+)/
+*/
 
+export {isNumber} from '../../core/units.js';
+/*
 export function isNumber(f) {
   if (f === "NaN" || (typeof f == "number" && isNaN(f))) {
     return false;
@@ -621,9 +624,9 @@ export function isNumber(f) {
   }
 
   return ok;
-}
+}*/
 
-window.isNumber = isNumber;
+//window.isNumber = isNumber;
 
 export class NumProperty extends ToolProperty {
   constructor(type, value, apiname,
@@ -1374,6 +1377,11 @@ export class Vec3Property extends VecPropertyBase {
     this.data = new Vector3(data);
   }
 
+  isColor() {
+    this.subtype = PropSubTypes.COLOR;
+    return this;
+  }
+
   setValue(v) {
     this.data.load(v);
 
@@ -1423,6 +1431,11 @@ export class Vec4Property extends FloatProperty {
       this.data[3] = w;
     }
 
+    return this;
+  }
+
+  isColor() {
+    this.subtype = PropSubTypes.COLOR;
     return this;
   }
 

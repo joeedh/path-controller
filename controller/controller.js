@@ -94,7 +94,6 @@ for (let i = 0; i < parserStack.length; i++) {
 parserStack.cur = 0;
 
 import {
-  ToolOpIface,
   setImplementationClass, isVecProperty, ListIface
 } from './controller_base.js';
 import {initToolPaths, parseToolPath} from '../toolsys/toolpath.js';
@@ -1681,10 +1680,6 @@ export class DataAPI extends ModelInterface {
 
     return tool;
   }
-}
-
-export function registerTool(cls) {
-  return DataAPI.registerTool(cls);
 }
 
 export function initSimpleController() {
