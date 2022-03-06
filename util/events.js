@@ -138,57 +138,16 @@ function getDom(dom, eventtype) {
 
 export let modalStack = [];
 export function isModalHead(owner) {
-  return modalStack.length == 0 || 
+  return modalStack.length === 0 ||
          modalStack[modalStack.length-1] === owner;
 }
 
 export class EventHandler {
+  pushPointerModal(dom, pointerId) {
+    this._modalstate = simple_events.pushPointerModal(this, dom, pointerId);
+  }
   pushModal(dom, _is_root) {
     this._modalstate = simple_events.pushModalLight(this);
-    return;
-    /*
-    if (!_is_root) {
-      console.trace("pushModal called");
-    }
-    
-    if (this.modal_pushed) {
-      console.trace("Error: pushModal called twice", this, dom);
-      return;
-    }
-    
-    var this2 = this;
-    
-    this.modal_pushed = true;
-    modalStack.push(this);
-    
-    let stop_prop = (func) => {
-      return (e) => {
-        //XXX this isModalHead call really shouldn't be necassary.  argh!
-        if (!isModalHead(this))
-          return;
-        
-        if (!_is_root) {
-          e.stopPropagation();
-          e.preventDefault();
-        }
-        
-          func.call(this, e);
-      }
-    }
-    
-    for (var k in DomEventTypes) {
-      var type = DomEventTypes[k];
-      
-      if (this[k] === undefined)
-        continue;
-      
-      if (this["__"+k] === undefined) {
-        this["__"+k] = stop_prop(this[k]);
-      }
-      
-      getDom(dom, type).addEventListener(type, this["__"+k], true);
-    }
-    */
   }
   
   popModal() {
