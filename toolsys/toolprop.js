@@ -725,9 +725,10 @@ export class _NumberPropertyBase extends ToolProperty {
     b.baseUnit = this.baseUnit;
     b.expRate = this.expRate;
     b.step = this.step;
-    b.range = this.range;
-    b.uiRange = this.uiRange;
-
+    b.range = this.range ? [this.range[0], this.range[1]] : undefined;
+    b.uiRange = this.uiRange ? [this.uiRange[0], this.uiRange[1]] : undefined;
+    b.slideSpeed = this.slideSpeed;
+    
     b.data = this.data;
   }
 
