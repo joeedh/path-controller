@@ -514,7 +514,7 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
     function make_pointer(k) {
       let k2 = "on_" + k;
 
-      ret.pointer[k] = function(e) {
+      ret.pointer[k] = function (e) {
         if (obj[k2] !== undefined) {
           obj[k2](e);
         }
@@ -544,7 +544,46 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
       }
     }
 
-    elem.setPointerCapture(pointerId)
+    try {
+      elem.setPointerCapture(pointerId)
+    } catch (error) {
+      util.print_stack(error);
+
+      console.log("attempting fallback");
+      for (let k in ret.pointer) {
+        if (k !== "elem" && k !== "pointerId") {
+          elem.removeEventListener(k, ret.pointer[k]);
+        }
+      }
+
+      delete ret.pointer;
+
+      modalstack.push(ret);
+      popModalLight(ret);
+
+      for (let k in obj) {
+        if (k === "pointercancel" || k === "pointerend" || k === "pointerstart") {
+          continue;
+        }
+
+        if (k.startsWith("pointer")) {
+          let k2 = k.replace(/pointer/, "mouse");
+          if (k2 in obj) {
+            console.warn("warning, existing mouse handler", k2);
+            continue;
+          }
+
+          let v = obj[k];
+          obj[k] = undefined;
+
+          obj[k2] = v;
+        }
+      }
+
+      console.log(obj);
+
+      return pushModalLight(obj, autoStopPropagation);
+    }
   }
 
   modalstack.push(ret);
