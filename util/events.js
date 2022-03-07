@@ -144,9 +144,19 @@ export function isModalHead(owner) {
 
 export class EventHandler {
   pushPointerModal(dom, pointerId) {
+    if (this._modalstate) {
+      console.warn("pushPointerModal called twiced!");
+      return;
+    }
+    
     this._modalstate = simple_events.pushPointerModal(this, dom, pointerId);
   }
   pushModal(dom, _is_root) {
+    if (this._modalstate) {
+      console.warn("pushModal called twiced!");
+      return;
+    }
+    
     this._modalstate = simple_events.pushModalLight(this);
   }
   
