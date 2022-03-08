@@ -2476,3 +2476,116 @@ export class DivLogger {
     return s;
   }
 }
+
+export const PendingTimeoutPromises = new Set();
+
+export class TimeoutPromise {
+  constructor(callback, timeout=3000, silent=false) {
+    if (!callback) {
+      return;
+    }
+
+    this.silent = silent;
+    this.timeout = timeout;
+
+    let accept2 = this._accept2.bind(this);
+    let reject2 = this._reject2.bind(this);
+
+    this.time = time_ms();
+
+    this.rejected = false;
+
+    this._promise = new Promise((accept, reject) => {
+      this._accept = accept;
+      this._reject = reject;
+
+      callback(accept2, reject2);
+    });
+
+    PendingTimeoutPromises.add(this);
+  }
+
+  _accept2(val) {
+    if (this.bad) {
+      if (!this.silent) {
+        this._reject(new Error("Timeout"));
+      }
+    } else {
+      return this._accept(val);
+    }
+  }
+
+  static wrapPromise(promise, timeout=3000, callback) {
+    let p = new TimeoutPromise();
+
+    p._promise = promise;
+
+    p._accept = callback;
+    p._reject = function(error) {
+      throw error;
+    }
+
+    p.then(val => {
+      p._accept2(val);
+    }).catch(error => {
+      p._reject2(error);
+    });
+
+    return p;
+  }
+
+  _reject2(error) {
+    this._reject(error);
+  }
+
+  then(callback) {
+    let cb = (val) => {
+      let ret = callback(val);
+
+      if (ret instanceof Promise) {
+        ret = TimeoutPromise.wrapPromise(ret, this.timeout, callback);
+      }
+
+      return ret;
+    }
+
+    this._promise.then(cb);
+    return this;
+  }
+
+  catch(callback) {
+    this._promise.catch(callback);
+    return this;
+  }
+
+  finally(callback) {
+    this._promise.catch(callback);
+    return this;
+  }
+
+  get bad() {
+    return time_ms() - this.time > this.timeout;
+  }
+}
+
+window.setInterval(() => {
+  let bad = [];
+
+  for (let promise of PendingTimeoutPromises) {
+    if (promise.bad) {
+      bad.push(promise);
+    }
+  }
+
+  for (let promise of bad) {
+    PendingTimeoutPromises.delete(promise);
+  }
+
+  for (let promise of bad) {
+    try {
+      promise._reject(new Error("Timeout"));
+    } catch (error) {
+      print_stack(error);
+    }
+  }
+}, 250);
