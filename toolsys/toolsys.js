@@ -425,6 +425,18 @@ export class ToolOp extends events.EventHandler {
     return {};
   }
 
+  /** Returns a read-only map of input property values,
+   *  e.g. `let {prop1, prop2} = this.getValues()` */
+  getInputs() {
+    let ret = {};
+
+    for (let k in this.inputs) {
+      ret[k] = this.inputs[k].getValue();
+    }
+
+    return ret;
+  }
+
   static Equals(a, b) {
     if (!a || !b) return false;
     if (a.constructor !== b.constructor) return false;
@@ -1473,6 +1485,7 @@ export class ToolStack extends Array {
 
       toolop._on_cancel = (function (toolop) {
         if (!(toolop.undoflag & UndoFlags.NO_UNDO)) {
+          this[this.cur].undo(ctx);
           this.pop_i(this.cur);
           this.cur--;
         }
