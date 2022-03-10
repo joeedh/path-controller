@@ -454,6 +454,14 @@ export class ToolProperty extends ToolPropertyIF {
 
   loadSTRUCT(reader) {
     reader(this);
+
+    if (this.baseUnit === "undefined") {
+      this.baseUnit = undefined;
+    }
+
+    if (this.displayUnit === "undefined") {
+      this.displayUnit = undefined;
+    }
   }
 }
 
@@ -475,6 +483,7 @@ ToolProperty {
   expRate        : float;
   radix          : float;
   decimalPlaces  : int;
+  uiname         : string | this.uiname || this.apiname || "";
 }
 `;
 nstructjs.register(ToolProperty);
