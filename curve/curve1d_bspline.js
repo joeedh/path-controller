@@ -1484,7 +1484,7 @@ export function initSplineTemplates() {
   }
 
   splineTemplatesLoaded = true;
-  
+
   for (let k in SplineTemplates) {
     let curve = new BSplineCurve();
     curve.loadTemplate(SplineTemplates[k]);

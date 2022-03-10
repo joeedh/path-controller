@@ -459,6 +459,7 @@ export class ToolProperty extends ToolPropertyIF {
 
 ToolProperty.STRUCT = `
 ToolProperty { 
+  apiname        : string;
   type           : int;
   flag           : int;
   subtype        : int;
@@ -467,7 +468,7 @@ ToolProperty {
   baseUnit       : string | ""+this.baseUnit;
   displayUnit    : string | ""+this.displayUnit;
   range          : array(float) | this.range ? this.range : [-1e17, 1e17];
-  uiRange        : array(float) | this.range ? this.range : [-1e17, 1e17];
+  uiRange        : array(float) | this.uiRange ? this.uiRange : [-1e17, 1e17];
   description    : string;
   stepIsRelative : bool;
   step           : float;
