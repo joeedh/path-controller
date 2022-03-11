@@ -855,7 +855,9 @@ export class ToolOp extends events.EventHandler {
       if (this._accept) {
         this._accept(this.modal_ctx, true);
       }
+
       this._on_cancel(this);
+      this._on_cancel = undefined;
     }
 
     this.resetTempGeom();

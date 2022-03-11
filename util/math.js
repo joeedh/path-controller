@@ -1908,30 +1908,7 @@ export function line_line_isect(v1, v2, v3, v4, test_segment) {
   }
 }
 
-export function line_line_cross(v1, v2, v3, v4) {
-  var l1 = _llc_l3, l2 = _llc_l4;
-  //l1[0].load(v1), l1[1].load(v2), l2[0].load(v3), l2[1].load(v4);
-
-  {
-    var a = l1[0], b = l1[1], c = l2[0], d = l2[1];
-
-    a[0] = v1[0];
-    a[1] = v1[1];
-    a[2] = v1[2];
-
-    b[0] = v2[0];
-    b[1] = v2[1];
-    b[2] = v2[2];
-
-    c[0] = v3[0];
-    c[1] = v3[1];
-    c[2] = v3[2];
-
-    d[0] = v4[0];
-    d[1] = v4[1];
-    d[2] = v4[2];
-  }
-
+export function line_line_cross(a, b, c, d) {
   /*
   var limit=feps*1000;
   if (Math.abs(l1[0].vectorDistance(l2[0])+l1[1].vectorDistance(l2[0])-l1[0].vectorDistance(l1[1]))<limit) {
@@ -1948,15 +1925,11 @@ export function line_line_cross(v1, v2, v3, v4) {
   }
   //*/
 
-  var a = l1[0];
-  var b = l1[1];
-  var c = l2[0];
-  var d = l2[1];
-  var w1 = winding(a, b, c);
-  var w2 = winding(c, a, d);
-  var w3 = winding(a, b, d);
-  var w4 = winding(c, b, d);
-  return (w1 == w2) && (w3 == w4) && (w1 != w3);
+  let w1 = winding(a, b, c);
+  let w2 = winding(c, a, d);
+  let w3 = winding(a, b, d);
+  let w4 = winding(c, b, d);
+  return (w1 === w2) && (w3 === w4) && (w1 !== w3);
 };
 
 var _asi_v1 = new Vector3();
