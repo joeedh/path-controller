@@ -394,7 +394,6 @@ export class DataStruct {
         }
 
         list[key] = val;
-        window.redraw_viewport();
       },
       function getKey(api, list, obj) {
         return list.indexOf(obj);
@@ -456,7 +455,6 @@ export class DataStruct {
         }
 
         list[key] = val;
-        window.redraw_viewport();
       },
       function getKey(api, list, obj) {
         return list.indexOf(obj);
