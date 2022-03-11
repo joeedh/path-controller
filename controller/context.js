@@ -49,6 +49,10 @@ export function makeDerivedOverlay(parent) {
       return this._state;
     }
 
+    set state(state) {
+      this._state = state;
+    }
+
     /*
     Ugly hack, ui_lasttool.js saves
     a DataStruct wrapping the most recently executed ToolOp
