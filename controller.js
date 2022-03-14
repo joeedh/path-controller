@@ -43,3 +43,5 @@ export * from './util/colorutils.js';
 export * from './util/graphpack.js';
 export * from './util/solver.js';
 export * from './util/simple_events.js';
+
+export {binomial} from './curve/curve1d_bspline.js';

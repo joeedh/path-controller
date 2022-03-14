@@ -47,6 +47,7 @@ export const PropFlags = {
   EDIT_AS_BASE_UNIT     : 1<<13, //user textbox input should be interpreted in display unit
   NO_UNDO               : 1<<14,
   USE_CUSTOM_PROP_GETTER: 1<<15, //hrm, not sure I need this
+  FORCE_ENUM_CHECKBOXES : 1<<16,
 };
 
 export class ToolPropertyIF {
