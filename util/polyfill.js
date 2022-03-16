@@ -232,10 +232,39 @@ if (typeof visualViewport === "undefined") {
 }
 
 if (Array.prototype.set === undefined) {
-  Array.prototype.set = function set(array, src, dst, count) {
+  /**
+   * A version of TypedArray.prototype.set for Array
+   * Unliked typed array version the array will be
+   * resized if the source array range extends past
+   * the array length.
+   *
+   * array.set(array) array.set(array, src_offset) array.set(array, src_offset, count)
+   * array.set(array, src_offset, dest_offset, count
+   * @param array
+   */
+  Array.prototype.set = function set(array) {
     if (arguments.length === 0) {
       //WASM somehow manages to call this
       return;
+    }
+
+    let src, dst, count;
+
+    if (arguments.length === 0) {
+      src = 0;
+      dst = 0;
+      count = array.length;
+    } else if (arguments.length === 1) {
+      count = array.length;
+      src = arguments[1];
+      dst = 0;
+    } else if (arguments.length === 2) {
+      src = arguments[1];
+      count = arguments[2];
+    } else if (arguments.length === 3) {
+      src = arguments[1];
+      dst = arguments[2];
+      count = arguments[3];
     }
 
     src = src === undefined ? 0 : src;
@@ -246,8 +275,11 @@ if (Array.prototype.set === undefined) {
       throw new RangeError("Count must be >= zero");
     }
 
-    let len = Math.min(this.length - dst, array.length - src);
-    len = Math.min(len, count);
+    let len = Math.min(src + count, array.length) - src;
+
+    if (dst + len > this.length) {
+      this.length = dst + len;
+    }
 
     for (let i = 0; i < len; i++) {
       this[dst + i] = array[src + i];
