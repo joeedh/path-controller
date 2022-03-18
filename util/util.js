@@ -1568,6 +1568,14 @@ export class HashDigest {
       v = strhash(v);
     }
 
+    if (typeof v === "object" && Array.isArray(v)) {
+      for (let i=0; i<v.length; i++) {
+        this.add(v[i]);
+      }
+
+      return this;
+    }
+
     if (v >= -5 && v <= 5) {
       v *= 32;
     }

@@ -467,7 +467,7 @@ export class ToolProperty extends ToolPropertyIF {
 
 ToolProperty.STRUCT = `
 ToolProperty { 
-  apiname        : string;
+  apiname        : string | ""+this.apiname;
   type           : int;
   flag           : int;
   subtype        : int;
@@ -1338,7 +1338,7 @@ export class VecPropertyBase extends FloatProperty {
 }
 
 VecPropertyBase.STRUCT = nstructjs.inherit(VecPropertyBase, FloatProperty) + `
-  hasUniformSlider : bool;
+  hasUniformSlider : bool | this.hasUniformSlider || false;
 }
 `;
 
