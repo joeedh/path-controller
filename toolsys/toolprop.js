@@ -455,6 +455,10 @@ export class ToolProperty extends ToolPropertyIF {
   loadSTRUCT(reader) {
     reader(this);
 
+    if (this.uiRange[0] === -1e17 && this.uiRange[1] === 1e17) {
+      this.uiRange = undefined;
+    }
+
     if (this.baseUnit === "undefined") {
       this.baseUnit = undefined;
     }
