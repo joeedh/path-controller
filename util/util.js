@@ -2597,3 +2597,21 @@ window.setInterval(() => {
     }
   }
 }, 250);
+
+import lzstring from '../extern/lz-string/lz-string.js';
+
+export function compress(data) {
+  return lzstring.compressToUint8Array(data);
+}
+
+export function decompress(data) {
+  if (data instanceof DataView) {
+    data = data.buffer;
+  }
+
+  if (data instanceof ArrayBuffer) {
+    data = new Uint8Array(data);
+  }
+
+  return lzstring.decompressFromUint8Array(data);
+}
