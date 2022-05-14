@@ -219,6 +219,10 @@ export class ToolPropertyCache {
   }
 
   has(cls, key, prop) {
+    if (prop.flag & PropFlags.NO_DEFAULT) {
+      return false;
+    }
+
     let obj = this._getAccessor(cls);
 
     key = this.constructor.getPropKey(cls, key, prop);
