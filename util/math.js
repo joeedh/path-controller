@@ -688,7 +688,7 @@ export function dist_to_tri_v3_old(co, v1, v2, v3, no = undefined) {
     let dy2 = c[1] - b[1];
 
     let len = dx2*dx2 + dy2*dy2;
-    len = len > 0.000001 ? 1.0 / len : 0.0;
+    len = len > 0.000001 ? 1.0/len : 0.0;
 
     dx2 *= len;
     dy2 *= len;
@@ -1870,10 +1870,8 @@ export function corner_normal(vec1, vec2, width) {
 }
 
 //test_segment is optional, true
-export function line_line_isect(v1, v2, v3, v4, test_segment) {
-  test_segment = test_segment === undefined ? true : test_segment;
-
-  if (!line_line_cross(v1, v2, v3, v4)) {
+export function line_line_isect(v1, v2, v3, v4, test_segment = true) {
+  if (test_segment && !line_line_cross(v1, v2, v3, v4)) {
     return undefined;
   }
 
