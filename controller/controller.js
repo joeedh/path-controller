@@ -897,19 +897,7 @@ export class DataAPI extends ModelInterface {
     parserStack.cur--;
 
     if (ret !== undefined && ret.prop && ret.dpath && (ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
-      let prop = ret.prop;
-
-      prop.ctx = ctx;
-      prop.datapath = inpath;
-      prop.dataref = ret.obj;
-
-      let newprop = getTempProp(prop.type);
-      prop.copyTo(newprop);
-
-      ret.dpath.propGetter.call(prop, newprop);
-      ret.prop = newprop;
-
-      prop.ctx = prop.datapath = prop.dataref = undefined;
+      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj);
     }
 
     if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.ui_name_get) {
@@ -925,6 +913,20 @@ export class DataAPI extends ModelInterface {
     }
 
     return ret;
+  }
+
+  getPropOverride(ctx, path, dpath, obj, prop = dpath.data) {
+    prop.ctx = ctx;
+    prop.datapath = path;
+    prop.dataref = obj;
+
+    let newprop = getTempProp(prop.type);
+    prop.copyTo(newprop);
+
+    dpath.propGetter.call(prop, newprop);
+    prop.ctx = prop.datapath = prop.dataref = undefined;
+
+    return newprop;
   }
 
   /**
@@ -1067,6 +1069,10 @@ export class DataAPI extends ModelInterface {
         }
       } else {
         prop = dpath.data;
+      }
+
+      if (prop && (dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
+        prop = this.getPropOverride(ctx, inpath, dpath, obj);
       }
 
       if (dpath.path.search(/\./) >= 0) {

@@ -1334,6 +1334,9 @@ export function seed(n) {
 
 let smallstr_hashes = {};
 
+
+const MAXINT = Math.pow(2, 31) - 1;
+
 export function strhash(str) {
   if (str.length <= 64) {
     let hash = smallstr_hashes[str];
@@ -1350,7 +1353,7 @@ export function strhash(str) {
 
     hash = hash < 0 ? -hash : hash;
 
-    hash ^= (ch*524287 + 4323543) & ((1<<19) - 1);
+    hash ^= (ch*1103515245 + 12345) & MAXINT;
   }
 
   if (str.length <= 64) {

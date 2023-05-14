@@ -429,7 +429,7 @@ export class ToolOp extends events.EventHandler {
     return {};
   }
 
-  /** Returns a read-only map of input property values,
+  /** Returns a map of input property values,
    *  e.g. `let {prop1, prop2} = this.getValues()` */
   getInputs() {
     let ret = {};
