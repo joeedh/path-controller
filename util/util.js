@@ -244,11 +244,6 @@ export function isMobile() {
   return mret;
 }
 
-//window._isMobile = isMobile;
-
-//let SmartConsoleTag = Symbol("SmartConsoleTag");
-//let tagid = 0;
-
 export class SmartConsoleContext {
   constructor(name, console) {
     this.name = name;
@@ -299,15 +294,11 @@ export class SmartConsoleContext {
       } else if (typeof n === "undefined" || n === null) {
         dohash(0);
       } else if (typeof n === "object") {
-        if (n === undefined) {
-          //n[SmartConsoleTag] = tagid++;
-        }
-
         if (visit.has(n)) {
           return;
         }
 
-        visit.add(n); //[SmartConsoleTag]);
+        visit.add(n);
 
         let keys = getAllKeys(n);
 
