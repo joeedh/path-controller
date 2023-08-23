@@ -1552,22 +1552,42 @@ export class DataAPI extends ModelInterface {
     };
   }
 
-  _stripToolUIName(path, uiNameOut = undefined) {
-    if (path.search(/\|/) >= 0) {
-      if (uiNameOut) {
-        uiNameOut[0] = path.slice(path.search(/\|/) + 1, path.length).trim();
+  _parsePathOverrides(path) {
+    let parts = ['', undefined, undefined];
+
+    const TOOLPATH = 0, NAME = 1, HOTKEY = 2;
+    let part = TOOLPATH;
+
+    for (let i = 0; i < path.length; i++) {
+      let c = path[i];
+      let n = i < path.length - 1 ? path[i + 1] : "";
+
+      if (c === "|") {
+        part = NAME;
+        parts[NAME] = "";
+        continue;
+      } else if (c === ":" && n === ":") {
+        part = HOTKEY;
+        parts[HOTKEY] = "";
+        i++;
+        continue;
       }
-      path = path.slice(0, path.search(/\|/)).trim();
+
+      parts[part] += c;
     }
 
-    return path.trim();
+    return {
+      path  : parts[TOOLPATH].trim(),
+      uiname: parts[NAME] ? parts[NAME].trim() : undefined,
+      hotkey: parts[HOTKEY] ? parts[HOTKEY].trim() : undefined,
+    };
   }
 
-  getToolDef(path) {
-    let uiname = [undefined];
-
-    path = this._stripToolUIName(path, uiname);
-    uiname = uiname[0];
+  /** Get tooldef for path, applying any modifications, e.g.:
+   *  "app.some_tool()|Label::CustomHotkeyString"
+   * */
+  getToolDef(toolpath) {
+    let {path, uiname, hotkey} = this._parsePathOverrides(toolpath);
 
     let cls = this.parseToolPath(path);
     if (cls === undefined) {
@@ -1578,15 +1598,22 @@ export class DataAPI extends ModelInterface {
     if (uiname) {
       def.uiname = uiname;
     }
+    if (hotkey) {
+      def.hotkey = hotkey;
+    }
 
     return def;
   }
 
-  getToolPathHotkey(ctx, path) {
-    path = this._stripToolUIName(path);
+  getToolPathHotkey(ctx, toolpath) {
+    let {path, uiname, hotkey} = this._parsePathOverrides(toolpath);
+
+    if (hotkey) {
+      return hotkey;
+    }
 
     try {
-      return this.getToolPathHotkey_intern(ctx, path);
+      return this.#getToolPathHotkey_intern(ctx, path);
     } catch (error) {
       print_stack(error);
       util.console.context("api").log("failed to fetch tool path: " + path);
@@ -1595,7 +1622,7 @@ export class DataAPI extends ModelInterface {
     }
   }
 
-  getToolPathHotkey_intern(ctx, path) {
+  #getToolPathHotkey_intern(ctx, path) {
     let screen = ctx.screen;
     let this2 = this;
 
@@ -1604,16 +1631,24 @@ export class DataAPI extends ModelInterface {
         return undefined;
       }
 
-      for (let hk of keymap) {
-        if (typeof hk.action !== "string") {
-          continue;
+      let ret;
+
+      function search(cb) {
+        if (ret) {
+          return;
         }
 
-        let tool = this2._stripToolUIName(hk.action);
-        if (tool === path) {
-          return hk.buildString();
+        for (let hk of keymap) {
+          if (typeof hk.action === "string" && cb(hk.action)) {
+            ret = hk.buildString();
+          }
         }
       }
+
+      search((tool) => tool.trim() === path.trim());
+      search((tool) => this2._parsePathOverrides(tool).path === path.trim());
+
+      return ret;
     }
 
     if (screen.sareas.length === 0) {

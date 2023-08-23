@@ -426,6 +426,11 @@ export class ToolProperty extends ToolPropertyIF {
     return this;
   }
 
+  setUnit(unit) {
+    this.baseUnit = this.displayUnit = unit;
+    return this;
+  }
+
   setFlag(f, combine = false) {
     this.flag = combine ? this.flag | f : f;
     return this;

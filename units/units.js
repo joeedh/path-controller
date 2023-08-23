@@ -11,6 +11,7 @@
  * and edits.
  *
  * Units:
+ * # none           No unit
  * # meter          Meter       (distance)
  * # inch           Inch        (distance)
  * # foot           Foot        (distance)
