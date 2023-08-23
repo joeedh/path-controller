@@ -1290,9 +1290,9 @@ EnumProperty.STRUCT = nstructjs.inherit(EnumProperty, ToolProperty) + `
 nstructjs.register(EnumProperty);
 
 export class FlagProperty extends EnumProperty {
-  constructor(string, valid_values, apiname,
+  constructor(string_or_int, valid_values, apiname,
               uiname, description, flag, icon) {
-    super(string, valid_values, apiname,
+    super(string_or_int, valid_values, apiname,
       uiname, description, flag, icon);
 
     this.type = PropTypes.FLAG;
