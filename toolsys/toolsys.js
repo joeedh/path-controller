@@ -294,6 +294,7 @@ export class ToolOp extends events.EventHandler {
   constructor() {
     super();
 
+    this._pointerId = undefined;
     this._overdraw = undefined;
     this.__memsize = undefined;
 
@@ -830,7 +831,12 @@ export class ToolOp extends events.EventHandler {
       this._reject = reject;
 
       modalstack.push(this);
-      super.pushModal(ctx.screen);
+
+      if (this._pointerId !== undefined) {
+        super.pushPointerModal(ctx.screen, this._pointerId);
+      } else {
+        super.pushModal(ctx.screen);
+      }
     });
 
     return this._promise;
