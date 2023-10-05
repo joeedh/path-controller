@@ -8,58 +8,56 @@ let singleMouseCBs = {};
 function debugDomEvents() {
   let cbsymbol = Symbol("event-callback");
   let thsymbol = Symbol("debug-info");
-  
+
   let idgen = 0;
-  
+
   function init(et) {
     if (!et[thsymbol]) {
       et[thsymbol] = idgen++;
     }
   }
-  
+
   function getkey(et, type, options) {
     init(et);
     return "" + et[thsymbol] + ":" + type + ":" + JSON.stringify(options);
   }
-  
+
   let addEventListener = EventTarget.prototype.addEventListener;
   let removeEventListener = EventTarget.prototype.removeEventListener;
-  
-  EventTarget.prototype.addEventListener = function(type, cb, options) {
+
+  EventTarget.prototype.addEventListener = function (type, cb, options) {
     init(this);
-    
+
     if (!cb[cbsymbol]) {
       cb[cbsymbol] = new Set();
     }
-    
+
     let key = getkey(this, type, options);
     cb[cbsymbol].add(key);
-    
+
     return addEventListener.call(this, type, cb, options);
   }
-  
-  EventTarget.prototype.removeEventListener = function(type, cb, options) {
+
+  EventTarget.prototype.removeEventListener = function (type, cb, options) {
     init(this);
-    
+
     if (!cb[cbsymbol]) {
       console.error("Invalid callback in removeEventListener for", type, this, cb);
       return;
     }
-    
+
     let key = getkey(this, type, options);
-    
+
     if (!cb[cbsymbol].has(key)) {
       console.error("Callback not in removeEventListener;", type, this, cb);
       return;
     }
-    
+
     cb[cbsymbol].delete(key);
-    
+
     return removeEventListener.call(this, type, cb, options);
   }
 }
-
-//debugDomEvents();
 
 function singletonMouseEvents() {
   let keys = ["mousedown", "mouseup", "mousemove"];
@@ -142,7 +140,7 @@ function singletonMouseEvents() {
       singleMouseCBs[type].add(cb);
     }
   };
-};
+}
 
 singletonMouseEvents = singletonMouseEvents();
 
@@ -393,7 +391,7 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
 
   if (pointerId === undefined) {
     keys = new Set([
-      "keydown", "keyup", "keypress", "mousedown", "mouseup", "touchstart", "touchend",
+      "keydown", "keyup", "mousedown", "mouseup", "touchstart", "touchend",
       "touchcancel", "mousewheel", "mousemove", "mouseover", "mouseout", "mouseenter",
       "mouseleave", "dragstart", "drag", "dragend", "dragexit", "dragleave", "dragover",
       "dragenter", "drop", "pointerdown", "pointermove", "pointerup", "pointercancel",
@@ -441,7 +439,6 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
 
   function make_default_touchhandler(type, state) {
     return function (e) {
-      //console.warn("touch event!", type, touchmap[type], e.touches.length);
       if (cconst.DEBUG.domEvents) {
         pathDebugEvent(e);
       }
@@ -457,18 +454,17 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
         e2.touches = e.touches;
 
         if (e.touches.length > 0) {
-          let dpi = window.devicePixelRatio; //UIBase.getDPI();
           let t = e.touches[0];
 
           mpos[0] = t.pageX;
           mpos[1] = t.pageY;
 
-          e2.pageX = e2.x = t.pageX;// * dpi;
-          e2.pageY = e2.y = t.pageY;// * dpi;
-          e2.clientX = t.clientX;// * dpi;
-          e2.clientY = t.clientY;// * dpi;
-          e2.x = t.clientX;// * dpi;
-          e2.y = t.clientY;// * dpi;
+          e2.pageX = e2.x = t.pageX;
+          e2.pageY = e2.y = t.pageY;
+          e2.clientX = t.clientX;
+          e2.clientY = t.clientY;
+          e2.x = t.clientX;
+          e2.y = t.clientY;
 
           ret.last_mpos[0] = e2.x;
           ret.last_mpos[1] = e2.y;
@@ -505,6 +501,9 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
       if (key.startsWith("mouse")) {
         mpos[0] = e.pageX;
         mpos[1] = e.pageY;
+      } else if (key.startsWith("pointer")) {
+        mpos[0] = e.x;
+        mpos[1] = e.y;
       }
 
       handleAreaContext();
@@ -606,7 +605,7 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
       util.print_stack(error);
 
       console.log("attempting fallback");
-      
+
       for (let k in ret.pointer) {
         if (k !== "elem" && k !== "pointerId") {
           elem.removeEventListener(k, ret.pointer[k]);
@@ -653,7 +652,16 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
   return ret;
 }
 
+/* Trace all calls to EventTarget.prototype.[add/rem]EventListener */
 if (0) {
+  window._print_evt_debug = false;
+
+  function evtprint() {
+    if (window.window._print_evt_debug) {
+      console.warn(...arguments);
+    }
+  }
+
   let addevent = EventTarget.prototype.addEventListener;
   let remevent = EventTarget.prototype.removeEventListener;
 
@@ -661,7 +669,7 @@ if (0) {
 
   EventTarget.prototype.addEventListener = function (name, func, args) {
     //if (name.startsWith("key")) {
-    console.warn("listener added", name, func, args);
+    evtprint("listener added", name, func.name, args);
     //}
 
     let func2 = function (e) {
@@ -669,12 +677,12 @@ if (0) {
         get(target, p, receiver) {
           if (p === "preventDefault") {
             return function () {
-              console.warn("preventDefault", name, arguments);
+              evtprint("preventDefault", name, arguments);
               return e.preventDefault(...arguments);
             }
           } else if (p === "stopPropagation") {
             return function () {
-              console.warn("stopPropagation", name, arguments);
+              evtprint("stopPropagation", name, arguments);
               return e.preventDefault(...arguments);
             }
           }
@@ -693,7 +701,7 @@ if (0) {
 
   EventTarget.prototype.removeEventListener = function (name, func, args) {
     //if (name.startsWith("key")) {
-    console.warn("listener removed", name, func, args);
+    evtprint("listener removed", name, func.name, args);
     //}
 
     func = func[funckey];
