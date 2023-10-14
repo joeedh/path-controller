@@ -451,7 +451,7 @@ export const console = new SmartConsole();
 
 globalThis.tm = 0.0;
 
-var EmptySlot = {};
+let EmptySlot = {};
 
 export function getClassParent(cls) {
   let p = cls.prototype;
@@ -556,12 +556,12 @@ export function btoa(buf) {
     buf = new Uint8Array(buf);
   }
 
-  if (typeof buf == "string" || buf instanceof String) {
+  if (typeof buf === "string" || buf instanceof String) {
     return window.btoa(buf);
   }
 
-  var ret = "";
-  for (var i = 0; i < buf.length; i++) {
+  let ret = "";
+  for (let i = 0; i < buf.length; i++) {
     ret += String.fromCharCode(buf[i]);
   }
 
@@ -607,16 +607,16 @@ export function time_ms() {
 }
 
 export function color2css(c) {
-  var ret = c.length == 3 ? "rgb(" : "rgba(";
+  let ret = c.length === 3 ? "rgb(" : "rgba(";
 
-  for (var i = 0; i < 3; i++) {
+  for (let i = 0; i < 3; i++) {
     if (i > 0)
       ret += ",";
 
     ret += ~~(c[i]*255);
   }
 
-  if (c.length == 4)
+  if (c.length === 4)
     ret += "," + c[3];
   ret += ")";
 
@@ -626,13 +626,13 @@ export function color2css(c) {
 export function merge(obja, objb) {
   return Object.assign({}, obja, objb);
   /*
-  var ret = {};
+  let ret = {};
 
-  for (var k in obja) {
+  for (let k in obja) {
     ret[k] = obja[k];
   }
 
-  for (var k in objb) {
+  for (let k in objb) {
     ret[k] = objb[k];
   }
 
@@ -730,13 +730,13 @@ export class cachering extends Array {
       window._cacherings.push(this);
     }
 
-    for (var i = 0; i < size; i++) {
+    for (let i = 0; i < size; i++) {
       this.push(func());
     }
   }
 
   static fromConstructor(cls, size, isprivate = false) {
-    var func = function () {
+    let func = function () {
       return new cls();
     }
 
@@ -767,7 +767,7 @@ export class SetIter {
   }
 
   next() {
-    var ret = this.ret;
+    let ret = this.ret;
 
     while (this.i < this.set.items.length && this.set.items[this.i] === EmptySlot) {
       this.i++;
@@ -803,13 +803,13 @@ export class set {
 
     this.length = 0;
 
-    if (typeof input == "string") {
+    if (typeof input === "string") {
       input = new String(input);
     }
 
     if (input !== undefined) {
       if (Symbol.iterator in input) {
-        for (var item of input) {
+        for (let item of input) {
           this.add(item);
         }
       } else if ("forEach" in input) {
@@ -817,7 +817,7 @@ export class set {
           this.add(item);
         }, this);
       } else if (input instanceof Array) {
-        for (var i = 0; i < input.length; i++) {
+        for (let i = 0; i < input.length; i++) {
           this.add(input[i]);
         }
       }
@@ -909,17 +909,17 @@ export class set {
   }
 
   add(item) {
-    var key = item[Symbol.keystr]();
+    let key = item[Symbol.keystr]();
 
     if (key in this.keys) return;
 
     if (this.freelist.length > 0) {
-      var i = this.freelist.pop();
+      let i = this.freelist.pop();
 
       this.keys[key] = i;
       this.items[i] = item;
     } else {
-      var i = this.items.length;
+      let i = this.items.length;
 
       this.keys[key] = i;
       this.items.push(item);
@@ -933,7 +933,7 @@ export class set {
   }
 
   remove(item, ignore_existence) {
-    var key = item[Symbol.keystr]();
+    let key = item[Symbol.keystr]();
 
     if (!(key in this.keys)) {
       if (!ignore_existence) {
@@ -942,7 +942,7 @@ export class set {
       return;
     }
 
-    var i = this.keys[key];
+    let i = this.keys[key];
     this.freelist.push(i);
     this.items[i] = EmptySlot;
 
@@ -956,8 +956,8 @@ export class set {
   }
 
   forEach(func, thisvar) {
-    for (var i = 0; i < this.items.length; i++) {
-      var item = this.items[i];
+    for (let i = 0; i < this.items.length; i++) {
+      let item = this.items[i];
 
       if (item === EmptySlot)
         continue;
@@ -975,7 +975,7 @@ export class HashIter {
   }
 
   next() {
-    var items = this.hash._items;
+    let items = this.hash._items;
 
     if (this.i >= items.length) {
       this.ret.done = true;
@@ -992,7 +992,7 @@ export class HashIter {
   }
 }
 
-var _hash_null = {};
+let _hash_null = {};
 
 export class hashtable {
   constructor() {
@@ -1006,9 +1006,9 @@ export class hashtable {
   }
 
   set(key, val) {
-    var key2 = key[Symbol.keystr]();
+    let key2 = key[Symbol.keystr]();
 
-    var i;
+    let i;
     if (!(key2 in this._keys)) {
       i = this._items.length;
 
@@ -1031,14 +1031,14 @@ export class hashtable {
   }
 
   remove(key) {
-    var key2 = key[Symbol.keystr]();
+    let key2 = key[Symbol.keystr]();
 
     if (!(key2 in this._keys)) {
       console.warn("Warning, key not in hashtable:", key, key2);
       return;
     }
 
-    var i = this._keys[key2];
+    let i = this._keys[key2];
 
     this._items[i] = _hash_null;
     this._items[i + 1] = _hash_null;
@@ -1048,13 +1048,13 @@ export class hashtable {
   }
 
   has(key) {
-    var key2 = key[Symbol.keystr]();
+    let key2 = key[Symbol.keystr]();
 
     return key2 in this._keys;
   }
 
   get(key) {
-    var key2 = key[Symbol.keystr]();
+    let key2 = key[Symbol.keystr]();
 
     if (!(key2 in this._keys)) {
       console.warn("Warning, item not in hash", key, key2);
@@ -1069,10 +1069,10 @@ export class hashtable {
   }
 
   keys() {
-    var ret = [];
+    let ret = [];
 
-    for (var i = 0; i < this._items.length; i += 2) {
-      var key = this._items[i];
+    for (let i = 0; i < this._items.length; i += 2) {
+      let key = this._items[i];
 
       if (key !== _hash_null) {
         ret.push(key);
@@ -1083,10 +1083,10 @@ export class hashtable {
   }
 
   values() {
-    var ret = [];
+    let ret = [];
 
-    for (var i = 0; i < this._items.length; i += 2) {
-      var item = this._items[i + 1];
+    for (let i = 0; i < this._items.length; i += 2) {
+      let item = this._items[i + 1];
 
       if (item !== _hash_null) {
         ret.push(item);
@@ -1097,11 +1097,11 @@ export class hashtable {
   }
 
   forEach(cb, thisvar) {
-    if (thisvar == undefined)
+    if (thisvar === undefined)
       thisvar = self;
 
-    for (var k in this._keys) {
-      var i = this._keys[k];
+    for (let k in this._keys) {
+      let i = this._keys[k];
 
       cb.call(thisvar, k, this._items[i]);
     }
@@ -1213,15 +1213,15 @@ globalThis.get_callstack = get_callstack;
 globalThis.print_stack = print_stack;
 
 export function fetch_file(path) {
-  var url = location.origin + "/" + path
+  let url = location.origin + "/" + path
 
-  var req = new XMLHttpRequest(
+  let req = new XMLHttpRequest(
   );
 
   return new Promise(function (accept, reject) {
     req.open("GET", url)
     req.onreadystatechange = function (e) {
-      if (req.status == 200 && req.readyState == 4) {
+      if (req.status === 200 && req.readyState === 4) {
         accept(req.response);
       } else if (req.status >= 400) {
         reject(req.status, req.statusText);
@@ -1270,7 +1270,7 @@ export class MersenneRandom {
 
     this.mt[0] = seed;  // Initialize the initial state to the seed
 
-    for (var i = 1; i < 624; i++) {
+    for (let i = 1; i < 624; i++) {
       this.mt[i] = _int32(
         1812433253*(this.mt[i - 1] ^ this.mt[i - 1]>>30) + i);
     }
@@ -1280,7 +1280,7 @@ export class MersenneRandom {
     if (this.index >= 624)
       this.twist();
 
-    var y = this.mt[this.index];
+    let y = this.mt[this.index];
 
     // Right shift by 11 bits
     y = y ^ y>>11;
@@ -1297,14 +1297,14 @@ export class MersenneRandom {
   }
 
   twist() {
-    for (var i = 0; i < 624; i++) {
+    for (let i = 0; i < 624; i++) {
       // Get the most significant bit and add it to the less significant
       // bits of the next number
-      var y = _int32((this.mt[i] & 0x80000000) +
+      let y = _int32((this.mt[i] & 0x80000000) +
         (this.mt[(i + 1)%624] & 0x7fffffff));
       this.mt[i] = this.mt[(i + 397)%624] ^ y>>1;
 
-      if (y%2 != 0)
+      if (y%2 !== 0)
         this.mt[i] = this.mt[i] ^ 0x9908b0df;
     }
 
@@ -1312,7 +1312,7 @@ export class MersenneRandom {
   }
 }
 
-var _mt = new MersenneRandom(0);
+let _mt = new MersenneRandom(0);
 
 export function random() {
   return _mt.extract_number()/(1<<30);
@@ -1337,10 +1337,10 @@ export function strhash(str) {
     }
   }
 
-  var hash = 0;
+  let hash = 0;
 
-  for (var i = 0; i < str.length; i++) {
-    var ch = str.charCodeAt(i);
+  for (let i = 0; i < str.length; i++) {
+    let ch = str.charCodeAt(i);
 
     hash = hash < 0 ? -hash : hash;
 
@@ -1354,14 +1354,14 @@ export function strhash(str) {
   return hash;
 }
 
-var hashsizes = [
+let hashsizes = [
   /*2, 5, 11, 19, 37, 67, 127, */223, 383, 653, 1117, 1901, 3251,
                                  5527, 9397, 15991, 27191, 46229, 78593, 133631, 227177, 38619,
                                  656587, 1116209, 1897561, 3225883, 5484019, 9322861, 15848867,
                                  26943089, 45803279, 77865577, 132371489, 225031553
 ];
 
-var FTAKEN = 0, FKEY = 1, FVAL = 2, FTOT = 3;
+let FTAKEN = 0, FKEY = 1, FVAL = 2, FTOT = 3;
 
 export class FastHash extends Array {
   constructor() {
@@ -1376,16 +1376,16 @@ export class FastHash extends Array {
   }
 
   resize(size) {
-    var table = this.slice(0, this.length);
+    let table = this.slice(0, this.length);
 
     this.length = size*FTOT;
     this.size = size;
     this.fill(0, 0, this.length);
 
-    for (var i = 0; i < table.length; i += FTOT) {
+    for (let i = 0; i < table.length; i += FTOT) {
       if (!table[i + FTAKEN]) continue;
 
-      var key = table[i + FKEY], val = table[i + FVAL];
+      let key = table[i + FKEY], val = table[i + FVAL];
       this.set(key, val);
     }
 
@@ -1393,16 +1393,16 @@ export class FastHash extends Array {
   }
 
   get(key) {
-    var hash = typeof key == "string" ? strhash(key) : key;
-    hash = typeof hash == "object" ? hash.valueOf() : hash;
+    let hash = typeof key === "string" ? strhash(key) : key;
+    hash = typeof hash === "object" ? hash.valueOf() : hash;
 
-    var probe = 0;
+    let probe = 0;
 
-    var h = (hash + probe)%this.size;
+    let h = (hash + probe)%this.size;
 
-    var _i = 0;
+    let _i = 0;
     while (_i++ < 50000 && this[h*FTOT + FTAKEN]) {
-      if (this[h*FTOT + FKEY] == key) {
+      if (this[h*FTOT + FKEY] === key) {
         return this[h*FTOT + FVAL];
       }
 
@@ -1414,16 +1414,16 @@ export class FastHash extends Array {
   }
 
   has(key) {
-    var hash = typeof key == "string" ? strhash(key) : key;
-    hash = typeof hash == "object" ? hash.valueOf() : hash;
+    let hash = typeof key === "string" ? strhash(key) : key;
+    hash = typeof hash === "object" ? hash.valueOf() : hash;
 
-    var probe = 0;
+    let probe = 0;
 
-    var h = (hash + probe)%this.size;
+    let h = (hash + probe)%this.size;
 
-    var _i = 0;
+    let _i = 0;
     while (_i++ < 50000 && this[h*FTOT + FTAKEN]) {
-      if (this[h*FTOT + FKEY] == key) {
+      if (this[h*FTOT + FKEY] === key) {
         return true;
       }
 
@@ -1435,20 +1435,20 @@ export class FastHash extends Array {
   }
 
   set(key, val) {
-    var hash = typeof key == "string" ? strhash(key) : key;
-    hash = typeof hash == "object" ? hash.valueOf() : hash;
+    let hash = typeof key === "string" ? strhash(key) : key;
+    hash = typeof hash === "object" ? hash.valueOf() : hash;
 
     if (this.used > this.size/3) {
       this.resize(hashsizes[this.cursize++]);
     }
 
-    var probe = 0;
+    let probe = 0;
 
-    var h = (hash + probe)%this.size;
+    let h = (hash + probe)%this.size;
 
-    var _i = 0;
+    let _i = 0;
     while (_i++ < 50000 && this[h*FTOT + FTAKEN]) {
-      if (this[h*FTOT + FKEY] == key) {
+      if (this[h*FTOT + FKEY] === key) {
         this[h*FTOT + FVAL] = val;
         return;
       }
@@ -1466,7 +1466,7 @@ export class FastHash extends Array {
 }
 
 export function test_fasthash() {
-  var h = new FastHash();
+  let h = new FastHash();
   console.log("bleh hash:", strhash("bleh"));
 
   h.set("bleh", 1);
@@ -1493,10 +1493,10 @@ export class ImageReader {
       let files = this.files;
       console.log("got file", e, files)
 
-      if (files.length == 0) return;
+      if (files.length === 0) return;
 
-      var reader = new FileReader();
-      var this2 = this;
+      let reader = new FileReader();
+      let this2 = this;
 
       reader.onload = (e) => {
         let data = e.target.result;
