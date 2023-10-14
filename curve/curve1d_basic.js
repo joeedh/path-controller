@@ -1,7 +1,6 @@
 import nstructjs from "../util/struct.js";
 import {CurveFlags, TangentModes, CurveTypeData} from './curve1d_base.js';
 import {Vector2, Vector3, Vector4, Quat, Matrix4} from '../util/vectormath.js';
-import {genHermiteTable, evalHermiteTable} from './curve1d_base.js';
 import * as util from '../util/util.js';
 
 let _udigest = new util.HashDigest();
@@ -16,7 +15,8 @@ class EquationCurve extends CurveTypeData {
 
     this.equation = "x";
     this._last_equation = "";
-    this.hermite = undefined;
+    this._last_xrange = new Vector2();
+    this._func = undefined;
   }
 
   get hasGUI() {
@@ -37,6 +37,8 @@ class EquationCurve extends CurveTypeData {
     super.calcHashKey(d);
 
     d.add(this.equation);
+    d.add(this.parent.xRange[0]);
+    d.add(this.parent.xRange[1]);
 
     return d.get();
   }
@@ -72,7 +74,7 @@ class EquationCurve extends CurveTypeData {
 
     let row = container.row();
 
-    let text = this.uidata.textbox = row.textbox(undefined, ""+this.equation);
+    let text = this.uidata.textbox = row.textbox(undefined, "" + this.equation);
     text.onchange = (val) => {
       console.log(val);
       this.equation = val;
@@ -99,10 +101,16 @@ class EquationCurve extends CurveTypeData {
   }
 
   evaluate(s) {
-    if (!this.hermite || this._last_equation !== this.equation) {
+    let update = this.hermite || this._last_equation !== this.equation;
+    update = update || this._last_xrange.vectorDistance(this.parent.xRange) > 0.0;
+    update = update || !this._func;
+
+    if (update) {
+      this._last_xrange.load(this.parent.xRange);
       this._last_equation = this.equation;
 
       this.updateTextBox();
+      this.#makeFunc();
 
       this._evaluate(0.0);
 
@@ -110,30 +118,48 @@ class EquationCurve extends CurveTypeData {
         console.warn("ERROR!");
         return 0.0;
       }
-
-      let steps = 32;
-      this.hermite = genHermiteTable((s) => this._evaluate(s), steps);
     }
 
-    return evalHermiteTable(this.hermite, s);
+    return this._func(s);
+  }
+
+  #makeFunc() {
+    this._func = undefined;
+
+    var sin = Math.sin, cos = Math.cos, pi = Math.PI, PI = Math.PI,
+        e                                                = Math.E, E                                    = Math.E, tan                      = Math.tan, abs = Math.abs,
+        floor                                            = Math.floor, ceil = Math.ceil, acos = Math.acos,
+        asin                                             = Math.asin, atan = Math.atan, cosh         = Math.cos,
+        sinh                                             = Math.sinh, log                            = Math.log, pow = Math.pow,
+        exp                                              = Math.exp, sqrt = Math.sqrt, cbrt           = Math.cbrt,
+        min                                              = Math.min, max = Math.max;
+
+    var func;
+    let code = `
+    func = function(x) {
+      return ${this.equation};
+    }
+    `;
+    try {
+      eval(code);
+
+      this._haserror = false;
+    } catch (error) {
+      this._haserror = true;
+      console.warn("Compile error!", error.message);
+    }
+
+    this._func = func;
   }
 
   _evaluate(s) {
-    let sin = Math.sin, cos = Math.cos, pi = Math.PI, PI = Math.PI,
-        e                                                = Math.E, E                                    = Math.E, tan                      = Math.tan, abs      = Math.abs,
-        floor                                            = Math.floor, ceil                         = Math.ceil, acos = Math.acos,
-        asin                                             = Math.asin, atan                           = Math.atan, cosh = Math.cos,
-        sinh                                             = Math.sinh, log                            = Math.log, pow = Math.pow,
-        exp                                              = Math.exp, sqrt                             = Math.sqrt, cbrt = Math.cbrt,
-        min                                              = Math.min, max = Math.max;
-
     try {
-      let x = s;
-      let ret = eval(this.equation);
-
+      let f = this._func(s);
       this._haserror = false;
 
-      return ret;
+      if (isNaN(f)) {
+        return 0.0;
+      }
     } catch (error) {
       this._haserror = true;
       console.warn("ERROR!");

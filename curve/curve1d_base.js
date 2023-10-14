@@ -2,7 +2,7 @@ import nstructjs from "../util/struct.js";
 import * as util from '../util/util.js';
 
 export const CurveConstructors = [];
-export const CURVE_VERSION = 1.0;
+export const CURVE_VERSION = 1.1;
 
 export const CurveFlags = {
   SELECT: 1
@@ -35,6 +35,7 @@ let _udigest = new util.HashDigest();
 export class CurveTypeData {
   constructor() {
     this.type = this.constructor.define().typeName;
+    this.parent = undefined;
   }
 
   get hasGUI() {
@@ -210,12 +211,15 @@ CurveTypeData {
 nstructjs.register(CurveTypeData);
 
 
-export function evalHermiteTable(table, t) {
+const unitRange = [0, 1];
+
+export function evalHermiteTable(table, t, range = unitRange) {
+  t = (t - range[0])/(range[1] - range[0]);
+
   let s = t*(table.length/4);
-
   let i = Math.floor(s);
-  s -= i;
 
+  s -= i;
   i *= 4;
 
   let a = table[i] + (table[i + 1] - table[i])*s;
@@ -225,14 +229,16 @@ export function evalHermiteTable(table, t) {
   //return table[i] + (table[i + 3] - table[i])*s;
 }
 
-export function genHermiteTable(evaluate, steps) {
+export function genHermiteTable(evaluate, steps, range = [0, 1]) {
   //console.log("building spline approx");
 
   let table = new Array(steps);
 
-  let eps = 0.00001;
-  let dt = (1.0 - eps*4.001)/(steps - 1);
-  let t = eps*4;
+  let [min, max] = range;
+
+  let eps = 0.0001;
+  let dt = ((max - min) - eps*4.001)/(steps - 1);
+  let t = min + eps*4;
   let lastdv1, lastf3;
 
   for (let j = 0; j < steps; j++, t += dt) {
