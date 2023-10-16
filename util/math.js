@@ -1078,7 +1078,9 @@ export function tri_area(v1, v2, v3) {
   let l3 = v3.vectorDistance(v1);
 
   let s = (l1 + l2 + l3)/2.0;
-  return Math.sqrt(s*(s - l1)*(s - l2)*(s - l3))
+  s = s*(s - l1)*(s - l2)*(s - l3);
+  s = Math.max(s, 0); /* Numerical error can dip into negative numbers. */
+  return Math.sqrt(s);
 }
 
 export function aabb_overlap_area(pos1, size1, pos2, size2) {
@@ -1628,7 +1630,7 @@ export function winding_axis(a, b, c, up_axis) {
   return f >= 0.0;
 }
 
-export function winding(a, b, c, zero_z, tol = 0.0) {
+export function winding(a, b, c, zero_z = false, tol = 0.0) {
   let t1 = _cross_vec1;
   let t2 = _cross_vec2;
 
