@@ -431,8 +431,10 @@ export class Curve1D extends EventDispatcher {
 
   #patchRange() {
     let range = this.getGenerator("BSplineCurve").range;
-    this.xRange.load(range[0]);
-    this.yRange.load(range[1]);
+    if (range) {
+      this.xRange.load(range[0]);
+      this.yRange.load(range[1]);
+    }
   }
 }
 
