@@ -77,12 +77,17 @@ export class DataPathSetOp extends ToolOp {
         let i = datapath.length - 1;
 
         //chope off enum selector
-        while (i >= 0 && datapath[i] !== '[') {
+        while (i >= 0 && datapath[i] !== '[' && datapath[i] !== '=') {
           i--;
         }
 
         if (i >= 0) {
-          datapath = datapath.slice(0, i);
+          if (!value && prop.type === PropTypes.ENUM) {
+            /* This is a no-op. */
+            return undefined;
+          }
+
+          datapath = datapath.slice(0, i).trim();
         }
 
         tool.inputs.prop = new IntProperty();

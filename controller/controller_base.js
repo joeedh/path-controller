@@ -216,6 +216,16 @@ export class DataPath {
     return this;
   }
 
+  checkStrip(state = true) {
+    if (state) {
+      this.data.flag |= PropFlags.FORCE_ENUM_CHECKBOXES;
+    } else {
+      this.data.flag &= ~PropFlags.FORCE_ENUM_CHECKBOXES;
+    }
+
+    return this;
+  }
+
   noUnits() {
     this.baseUnit("none");
     this.displayUnit("none");
