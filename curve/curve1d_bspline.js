@@ -1170,7 +1170,13 @@ class BSplineCurve extends CurveTypeData {
 
     let Icons = row.constructor.getIconEnum();
 
-    row.iconbutton(Icons.TINY_X, "Delete Point", () => {
+    let icon = Icons.LARGE_X !== undefined ? Icons.LARGE_X : Icons.TINY_X;
+    if (Icons.LARGE_X === undefined) {
+      console.log(Icons);
+      console.error("Curve widget expects Icons.LARGE_X icon for delete button.");
+    }
+
+    row.iconbutton(icon, "Delete Point", () => {
       for (let i = 0; i < this.points.length; i++) {
         let p = this.points[i];
 
@@ -1187,11 +1193,24 @@ class BSplineCurve extends CurveTypeData {
       this.reset();
     });
 
+    let slider = row.simpleslider(undefined, {
+      name      : "Degree",
+      defaultval: this.deg,
+      min       : 1,
+      max       : 7,
+      isInt     : true,
+      callback  : (slider) => {
+        this.deg = Math.floor(slider.value);
+        fullUpdate();
+      }
+    });
+    /*
     let slider = row.simpleslider(undefined, "Degree", this.deg, 1, 6, 1, true, true, (slider) => {
       this.deg = Math.floor(slider.value);
+      console.log(slider.value);
 
       fullUpdate();
-    });
+    });*/
 
     slider.baseUnit = "none";
     slider.displayUnit = "none";
