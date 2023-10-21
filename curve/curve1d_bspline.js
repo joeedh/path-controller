@@ -539,6 +539,7 @@ export class Curve1DPoint {
   get 0() {
     throw new Error("Curve1DPoint get 0");
   }
+
   get 1() {
     throw new Error("Curve1DPoint get 1");
   }
@@ -547,6 +548,7 @@ export class Curve1DPoint {
   set 0(v) {
     this.co[0] = v;
   }
+
   set 1(v) {
     this.co[1] = v;
   }
@@ -720,8 +722,6 @@ class BSplineCurve extends CurveTypeData {
     this._degOffset = 0;
     this.cache_w = 0;
     this._last_cache_key = 0;
-
-    this._last_update_key = "";
 
     this.fastmode = false;
     this.points = [];
@@ -1659,7 +1659,6 @@ class BSplineCurve extends CurveTypeData {
 
     let slider = row.simpleslider(undefined, {
       name      : "Degree",
-      defaultval: this.deg,
       min       : 1,
       max       : 7,
       isInt     : true,
@@ -1668,6 +1667,17 @@ class BSplineCurve extends CurveTypeData {
         fullUpdate();
       }
     });
+    slider.setValue(this.deg);
+
+    let last_deg = this.deg;
+    slider.update.after(() => {
+      if (last_deg !== this.deg) {
+        console.log("degree update", this.deg);
+        last_deg = this.deg;
+        slider.setValue(this.deg);
+      }
+    });
+
     /*
     let slider = row.simpleslider(undefined, "Degree", this.deg, 1, 6, 1, true, true, (slider) => {
       this.deg = Math.floor(slider.value);
@@ -1687,15 +1697,6 @@ class BSplineCurve extends CurveTypeData {
       this.interpolating = check.value;
       fullUpdate();
     }
-
-    container.update.after(() => {
-      let key = this.calcHashKey();
-      if (key !== this._last_update_key) {
-        this._last_update_key = key;
-
-        slider.setValue(this.deg);
-      }
-    });
 
     return this;
   }
@@ -1814,6 +1815,7 @@ class BSplineCurve extends CurveTypeData {
     this.length = b.points.length;
     this.points.length = 0;
     this.eidgen = b.eidgen.copy();
+
     this.deg = b.deg;
     this.interpolating = b.interpolating;
 
