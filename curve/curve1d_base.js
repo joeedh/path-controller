@@ -5,7 +5,8 @@ export const CurveConstructors = [];
 export const CURVE_VERSION = 1.1;
 
 export const CurveFlags = {
-  SELECT: 1
+  SELECT   : 1,
+  TRANSFORM: 2,
 };
 
 

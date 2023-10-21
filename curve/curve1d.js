@@ -44,9 +44,9 @@ import {CurveConstructors, CURVE_VERSION, CurveTypeData} from './curve1d_base.js
 
 let _udigest = new util.HashDigest();
 
-export class Curve1D extends EventDispatcher {
+export class Curve1D {
   constructor() {
-    super();
+    this._eventCBs = [];
 
     this.uiZoom = 1.0;
     this.xRange = new Vector2().loadXY(0.0, 1.0);
@@ -83,6 +83,63 @@ export class Curve1D extends EventDispatcher {
     }
   }
 
+  /** cb_is_dead is a callback that returns true if it
+   *  should be removed from the callback list. */
+  on(type, cb, owner, cb_is_dead) {
+    if (cb_is_dead === undefined) {
+      cb_is_dead = () => false;
+    }
+
+    this._eventCBs.push({type, cb, owner, dead: cb_is_dead, once: false});
+  }
+
+  off(type, cb) {
+    this._eventCBs = this._eventCBs.filter(cb => cb.cb !== cb);
+  }
+
+  once(type, cb, owner, cb_is_dead) {
+    this.on(type, cb, owner, cb_is_dead);
+    this._eventCBs[this._eventCBs.length - 1].once = true;
+  }
+
+  subscribed(type, owner) {
+    for (let cb of this._eventCBs) {
+      if ((!type || cb.type === type) && cb.owner === owner) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  _pruneEventCallbacks() {
+    this._eventCBs = this._eventCBs.filter(cb => !cb.dead());
+  }
+
+  _fireEvent(evt, data) {
+    this._pruneEventCallbacks();
+
+    for (let i = 0; i < this._eventCBs.length; i++) {
+      let cb = this._eventCBs[i];
+
+      if (cb.type !== evt) {
+        continue;
+      }
+
+      try {
+        cb.cb(data);
+      } catch (error) {
+        console.error(error.stack);
+        console.error(error.message);
+      }
+
+      if (cb.once) {
+        this._eventCBs.remove(cb);
+        i--;
+      }
+    }
+  }
+
   calcHashKey(digest = _udigest.reset()) {
     let d = digest;
 
@@ -105,7 +162,7 @@ export class Curve1D extends EventDispatcher {
   }
 
   load(b) {
-    if (b === undefined) {
+    if (b === undefined || b === this) {
       return;
     }
     /*
@@ -129,12 +186,39 @@ export class Curve1D extends EventDispatcher {
     let json = nstructjs.writeJSON(b, Curve1D);
     let cpy = nstructjs.readJSON(json, Curve1D);
 
+    let activeCls = this.generators.active.constructor;
+    let oldGens = this.generators;
+
     this.generators = cpy.generators;
+    this.generators.active = undefined;
+
     for (let gen of cpy.generators) {
+      /* See if generator provides a .load() method. */
+      for (let gen2 of oldGens) {
+        if (gen2.constructor === gen.constructor && gen2.load !== undefined) {
+          cpy.generators[cpy.generators.indexOf(gen)] = gen2;
+
+          if (gen2.constructor === activeCls) {
+            this.generators.active = gen2;
+          }
+
+          gen2.parent = this;
+          gen2.load(gen);
+          gen = gen2;
+          break;
+        }
+      }
+
+      if (gen.constructor === activeCls) {
+        this.generators.active = gen;
+      }
       gen.parent = this;
     }
 
     for (let k in json) {
+      if (k === "generators") {
+        continue;
+      }
       if (k.startsWith("_")) {
         continue;
       }
@@ -154,9 +238,8 @@ export class Curve1D extends EventDispatcher {
   }
 
   copy() {
-    let ret = new Curve1D();
-    ret.loadJSON(JSON.parse(mySafeJSONStringify(this)));
-    return ret;
+    let json = nstructjs.writeJSON(this, Curve1D);
+    return nstructjs.readJSON(json, Curve1D);
   }
 
   _on_change() {
