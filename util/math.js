@@ -1850,7 +1850,7 @@ export function line_line_isect(v1, v2, v3, v4, test_segment = true) {
   let xb1 = v3[0], xb2 = v4[0], yb1 = v3[1], yb2 = v4[1];
 
   let div = ((xa1 - xa2)*(yb1 - yb2) - (xb1 - xb2)*(ya1 - ya2));
-  if (div < 0.00000001) { //parallel but intersecting lines.
+  if (Math.abs(div) < 0.00000001) { //parallel but intersecting lines.
     return COLINEAR_ISECT;
   } else { //intersection exists
     let t1 = (-((ya1 - yb2)*xb1 - (yb1 - yb2)*xa1 - (ya1 - yb1)*xb2))/div;
@@ -3409,4 +3409,31 @@ export function tri_angles(v1, v2, v3) {
   return ret;
 }
 
+let angle_v2_temps = util.cachering.fromConstructor(Vector2, 32);
+let angle_v3_temps = util.cachering.fromConstructor(Vector3, 32);
 
+export function angle_between_vecs(v1, vcent, v2) {
+  let t1, t2;
+
+  if (v1.length === 2) {
+    t1 = angle_v2_temps.next();
+    t2 = angle_v2_temps.next();
+  } else {
+    t1 = angle_v3_temps.next();
+    t2 = angle_v3_temps.next();
+  }
+
+  t1.load(v1).sub(vcent).normalize();
+  t2.load(v2).sub(vcent).normalize();
+
+  let d = t1.dot(t2);
+
+  /* Handle numerical error. */
+  if (d < -1.0) {
+    return Math.PI;
+  } else if (d > 1.0) {
+    return 0.0;
+  } else {
+    return Math.acos(d);
+  }
+}
