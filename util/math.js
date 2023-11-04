@@ -1733,23 +1733,33 @@ export function expand_line(l, margin) {
   l[0].add(c);
   l[1].add(c);
   return l;
-};
+}
 
-//stupidly ancient function, todo: rewrite
-export function colinear(a, b, c, limit = 2.2e-16) {
-  for (let i = 0; i < 3; i++) {
-    _cross_vec1[i] = b[i] - a[i];
-    _cross_vec2[i] = c[i] - a[i];
+export function colinear(a, b, c, limit = 2.2e-16, distLimit = 0.00001**2) {
+  let t1 = _cross_vec1;
+  let t2 = _cross_vec2;
+
+  let axes = a.length;
+
+  for (let i = 0; i < axes; i++) {
+    t1[i] = b[i] - a[i];
+    t2[i] = c[i] - a[i];
   }
 
-  if (a.vectorDistance(b) < feps*100 && a.vectorDistance(c) < feps*100) {
+  for (let i = axes; i < 3; i++) {
+    t1[i] = t2[i] = 0.0;
+  }
+
+  if (t1.dot(t1) <= distLimit || t2.dot(t2) <= distLimit) {
     return true;
   }
-  if (_cross_vec1.dot(_cross_vec1) < limit || _cross_vec2.dot(_cross_vec2) < limit)
-    return true;
-  _cross_vec1.cross(_cross_vec2);
-  return _cross_vec1.dot(_cross_vec1) < limit;
-};
+
+  t1.normalize();
+  t2.normalize();
+
+  t1.cross(t2);
+  return t1.dot(t1) <= limit;
+}
 
 let _llc_l1 = [new Vector3(), new Vector3()];
 let _llc_l2 = [new Vector3(), new Vector3()];
