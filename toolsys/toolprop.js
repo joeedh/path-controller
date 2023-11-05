@@ -493,6 +493,7 @@ ToolProperty {
   radix          : float;
   decimalPlaces  : int;
   uiname         : string | this.uiname || this.apiname || "";
+  wasSet         : bool;
 }
 `;
 nstructjs.register(ToolProperty);

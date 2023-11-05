@@ -1666,48 +1666,35 @@ export function inrect_2d(p, pos, size) {
     return false;
   }
   return p[0] >= pos[0] && p[0] <= pos[0] + size[0] && p[1] >= pos[1] && p[1] <= pos[1] + size[1];
-};
-let $smin_aabb_isect_line_2d = new Vector2();
-let $ssize_aabb_isect_line_2d = new Vector2();
-let $sv1_aabb_isect_line_2d = new Vector2();
-let $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2()];
-let $l1_aabb_isect_line_2d = [0, 0];
-let $smax_aabb_isect_line_2d = new Vector2();
-let $sv2_aabb_isect_line_2d = new Vector2();
-let $l2_aabb_isect_line_2d = [0, 0];
+}
 
+let $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
 export function aabb_isect_line_2d(v1, v2, min, max) {
-  for (let i = 0; i < 2; i++) {
-    $smin_aabb_isect_line_2d[i] = Math.min(min[i], v1[i]);
-    $smax_aabb_isect_line_2d[i] = Math.max(max[i], v2[i]);
+  if (point_in_aabb_2d(v1, min, max) || point_in_aabb(v2, min, max)) {
+    return true;
   }
-  $smax_aabb_isect_line_2d.sub($smin_aabb_isect_line_2d);
-  $ssize_aabb_isect_line_2d.load(max).sub(min);
-  if (!aabb_isect_2d($smin_aabb_isect_line_2d, $smax_aabb_isect_line_2d, min, $ssize_aabb_isect_line_2d))
-    return false;
+
+  let lines = $ps_aabb_isect_line_2d;
+  lines[0][0] = min[0];
+  lines[0][1] = min[1];
+
+  lines[1][0] = min[0];
+  lines[1][1] = max[1];
+
+  lines[2][0] = max[0];
+  lines[2][1] = max[1];
+
+  lines[3][0] = max[0];
+  lines[3][1] = min[1];
+
   for (let i = 0; i < 4; i++) {
-    if (inrect_2d(v1, min, $ssize_aabb_isect_line_2d))
+    if (line_line_cross(v1, v2, lines[i], lines[(i + 1)%4])) {
       return true;
-    if (inrect_2d(v2, min, $ssize_aabb_isect_line_2d))
-      return true;
+    }
   }
-  $ps_aabb_isect_line_2d[0] = min;
-  $ps_aabb_isect_line_2d[1][0] = min[0];
-  $ps_aabb_isect_line_2d[1][1] = max[1];
-  $ps_aabb_isect_line_2d[2] = max;
-  $ps_aabb_isect_line_2d[3][0] = max[0];
-  $ps_aabb_isect_line_2d[3][1] = min[1];
-  $l1_aabb_isect_line_2d[0] = v1;
-  $l1_aabb_isect_line_2d[1] = v2;
-  for (let i = 0; i < 4; i++) {
-    let a = $ps_aabb_isect_line_2d[i], b = $ps_aabb_isect_line_2d[(i + 1)%4];
-    $l2_aabb_isect_line_2d[0] = a;
-    $l2_aabb_isect_line_2d[1] = b;
-    if (line_line_cross($l1_aabb_isect_line_2d, $l2_aabb_isect_line_2d))
-      return true;
-  }
+
   return false;
-};
+}
 
 
 export function expand_rect2d(pos, size, margin) {
@@ -1759,6 +1746,25 @@ export function colinear(a, b, c, limit = 2.2e-16, distLimit = 0.00001**2) {
 
   t1.cross(t2);
   return t1.dot(t1) <= limit;
+}
+
+export function colinear2d(a, b, c, limit = 0.00001, precise=false) {
+  let dx1 = a[0]-b[0];
+  let dy1 = a[1]-b[1];
+  let dx2 = c[0]-b[0];
+  let dy2 = c[1]-b[1];
+
+  let det = Math.abs(dx1*dy2 - dy1*dx2);
+  if (precise) {
+    let len = (dx1**2 + dy1**2)**0.5 + (dx2**2 + dy2**2)**0.5;
+    if (len <= 0.00001) {
+      return true;
+    }
+
+    det /= len;
+  }
+
+  return det <= limit;
 }
 
 let _llc_l1 = [new Vector3(), new Vector3()];
