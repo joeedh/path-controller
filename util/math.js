@@ -1631,31 +1631,12 @@ export function winding_axis(a, b, c, up_axis) {
 }
 
 export function winding(a, b, c, zero_z = false, tol = 0.0) {
-  let t1 = _cross_vec1;
-  let t2 = _cross_vec2;
+  let dx1 = b[0] - a[0];
+  let dy1 = b[1] - a[1];
+  let dx2 = c[0] - a[0];
+  let dy2 = c[1] - a[1];
 
-  for (let i = 0; i < a.length; i++) {
-    t1[i] = b[i] - a[i];
-    t2[i] = c[i] - a[i];
-  }
-
-  return t1[0]*t2[1] - t1[1]*t2[0] > tol;
-  /*
-  t1.load(a).sub(b);
-  t2.load(c).sub(b);
-  return t[0]*
-  
-  for (let i=0; i<a.length; i++) {
-      _cross_vec1[i] = b[i]-a[i];
-      _cross_vec2[i] = c[i]-a[i];
-  }
-  if (a.length==2 || zero_z) {
-      _cross_vec1[2] = 0.0;
-      _cross_vec2[2] = 0.0;
-  }
-  _cross_vec1.cross(_cross_vec2);
-  return _cross_vec1[2]>tol;
-*/
+  return dx1*dy2 - dy1*dx2 > tol;
 }
 
 export function inrect_2d(p, pos, size) {
