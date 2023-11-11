@@ -1,3 +1,5 @@
+//OUTDATED, see ./nstructjs_es6.js
+
 let nexports = (function () {
   if (typeof window === "undefined" && typeof global != "undefined") {
     global._nGlobal = global;
