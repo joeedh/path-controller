@@ -92,7 +92,7 @@ export class ToolProperty extends ToolPropertyIF {
     this.apiname = apiname;
     this.uiname = uiname !== undefined ? uiname : apiname;
     this.description = description;
-    this.flag = flag;
+    this.flag = flag | PropFlags.SAVE_LAST_VALUE;
     this.icon = icon;
     this.icon2 = icon; //another icon, e.g. unchecked state
 
@@ -233,8 +233,16 @@ export class ToolProperty extends ToolPropertyIF {
     return this;
   }
 
+  /** Save property in last value cache.  Now set by default,
+   *  to disable use .ignoreLastValue().
+   */
   saveLastValue() {
     this.flag |= PropFlags.SAVE_LAST_VALUE;
+    return this;
+  }
+
+  ignoreLastValue() {
+    this.flag &= ~PropFlags.SAVE_LAST_VALUE;
     return this;
   }
 
@@ -748,7 +756,7 @@ export class _NumberPropertyBase extends ToolProperty {
     b.range = this.range ? [this.range[0], this.range[1]] : undefined;
     b.uiRange = this.uiRange ? [this.uiRange[0], this.uiRange[1]] : undefined;
     b.slideSpeed = this.slideSpeed;
-    
+
     b.data = this.data;
   }
 
