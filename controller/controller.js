@@ -546,7 +546,7 @@ export class DataStruct {
   }
 
   curve1d(path, apiname, uiname, description) {
-    let prop = new toolprop.Curve1DProperty(undefined);
+    let prop = new Curve1DProperty(undefined);
 
     prop.apiname = apiname;
     prop.uiname = uiname;
@@ -1748,6 +1748,7 @@ export function initSimpleController() {
 }
 
 import {DataPathSetOp} from "./controller_ops.js";
+import {Curve1DProperty} from '../curve/curve1d_toolprop.js';
 
 let dpt = DataPathSetOp;
 

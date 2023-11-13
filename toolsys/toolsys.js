@@ -75,6 +75,7 @@ import {keymap} from '../util/simple_events.js';
 import {PropFlags, PropTypes} from './toolprop.js';
 import {DataPath} from '../controller/controller_base.js';
 import * as util from '../util/util.js';
+import {Context} from '../controller/context.js';
 
 export let ToolClasses = [];
 window._ToolClasses = ToolClasses;
@@ -1721,7 +1722,17 @@ window._testToolStackIO = function () {
   return toolstack;
 }
 
-export function buildToolSysAPI(api, registerWithNStructjs = true, rootCtxStruct = undefined) {
+/**
+ * Call this to build the tool property cache data binding API.
+ *
+ * If rootCtxClass is not undefined and insertToolDefaultsIntoContext is true
+ * then ".toolDefaults" will be automatically added to rootCtxClass's prototype
+ * if necessary.
+ */
+export function buildToolSysAPI(api, registerWithNStructjs    = true,
+                                rootCtxStruct                 = undefined,
+                                rootCtxClass                  = undefined,
+                                insertToolDefaultsIntoContext = true) {
   let datastruct = api.mapStruct(ToolPropertyCache, true);
 
   for (let cls of ToolClasses) {
@@ -1738,6 +1749,25 @@ export function buildToolSysAPI(api, registerWithNStructjs = true, rootCtxStruct
 
   if (rootCtxStruct) {
     rootCtxStruct.struct("toolDefaults", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+  }
+
+  if (rootCtxClass && insertToolDefaultsIntoContext) {
+    let inst = new rootCtxClass({});
+    if (inst.toolDefaults === undefined) {
+      Object.defineProperty(rootCtxClass, "toolDefaults", {
+        get() {
+          return SavedToolDefaults;
+        }
+      });
+
+      if (Context.isContextSubclass(rootCtxClass)) {
+        rootCtxClass.prototype.toolDefaults_save = function () {
+          return {};
+        };
+        rootCtxClass.prototype.toolDefaults_load = function () {
+        };
+      }
+    }
   }
 
   if (!registerWithNStructjs) {

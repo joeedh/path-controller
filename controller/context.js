@@ -270,6 +270,18 @@ export class Context {
     this._inside_map = {};
   }
 
+  static isContextSubclass(cls) {
+    while (cls) {
+      if (cls === Context) {
+        return true;
+      }
+
+      cls = cls.__proto__;
+    }
+
+    return false;
+  }
+
   /** chrome's debug console corrupts this._inside_map,
    this method fixes it*/
   _fix() {
