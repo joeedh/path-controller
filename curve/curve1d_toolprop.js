@@ -2,6 +2,8 @@ import {Curve1D} from './curve1d.js';
 import {ToolProperty, PropTypes, PropFlags} from '../toolsys/toolprop.js';
 import * as nstructjs from '../util/nstructjs_es6.js';
 
+import './curve1d_all.js';
+
 export class Curve1DProperty extends ToolProperty {
   constructor(curve, apiname, uiname, description, flag, icon) {
     super(PropTypes.CURVE, undefined, apiname, uiname, description, flag, icon);

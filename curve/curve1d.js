@@ -11,8 +11,6 @@ import {EventDispatcher} from "../util/events.js";
 export {getCurve} from './curve1d_base.js';
 export {SplineTemplates, SplineTemplateIcons} from './curve1d_bspline.js';
 
-import './curve1d_all.js';
-
 export function mySafeJSONStringify(obj) {
   return JSON.stringify(obj.toJSON(), function (key) {
     let v = this[key];

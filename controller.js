@@ -9,6 +9,9 @@ export * from './toolsys/toolprop.js';
 export * from './toolsys/toolpath.js';
 
 export * from './curve/curve1d_all.js';
+export * from './curve/curve1d.js';
+export * from './curve/curve1d_base.js';
+export * from './curve/curve1d_toolprop.js';
 
 import * as solver from './util/solver.js';
 export {solver};
