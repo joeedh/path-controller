@@ -3,6 +3,7 @@ import {Quat, Vector2, Vector3, Vector4} from '../util/vectormath.js';
 import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
 import * as toolprop from '../toolsys/toolprop.js';
 import {print_stack, cachering} from '../util/util.js';
+import {ToolProperty} from '../toolsys/toolprop.js';
 
 export const DataFlags = {
   READ_ONLY             : 1,
@@ -77,6 +78,10 @@ export class DataPath {
     this.path = path;
     this.flag = 0;
     this.struct = undefined;
+
+    if (type === DataTypes.PROP && this.data && ("" + this.data.uiname).trim().length === 0) {
+      this.data.uiname = ToolProperty.makeUIName(apiname);
+    }
   }
 
   copy() {
