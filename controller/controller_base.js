@@ -266,6 +266,11 @@ export class DataPath {
     return this;
   }
 
+  sliderDisplayExp(f) {
+    this.data.setSliderDisplayExp(f);
+    return this;
+  }
+
   /**
    * like other callbacks (until I refactor it),
    * func will be called with a mysterious object that stores

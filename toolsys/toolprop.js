@@ -7,7 +7,7 @@ export {PropTypes, PropFlags} from './toolprop_abstract.js';
 
 export const NumberConstraintsBase = new Set([
   'range', 'expRate', 'step', 'uiRange', 'baseUnit', 'displayUnit', 'stepIsRelative',
-  'slideSpeed'
+  'slideSpeed', 'sliderDisplayExp'
 ]);
 
 export const IntegerConstraints = new Set([
@@ -690,6 +690,12 @@ export class _NumberPropertyBase extends ToolProperty {
     //remember to update NumberConstraintsBase et al when adding new number
     //constraints
 
+    /** Display simple sliders with exponent divisions, don't
+     * confuse with expRate which affects rollar
+     * slider speed.
+     */
+    this.sliderDisplayExp = 1.0;
+
     /** controls roller slider rate */
     this.slideSpeed = 1.0;
 
@@ -756,10 +762,15 @@ export class _NumberPropertyBase extends ToolProperty {
     b.range = this.range ? [this.range[0], this.range[1]] : undefined;
     b.uiRange = this.uiRange ? [this.uiRange[0], this.uiRange[1]] : undefined;
     b.slideSpeed = this.slideSpeed;
+    b.sliderDisplayExp = this.sliderDisplayExp;
 
     b.data = this.data;
   }
 
+  setSliderDisplayExp(f) {
+    this.sliderDisplayExp = f;
+    return this;
+  }
 
   setSlideSpeed(f) {
     this.slideSpeed = f;
@@ -808,11 +819,12 @@ export class _NumberPropertyBase extends ToolProperty {
   }
 };
 _NumberPropertyBase.STRUCT = nstructjs.inherit(_NumberPropertyBase, ToolProperty) + `
-  range      : array(float);
-  expRate    : float;
-  data       : float;
-  step       : float;
-  slideSpeed : float;
+  range            : array(float);
+  expRate          : float;
+  data             : float;
+  step             : float;
+  slideSpeed       : float;
+  sliderDisplayExp : float;
 }
 `;
 nstructjs.register(_NumberPropertyBase);
