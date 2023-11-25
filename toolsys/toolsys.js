@@ -1722,6 +1722,40 @@ window._testToolStackIO = function () {
   return toolstack;
 }
 
+export function buildToolOpAPI(api, cls) {
+  let st = api.mapStruct(cls, true);
+  let def = cls._getFinalToolDef();
+
+  if (window.DEBUG && window.DEBUG.datapaths) {
+    console.log("Building api for ", def.toolpath);
+  }
+
+  function makeProp(k) {
+    let prop = def.inputs[k];
+
+    if (prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
+      return;
+    }
+
+    prop.uiname = prop.uiname || ToolProperty.makeUIName(k);
+
+    let dpath = new DataPath(k, k, prop);
+    st.add(dpath);
+
+    dpath.customGetSet(function () {
+      return this.dataref.inputs[k].getValue()
+    }, function (val) {
+      this.dataref.inputs[k].setValue(val);
+    });
+  }
+
+  for (let k in def.inputs) {
+    makeProp(k);
+  }
+
+  return st;
+}
+
 /**
  * Call this to build the tool property cache data binding API.
  *
@@ -1738,6 +1772,8 @@ export function buildToolSysAPI(api, registerWithNStructjs    = true,
   for (let cls of ToolClasses) {
     let def = cls._getFinalToolDef();
 
+    buildToolOpAPI(api, cls);
+
     for (let k in def.inputs) {
       let prop = def.inputs[k];
 
@@ -1749,23 +1785,40 @@ export function buildToolSysAPI(api, registerWithNStructjs    = true,
 
   if (rootCtxStruct) {
     rootCtxStruct.struct("toolDefaults", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+    rootCtxStruct.dynamicStruct("last_tool", "last_tool", "Last Tool");
   }
 
   if (rootCtxClass && insertToolDefaultsIntoContext) {
     let inst = new rootCtxClass({});
-    if (inst.toolDefaults === undefined) {
-      Object.defineProperty(rootCtxClass, "toolDefaults", {
+
+    function haveprop(k) {
+      return Reflect.ownKeys(inst).indexOf(k) >= 0
+        || Reflect.ownKeys(rootCtxClass.prototype).indexOf(k) >= 0;
+    }
+
+    if (!haveprop("last_tool")) {
+      Object.defineProperty(rootCtxClass.prototype, "last_tool", {
+        get() {
+          return this.toolstack.head;
+        }
+      });
+
+      if (Context.isContextSubclass(rootCtxClass)) {
+        rootCtxClass.prototype.last_tool_save = () => ({});
+        rootCtxClass.prototype.last_tool_load = () => undefined;
+      }
+    }
+
+    if (!haveprop("toolDefaults")) {
+      Object.defineProperty(rootCtxClass.prototype, "toolDefaults", {
         get() {
           return SavedToolDefaults;
         }
       });
 
       if (Context.isContextSubclass(rootCtxClass)) {
-        rootCtxClass.prototype.toolDefaults_save = function () {
-          return {};
-        };
-        rootCtxClass.prototype.toolDefaults_load = function () {
-        };
+        rootCtxClass.prototype.toolDefaults_save = () => ({});
+        rootCtxClass.prototype.toolDefaults_load = () => undefined;
       }
     }
   }

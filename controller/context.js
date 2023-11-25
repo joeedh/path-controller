@@ -53,16 +53,6 @@ export function makeDerivedOverlay(parent) {
       this._state = state;
     }
 
-    /*
-    Ugly hack, ui_lasttool.js saves
-    a DataStruct wrapping the most recently executed ToolOp
-    in this.state._last_tool.
-    */
-    get last_tool() {
-      return this.state._last_tool;
-    }
-
-
     onRemove(have_new_file = false) {
     }
 
