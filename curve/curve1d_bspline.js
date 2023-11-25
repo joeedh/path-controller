@@ -2145,6 +2145,7 @@ export function initSplineTemplates() {
   splineTemplatesLoaded = true;
 
   for (let k in SplineTemplates) {
+    console.log("Loading spline template", k);
     let curve = new BSplineCurve();
     curve.loadTemplate(SplineTemplates[k]);
     splineCache.get(curve);

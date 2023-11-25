@@ -478,7 +478,7 @@ export function list(iterable) {
 
 /** Count items in list; if searchItem is not undefined then a count
  *  of the number of times searchItem occurs will be returned.*/
-export function count(iterable, searchItem=undefined) {
+export function count(iterable, searchItem = undefined) {
   let count = 0;
 
   if (searchItem !== undefined) {
@@ -1197,7 +1197,7 @@ nstructjs.register(IDGen);
 
 
 function get_callstack(err) {
-  return (""+err.stack).split("\n");
+  return ("" + err.stack).split("\n");
 }
 
 export function print_stack(err) {
@@ -1251,14 +1251,14 @@ export class MersenneRandom {
   }
 
   /** normal-ish distribution */
-  nrandom(n=3) {
+  nrandom(n = 3) {
     let ret = 0.0;
 
-    for (let i=0; i<n; i++) {
+    for (let i = 0; i < n; i++) {
       ret += this.random();
     }
 
-    return ret / n;
+    return ret/n;
   }
 
   seed(seed) {
@@ -1563,7 +1563,7 @@ export class HashDigest {
     }
 
     if (typeof v === "object" && Array.isArray(v)) {
-      for (let i=0; i<v.length; i++) {
+      for (let i = 0; i < v.length; i++) {
         this.add(v[i]);
       }
 
@@ -2278,7 +2278,7 @@ export class ArrayPool {
     this.map = new Array(1024);
   }
 
-  get(n, clear) {
+  get(n, clear = false) {
     let pool;
 
     if (n < 1024) {
@@ -2329,7 +2329,7 @@ export class ArrayPool {
 
 /** jsFiddle-friendly */
 export class DivLogger {
-  constructor(elemId, maxLines=16) {
+  constructor(elemId, maxLines = 16) {
     this.elemId = elemId;
     this.elem = undefined;
     this.lines = new Array();
@@ -2358,11 +2358,11 @@ export class DivLogger {
     this.elem.innerHTML = buf;
   }
 
-  toString(obj, depth=0) {
+  toString(obj, depth = 0) {
     let s = '';
 
     let tab = '';
-    for (let i=0; i<depth; i++) {
+    for (let i = 0; i < depth; i++) {
       tab += '$TAB';
     }
 
@@ -2375,13 +2375,13 @@ export class DivLogger {
 
     if (typeof obj === "object" && Array.isArray(obj)) {
       s = "[$NL";
-      for (let i=0; i<obj.length; i++) {
+      for (let i = 0; i < obj.length; i++) {
         let v = obj[i];
 
         if (depth >= DEPTH_LIMIT) {
           v = typeof v;
         } else {
-          v = this.toString(v, depth+1);
+          v = this.toString(v, depth + 1);
         }
 
         s += tab + "$TAB";
@@ -2389,7 +2389,7 @@ export class DivLogger {
       }
 
       let keys = Reflect.ownKeys(obj);
-      for (let i=0; i<keys.length; i++) {
+      for (let i = 0; i < keys.length; i++) {
         let k = keys[i];
         let n;
 
@@ -2410,7 +2410,7 @@ export class DivLogger {
 
         s += tab + `$TAB${k2} : ${v}`;
 
-        if (i < keys.length-1) {
+        if (i < keys.length - 1) {
           s += ",";
         }
 
@@ -2431,7 +2431,7 @@ export class DivLogger {
       s = '{$NL';
 
       let keys = Reflect.ownKeys(obj);
-      for (let i=0; i<keys.length; i++) {
+      for (let i = 0; i < keys.length; i++) {
         let k = keys[i];
         let k2 = this.toString(k);
 
@@ -2445,12 +2445,12 @@ export class DivLogger {
         if (depth >= DEPTH_LIMIT) {
           v = typeof v;
         } else {
-          v = this.toString(v, depth+1);
+          v = this.toString(v, depth + 1);
         }
 
         s += tab + `$TAB${k2} : ${v}`;
 
-        if (i < keys.length-1) {
+        if (i < keys.length - 1) {
           s += ",";
         }
 
@@ -2482,7 +2482,7 @@ export class DivLogger {
 export const PendingTimeoutPromises = new Set();
 
 export class TimeoutPromise {
-  constructor(callback, timeout=3000, silent=false) {
+  constructor(callback, timeout = 3000, silent = false) {
     if (!callback) {
       return;
     }
@@ -2517,13 +2517,13 @@ export class TimeoutPromise {
     }
   }
 
-  static wrapPromise(promise, timeout=3000, callback) {
+  static wrapPromise(promise, timeout = 3000, callback) {
     let p = new TimeoutPromise();
 
     p._promise = promise;
 
     p._accept = callback;
-    p._reject = function(error) {
+    p._reject = function (error) {
       throw error;
     }
 
@@ -2608,4 +2608,11 @@ export function decompress(data) {
   }
 
   return lzstring.decompressFromUint8Array(data);
+}
+
+/* Returns 'undefined' as type type.  Breaks the typescript
+   type system, is meant only for object pool systems.
+ */
+export function undefinedForGC() {
+  return undefined;
 }
