@@ -34,6 +34,8 @@ export declare class Matrix4 {
   euler_rotate(x: number, y: number, z: number): this;
 
   makeIdentity(): this;
+
+  isPersp: boolean;
 }
 
 declare class BaseVector {
@@ -60,17 +62,17 @@ declare class BaseVector {
 
   divScalar(b: number): this;
 
-  min(b: number): this;
+  min(b: this): this;
 
-  max(b: number): this;
+  max(b: this): this;
 
-  floor(b: number): this;
+  floor(): this;
 
-  ceil(b: number): this;
+  ceil(): this;
 
-  abs(b: number): this;
+  abs(): this;
 
-  dot(b: this): this;
+  dot(b: this): number;
 
   normalize(): this;
 
@@ -78,9 +80,9 @@ declare class BaseVector {
 
   vectorLengthSqr(): number;
 
-  vectorDistance(): number;
+  vectorDistance(b: this): number;
 
-  vectorDistanceSqr(): number;
+  vectorDistanceSqr(b: this): number;
 
   multVecMatrix(mat: Matrix4): void;
 
@@ -107,6 +109,9 @@ export declare class Vector4 extends BaseVector {
 }
 
 export declare class Quat extends BaseVector {
+  axisAngleToQuat(axis: Vector3, angle: number): this;
+
+  toMatrix(output: Matrix4 | undefined): Matrix4;
 }
 
 

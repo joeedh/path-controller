@@ -12,9 +12,11 @@ export declare class cachering<type> extends Array<type> {
 }
 
 export declare class IDGen {
-  next: number;
+  next(): number;
 
   copy(): this;
+
+  _cur: number;
 }
 
 export declare function time_ms(): number;
@@ -69,4 +71,18 @@ export declare class set<KeyType> {
   has(item): boolean;
 
   forEach(func: function, thisvar: this): void;
+}
+
+export declare class Queue<type> {
+  constructor(n: number);
+
+  enqueue(item: type): number;
+
+  clear(clearData?: boolean): this;
+
+  dequeue(): type | undefined;
+
+  queue: Array<type>;
+
+  length: number;
 }
