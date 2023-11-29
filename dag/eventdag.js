@@ -442,7 +442,7 @@ export class DependSocket extends EventSocket {
   }
 
   set value(v) {
-    this.#value = void;
+    this.#value = v;
   }
 
   copyFrom(b) {
@@ -474,7 +474,7 @@ export class PropertySocket extends EventSocket {
     key: "",
   }
 
-  #callback = null; //(newval, oldval) => val
+  #callbacks = []; //(newval, oldval) => val
   #invert = false; //Invert bool or number properties
 
   oldValue = undefined;
@@ -488,7 +488,7 @@ export class PropertySocket extends EventSocket {
     super.copyFrom(b);
 
     this.#invert = b.#invert;
-    this.#callback = b.#callback;
+    this.#callbacks = Array.from(b.#callbacks);
     this.#binding = b.#binding;
 
     return this;
@@ -500,7 +500,7 @@ export class PropertySocket extends EventSocket {
   }
 
   callback(cb) {
-    this.#callback = cb;
+    this.#callbacks.push(cb);
     return this;
   }
 
@@ -511,10 +511,13 @@ export class PropertySocket extends EventSocket {
 
   set value(v) {
     let old = this.value;
-    if (this.#callback) {
-      v = this.#callback(v, old);
+    if (this.#callbacks.length > 0) {
+      for (let cb of this.#callbacks) {
+        v = cb(v, old);
+      }
     }
-    if (this.#invert && (typeof v === "number" || typeof v === "boolean" || typeof v === "undefined") {
+
+    if (this.#invert && (typeof v === "number" || typeof v === "boolean" || typeof v === "undefined")) {
       v = !v;
     } else if (this.#invert && typeof v === "string") {
       let s = v.toLowerCase().trim();
