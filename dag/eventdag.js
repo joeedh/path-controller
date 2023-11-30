@@ -14,7 +14,7 @@ export const RecalcFlags = {
 };
 export const SocketTypes = {
   INPUT : "inputs",
-  OUTPUT: "output"
+  OUTPUT: "outputs"
 };
 
 let graphIdGen = 1;
@@ -65,8 +65,17 @@ export class EventSocket {
   flagUpdate() {
     this.flag |= SocketFlags.UPDATE;
 
-    if (this.type !== SocketTypes.OUTPUT && this.node) {
+    if (!this.node) {
+      return;
+    }
+
+    if (this.type === SocketTypes.INPUT) {
       this.node.flagUpdate();
+    } else {
+      for (let sockb of this.edges) {
+        sockb.flag |= SocketFlags.UPDATE;
+        sockb.node.flagUpdate();
+      }
     }
 
     return this;
@@ -84,6 +93,16 @@ export class EventSocket {
     this.edges.push(sockb);
     sockb.edges.push(this);
     return this;
+  }
+
+  hasNode(node) {
+    for (let sockb of this.edges) {
+      if (sockb.node === node || sockb.node.owner === node) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   has(sockb) {
@@ -204,12 +223,19 @@ export class EventNode {
   }
 
   flagUpdate() {
-    this.graph.flagUpdate(this);
+    this.flag |= NodeFlags.UPDATE;
+
+    if (this.graph) {
+      this.graph.flagUpdate(this);
+    }
+
     return this;
   }
 
   flagResort() {
-    this.graph.flagResort(this);
+    if (this.graph) {
+      this.graph.flagResort(this);
+    }
     return this;
   }
 }
@@ -307,6 +333,8 @@ export class EventGraph {
   }
 
   sort() {
+    console.warn("Sorting Graph");
+
     this.flag &= ~RecalcFlags.RESORT;
 
     for (let n of this.nodes) {
@@ -357,6 +385,8 @@ export class EventGraph {
   }
 
   queueExec() {
+    console.warn("queueExec", this.queueReq);
+
     this.flag |= RecalcFlags.RUN;
 
     if (this.queueReq !== undefined) {
@@ -376,6 +406,8 @@ export class EventGraph {
     if (this.flag & RecalcFlags.RESORT) {
       this.sort();
     }
+
+    console.warn("Executing Graph");
 
     this.#skipQueueExec++;
 
@@ -495,7 +527,7 @@ export class PropertySocket extends EventSocket {
   }
 
   invert(state = true) {
-    this.invert = state;
+    this.#invert = state;
     return this;
   }
 

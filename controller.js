@@ -13,6 +13,9 @@ export * from './curve/curve1d.js';
 export * from './curve/curve1d_base.js';
 export * from './curve/curve1d_toolprop.js';
 
+import * as eventgraph from './dag/eventdag.js';
+export {eventgraph};
+
 import * as solver from './util/solver.js';
 export {solver};
 
