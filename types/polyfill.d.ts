@@ -1,21 +1,20 @@
 export declare global {
-  declare interface Array {
-    remove(item: any): void;
-  }
+    declare interface Array {
+        remove(item: any, ignore_existence?: boolean): void;
 
-  declare interface SymbolConstructor {
-    readonly keystr: unique symbol;
-  }
+        /** FailOnError is true by default. */
+        replace(oldItem: any, newItem: any, failOnError?: boolean): void;
+    }
 
-  declare interface MathConstructor {
-    fract(f: number): number;
-  }
+    declare interface SymbolConstructor {
+        readonly keystr: unique symbol;
+    }
 
-  declare interface Math {
-    fract(f: number): number;
-  }
+    declare interface MathConstructor {
+        fract(f: number): number;
+    }
 
-  declare interface WindowOrWorkerGlobalScope {
-    redraw_all(): void;
-  }
+    declare interface Math {
+        fract(f: number): number;
+    }
 }

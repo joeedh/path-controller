@@ -17,3 +17,10 @@ export * from './toolsys/toolsys';
 export * from './toolsys/toolprop';
 
 export * from './polyfill';
+
+export class EnumKeyPair {
+  constructor(key?: string, val?: string);
+
+  key: string;
+  val: string;
+}

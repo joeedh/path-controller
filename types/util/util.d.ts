@@ -1,12 +1,14 @@
 /* Returns 'undefined' as type type.  Breaks the type
    system, is meant only for object pool systems.
  */
+import {Matrix4, Vector2, Vector3, Vector4} from "./vectormath";
+
 export declare function undefinedForGC<type>(): type;
 
 export declare class cachering<type> extends Array<type> {
   constructor(factory: () => type, n: number);
 
-  static fromConstructor<type>(cls: new () => type, number: n): cachering<type>;
+  static fromConstructor<type>(cls: new () => type, number: n, isprivate?: boolean): cachering<type>;
 
   next(): type;
 }
@@ -83,6 +85,38 @@ export declare class Queue<type> {
   dequeue(): type | undefined;
 
   queue: Array<type>;
+
+  length: number;
+}
+
+export declare class HashDigest {
+  get(): number;
+
+  add(f: number | Matrix4 | Vector2 | Vector3 | Vector4): number;
+
+  reset(): this;
+}
+
+export declare function print_stack(error: Error): void;
+
+export class MersenneRandom {
+  constructor(seed?: number);
+
+  random(): number;
+
+  seed(f: number);
+}
+
+export declare function random(): number;
+
+export declare function seed(s: number);
+
+export class MinHeapQueue<type> {
+  constructor(iter?: Iterable<type>, iterw?: Iterable<number>);
+
+  push(e: type, w: number): void;
+
+  pop(): type | void;
 
   length: number;
 }

@@ -475,6 +475,14 @@ function getBaseVector(parent) {
       return this;
     }
 
+    sinterp(v2, t) {
+      let l1 = this.vectorLength();
+      let l2 = v2.vectorLength();
+
+      //XXX this seems horribly incorrect.
+      return this.interp(v2, t).normalize().mulScalar(l1 + (l2 - l1) * t);
+    }
+
     normalize() {
       /*
       for (let i=0; i<this.length; i++) {

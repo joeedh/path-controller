@@ -21,6 +21,8 @@ export declare class Matrix4Data {
 }
 
 export declare class Matrix4 {
+  constructor(existing?: Matrix4);
+
   $matrix: Matrix4Data
 
   multiply(b: Matrix4): this;
@@ -38,10 +40,12 @@ export declare class Matrix4 {
   isPersp: boolean;
 }
 
-declare class BaseVector {
+declare class BaseVector extends Array<number> {
   constructor(existing?: this);
 
   length: number;
+
+  sinterp(b: this, t: number): this;
 
   //all math operates in-place, no new objects
   load(b: this): this;

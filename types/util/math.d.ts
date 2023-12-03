@@ -4,7 +4,7 @@ export declare function colinear(a: BaseVector, b: BaseVector, c: BaseVector, li
 
 export declare function winding(a: BaseVector, b: BaseVector, c: BaseVector, zero_z?: boolean, tol?: number): boolean;
 
-export declare function tri_area(a: BaseVector, b: BaseVector, c: BaseVector): boolean;
+export declare function tri_area(a: BaseVector, b: BaseVector, c: BaseVector): number;
 
 export declare function normal_tri(a: Vector3, b: Vector3, c: Vector3): Vector3;
 

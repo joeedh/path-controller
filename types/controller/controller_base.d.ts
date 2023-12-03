@@ -14,7 +14,7 @@ declare interface resolvePathRet {
 }
 
 declare class DataAPI {
-  mapStruct(cls: Function, autoCreate: boolean): DataStruct;
+  mapStruct(cls: Function, autoCreate?: boolean): DataStruct;
 
   hasStruct(cls: Function): Boolean;
 
@@ -48,9 +48,9 @@ declare class DataPath {
 
   customGet(get: DataPathCallBack): DataPath;
 
-  on(type: string, callback: Function): DataPath;
+  on(type: string, callback: DataPathCallBack): DataPath;
 
-  off(type: string, callback: Function): DataPath;
+  off(type: string, callback: DataPathCallBack): DataPath;
 
   simpleSlider(): DataPath;
 
