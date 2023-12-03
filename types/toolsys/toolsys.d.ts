@@ -1,3 +1,5 @@
+import {ToolProperty} from "./toolprop";
+
 export as namespace toolsys;
 
 import {Context} from '../core/context';
@@ -40,8 +42,19 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
   register(cls: IToolOpConstructor<any, any, any>);
 }
 
-declare class ToolOp<InputSlots = any, OutputSlots = any, ContextCls = Context, ModalContextCls = ContextCls> {
+declare type SlotType<slot extends ToolProperty<any>> = typeof slot.ValueTypeAlias;
+
+declare class ToolOp<
+  InputSlots = { [k: string]: ToolProperty<any> },
+  OutputSlots = { [k: string]: ToolProperty<any> },
+  ContextCls = Context,
+  ModalContextCls = ContextCls> {
+
   ['constructor']: IToolOpConstructor<this, InputSlots, OutputSlots>;
+
+  getInputs(): { [k: string]: SlotType<InputSlots[k]> };
+
+  getOutputs(): { [k: string]: SlotType<OutputSlots[k]> };
 
   modal_ctx?: ModalContextCls;
   modalRunning: boolean;
