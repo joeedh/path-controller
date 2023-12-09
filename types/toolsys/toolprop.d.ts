@@ -104,6 +104,8 @@ declare class EnumProperty extends ToolProperty<number> {
   constructor(value: any, enumdef: {}, apiname?: string, uiname?: string, desription?: string);
 
   addIcons(iconmap: {}): this;
+
+  addUINames(uinames: {}): this;
 }
 
 declare class FlagProperty extends ToolProperty<number> {

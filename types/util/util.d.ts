@@ -120,3 +120,19 @@ export class MinHeapQueue<type> {
 
   length: number;
 }
+
+export class IDMap<ValueType> {
+  has(id: number): boolean;
+
+  set(id: number, val: ValueType): boolean;
+
+  get(id: number): ValueType | undefined;
+
+  delete(id: number): boolean;
+
+  keys(): Iterable<number>;
+
+  values(): Iterable<ValueType>;
+
+  [Symbol.iterator](): Iterator<[number, ValueType]>
+}

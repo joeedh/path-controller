@@ -1,3 +1,12 @@
+export enum EulerOrders {
+  XYZ = 0,
+  XZY = 1,
+  YXZ = 2,
+  YZX = 3,
+  ZXY = 4,
+  ZYX = 5
+}
+
 export declare class Matrix4Data {
   m11: number;
   m12: number;
@@ -25,7 +34,15 @@ export declare class Matrix4 {
 
   $matrix: Matrix4Data
 
+  decompose(loc: Vector3, rot: Vector3, scale: Vector3): this;
+
+  copyColumnTo(i: number, vec: BaseVector): this
+
+  invert(): this;
+
   multiply(b: Matrix4): this;
+
+  preMultiply(b: Matrix4): this;
 
   load(b: Matrix4): this;
 
@@ -35,9 +52,17 @@ export declare class Matrix4 {
 
   euler_rotate(x: number, y: number, z: number): this;
 
+  euler_rotate_order(x: number, y: number, z: number, rotOrder: EulerOrders): this;
+
   makeIdentity(): this;
 
   isPersp: boolean;
+}
+
+declare interface INumVector {
+  [k: number]: number;
+
+  length: number;
 }
 
 declare class BaseVector extends Array<number> {
@@ -48,7 +73,9 @@ declare class BaseVector extends Array<number> {
   sinterp(b: this, t: number): this;
 
   //all math operates in-place, no new objects
-  load(b: this): this;
+  load(b: INumVector): this;
+
+  copy(): this;
 
   add(b: this): this;
 
