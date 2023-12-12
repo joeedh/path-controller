@@ -40,7 +40,7 @@ export declare class MovingAvg {
 export declare function pollTimer(id: string, interval: number): boolean;
 
 export declare class ArrayPool {
-  get<type>(n: number, clear: boolean): Array<type>;
+  get<type>(n: number, clear?: boolean): Array<type>;
 }
 
 export declare class set<KeyType> {

@@ -58,6 +58,10 @@ export declare class Matrix4 {
 
   makeRotationOnly(): this;
 
+  makeNormalMatrix(n: Vector3, up?: Vector3): this;
+
+  transpose(): this;
+
   getAsArray(): number[];
 
   perspective(fovy: number, aspect: number, near: number, far: number): this;
@@ -138,6 +142,8 @@ declare class BaseVector extends Array<number> {
   zero(): this;
 
   negate(): this;
+
+  swapAxes(axix1: number, axis2: number): this;
 }
 
 export declare class Vector2 extends BaseVector {
@@ -145,10 +151,14 @@ export declare class Vector2 extends BaseVector {
 
 export declare class Vector3 extends BaseVector {
   cross(b: this): this;
+
+  static normalizedDot3(a: Vector3, b: Vector3, c: Vector3): number;
 }
 
 export declare class Vector4 extends BaseVector {
   cross(b: this): this;
+
+  static normalizedDot3(a: Vector4, b: Vector4, c: Vector4): number;
 }
 
 export declare class Quat extends BaseVector {

@@ -1650,6 +1650,7 @@ export function inrect_2d(p, pos, size) {
 }
 
 let $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
+
 export function aabb_isect_line_2d(v1, v2, min, max) {
   if (point_in_aabb_2d(v1, min, max) || point_in_aabb(v2, min, max)) {
     return true;
@@ -1729,11 +1730,11 @@ export function colinear(a, b, c, limit = 2.2e-16, distLimit = 0.00001**2) {
   return t1.dot(t1) <= limit;
 }
 
-export function colinear2d(a, b, c, limit = 0.00001, precise=false) {
-  let dx1 = a[0]-b[0];
-  let dy1 = a[1]-b[1];
-  let dx2 = c[0]-b[0];
-  let dy2 = c[1]-b[1];
+export function colinear2d(a, b, c, limit = 0.00001, precise = false) {
+  let dx1 = a[0] - b[0];
+  let dy1 = a[1] - b[1];
+  let dx2 = c[0] - b[0];
+  let dy2 = c[1] - b[1];
 
   let det = Math.abs(dx1*dy2 - dy1*dx2);
   if (precise) {
@@ -2262,11 +2263,7 @@ let dt2l_v3 = new Vector2();
 let dt2l_v4 = new Vector2();
 let dt2l_v5 = new Vector2();
 
-export function dist_to_line_2d(p, v1, v2, clip, closest_co_out = undefined, t_out = undefined) {
-  if (clip === undefined) {
-    clip = true;
-  }
-
+export function dist_to_line_2d(p, v1, v2, clip = true, closest_co_out = undefined, t_out = undefined) {
   v1 = dt2l_v4.load(v1);
   v2 = dt2l_v5.load(v2);
 
