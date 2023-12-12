@@ -56,7 +56,19 @@ export declare class Matrix4 {
 
   makeIdentity(): this;
 
+  makeRotationOnly(): this;
+
+  getAsArray(): number[];
+
+  perspective(fovy: number, aspect: number, near: number, far: number): this;
+
+  orthographic(scale: number, aspect: number, near: number, far: number): this;
+
+  lookat(pos: Vector3, target: Vector3, up: Vector3): this;
+
   isPersp: boolean;
+
+  setUniform(gl: WebGLRenderingContextBase, loc: WebGLUniformLocation);
 }
 
 declare interface INumVector {

@@ -23,7 +23,7 @@ export declare class IDGen {
 
 export declare function time_ms(): number;
 
-export declare function termColor(s: string, c: string, d: number): string;
+export declare function termColor(s: string, c: string, d?: number): string;
 
 export declare function termPrint(...arguments: any[]);
 
