@@ -12,6 +12,7 @@ import * as math from './util/math';
 
 export {math}
 
+export * from './util/graph';
 export * from './util/vectormath';
 export * from './toolsys/toolsys';
 export * from './toolsys/toolprop';
