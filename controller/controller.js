@@ -79,7 +79,7 @@ let tokens = [
   tk("LSBRACKET", /\[/),
   tk("RSBRACKET", /\]/),
   tk("AND", /\&/),
-  tk("WS", /[ \t\n\r]+/, (t) => undefined) //drok token
+  tk("WS", /[ \t\n\r]+/, (t) => undefined), //drop token
 ];
 
 let lexer = new parseutil.lexer(tokens, (t) => {
@@ -815,11 +815,11 @@ export class DataAPI extends ModelInterface {
     let api = ctx.api;
 
     function applyFilter(obj) {
-      //console.log(filter, obj, obj.constructor.name);
+      const forceEval = rdef.dpath.flag & DataFlags.USE_EVAL_MASS_SET_PATHS;
 
       if (obj === undefined) {
         return undefined;
-      } else if (typeof obj === "object" || typeof obj === "function") {
+      } else if (!forceEval && (typeof obj === "object" || typeof obj === "function")) {
         let st = api.mapStruct(obj.constructor, false);
 
         let path = filter;

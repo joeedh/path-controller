@@ -91,6 +91,9 @@ declare class DataPath {
   uiNames(namemap: any): DataPath;
 
   description(tooltip: string): DataPath;
+
+  /* Evaluate mass set path filters using eval() */
+  evalMassSetFilter(): DataPath
 }
 
 declare enum StructFlags {
