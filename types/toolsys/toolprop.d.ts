@@ -56,7 +56,7 @@ declare interface NumberPropertyBase {
 }
 
 declare class FloatProperty extends ToolProperty<number> implements NumberPropertyBase {
-  constructor(val: number);
+  constructor(val?: number);
 
   setRange(min: number, max: number): this;
 
@@ -64,7 +64,7 @@ declare class FloatProperty extends ToolProperty<number> implements NumberProper
 }
 
 declare class IntProperty extends ToolProperty<number> implements NumberPropertyBase {
-  constructor(val: number);
+  constructor(val?: number);
 
   setRange(min: number, max: number): this;
 
@@ -72,11 +72,11 @@ declare class IntProperty extends ToolProperty<number> implements NumberProperty
 }
 
 declare class BoolProperty extends ToolProperty<boolean> {
-  constructor(val: boolean);
+  constructor(val?: boolean);
 }
 
 declare class StringProperty extends ToolProperty<string> {
-  constructor(val: string);
+  constructor(val?: string);
 }
 
 declare class Vec2Property extends ToolProperty<Vector2> implements NumberPropertyBase {
@@ -87,21 +87,21 @@ declare class Vec2Property extends ToolProperty<Vector2> implements NumberProper
 }
 
 declare class Vec3Property extends ToolProperty<Vector3> implements NumberPropertyBase {
-  constructor(val: Vector3);
+  constructor(val?: Vector3);
 
   setRange(min: number, max: number): this;
 
 }
 
 declare class Vec4Property extends ToolProperty<Vector4> implements NumberPropertyBase {
-  constructor(val: Vector4);
+  constructor(val?: Vector4);
 
   setRange(min: number, max: number): this;
 
 }
 
 declare class EnumProperty extends ToolProperty<number> {
-  constructor(value: any, enumdef: {}, apiname?: string, uiname?: string, desription?: string);
+  constructor(value?: any, enumdef: {}, apiname?: string, uiname?: string, desription?: string);
 
   addIcons(iconmap: {}): this;
 
@@ -109,11 +109,11 @@ declare class EnumProperty extends ToolProperty<number> {
 }
 
 declare class FlagProperty extends ToolProperty<number> {
-  constructor(val: number, flagdef: { [k: string]: number });
+  constructor(val?: number | string, flagdef: { [k: string]: number | string });
 }
 
 declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType[]> {
-  constructor(type: IToolPropConstructor, data: any[]);
+  constructor(type: IToolPropConstructor, data?: any[]);
 
   [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias.getValue>;
 }

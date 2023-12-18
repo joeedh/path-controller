@@ -91,6 +91,8 @@ declare class BaseVector extends Array<number> {
   //all math operates in-place, no new objects
   load(b: INumVector): this;
 
+  loadXY(x: number, y: number): this;
+
   copy(): this;
 
   add(b: this): this;
@@ -114,6 +116,8 @@ declare class BaseVector extends Array<number> {
   max(b: this): this;
 
   floor(): this;
+
+  fract(): this;
 
   ceil(): this;
 
@@ -150,12 +154,18 @@ export declare class Vector2 extends BaseVector {
 }
 
 export declare class Vector3 extends BaseVector {
+  loadXYZ(x: number, y: number, z: number): this;
+
   cross(b: this): this;
 
   static normalizedDot3(a: Vector3, b: Vector3, c: Vector3): number;
 }
 
 export declare class Vector4 extends BaseVector {
+  loadXYZ(x: number, y: number, z: number): this;
+
+  loadXYZW(x: number, y: number, z: number, w: number): this;
+
   cross(b: this): this;
 
   static normalizedDot3(a: Vector4, b: Vector4, c: Vector4): number;
