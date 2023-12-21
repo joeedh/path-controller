@@ -265,18 +265,18 @@ ${doExports("BaseVector")} class BaseVector extends Array {
   return s;
 }
 
-var sin                                                          = Math.sin, cos                                          = Math.cos, abs                          = Math.abs, log = Math.log,
-    asin                                                         = Math.asin, exp                                        = Math.exp, acos = Math.acos, fract = Math.fract,
+var sin                                                          = Math.sin, cos                                          = Math.cos, abs = Math.abs, log = Math.log,
+    asin                                                         = Math.asin, exp = Math.exp, acos = Math.acos, fract    = Math.fract,
     sign = Math.sign, tent = Math.tent, atan2 = Math.atan2, atan = Math.atan,
-    pow                                                          = Math.pow, sqrt = Math.sqrt, floor                      = Math.floor, ceil = Math.ceil,
-    min                                                          = Math.min, max = Math.max, PI = Math.PI, E = 2.718281828459045;
+    pow                                                          = Math.pow, sqrt = Math.sqrt, floor = Math.floor, ceil = Math.ceil,
+    min                                                          = Math.min, max = Math.max, PI                           = Math.PI, E = 2.718281828459045;
 
 var DOT_NORM_SNAP_LIMIT = 0.00000000001;
 var M_SQRT2 = Math.sqrt(2.0);
 var FLT_EPSILON = 2.22e-16;
 
 var basic_funcs = {
-  equals   : [["b"], "this[X] === b[X]", "&&"],
+  equals: [["b"], "this[X] === b[X]", "&&"],
   /*dot is made manually so it's safe for acos
   dot     : [["b"], "this[X]*b[X]", "+"],
    */
@@ -480,7 +480,16 @@ function getBaseVector(parent) {
       let l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
-      return this.interp(v2, t).normalize().mulScalar(l1 + (l2 - l1) * t);
+      return this.interp(v2, t).normalize().mulScalar(l1 + (l2 - l1)*t);
+    }
+
+    perpSwap(axis1 = 0, axis2 = 1, sign = 1) {
+      let tmp = this[axis1];
+
+      this[axis1] = this[axis2]*sign;
+      this[axis2] = -tmp*sign;
+
+      return this;
     }
 
     normalize() {
@@ -575,18 +584,18 @@ export class Vector4 extends BaseVector {
   }
 
   mulVecQuat(q) {
-    let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
-    let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
-    let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
+    let t0 = -q[1]*this[0] - q[2]*this[1] - q[3]*this[2];
+    let t1 = q[0]*this[0] + q[2]*this[2] - q[3]*this[1];
+    let t2 = q[0]*this[1] + q[3]*this[0] - q[1]*this[2];
 
-    this[2] = q[0] * this[2] + q[1] * this[1] - q[2] * this[0];
+    this[2] = q[0]*this[2] + q[1]*this[1] - q[2]*this[0];
     this[0] = t1;
     this[1] = t2;
 
-    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + this[2] * q[2];
-    t2 = t0 * -q[2] + this[1] * q[0] - this[2] * q[1] + this[0] * q[3];
+    t1 = t0* -q[1] + this[0]*q[0] - this[1]*q[3] + this[2]*q[2];
+    t2 = t0* -q[2] + this[1]*q[0] - this[2]*q[1] + this[0]*q[3];
 
-    this[2] = t0 * -q[3] + this[2] * q[0] - this[0] * q[2] + this[1] * q[1];
+    this[2] = t0* -q[3] + this[2]*q[0] - this[0]*q[2] + this[1]*q[1];
     this[0] = t1;
     this[1] = t2;
 
@@ -745,18 +754,18 @@ export class Vector3 extends F64BaseVector {
   }
 
   mulVecQuat(q) {
-    let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
-    let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
-    let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
+    let t0 = -q[1]*this[0] - q[2]*this[1] - q[3]*this[2];
+    let t1 = q[0]*this[0] + q[2]*this[2] - q[3]*this[1];
+    let t2 = q[0]*this[1] + q[3]*this[0] - q[1]*this[2];
 
-    this[2] = q[0] * this[2] + q[1] * this[1] - q[2] * this[0];
+    this[2] = q[0]*this[2] + q[1]*this[1] - q[2]*this[0];
     this[0] = t1;
     this[1] = t2;
 
-    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + this[2] * q[2];
-    t2 = t0 * -q[2] + this[1] * q[0] - this[2] * q[1] + this[0] * q[3];
+    t1 = t0* -q[1] + this[0]*q[0] - this[1]*q[3] + this[2]*q[2];
+    t2 = t0* -q[2] + this[1]*q[0] - this[2]*q[1] + this[0]*q[3];
 
-    this[2] = t0 * -q[3] + this[2] * q[0] - this[0] * q[2] + this[1] * q[1];
+    this[2] = t0* -q[3] + this[2]*q[0] - this[0]*q[2] + this[1]*q[1];
     this[0] = t1;
     this[1] = t2;
 
@@ -927,7 +936,7 @@ export class Vector2 extends BaseVector {
     if (matrix.isPersp) {
       let w2 = w*matrix.$matrix.m44 + x*matrix.$matrix.m14 + y*matrix.$matrix.m24;
 
-      if (w2  !==  0.0) {
+      if (w2 !== 0.0) {
         this[0] /= w2;
         this[1] /= w2;
       }
@@ -937,16 +946,16 @@ export class Vector2 extends BaseVector {
   }
 
   mulVecQuat(q) {
-    let t0 = -q[1] * this[0] - q[2] * this[1];
-    let t1 = q[0] * this[0] - q[3] * this[1];
-    let t2 = q[0] * this[1] + q[3] * this[0];
+    let t0 = -q[1]*this[0] - q[2]*this[1];
+    let t1 = q[0]*this[0] - q[3]*this[1];
+    let t2 = q[0]*this[1] + q[3]*this[0];
 
-    let z  = q[1] * this[1] - q[2] * this[0];
+    let z = q[1]*this[1] - q[2]*this[0];
     this[0] = t1;
     this[1] = t2;
 
-    t1 = t0 * -q[1] + this[0] * q[0] - this[1] * q[3] + z * q[2];
-    t2 = t0 * -q[2] + this[1] * q[0] - z * q[1] + this[0] * q[3];
+    t1 = t0* -q[1] + this[0]*q[0] - this[1]*q[3] + z*q[2];
+    t2 = t0* -q[2] + this[1]*q[0] - z*q[1] + this[0]*q[3];
 
     this[0] = t1;
     this[1] = t2;
@@ -2414,8 +2423,8 @@ export class Matrix4 {
     mat2.makeRotationOnly();
     let axes = mat2.getAsVecs();
 
-    let axis2 = (axis + 1) % 3;
-    let axis3 = (axis + 2) % 3;
+    let axis2 = (axis + 1)%3;
+    let axis3 = (axis + 2)%3;
 
     axes[axis].load(vec)
     axes[axis2].cross(axes[axis]).cross(axes[axis])
