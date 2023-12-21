@@ -88,6 +88,8 @@ declare class BaseVector extends Array<number> {
 
   sinterp(b: this, t: number): this;
 
+  perpSwap(axis1?: number, axis2?: number, sign?: number): this;
+
   //all math operates in-place, no new objects
   load(b: INumVector): this;
 
