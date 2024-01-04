@@ -182,11 +182,10 @@ export class Curve1D {
     let json = nstructjs.writeJSON(b, Curve1D);
     let cpy = nstructjs.readJSON(json, Curve1D);
 
-    let activeCls = this.generators.active.constructor;
+    let activeCls = cpy.generators.active.constructor;
     let oldGens = this.generators;
 
     this.generators = cpy.generators;
-    this.generators.active = undefined;
 
     for (let gen of cpy.generators) {
       /* See if generator provides a .load() method. */
@@ -379,7 +378,16 @@ export class Curve1D {
       s = Math.min(Math.max(s, this.xRange[0]), this.xRange[1]);
     }
 
-    let f = this.generators.active.evaluate(s);
+    let f;
+
+    try {
+      f = this.generators.active.evaluate(s);
+    } catch (error) {
+      f = 0.0;
+      console.warn(error.stack);
+      console.warn(error.message);
+    }
+
     if (this.clipToRange) {
       f = Math.min(Math.max(f, this.yRange[0]), this.yRange[1]);
     }
