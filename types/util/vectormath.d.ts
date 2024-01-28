@@ -143,7 +143,7 @@ declare class BaseVector extends Array<number> {
 
   addFac(b: this, fac: number): this;
 
-  rot2d(th: number, axis: number | undefined): this;
+  rot2d(th: number, axis?: number | undefined): this;
 
   zero(): this;
 
@@ -176,7 +176,7 @@ export declare class Vector4 extends BaseVector {
 export declare class Quat extends BaseVector {
   axisAngleToQuat(axis: Vector3, angle: number): this;
 
-  toMatrix(output: Matrix4 | undefined): Matrix4;
+  toMatrix(output?: Matrix4): Matrix4;
 }
 
 

@@ -45,10 +45,10 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
 declare type SlotType<slot extends ToolProperty<any>> = typeof slot.ValueTypeAlias;
 
 declare class ToolOp<
-  InputSlots = { [k: string]: ToolProperty<any> },
-  OutputSlots = { [k: string]: ToolProperty<any> },
-  ContextCls = Context,
-  ModalContextCls = ContextCls> {
+    InputSlots = { [k: string]: ToolProperty<any> },
+    OutputSlots = { [k: string]: ToolProperty<any> },
+    ContextCls = Context,
+    ModalContextCls = ContextCls> {
 
   ['constructor']: IToolOpConstructor<this, InputSlots, OutputSlots>;
 
@@ -61,6 +61,10 @@ declare class ToolOp<
 
   inputs: InputSlots;
   outputs: OutputSlots;
+
+  static onTick(): void;
+
+  static canRun(ctx: ContextCls): boolean;
 
   static invoke(ctx: ModalContextCls, args: { [k: string]: any }): any;
 
@@ -89,3 +93,4 @@ declare class ToolMacro extends ToolOp<any, any> {
   add(tool: ToolOp)
 }
 
+declare const ToolClasses: (typeof ToolOp)[]

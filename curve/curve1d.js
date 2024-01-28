@@ -159,7 +159,7 @@ export class Curve1D {
 
   load(b) {
     if (b === undefined || b === this) {
-      return;
+      return this;
     }
     /*
     if (b === undefined) {
