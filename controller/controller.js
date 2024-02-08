@@ -21,24 +21,24 @@
  <pre>
 
  function initMyDataAPI() {
-  let api = new DataAPI();
+ let api = new DataAPI();
 
-  //map MyContextClass to a struct, true tells mapStruct to auto-create
-  //the struct if it doesn't already exist.
-  //
-  //MyContextClass should have a member "propCache" pointing at SavedToolDefaults.
-  let st = api.mapStruct(MyContextClass, true);
+ //map MyContextClass to a struct, true tells mapStruct to auto-create
+ //the struct if it doesn't already exist.
+ //
+ //MyContextClass should have a member "propCache" pointing at SavedToolDefaults.
+ let st = api.mapStruct(MyContextClass, true);
 
-  //set fields of struct, e.g. st.int, st.float, st.enum, st.struct, etc
+ //set fields of struct, e.g. st.int, st.float, st.enum, st.struct, etc
 
-  //build toolsys api
-  buildToolSysAPI(api);
+ //build toolsys api
+ buildToolSysAPI(api);
 
-  //create bindings for default tool operator settings
-  cstruct.struct("propCache", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+ //create bindings for default tool operator settings
+ cstruct.struct("propCache", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
 
-  return api;
-}
+ return api;
+ }
  </pre>
  */
 import * as toolprop from '../toolsys/toolprop.js';
@@ -79,7 +79,7 @@ let tokens = [
   tk("LSBRACKET", /\[/),
   tk("RSBRACKET", /\]/),
   tk("AND", /\&/),
-  tk("WS", /[ \t\n\r]+/, (t) => undefined) //drok token
+  tk("WS", /[ \t\n\r]+/, (t) => undefined), //drop token
 ];
 
 let lexer = new parseutil.lexer(tokens, (t) => {
@@ -608,15 +608,9 @@ export class DataStruct {
     this.members.remove(m);
   }
 
-  fromToolProp(path, prop, apiname) {
-    if (apiname === undefined) {
-      apiname = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : k;
-    }
-
+  fromToolProp(path, prop, apiname = prop.apiname.length > 0 ? prop.apiname : path) {
     let dpath = new DataPath(path, apiname, prop);
-
     this.add(dpath);
-
     return dpath;
   }
 
@@ -815,11 +809,11 @@ export class DataAPI extends ModelInterface {
     let api = ctx.api;
 
     function applyFilter(obj) {
-      //console.log(filter, obj, obj.constructor.name);
+      const forceEval = rdef.dpath.flag & DataFlags.USE_EVAL_MASS_SET_PATHS;
 
       if (obj === undefined) {
         return undefined;
-      } else if (typeof obj === "object" || typeof obj === "function") {
+      } else if (!forceEval && (typeof obj === "object" || typeof obj === "function")) {
         let st = api.mapStruct(obj.constructor, false);
 
         let path = filter;
@@ -935,7 +929,7 @@ export class DataAPI extends ModelInterface {
    get meta information for a datapath.
 
    @param ignoreExistence: don't try to get actual data associated with path,
-   just want meta information
+    just want meta information
    */
   resolvePath_intern(ctx, inpath, ignoreExistence = false, p = pathParser, dstruct = undefined) {
     inpath = inpath.replace("==", "=");

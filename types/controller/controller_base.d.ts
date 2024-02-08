@@ -3,12 +3,12 @@ export as namespace controller_base;
 import { ToolOp } from "../toolsys/toolsys";
 import { ToolProperty, EnumProperty, FlagProperty } from "../toolsys/toolprop";
 
-declare interface resolvePathRet {
-  value: any;
+declare interface PathPropMeta<T = any, PropType extends ToolProperty<any> = ToolProperty<any>> {
+  value?: T;
   obj: any;
   dstruct: DataStruct;
   dpath: DataPath;
-  prop: ToolProperty<any>;
+  prop: PropType;
 }
 
 declare class DataAPI {
@@ -16,7 +16,7 @@ declare class DataAPI {
 
   hasStruct(cls: Function): Boolean;
 
-  resolvePath(ctx: any, path: string): resolvePathRet;
+  resolvePath(ctx: any, path: string): PathPropMeta;
 
   getValue(ctx: any, path: string): any;
 
@@ -89,6 +89,9 @@ declare class DataPath {
   uiNames(namemap: any): DataPath;
 
   description(tooltip: string): DataPath;
+
+  /* Evaluate mass set path filters using eval() */
+  evalMassSetFilter(): DataPath
 }
 
 declare enum StructFlags {
@@ -166,7 +169,8 @@ declare class DataStruct {
   flags(path: string, apiname: string, enumdef: {}, uiname: string, description?: string): DataPath;
   flags(path: string, apiname: string, enumdef: FlagProperty, uiname: string, description?: string): DataPath;
 
-  fromToolProp(path: string, prop: ToolProperty<any>, apiname: string): DataPath;
+  /** if `apiname` is undefined, will use `prop.apiname` if it's not empty, otherwise `path` */
+  fromToolProp(path: string, prop: ToolProperty<any>, apiname?: string): DataPath;
 
   add(dpath: DataPath): DataStruct;
 }

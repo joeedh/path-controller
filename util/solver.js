@@ -16,7 +16,9 @@ export class Constraint {
 
     this.df = 0.0005;
     this.threshold = 0.0001;
-    this.func = func;
+    if (func !== undefined) { /* Happens with subclass-style constraints. */
+      this.func = func;
+    }
 
     this.funcDv = null;
   }

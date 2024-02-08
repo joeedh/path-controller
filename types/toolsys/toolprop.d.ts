@@ -102,11 +102,11 @@ declare class IntProperty extends NumberPropertyBase<number> {
 }
 
 declare class BoolProperty extends ToolProperty<boolean> {
-  constructor(val: boolean);
+  constructor(val?: boolean);
 }
 
 declare class StringProperty extends ToolProperty<string> {
-  constructor(val: string);
+  constructor(val?: string);
 }
 
 declare class Vec2Property extends NumberPropertyBase<Vector2> {
@@ -128,19 +128,22 @@ declare class Vec4Property extends NumberPropertyBase<Vector4> {
 }
 
 declare class EnumProperty extends ToolProperty<number> {
-  constructor(value: any, enumdef: {}, apiname?: string, uiname?: string, desription?: string);
+  constructor(value?: any, enumdef?: {}, apiname?: string, uiname?: string, desription?: string);
 
   addIcons(iconmap: {}): this;
 
   addUINames(uinames: {}): this;
+
+  keys: { [k: string | number]: string | number };
+  values: { [k: string | number]: string | number };
 }
 
 declare class FlagProperty extends ToolProperty<number> {
-  constructor(val: number, flagdef: { [k: string]: number });
+  constructor(val?: number | string, flagdef?: { [k: string]: number | string });
 }
 
 declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType[]> {
-  constructor(type: IToolPropConstructor<any>, data: any[]);
+  constructor(type: IToolPropConstructor<any>, data?: any[]);
 
   [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias>;
 }

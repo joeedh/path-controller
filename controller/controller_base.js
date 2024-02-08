@@ -6,10 +6,11 @@ import {print_stack, cachering} from '../util/util.js';
 import {ToolProperty} from '../toolsys/toolprop.js';
 
 export const DataFlags = {
-  READ_ONLY             : 1,
-  USE_CUSTOM_GETSET     : 2,
-  USE_FULL_UNDO         : 4, //DataPathSetOp in controller_ops.js saves/loads entire file for undo/redo
-  USE_CUSTOM_PROP_GETTER: 8,
+  READ_ONLY              : 1,
+  USE_CUSTOM_GETSET      : 2,
+  USE_FULL_UNDO          : 4, //DataPathSetOp in controller_ops.js saves/loads entire file for undo/redo
+  USE_CUSTOM_PROP_GETTER : 8,
+  USE_EVAL_MASS_SET_PATHS: 16,
 };
 
 
@@ -82,6 +83,11 @@ export class DataPath {
     if (type === DataTypes.PROP && this.data && ("" + this.data.uiname).trim().length === 0) {
       this.data.uiname = ToolProperty.makeUIName(apiname);
     }
+  }
+
+  evalMassSetFilter() {
+    this.flag |= DataFlags.USE_EVAL_MASS_SET_PATHS;
+    return this;
   }
 
   copy() {

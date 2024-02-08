@@ -927,6 +927,8 @@ export class KeyMap extends Array {
         return true;
       }
     }
+
+    return false;
   }
 
   add(hk) {
