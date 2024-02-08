@@ -1,9 +1,7 @@
 export as namespace controller_base;
 
-import {Context} from "../core/context";
-import {ToolOp} from "../toolsys/toolsys";
-
-import {ToolProperty, EnumProperty, FlagProperty} from "../toolsys/toolprop";
+import { ToolOp } from "../toolsys/toolsys";
+import { ToolProperty, EnumProperty, FlagProperty } from "../toolsys/toolprop";
 
 declare interface resolvePathRet {
   value: any;
@@ -36,7 +34,7 @@ declare interface BoundProperty {
 }
 
 declare interface DataPathCallBack {
-  (this: BoundProperty, ...args: any[])
+  (this: BoundProperty, ...args: any[]);
 }
 
 declare class DataPath {
@@ -84,7 +82,7 @@ declare class DataPath {
 
   icon(i: number): DataPath;
 
-  icons(iconmap: any): DataPath
+  icons(iconmap: any): DataPath;
 
   descriptions(dmap: any): DataPath;
 
@@ -94,7 +92,7 @@ declare class DataPath {
 }
 
 declare enum StructFlags {
-  NO_UNDO = 1
+  NO_UNDO = 1,
 }
 
 declare interface ListIFace<ListType = any, KeyType = any, ObjType = any> {
@@ -118,11 +116,13 @@ declare interface ListIFace<ListType = any, KeyType = any, ObjType = any> {
 }
 
 export type DataPathMap = {
-  [key: string]: DataPath
-}
+  [key: string]: DataPath;
+};
 
 declare class DataStruct {
   pathmap: DataPathMap;
+
+  clear(): this;
 
   dynamicStruct(path: string, apiname: string, uiname: string, existingStruct?: DataStruct): DataStruct;
 
@@ -157,7 +157,11 @@ declare class DataStruct {
   enum(path: string, apiname: string, enumdef: {}, uiname: string, description?: string): DataPath;
   enum(path: string, apiname: string, enumdef: EnumProperty, uiname: string, description?: string): DataPath;
 
-  list<ListType, KeyType, ObjType>(path: string, apiname: string, callbacks: ListIFace<ListType, KeyType, ObjType>): DataPath;
+  list<ListType, KeyType, ObjType>(
+    path: string,
+    apiname: string,
+    callbacks: ListIFace<ListType, KeyType, ObjType>
+  ): DataPath;
 
   flags(path: string, apiname: string, enumdef: {}, uiname: string, description?: string): DataPath;
   flags(path: string, apiname: string, enumdef: FlagProperty, uiname: string, description?: string): DataPath;

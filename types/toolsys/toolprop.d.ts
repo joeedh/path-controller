@@ -1,9 +1,27 @@
 export as namespace toolprop;
 
-import {Vector2, Vector3, Vector4, Quat, Matrix4} from '../util/vectormath';
+import { UnitType } from "../units/units";
+import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath";
 
-declare interface IToolPropConstructor<any> {
-  new(): ToolProperty<any>;
+export type NumberConstraintBase =
+  | "range"
+  | "expRate"
+  | "step"
+  | "uiRange"
+  | "displayUnit"
+  | "baseUnit"
+  | "stepIsRelative"
+  | "slideSpeed"
+  | "sliderDisplayExp";
+export type IntegerConstraint = NumberConstraintBase | "radix";
+export type FloatConstraint = NumberConstraintBase | "decimalPlaces";
+export type NumberConstraint = IntegerConstraint | FloatConstraint;
+export declare const NumberConstraints: Set<NumberConstraint>;
+export declare const IntegerConstraints: Set<IntegerConstraint>;
+export declare const FloatConstraints: Set<FloatConstraint>;
+
+declare interface IToolPropConstructor<T> {
+  new (): ToolProperty<T>;
 }
 
 declare class ToolProperty<T> {
@@ -14,6 +32,7 @@ declare class ToolProperty<T> {
   uiname: string;
   flag: number;
   description: string;
+  icon: number;
 
   private(): this;
 
@@ -33,9 +52,6 @@ declare class ToolProperty<T> {
 
   static calcRelativeStep(step: number, value: number, logBase: number): number;
 
-  uiname: string;
-  icon: number;
-
   static makeUIName(name: string): string;
 
   static register(cls: any): number;
@@ -43,19 +59,33 @@ declare class ToolProperty<T> {
   setIcon(i: number): ToolProperty<T>;
 
   type: number;
+  subtype: number;
 
   /* Set by path controller system. */
   dataref: any;
   ctx: any;
 }
 
-declare interface NumberPropertyBase {
+declare class NumberPropertyBase<T> extends ToolProperty<T> {
+  range: [number, number];
+
+  /** if undefined, .range will be used. */
+  uiRange?: [number, number];
+
   setRange(min: number, max: number): this;
 
   noUnits(): this;
+
+  baseUnit?: UnitType;
+  displayUnit?: UnitType;
+  expRate: number;
+  slideSpeed: number;
+  step: number;
+  stepIsRelative: boolean;
+  sliderDisplayExp: number;
 }
 
-declare class FloatProperty extends ToolProperty<number> implements NumberPropertyBase {
+declare class FloatProperty extends NumberPropertyBase<number> {
   constructor(val: number);
 
   setRange(min: number, max: number): this;
@@ -63,7 +93,7 @@ declare class FloatProperty extends ToolProperty<number> implements NumberProper
   noUnits(): this;
 }
 
-declare class IntProperty extends ToolProperty<number> implements NumberPropertyBase {
+declare class IntProperty extends NumberPropertyBase<number> {
   constructor(val: number);
 
   setRange(min: number, max: number): this;
@@ -79,25 +109,22 @@ declare class StringProperty extends ToolProperty<string> {
   constructor(val: string);
 }
 
-declare class Vec2Property extends ToolProperty<Vector2> implements NumberPropertyBase {
+declare class Vec2Property extends NumberPropertyBase<Vector2> {
   constructor(val: Vector2);
 
   setRange(min: number, max: number): this;
-
 }
 
-declare class Vec3Property extends ToolProperty<Vector3> implements NumberPropertyBase {
+declare class Vec3Property extends NumberPropertyBase<Vector3> {
   constructor(val: Vector3);
 
   setRange(min: number, max: number): this;
-
 }
 
-declare class Vec4Property extends ToolProperty<Vector4> implements NumberPropertyBase {
+declare class Vec4Property extends NumberPropertyBase<Vector4> {
   constructor(val: Vector4);
 
   setRange(min: number, max: number): this;
-
 }
 
 declare class EnumProperty extends ToolProperty<number> {
@@ -113,20 +140,20 @@ declare class FlagProperty extends ToolProperty<number> {
 }
 
 declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType[]> {
-  constructor(type: IToolPropConstructor, data: any[]);
+  constructor(type: IToolPropConstructor<any>, data: any[]);
 
-  [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias.getValue>;
+  [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias>;
 }
 
 export declare enum PropSubTypes {
-  COLOR = 1
+  COLOR = 1,
 }
 
 export declare enum PropFlags {
   SELECT = 1,
   PRIVATE = 2,
   LABEL = 4,
-  USE_ICONS = 64, /* Implies FORCE_ENUM_CHECKBOXES (for enum/flag properties). */
+  USE_ICONS = 64 /* Implies FORCE_ENUM_CHECKBOXES (for enum/flag properties). */,
   USE_CUSTOM_GETSET = 128, //used by controller.js interface
   SAVE_LAST_VALUE = 256,
   READ_ONLY = 512,
@@ -136,7 +163,7 @@ export declare enum PropFlags {
   EDIT_AS_BASE_UNIT = 1 << 13, //user textbox input should be interpreted in display unit
   NO_UNDO = 1 << 14,
   USE_CUSTOM_PROP_GETTER = 1 << 15, //hrm, not sure I need this
-  FORCE_ENUM_CHECKBOXES = 1 << 16,/* Use a strip of checkboxes, also applies to flag properties. */
+  FORCE_ENUM_CHECKBOXES = 1 << 16 /* Use a strip of checkboxes, also applies to flag properties. */,
   NO_DEFAULT = 1 << 17,
 }
 
@@ -145,5 +172,5 @@ export declare const PropTypes: {
 };
 
 declare class Mat4Property extends ToolProperty<Matrix4> {
-  constructor(val: Mat4);
+  constructor(val: Matrix4);
 }
