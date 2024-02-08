@@ -933,13 +933,6 @@ export function makeVector2(BaseVector, structName = 'vec2', structType = 'float
       return this;
     }
 
-    loadXY(x, y) {
-      this[0] = x;
-      this[1] = y;
-
-      return this;
-    }
-
     static normalizedDot4(v1, v2, v3, v4) {
       temp1.load(v2).sub(v1).normalize()
       temp2.load(v4).sub(v3).normalize();
@@ -2689,10 +2682,6 @@ export class Matrix4 {
 
   _determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
     return a1*this._determinant2x2(b2, b3, c2, c3) - b1*this._determinant2x2(a2, a3, c2, c3) + c1*this._determinant2x2(a2, a3, b2, b3);
-  }
-
-  determinant() {
-    return this._determinant4x4();
   }
 
   _determinant4x4() {

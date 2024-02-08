@@ -743,15 +743,6 @@ export class _NumberPropertyBase extends ToolProperty {
     return json;
   }
 
-  loadJSON(obj) {
-    super.loadJSON(obj);
-
-    this.data = obj.data || this.data;
-    this.expRate = obj.expRate || this.expRate;
-
-    return this;
-  }
-
   copyTo(b) {
     super.copyTo(b);
 

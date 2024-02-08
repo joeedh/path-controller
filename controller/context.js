@@ -92,7 +92,7 @@ export function makeDerivedOverlay(parent) {
         def2[k] = def[k];
       }
 
-      if (!("flag") in def) {
+      if (!("flag" in def)) {
         def2.flag = Context.inherit(0);
       }
 
