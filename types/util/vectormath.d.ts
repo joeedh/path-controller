@@ -30,7 +30,7 @@ export declare class Matrix4Data {
 }
 
 export declare class Matrix4 {
-  constructor(existing?: Matrix4);
+  constructor(existing?: Matrix4 | number[]);
 
   $matrix: Matrix4Data
 

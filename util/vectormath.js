@@ -1362,6 +1362,7 @@ class internal_matrix {
   }
 }
 
+/** Incredibly old matrix class. */
 export class Matrix4 {
   constructor(m) {
     this.$matrix = new internal_matrix();

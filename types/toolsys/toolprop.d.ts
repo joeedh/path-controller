@@ -110,19 +110,19 @@ declare class StringProperty extends ToolProperty<string> {
 }
 
 declare class Vec2Property extends NumberPropertyBase<Vector2> {
-  constructor(val: Vector2);
+  constructor(val?: Vector2);
 
   setRange(min: number, max: number): this;
 }
 
 declare class Vec3Property extends NumberPropertyBase<Vector3> {
-  constructor(val: Vector3);
+  constructor(val?: Vector3);
 
   setRange(min: number, max: number): this;
 }
 
 declare class Vec4Property extends NumberPropertyBase<Vector4> {
-  constructor(val: Vector4);
+  constructor(val?: Vector4);
 
   setRange(min: number, max: number): this;
 }
@@ -142,10 +142,10 @@ declare class FlagProperty extends ToolProperty<number> {
   constructor(val?: number | string, flagdef?: { [k: string]: number | string });
 }
 
-declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType[]> {
+declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType["ValueTypeAlias"][]> {
   constructor(type: IToolPropConstructor<any>, data?: any[]);
 
-  [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias>;
+  [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias[0]>;
 }
 
 export declare enum PropSubTypes {
