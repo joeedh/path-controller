@@ -4,7 +4,7 @@ export enum EulerOrders {
   YXZ = 2,
   YZX = 3,
   ZXY = 4,
-  ZYX = 5
+  ZYX = 5,
 }
 
 export declare class Matrix4Data {
@@ -32,11 +32,11 @@ export declare class Matrix4Data {
 export declare class Matrix4 {
   constructor(existing?: Matrix4 | number[]);
 
-  $matrix: Matrix4Data
+  $matrix: Matrix4Data;
 
   decompose(loc: Vector3, rot: Vector3, scale: Vector3): this;
 
-  copyColumnTo(i: number, vec: BaseVector): this
+  copyColumnTo(i: number, vec: Vector3 | Vector4): this;
 
   invert(): this;
 
@@ -81,50 +81,50 @@ declare interface IOpenNumVector {
   length: number;
 }
 
-type indexUnions = { 0: never, 1: 0, 2: 0 | 1, 3: 0 | 1 | 2, 4: 0 | 1 | 2 | 3 };
-type strNumMap = { "0": 0, "1": 1, "2": 2, "3": 3, "4": 4 };
+type indexUnions = { 0: never; 1: 0; 2: 0 | 1; 3: 0 | 1 | 2; 4: 0 | 1 | 2 | 3 };
+type strNumMap = { "0": 0; "1": 1; "2": 2; "3": 3; "4": 4 };
 
 declare type INumVectorLimited<LEN extends 0 | 1 | 2 | 3 | 4> = {
-  [P: number]: never,
-  0: LEN extends 1 | 2 | 3 | 4 ? number : never,
-  1: LEN extends 2 | 3 | 4 ? number : never,
-  2: LEN extends 3 | 4 ? number : never,
-  3: LEN extends 4 ? number : never,
-  length: LEN
+  //[P: number]: never;
+  0: LEN extends 1 | 2 | 3 | 4 ? number : never;
+  1: LEN extends 2 | 3 | 4 ? number : never;
+  2: LEN extends 3 | 4 ? number : never;
+  3: LEN extends 4 ? number : never;
+  length: LEN;
 };
 
 declare type INumVector =
-    IOpenNumVector
-    | INumVectorLimited<0>
-    | INumVectorLimited<1>
-    | INumVectorLimited<2>
-    | INumVectorLimited<3>
+  | IOpenNumVector
+  | INumVectorLimited<0>
+  | INumVectorLimited<1>
+  | INumVectorLimited<2>
+  | INumVectorLimited<3>;
 
-type numlits = { 2: 2 | 3 | 4, 3: 3 | 4, 4: 4 }
-type NumLitHigher<L extends 2 | 3 | 4> = numlits[L]
-type IndexUnion<L extends 2 | 3 | 4> = indexUnions[L]
+type numlits = { 1: 1; 2: 2 | 3 | 4; 3: 3 | 4; 4: 4 };
+type NumLitHigher<L extends 1 | 2 | 3 | 4> = numlits[L];
+type IndexUnion<L extends 0 | 1 | 2 | 3 | 4> = indexUnions[L];
 
 //type indexUnions = { 2: 0 | 1, 3: 0 | 1 | 2, 4: 0 | 1 | 2 | 3 };
 
-declare type Number1 = 0
-declare type Number2 = 0 | 1
-declare type Number3 = 0 | 1 | 2
-declare type Number4 = 0 | 1 | 2 | 3
-declare type Number5 = 0 | 1 | 2 | 3 | 4
+declare type Number1 = 0;
+declare type Number2 = 0 | 1;
+declare type Number3 = 0 | 1 | 2;
+declare type Number4 = 0 | 1 | 2 | 3;
+declare type Number5 = 0 | 1 | 2 | 3 | 4;
 
-declare interface IBaseVector<LEN, ArrayType = Array<number>> extends ArrayType {
+declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<number>> {
   constructor(existing?: this | INumVector | IBaseVector<NumLitHigher<LEN>>);
 
   //[P: P extends indexUnions[LEN] ? number : never]: P extends IndexUnion<LEN> ? number : never;
 
   length: LEN;
 
-  [P: number]: never;
+  //[P: number]: never;
 
-  0: LEN extends 1 | 2 | 3 | 4 ? number : never
-  1: LEN extends 2 | 3 | 4 ? number : never
-  2: LEN extends 3 | 4 ? number : never
-  3: LEN extends 4 ? number : never
+  0: LEN extends 1 | 2 | 3 | 4 ? number : never;
+  1: LEN extends 2 | 3 | 4 ? number : never;
+  2: LEN extends 3 | 4 ? number : never;
+  3: LEN extends 4 ? number : never;
 
   [Symbol.iterator](): Iterator<number>;
 
@@ -194,10 +194,9 @@ declare interface IBaseVector<LEN, ArrayType = Array<number>> extends ArrayType 
   swapAxes(axis1: number, axis2: number): this;
 }
 
-export declare type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = Type | IBaseVector<NumLitHigher<LEN>>
+export declare type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = Type | IBaseVector<NumLitHigher<LEN>>;
 
-export declare interface IVector2 extends IBaseVector<2> {
-}
+export declare interface IVector2 extends IBaseVector<2> {}
 
 export declare interface IVector3 extends IBaseVector<3> {
   loadXYZ(x: number, y: number, z: number): this;
@@ -219,40 +218,65 @@ export declare interface IQuat extends IBaseVector<4> {
   toMatrix(output?: Matrix4): Matrix4;
 }
 
-export declare interface IVectorConstructor<Type, LEN = 3> {
-  new(value?: number[] | Type): Type;
+export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
+  new (value?: number[] | Type): Type;
 
   /** |(a - center)| dot |(b - center)| */
-  normalizedDot3(a: IVectorOrHigher<LEN, Type>, center: IVectorOrHigher<LEN, Type>, b: IVectorOrHigher<LEN, Type>): number;
+  normalizedDot3(
+    a: IVectorOrHigher<LEN, Type>,
+    center: IVectorOrHigher<LEN, Type>,
+    b: IVectorOrHigher<LEN, Type>
+  ): number;
 
   /** |(b - a)| dot |(d - c)| */
-  normalizedDot4(a: IVectorOrHigher<LEN, Type>, b: IVectorOrHigher<LEN, Type>, c: IVectorOrHigher<LEN, Type>, d: IVectorOrHigher<LEN, Type>): number;
+  normalizedDot4(
+    a: IVectorOrHigher<LEN, Type>,
+    b: IVectorOrHigher<LEN, Type>,
+    c: IVectorOrHigher<LEN, Type>,
+    d: IVectorOrHigher<LEN, Type>
+  ): number;
+
+  structName: string;
+  STRUCT: string;
 }
 
-export declare const BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const F32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const F64BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const I32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const I16BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const I8BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const UI32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const UI16BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
-export declare const UI8BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>
+export declare const BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const F32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const F64BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const I32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const I16BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const I8BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const UI32BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const UI16BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
+export declare const UI8BaseVector: IVectorConstructor<IBaseVector<2 | 3 | 4>>;
 
-export declare type Vector2 = IVector2
-export declare const Vector2: IVectorConstructor<Vector2, 2>
+export declare type Vector2 = IVector2;
+export declare const Vector2: IVectorConstructor<Vector2, 2>;
 
-export declare type Vector3 = IVector3
-export declare const Vector3: IVectorConstructor<Vector3, 3>
+export declare type Vector3 = IVector3;
+export declare const Vector3: IVectorConstructor<Vector3, 3>;
 
-export declare type Vector4 = IVector4
-export declare const Vector4: IVectorConstructor<Vector4, 4>
+export declare type Vector4 = IVector4;
+export declare const Vector4: IVectorConstructor<Vector4, 4>;
 
 export declare type Quat = IQuat;
 export declare const Quat: IVectorConstructor<Quat>;
 
-export declare function makeVector2<Base extends IBaseVector<2>>(parent: IVectorConstructor<Base, 2>, structName: string, structType?: string): IVectorConstructor<Base, 2>;
+export declare function makeVector2<Base extends IBaseVector<2>>(
+  parent: IVectorConstructor<Base, 2>,
+  structName: string,
+  structType?: string
+): IVectorConstructor<Base, 2>;
 
-export declare function makeVector3<Base extends IBaseVector<3>>(parent: IVectorConstructor<Base, 3>, structName: string, structType?: string, customConstructorCode?: string): IVectorConstructor<Base, 3>;
+export declare function makeVector3<Base extends IBaseVector<3>>(
+  parent: IVectorConstructor<Base, 3>,
+  structName: string,
+  structType?: string,
+  customConstructorCode?: string
+): IVectorConstructor<Base, 3>;
 
-export declare function makeVector4<Base extends IBaseVector<4>>(parent: IVectorConstructor<Base, 4>, structName: string, structType?: string): IVectorConstructor<Base, 4>;
+export declare function makeVector4<Base extends IBaseVector<4>>(
+  parent: IVectorConstructor<Base, 4>,
+  structName: string,
+  structType?: string
+): IVectorConstructor<Base, 4>;

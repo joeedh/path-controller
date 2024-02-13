@@ -1,15 +1,15 @@
 /* Returns 'undefined' as type type.  Breaks the type
    system, is meant only for object pool systems.
  */
-import {Matrix4, Vector2, Vector3, Vector4} from "./vectormath";
-import type {Curve1D} from "../curve/curve1d";
+import { Matrix4, Vector2, Vector3, Vector4 } from "./vectormath";
+import type { Curve1D } from "../curve/curve1d";
 
 export declare function undefinedForGC<type>(): type;
 
 export declare class cachering<type> extends Array<type> {
   constructor(factory: () => type, n: number);
 
-  static fromConstructor<type>(cls: new () => type, number: n, isprivate?: boolean): cachering<type>;
+  static fromConstructor<type>(cls: new () => type, n: number, isprivate?: boolean): cachering<type>;
 
   next(): type;
 }
@@ -135,5 +135,5 @@ export class IDMap<ValueType> {
 
   values(): Iterable<ValueType>;
 
-  [Symbol.iterator](): Iterator<[number, ValueType]>
+  [Symbol.iterator](): Iterator<[number, ValueType]>;
 }
