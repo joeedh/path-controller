@@ -691,6 +691,7 @@ let _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4;
 
 export function makeVector3(BaseVector, structName = 'vec3', structType = 'float', customConstructorCode = undefined) {
   var Vector3;
+  var bundlehelper = [nstructjs];
 
   const constructorCode = customConstructorCode ?? `
     constructor(data) {
@@ -715,7 +716,7 @@ export function makeVector3(BaseVector, structName = 'vec3', structType = 'float
   const code = `
   let temp1, temp2, temp3, temp4;
   Vector3 = class Vector3 extends BaseVector {
-    static STRUCT = nstructjs.inlineRegister(this, \`
+    static STRUCT = bundlehelper[0].inlineRegister(this, \`
     ${structName} {
       0 : ${structType};
       1 : ${structType};

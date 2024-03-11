@@ -16,6 +16,8 @@ export declare function winding(a: BaseVector, b: BaseVector, c: BaseVector, zer
 
 export declare function tri_area(a: BaseVector, b: BaseVector, c: BaseVector): number
 
+export declare function point_in_tri(p: BaseVector, a: BaseVector, b: BaseVector, c: BaseVector): number
+
 export declare function normal_tri(a: Vector3, b: Vector3, c: Vector3): Vector3
 
 export declare function normal_quad(a: Vector3, b: Vector3, c: Vector3, d: Vector3): Vector3
@@ -31,6 +33,8 @@ export declare function line_line_isect<VectorType extends BaseVector>(
     l4: VectorType,
     test_segment?: boolean
 ): VectorType | number
+
+export declare function line_line_cross(a: BaseVector, b: BaseVector, c: BaseVector, d: BaseVector): boolean
 
 export declare const COLINEAR_ISECT: number
 
