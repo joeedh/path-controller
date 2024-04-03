@@ -42,7 +42,7 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
   register(cls: IToolOpConstructor<any, any, any>);
 }
 
-declare type SlotType<slot extends ToolProperty<any>> = typeof slot.ValueTypeAlias;
+declare type SlotType<slot extends ToolProperty<any>> = slot["ValueTypeAlias"];
 
 declare class ToolOp<
   InputSlots = { [k: string]: ToolProperty<any> },
@@ -58,7 +58,7 @@ declare class ToolOp<
   inputs: InputSlots;
   outputs: OutputSlots;
 
-  getInputs(): { [k: string]: SlotType<InputSlots[k]> };
+  getInputs(): { [k in keyof InputSlots]: SlotType<InputSlots[k]> };
 
   getOutputs(): { [k: string]: SlotType<OutputSlots[k]> };
 

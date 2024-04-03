@@ -1600,6 +1600,7 @@ export class ListProperty extends ToolProperty {
     super(PropTypes.PROPLIST);
 
     this.uiname = uiname;
+    this.flag &= ~PropFlags.SAVE_LAST_VALUE
 
     if (typeof prop == "number") {
       prop = PropClasses[prop];
@@ -1677,6 +1678,7 @@ export class ListProperty extends ToolProperty {
     super.copyTo(b);
 
     b.prop = this.prop.copy();
+    b.value.length = []
 
     for (let prop of this.value) {
       b.value.push(prop.copy());
@@ -1706,13 +1708,20 @@ export class ListProperty extends ToolProperty {
 
   clear() {
     this.value.length = 0;
+    return this
   }
 
   getListItem(i) {
+    if (i < 0) {
+      i += this.length
+    }
     return this.value[i].getValue();
   }
 
   setListItem(i, val) {
+    if (i < 0) {
+      i += this.length
+    }
     this.value[i].setValue(val);
   }
 

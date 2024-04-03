@@ -1466,6 +1466,23 @@ export class DataAPI extends ModelInterface {
       console.error("Unknown tool " + path);
     }
 
+    args = {...args}
+
+    // feed inputs to invoke
+    const tooldef = cls._getFinalToolDef()
+    if (inputs !== undefined) {
+      for (let k in inputs) {
+        if (!(k in tooldef.inputs)) {
+          console.warn(cls.tooldef().uiname + ": Unknown tool property \"" + k + "\"");
+          continue;
+        }
+
+        if (!(k in args)) {
+          args[k] = inputs[k]
+        }
+      }
+    }
+
     let tool = cls.invoke(ctx, args);
 
     if (inputs !== undefined) {

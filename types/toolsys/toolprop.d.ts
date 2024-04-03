@@ -33,6 +33,11 @@ declare class ToolProperty<T> {
   flag: number;
   description: string;
   icon: number;
+  /**
+   * Is false if this property still has its default value,
+   * i.e. it hasn't been set by the user or anyone else
+   */
+  wasSet: boolean;
 
   private(): this;
 
@@ -86,7 +91,7 @@ declare class NumberPropertyBase<T> extends ToolProperty<T> {
 }
 
 declare class FloatProperty extends NumberPropertyBase<number> {
-  constructor(val: number);
+  constructor(val?: number);
 
   setRange(min: number, max: number): this;
 
@@ -94,7 +99,7 @@ declare class FloatProperty extends NumberPropertyBase<number> {
 }
 
 declare class IntProperty extends NumberPropertyBase<number> {
-  constructor(val: number);
+  constructor(val?: number);
 
   setRange(min: number, max: number): this;
 
@@ -142,10 +147,15 @@ declare class FlagProperty extends ToolProperty<number> {
   constructor(val?: number | string, flagdef?: { [k: string]: number | string });
 }
 
-declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType["ValueTypeAlias"][]> {
+declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolProperty<ToolPropType[]> {
   constructor(type: IToolPropConstructor<any>, data?: any[]);
 
-  [Symbol.iterator](): Iterator<typeof this.ValueTypeAlias[0]>;
+  length: number;
+  [Symbol.iterator](): Iterator<ToolPropType["ValueTypeAlias"]>;
+  clear(): this;
+  push(item: ToolPropType["ValueTypeAlias"] | ToolPropType): ToolPropType["ValueTypeAlias"];
+  getListItem(i: number): ToolPropType["ValueTypeAlias"];
+  setListItem(i: number, value: ToolPropType["ValueTypeAlias"]): void;
 }
 
 export declare enum PropSubTypes {
