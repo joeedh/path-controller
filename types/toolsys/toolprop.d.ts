@@ -154,6 +154,8 @@ declare class ListProperty<ToolPropType extends ToolProperty<any>> extends ToolP
   [Symbol.iterator](): Iterator<ToolPropType["ValueTypeAlias"]>;
   clear(): this;
   push(item: ToolPropType["ValueTypeAlias"] | ToolPropType): ToolPropType["ValueTypeAlias"];
+  splice(i: number, deleteCount?: number, ...args: (ToolPropType["ValueTypeAlias"] | ToolPropType)[]): this;
+
   getListItem(i: number): ToolPropType["ValueTypeAlias"];
   setListItem(i: number, value: ToolPropType["ValueTypeAlias"]): void;
 }

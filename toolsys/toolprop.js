@@ -1637,6 +1637,12 @@ export class ListProperty extends ToolProperty {
     this.value.length = val;
   }
 
+  splice(i, deleteCount, ...newItems) {
+    const deletedItems = this.value.splice(i, deleteCount, ...newItems)
+    this.length = this.value.length
+    return deletedItems
+  }
+
   calcMemSize() {
     let tot = super.calcMemSize();
 
