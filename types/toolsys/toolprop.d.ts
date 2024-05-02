@@ -54,6 +54,7 @@ declare class ToolProperty<T> {
   getValue(): T;
 
   saveLastValue(): this;
+  ignoreLastValue(): this;
 
   static calcRelativeStep(step: number, value: number, logBase: number): number;
 
