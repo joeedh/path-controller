@@ -12,6 +12,7 @@ export declare function aabb_isect_line_2d(a: Vector2, b: Vector2, min: Vector2,
 
 export declare function colinear2d(a: Vector2, b: Vector2, c: Vector2, limit?: number, distLimit?: number): boolean;
 
+/** returns false if clockwise */
 export declare function winding(a: BaseVector, b: BaseVector, c: BaseVector, zero_z?: boolean, tol?: number): boolean;
 
 export declare function tri_area(a: BaseVector, b: BaseVector, c: BaseVector): number;
