@@ -3,15 +3,23 @@ import * as math from './math.js';
 import * as util from './util.js';
 
 export class Constraint {
-  constructor(name, func, klst, params, k=1.0) {
+  constructor(name, func, klst, params, k = 1.0) {
     this.glst = [];
     this.klst = klst;
+    this.wlst = [];
     this.k = k;
     this.params = params;
     this.name = name;
 
     for (let ks of klst) {
       this.glst.push(new Float64Array(ks.length));
+      const ws = new Float64Array(ks.length);
+
+      for (let i = 0; i < ws.length; i++) {
+        ws[i] = 1.0;
+      }
+
+      this.wlst.push(ws);
     }
 
     this.df = 0.0005;
@@ -19,11 +27,15 @@ export class Constraint {
     if (func !== undefined) { /* Happens with subclass-style constraints. */
       this.func = func;
     }
-
-    this.funcDv = null;
+    if (!this.funcDv) {
+      this.funcDv = null;
+    }
   }
 
-  evaluate(no_dvs=false) {
+  postSolve() {
+  }
+
+  evaluate(no_dvs = false) {
     let r1 = this.func(this.params);
 
     if (this.funcDv) {
@@ -39,17 +51,17 @@ export class Constraint {
     if (no_dvs)
       return r1;
 
-    for (let i=0; i<this.klst.length; i++) {
+    for (let i = 0; i < this.klst.length; i++) {
       let gs = this.glst[i];
       let ks = this.klst[i];
 
-      for (let j=0; j<ks.length; j++) {
+      for (let j = 0; j < ks.length; j++) {
         let orig = ks[j];
         ks[j] += df;
         let r2 = this.func(this.params);
         ks[j] = orig;
 
-        gs[j] = (r2 - r1) / df;
+        gs[j] = (r2 - r1)/df;
       }
     }
 
@@ -68,15 +80,19 @@ export class Solver {
     this.threshold = 0.01;
   }
 
+  remove(con) {
+    this.constraints.remove(con);
+  }
+
   add(con) {
     this.constraints.push(con);
   }
 
-  solveStep(gk=this.gk) {
+  solveStep(gk = this.gk) {
     let err = 0.0;
 
     let cons = this.constraints;
-    for (let ci=0; ci<cons.length; ci++ ){
+    for (let ci = 0; ci < cons.length; ci++) {
       let ri = ci;
       if (this.randCons) {
         ri = ~~(Math.random()*this.constraints.length*0.99999);
@@ -92,35 +108,37 @@ export class Solver {
       err += Math.abs(r1);
       let totgs = 0.0;
 
-      for (let i=0; i<con.klst.length; i++) {
+      for (let i = 0; i < con.klst.length; i++) {
         let ks = con.klst[i], gs = con.glst[i];
-        for (let j=0; j<ks.length; j++) {
+        for (let j = 0; j < ks.length; j++) {
           totgs += gs[j]*gs[j];
         }
       }
 
-      if (totgs === 0.0)  {
+      if (totgs === 0.0) {
         continue;
       }
 
       r1 /= totgs;
 
-      for (let i=0; i<con.klst.length; i++) {
-        let ks = con.klst[i], gs = con.glst[i];
-        for (let j=0; j<ks.length; j++) {
-          ks[j] += -r1*gs[j]*con.k*gk;
+      for (let i = 0; i < con.klst.length; i++) {
+        let ks = con.klst[i], gs = con.glst[i], ws = con.wlst[i];
+        for (let j = 0; j < ks.length; j++) {
+          ks[j] += -r1*gs[j]*con.k*gk*ws[j];
         }
+
+        con.postSolve();
       }
     }
 
     return err;
   }
 
-  solveStepSimple(gk=this.gk) {
+  solveStepSimple(gk = this.gk) {
     let err = 0.0;
 
     let cons = this.constraints;
-    for (let ci=0; ci<cons.length; ci++ ){
+    for (let ci = 0; ci < cons.length; ci++) {
       let ri = ci;
       if (this.randCons) {
         ri = ~~(Math.random()*this.constraints.length*0.99999);
@@ -136,34 +154,36 @@ export class Solver {
       err += Math.abs(r1);
       let totgs = 0.0;
 
-      for (let i=0; i<con.klst.length; i++) {
+      for (let i = 0; i < con.klst.length; i++) {
         let ks = con.klst[i], gs = con.glst[i];
-        for (let j=0; j<ks.length; j++) {
+        for (let j = 0; j < ks.length; j++) {
           totgs += gs[j]*gs[j];
         }
       }
 
-      if (totgs === 0.0)  {
+      if (totgs === 0.0) {
         continue;
       }
 
-      totgs = 0.0001 / Math.sqrt(totgs);
+      totgs = 0.0001/Math.sqrt(totgs);
 
-      for (let i=0; i<con.klst.length; i++) {
-        let ks = con.klst[i], gs = con.glst[i];
-        for (let j=0; j<ks.length; j++) {
-          ks[j] += -totgs*gs[j]*con.k*gk;
+      for (let i = 0; i < con.klst.length; i++) {
+        let ks = con.klst[i], gs = con.glst[i], ws = con.wlst[j];
+        for (let j = 0; j < ks.length; j++) {
+          ks[j] += -totgs*gs[j]*con.k*gk*ws[j];
         }
       }
+
+      con.postSolve();
     }
 
     return err;
   }
 
-  solve(steps, gk=this.gk, printError=false) {
+  solve(steps, gk = this.gk, printError = false) {
     let err = 0.0;
 
-    for (let i=0; i<steps; i++) {
+    for (let i = 0; i < steps; i++) {
       if (this.simple) {
         err = this.solveStepSimple(gk);
       } else {
@@ -174,7 +194,7 @@ export class Solver {
       if (printError) {
         console.warn("average error:", (err/this.constraints.length).toFixed(4));
       }
-      if (err < this.threshold / this.constraints.length) {
+      if (err < this.threshold/this.constraints.length) {
         break;
       }
     }
