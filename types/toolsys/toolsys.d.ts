@@ -1,24 +1,24 @@
-import {ToolProperty} from "./toolprop";
+import { ToolProperty } from "./toolprop";
 
 export as namespace toolsys;
 
-import {Context} from '../core/context';
+import { Context } from "../core/context";
 
-import * as toolsys from '../../../path-controller/toolsys/toolsys.js';
+import * as toolsys from "../../../path-controller/toolsys/toolsys.js";
 
 declare enum ToolFlags {
-  PRIVATE = toolsys.ToolFlags.PRIVATE
+  PRIVATE = toolsys.ToolFlags.PRIVATE,
 }
 
 declare enum UndoFlags {
   NO_UNDO = toolsys.UndoFlags.NO_UNDO,
   IS_UNDO_ROOT = toolsys.UndoFlags.IS_UNDO_ROOT,
   UNDO_BARRIER = toolsys.UndoFlags.UNDO_BARRIER,
-  HAS_UNDO_DATA = toolsys.UndoFlags.HAS_UNDO_DATA
+  HAS_UNDO_DATA = toolsys.UndoFlags.HAS_UNDO_DATA,
 }
 
 declare interface InheritFlag<Slots> {
-  slots: Slots
+  slots: Slots;
 }
 
 declare interface ToolDef<InputSlots = any, OutputSlots = any> {
@@ -33,7 +33,7 @@ declare interface ToolDef<InputSlots = any, OutputSlots = any> {
 }
 
 declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, OutputSlots = {}, ContextCls = any> {
-  new(): ToolOpCls;
+  new (): ToolOpCls;
 
   tooldef(): ToolDef;
 
@@ -42,25 +42,29 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
   register(cls: IToolOpConstructor<any, any, any>);
 }
 
-declare type SlotType<slot extends ToolProperty<any>> = typeof slot.ValueTypeAlias;
+declare type SlotType<slot extends ToolProperty<any>> = slot["ValueTypeAlias"];
 
 declare class ToolOp<
   InputSlots = { [k: string]: ToolProperty<any> },
   OutputSlots = { [k: string]: ToolProperty<any> },
   ContextCls = Context,
-  ModalContextCls = ContextCls> {
-
-  ['constructor']: IToolOpConstructor<this, InputSlots, OutputSlots>;
-
-  getInputs(): { [k: string]: SlotType<InputSlots[k]> };
-
-  getOutputs(): { [k: string]: SlotType<OutputSlots[k]> };
+  ModalContextCls = ContextCls,
+> {
+  ["constructor"]: IToolOpConstructor<this, InputSlots, OutputSlots>;
 
   modal_ctx?: ModalContextCls;
   modalRunning: boolean;
 
   inputs: InputSlots;
   outputs: OutputSlots;
+
+  getInputs(): { [k in keyof InputSlots]: SlotType<InputSlots[k]> };
+
+  getOutputs(): { [k: string]: SlotType<OutputSlots[k]> };
+
+  static onTick(): void;
+
+  static canRun(ctx: ContextCls): boolean;
 
   static invoke(ctx: ModalContextCls, args: { [k: string]: any }): any;
 
@@ -74,6 +78,8 @@ declare class ToolOp<
 
   undo(ctx: ContextCls): void;
 
+  redo(ctx: ContextCls): void;
+
   execPre(ctx: ContextCls): void;
 
   exec(ctx: ContextCls): void;
@@ -86,6 +92,7 @@ declare class ToolOp<
 }
 
 declare class ToolMacro extends ToolOp<any, any> {
-  add(tool: ToolOp)
+  add(tool: ToolOp);
 }
 
+declare const ToolClasses: (typeof ToolOp)[];

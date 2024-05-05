@@ -65,7 +65,7 @@ export class CurveTypeData {
     return {
       uiname  : "Some Curve",
       name    : "somecurve",
-      typeName: CurveTypeData
+      typeName: "CurveTypeData"
     }
   }
 

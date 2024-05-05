@@ -1,14 +1,15 @@
 /* Returns 'undefined' as type type.  Breaks the type
    system, is meant only for object pool systems.
  */
-import {Matrix4, Vector2, Vector3, Vector4} from "./vectormath";
+import { Matrix4, Vector2, Vector3, Vector4 } from "./vectormath";
+import type { Curve1D } from "../curve/curve1d";
 
 export declare function undefinedForGC<type>(): type;
 
 export declare class cachering<type> extends Array<type> {
   constructor(factory: () => type, n: number);
 
-  static fromConstructor<type>(cls: new () => type, number: n, isprivate?: boolean): cachering<type>;
+  static fromConstructor<type>(cls: new () => type, n: number, isprivate?: boolean): cachering<type>;
 
   next(): type;
 }
@@ -44,11 +45,11 @@ export declare class ArrayPool {
 }
 
 export declare class set<KeyType> {
-  constructor(input: Iterable<KeyType>);
+  constructor(input?: Iterable<KeyType>);
 
   has(key: KeyType): boolean;
 
-  [Symbol.iterator](): Iterable<KeyType>;
+  [Symbol.iterator](): Iterator<KeyType>;
 
   get size(): number;
 
@@ -66,9 +67,9 @@ export declare class set<KeyType> {
 
   add(item: KeyType): void;
 
-  delete(item: KeyType, ignore_existence: boolean): void;
+  delete(item: KeyType, ignore_existence?: boolean): void;
 
-  remove(item: KeyType, ignore_existence: boolean): void;
+  remove(item: KeyType, ignore_existence?: boolean): void;
 
   has(item): boolean;
 
@@ -92,7 +93,7 @@ export declare class Queue<type> {
 export declare class HashDigest {
   get(): number;
 
-  add(f: number | Matrix4 | Vector2 | Vector3 | Vector4): number;
+  add(f: number | Matrix4 | Vector2 | Vector3 | Vector4 | string | boolean | Curve1D): number;
 
   reset(): this;
 }
@@ -134,5 +135,5 @@ export class IDMap<ValueType> {
 
   values(): Iterable<ValueType>;
 
-  [Symbol.iterator](): Iterator<[number, ValueType]>
+  [Symbol.iterator](): Iterator<[number, ValueType]>;
 }

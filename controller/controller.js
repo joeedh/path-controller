@@ -21,24 +21,24 @@
  <pre>
 
  function initMyDataAPI() {
-  let api = new DataAPI();
+ let api = new DataAPI();
 
-  //map MyContextClass to a struct, true tells mapStruct to auto-create
-  //the struct if it doesn't already exist.
-  //
-  //MyContextClass should have a member "propCache" pointing at SavedToolDefaults.
-  let st = api.mapStruct(MyContextClass, true);
+ //map MyContextClass to a struct, true tells mapStruct to auto-create
+ //the struct if it doesn't already exist.
+ //
+ //MyContextClass should have a member "propCache" pointing at SavedToolDefaults.
+ let st = api.mapStruct(MyContextClass, true);
 
-  //set fields of struct, e.g. st.int, st.float, st.enum, st.struct, etc
+ //set fields of struct, e.g. st.int, st.float, st.enum, st.struct, etc
 
-  //build toolsys api
-  buildToolSysAPI(api);
+ //build toolsys api
+ buildToolSysAPI(api);
 
-  //create bindings for default tool operator settings
-  cstruct.struct("propCache", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+ //create bindings for default tool operator settings
+ cstruct.struct("propCache", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
 
-  return api;
-}
+ return api;
+ }
  </pre>
  */
 import * as toolprop from '../toolsys/toolprop.js';
@@ -608,15 +608,9 @@ export class DataStruct {
     this.members.remove(m);
   }
 
-  fromToolProp(path, prop, apiname) {
-    if (apiname === undefined) {
-      apiname = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : k;
-    }
-
+  fromToolProp(path, prop, apiname = prop.apiname.length > 0 ? prop.apiname : path) {
     let dpath = new DataPath(path, apiname, prop);
-
     this.add(dpath);
-
     return dpath;
   }
 
@@ -935,7 +929,7 @@ export class DataAPI extends ModelInterface {
    get meta information for a datapath.
 
    @param ignoreExistence: don't try to get actual data associated with path,
-   just want meta information
+    just want meta information
    */
   resolvePath_intern(ctx, inpath, ignoreExistence = false, p = pathParser, dstruct = undefined) {
     inpath = inpath.replace("==", "=");
@@ -1300,260 +1294,6 @@ export class DataAPI extends ModelInterface {
     };
   }
 
-  resolvePathOld2(ctx, path) {
-    let splitchars = new Set([".", "[", "]", "=", "&"]);
-    let subkey = undefined;
-
-    path = path.replace(/\=\=/g, "=");
-
-    path = "." + this.prefix + path;
-
-    let p = [""];
-    for (let i = 0; i < path.length; i++) {
-      let s = path[i];
-
-      if (splitchars.has(s)) {
-        if (s !== "]") {
-          p.push(s);
-        }
-
-        p.push("");
-        continue;
-      }
-
-      p[p.length - 1] += s;
-    }
-
-    for (let i = 0; i < p.length; i++) {
-      p[i] = p[i].trim();
-
-      if (p[i].length === 0) {
-        p.remove(p[i]);
-        i--;
-      }
-
-      let c = parseInt(p[i]);
-      if (!isNaN(c)) {
-        p[i] = c;
-      }
-    }
-
-    let i = 0;
-
-    let parent1, obj = ctx, parent2;
-    let key = undefined;
-    let dstruct = undefined;
-    let arg = undefined;
-    let type = "normal";
-    let retpath = p;
-    let prop;
-    let lastkey = key, a;
-    let apiname = key;
-
-    while (i < p.length - 1) {
-      lastkey = key;
-      apiname = key;
-
-      if (dstruct !== undefined && dstruct.pathmap[lastkey]) {
-        let dpath = dstruct.pathmap[lastkey];
-
-        apiname = dpath.apiname;
-      }
-
-      let a = p[i];
-      let b = p[i + 1];
-
-      //check for enum/flag propertys with [] form
-      if (a === "[") {
-        let ok = false;
-
-        key = b;
-        prop = undefined;
-
-        if (dstruct !== undefined && dstruct.pathmap[lastkey]) {
-          let dpath = dstruct.pathmap[lastkey];
-
-          if (dpath.type === DataTypes.PROP) {
-            prop = dpath.data;
-          }
-        }
-
-        if (prop !== undefined && (prop.type === PropTypes.ENUM || prop.type === PropTypes.FLAG)) {
-          util.console.context("api").log("found flag/enum property");
-          ok = true;
-        }
-
-        if (ok) {
-          if (isNaN(parseInt(key))) {
-            key = prop.values[key];
-          } else if (typeof key == "int") {
-            key = parseInt(key);
-          }
-
-          let value = obj;
-          if (typeof value == "string") {
-            value = prop.values[key];
-          }
-
-          if (prop.type === PropTypes.ENUM) {
-            value = !!(value == key);
-          } else { //flag
-            value = !!(value & key);
-          }
-
-          if (key in prop.keys) {
-            subkey = prop.keys[key];
-          }
-
-          obj = value;
-          i++;
-          continue;
-        }
-      }
-
-      if (dstruct !== undefined && dstruct.pathmap[lastkey]) {
-        let dpath = dstruct.pathmap[lastkey];
-
-        if (dpath.type == DataTypes.PROP) {
-          prop = dpath.data;
-        }
-      }
-
-      if (a === "." || a === "[") {
-        key = b;
-
-        parent2 = parent1;
-        parent1 = obj;
-        obj = obj[b];
-
-        if (obj === undefined || obj === null) {
-          break;
-        }
-
-        if (typeof obj == "object") {
-          dstruct = this.mapStruct(obj.constructor, false);
-        }
-
-        i += 2;
-        continue;
-      } else if (a === "&") {
-        obj &= b;
-        arg = b;
-
-        if (b in prop.keys) {
-          subkey = prop.keys[b];
-        }
-
-        i += 2;
-        type = "flag";
-        continue;
-      } else if (a === "=") {
-        obj = obj == b;
-        arg = b;
-
-        if (b in prop.keys) {
-          subkey = prop.keys[b];
-        }
-
-        i += 2;
-        type = "enum";
-        continue;
-      } else {
-        throw new DataPathError("bad path " + path);
-      }
-
-      i++;
-    }
-
-    if (lastkey !== undefined && dstruct !== undefined && dstruct.pathmap[lastkey]) {
-      let dpath = dstruct.pathmap[key];
-
-      apiname = dpath.apiname;
-    }
-
-
-    if (dstruct !== undefined && dstruct.pathmap[key]) {
-      let dpath = dstruct.pathmap[key];
-
-      if (dpath.type == DataTypes.PROP) {
-        prop = dpath.data;
-      }
-    }
-
-    return {
-      parent : parent2,
-      obj    : parent1,
-      value  : obj,
-      key    : key,
-      dstruct: dstruct,
-      subkey : subkey,
-      prop   : prop,
-      arg    : arg,
-      type   : type,
-      _path  : retpath
-    };
-  }
-
-  /*returns {
-    obj : [object owning property key]
-    parent : [parent of obj]
-    key : [property key]
-    value : [value of property]
-    prop : [optional toolprop.ToolProperty representing the property definition]
-    struct : [optional datastruct representing the type, if value is an object]
-  }
-  */
-  resolvePathold(ctx, path) {
-    path = this.prefix + path;
-    path = path.replace(/\[/g, ".").replace(/\]/g, "").trim().split(".");
-
-    let parent1, obj = ctx, parent2;
-    let key = undefined;
-    let dstruct = undefined;
-
-    for (let c of path) {
-      let c2 = parseInt(c);
-      if (!isNaN(c2)) {
-        c = c2;
-      }
-
-      parent2 = parent1;
-      parent1 = obj;
-      key = c;
-
-      if (typeof obj == "number") {
-        //bitmask test
-        obj = obj & c;
-        break;
-      }
-
-      obj = obj[c];
-
-      if (typeof obj == "object") {
-        dstruct = this.mapStruct(obj.constructor, false);
-      }
-    }
-
-    let prop;
-
-    if (dstruct !== undefined && dstruct.pathmap[key]) {
-      let dpath = dstruct.pathmap[key];
-
-      if (dpath.type == DataTypes.PROP) {
-        prop = dpath.data;
-      }
-    }
-
-    return {
-      parent : parent2,
-      obj    : parent1,
-      value  : obj,
-      key    : key,
-      dstruct: dstruct,
-      prop   : prop
-    };
-  }
-
   _parsePathOverrides(path) {
     let parts = ['', undefined, undefined];
 
@@ -1724,6 +1464,23 @@ export class DataAPI extends ModelInterface {
     if (!cls) {
       debugger;
       console.error("Unknown tool " + path);
+    }
+
+    args = {...args}
+
+    // feed inputs to invoke
+    const tooldef = cls._getFinalToolDef()
+    if (inputs !== undefined) {
+      for (let k in inputs) {
+        if (!(k in tooldef.inputs)) {
+          console.warn(cls.tooldef().uiname + ": Unknown tool property \"" + k + "\"");
+          continue;
+        }
+
+        if (!(k in args)) {
+          args[k] = inputs[k]
+        }
+      }
     }
 
     let tool = cls.invoke(ctx, args);

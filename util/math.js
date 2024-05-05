@@ -1630,6 +1630,7 @@ export function winding_axis(a, b, c, up_axis) {
   return f >= 0.0;
 }
 
+/** returns false if clockwise */
 export function winding(a, b, c, zero_z = false, tol = 0.0) {
   let dx1 = b[0] - a[0];
   let dy1 = b[1] - a[1];

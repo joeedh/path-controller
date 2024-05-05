@@ -1,6 +1,6 @@
 import './polyfill.js';
 import './struct.js';
-import './mobile-detect.js';
+import './mobile-detect.cjs';
 import nstructjs from './struct.js';
 
 let f64tmp = new Float64Array(1);
