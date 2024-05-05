@@ -230,6 +230,7 @@ export class ToolProperty extends ToolPropertyIF {
 
   private() {
     this.flag |= PropFlags.PRIVATE;
+    this.flag &= ~PropFlags.SAVE_LAST_VALUE;
     return this;
   }
 
