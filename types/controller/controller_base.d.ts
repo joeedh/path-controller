@@ -13,6 +13,7 @@ declare interface PathPropMeta<T = any, PropType extends ToolProperty<any> = Too
 
 declare class DataAPI {
   mapStruct(cls: Function, autoCreate?: boolean): DataStruct;
+  mapStructCustom(cls: Function, callback: Function): DataStruct
 
   hasStruct(cls: Function): Boolean;
 
@@ -92,6 +93,10 @@ declare class DataPath {
 
   /* Evaluate mass set path filters using eval() */
   evalMassSetFilter(): DataPath
+
+  checkStrip(state?: boolean): DataPath
+
+  data: ToolProperty<any>
 }
 
 declare enum StructFlags {
@@ -157,8 +162,8 @@ declare class DataStruct {
 
   curve1d(path: string, apiname: string, uiname: string, description?: string): DataPath;
 
-  enum(path: string, apiname: string, enumdef: {}, uiname: string, description?: string): DataPath;
-  enum(path: string, apiname: string, enumdef: EnumProperty, uiname: string, description?: string): DataPath;
+  enum(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath;
+  enum(path: string, apiname: string, enumdef: EnumProperty, uiname?: string, description?: string): DataPath;
 
   list<ListType, KeyType, ObjType>(
     path: string,
@@ -166,8 +171,8 @@ declare class DataStruct {
     callbacks: ListIFace<ListType, KeyType, ObjType>
   ): DataPath;
 
-  flags(path: string, apiname: string, enumdef: {}, uiname: string, description?: string): DataPath;
-  flags(path: string, apiname: string, enumdef: FlagProperty, uiname: string, description?: string): DataPath;
+  flags(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath;
+  flags(path: string, apiname: string, enumdef: FlagProperty, uiname?: string, description?: string): DataPath;
 
   /** if `apiname` is undefined, will use `prop.apiname` if it's not empty, otherwise `path` */
   fromToolProp(path: string, prop: ToolProperty<any>, apiname?: string): DataPath;

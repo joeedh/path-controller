@@ -15,3 +15,5 @@ export declare function writeJSON(object: any, cls?: new () => any): any;
 export declare function readObject<type>(data: DataView, cls: new() => type): type;
 
 export declare function readJSON<type>(json: any, cls: new() => type): type;
+
+export declare function setWarningMode(mode: number)
