@@ -5,6 +5,7 @@ export as namespace toolsys;
 import { Context } from "../core/context";
 
 import * as toolsys from "../../../path-controller/toolsys/toolsys.js";
+import { INumVector, Vector2 } from "../controller";
 
 declare enum ToolFlags {
   PRIVATE = toolsys.ToolFlags.PRIVATE,
@@ -89,6 +90,9 @@ declare class ToolOp<
   modalStart(ctx: ContextCls): void;
 
   modalEnd(wasCancelled: boolean): void;
+
+  resetTempGeom(): void
+  makeTempLine(v1: INumVector, v2: INumVector, color?: string)
 }
 
 declare class ToolMacro extends ToolOp<any, any> {
