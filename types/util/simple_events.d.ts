@@ -1,11 +1,13 @@
 export declare type HotKeyAction = string | ((ctx: any) => any)
 
-export declare class HotKey {
+export declare class HotKey<CTX=any> {
   constructor(key: string, modifiers: string[], action: HotKeyAction, uiname?: string);
 
   exec(ctx: any);
 
   buildString(): string;
+
+  action: string | ((ctx: CTX) => void)
 }
 
 export declare class KeyMap extends Array<HotKey> {

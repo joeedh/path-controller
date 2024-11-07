@@ -117,7 +117,7 @@ declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<numbe
 
   //[P: P extends indexUnions[LEN] ? number : never]: P extends IndexUnion<LEN> ? number : never;
 
-  length: LEN;
+  length: LEN | number;
 
   //[P: number]: never;
 

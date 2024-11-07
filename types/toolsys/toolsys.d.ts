@@ -43,10 +43,10 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
 }
 
 declare type SlotType<slot extends ToolProperty<any>> = slot["ValueTypeAlias"];
-
+declare type PropertySlots = { [k: string]: ToolProperty<any> }
 declare class ToolOp<
-  InputSlots = { [k: string]: ToolProperty<any> },
-  OutputSlots = { [k: string]: ToolProperty<any> },
+  InputSlots extends PropertySlots = {},
+  OutputSlots extends PropertySlots = {},
   ContextCls = Context,
   ModalContextCls = ContextCls,
 > {

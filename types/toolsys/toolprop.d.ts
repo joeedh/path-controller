@@ -136,9 +136,10 @@ declare class Vec4Property extends NumberPropertyBase<Vector4> {
 declare class EnumProperty extends ToolProperty<number> {
   constructor(value?: any, enumdef?: {}, apiname?: string, uiname?: string, desription?: string);
 
-  addIcons(iconmap: {}): this;
+  addIcons(iconmap: {[k: string]: number}): this;
 
-  addUINames(uinames: {}): this;
+  addUINames(uinames: {[k: string]: string}): this;
+  addDescriptions(descriptions: {[k: string]: string}): this;
 
   keys: { [k: string | number]: string | number };
   values: { [k: string | number]: string | number };

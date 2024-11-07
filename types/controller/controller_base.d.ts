@@ -25,8 +25,8 @@ declare class DataAPI {
 
   massSetProp(ctx: any, massSetPath: string, value: any): void;
 
-  execTool(ctx: any, path: string, inputs: any): ToolOp;
-  execTool(ctx: any, tool: ToolOp, inputs: any): ToolOp;
+  execTool(ctx: any, path: string, inputs?: any): ToolOp;
+  execTool(ctx: any, tool: ToolOp, inputs?: any): ToolOp;
 }
 
 declare interface BoundProperty {
@@ -60,6 +60,9 @@ declare class DataPath {
   baseUnit(unit: string): DataPath;
 
   displayUnit(unit: string): DataPath;
+
+  /** Sets both baseUnit and displayUnit */
+  unit(unit: string): DataPath
 
   range(min: number, max: number): DataPath;
 
