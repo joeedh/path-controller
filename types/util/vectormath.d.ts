@@ -77,7 +77,6 @@ export declare class Matrix4 {
 
 declare interface IOpenNumVector {
   [k: number]: number;
-
   length: number;
 }
 
@@ -87,18 +86,18 @@ type strNumMap = { "0": 0; "1": 1; "2": 2; "3": 3; "4": 4 };
 declare type INumVectorLimited<LEN extends 0 | 1 | 2 | 3 | 4> = {
   //[P: number]: never;
   0: LEN extends 1 | 2 | 3 | 4 ? number : never;
-  1: LEN extends 2 | 3 | 4 ? number : never;
-  2: LEN extends 3 | 4 ? number : never;
-  3: LEN extends 4 ? number : never;
-  length: LEN;
+  1?: LEN extends 2 | 3 | 4 ? number : never;
+  2?: LEN extends 3 | 4 ? number : never;
+  3?: LEN extends 4 ? number : never;
+  length: number;
 };
 
 declare type INumVector =
   | IOpenNumVector
-  | INumVectorLimited<0>
-  | INumVectorLimited<1>
   | INumVectorLimited<2>
-  | INumVectorLimited<3>;
+  | INumVectorLimited<3>
+  | INumVectorLimited<4>
+
 
 type numlits = { 1: 1; 2: 2 | 3 | 4; 3: 3 | 4; 4: 4 };
 type NumLitHigher<L extends 1 | 2 | 3 | 4> = numlits[L];
@@ -119,7 +118,7 @@ declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<numbe
 
   length: LEN | number;
 
-  //[P: number]: never;
+  [P: number]: never;
 
   0: LEN extends 1 | 2 | 3 | 4 ? number : never;
   1: LEN extends 2 | 3 | 4 ? number : never;
