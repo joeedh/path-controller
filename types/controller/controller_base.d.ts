@@ -53,7 +53,7 @@ declare class DataPath {
 
   simpleSlider(): DataPath;
 
-  rollarSlider: DataPath;
+  rollerSlider(): DataPath;
 
   noUnits(): DataPath;
 
