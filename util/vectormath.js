@@ -860,11 +860,11 @@ export function makeVector3(BaseVector, structName = 'vec3', structType = 'float
       let y = this[1];
 
       if (axis === 1) {
-        this[0] = x*cos(A) + y*sin(A);
-        this[1] = y*cos(A) - x*sin(A);
+        this[0] = x*Math.cos(A) + y*Math.sin(A);
+        this[1] = y*Math.cos(A) - x*Math.sin(A);
       } else {
-        this[0] = x*cos(A) - y*sin(A);
-        this[1] = y*cos(A) + x*sin(A);
+        this[0] = x*Math.cos(A) - y*Math.sin(A);
+        this[1] = y*Math.cos(A) + x*Math.sin(A);
       }
 
       return this;
@@ -979,11 +979,11 @@ export function makeVector2(BaseVector, structName = 'vec2', structType = 'float
       let y = this[1];
 
       if (axis === 1) {
-        this[0] = x*cos(A) + y*sin(A);
-        this[1] = y*cos(A) - x*sin(A);
+        this[0] = x*Math.cos(A) + y*Math.sin(A);
+        this[1] = y*Math.cos(A) - x*Math.sin(A);
       } else {
-        this[0] = x*cos(A) - y*sin(A);
-        this[1] = y*cos(A) + x*sin(A);
+        this[0] = x*Math.cos(A) - y*Math.sin(A);
+        this[1] = y*Math.cos(A) + x*Math.sin(A);
       }
 
       return this;

@@ -28,3 +28,4 @@ export class EnumKeyPair {
 
 export * from './curve/curve1d'
 export * from './util/simple_events'
+export * from './util/solver'

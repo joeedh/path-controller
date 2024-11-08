@@ -113,7 +113,7 @@ declare interface ListIFace<ListType = any, KeyType = any, ObjType = any> {
 
   getKey(api: DataAPI, list: ListType, obj: ObjType): any;
 
-  getActive?(api: DataAPI, list: ListType): ObjType;
+  getActive?(api: DataAPI, list: ListType): ObjType | undefined;
 
   setActive?(api: DataAPI, list: ListType, val: ObjType): void;
 
