@@ -11,93 +11,98 @@ declare interface PathPropMeta<T = any, PropType extends ToolProperty<any> = Too
   prop: PropType;
 }
 
-declare class DataAPI {
-  mapStruct(cls: Function, autoCreate?: boolean): DataStruct;
-  mapStructCustom(cls: Function, callback: Function): DataStruct
+declare class DataAPI<CTX = any> {
+  mapStruct(cls: Function, autoCreate?: boolean): DataStruct<CTX>;
+  mapStructCustom(cls: Function, callback: Function): DataStruct<CTX>
 
   hasStruct(cls: Function): Boolean;
 
-  resolvePath(ctx: any, path: string): PathPropMeta;
+  resolvePath(ctx: CTX, path: string): PathPropMeta;
 
-  getValue(ctx: any, path: string): any;
+  getValue(ctx: CTX, path: string): any;
 
-  setValue(ctx: any, path: string, val: any): void;
+  setValue(ctx: CTX, path: string, val: any): void;
 
-  massSetProp(ctx: any, massSetPath: string, value: any): void;
+  massSetProp(ctx: CTX, massSetPath: string, value: any): void;
 
-  execTool(ctx: any, path: string, inputs?: any): ToolOp;
-  execTool(ctx: any, tool: ToolOp, inputs?: any): ToolOp;
+  execTool(ctx: CTX, path: string, inputs?: any): ToolOp;
+  execTool(ctx: CTX, tool: ToolOp, inputs?: any): ToolOp;
 }
 
-declare interface BoundProperty {
+declare interface BoundProperty<CTX = any> {
   dataref: any;
-  ctx: any;
+  ctx: CTX;
 }
 
-declare interface DataPathCallBack {
-  (this: BoundProperty, ...args: any[]);
+declare interface DataPathCallBack<CTX = any> {
+  (this: BoundProperty<CTX>, ...args: any[]);
 }
 
-declare class DataPath {
+export declare type BasicEvents = 'change'
+export declare type EnumEvents = BasicEvents|'meta'|'metaChange'
+
+export declare class DataPath<CTX = any, EVENTS extends string = BasicEvents> {
   readOnly(): DataPath;
 
-  customGetSet(get: DataPathCallBack, set?: DataPathCallBack): DataPath;
+  customGetSet(get: DataPathCallBack<CTX>, set?: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  customSet(set: DataPathCallBack): DataPath;
+  customSet(set: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  customGet(get: DataPathCallBack): DataPath;
+  customGet(get: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  on(type: string, callback: DataPathCallBack): DataPath;
+  dynamicMeta(metaCB: (enumProp: EnumProperty|FlagProperty) => void): DataPath<CTX>;
 
-  off(type: string, callback: DataPathCallBack): DataPath;
+  on(type: EVENTS, callback: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  simpleSlider(): DataPath;
+  off(type: EVENTS, callback: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  rollerSlider(): DataPath;
+  simpleSlider(): DataPath<CTX>;
 
-  noUnits(): DataPath;
+  rollerSlider(): DataPath<CTX>;
 
-  baseUnit(unit: string): DataPath;
+  noUnits(): DataPath<CTX>;
 
-  displayUnit(unit: string): DataPath;
+  baseUnit(unit: string): DataPath<CTX>;
+
+  displayUnit(unit: string): DataPath<CTX>;
 
   /** Sets both baseUnit and displayUnit */
-  unit(unit: string): DataPath
+  unit(unit: string): DataPath<CTX>
 
-  range(min: number, max: number): DataPath;
+  range(min: number, max: number): DataPath<CTX>;
 
-  uiRange(min: number, max: number): DataPath;
+  uiRange(min: number, max: number): DataPath<CTX>;
 
-  decimalPlaces(places: number): DataPath;
+  decimalPlaces(places: number): DataPath<CTX>;
 
-  uiNameGetter(callback: Function): DataPath;
+  uiNameGetter(callback: Function): DataPath<CTX>;
 
-  expRate(exp: number): DataPath;
+  expRate(exp: number): DataPath<CTX>;
 
-  uniformSlider(state: boolean): DataPath;
+  uniformSlider(state: boolean): DataPath<CTX>;
 
-  radix(r: number): DataPath;
+  radix(r: number): DataPath<CTX>;
 
-  relativeStep(s: number): DataPath;
+  relativeStep(s: number): DataPath<CTX>;
 
-  step(s: number): DataPath;
+  step(s: number): DataPath<CTX>;
 
-  fullSaveUndo(): DataPath;
+  fullSaveUndo(): DataPath<CTX>;
 
-  icon(i: number): DataPath;
+  icon(i: number): DataPath<CTX>;
 
-  icons(iconmap: any): DataPath;
+  icons(iconmap: any): DataPath<CTX>;
 
-  descriptions(dmap: any): DataPath;
+  descriptions(dmap: any): DataPath<CTX>;
 
-  uiNames(namemap: any): DataPath;
+  uiNames(namemap: any): DataPath<CTX>;
 
-  description(tooltip: string): DataPath;
+  description(tooltip: string): DataPath<CTX>;
 
   /* Evaluate mass set path filters using eval() */
-  evalMassSetFilter(): DataPath
+  evalMassSetFilter(): DataPath<CTX>
 
-  checkStrip(state?: boolean): DataPath
+  checkStrip(state?: boolean): DataPath<CTX>
 
   data: ToolProperty<any>
 }
@@ -106,79 +111,79 @@ declare enum StructFlags {
   NO_UNDO = 1,
 }
 
-declare interface ListIFace<ListType = any, KeyType = any, ObjType = any> {
-  getStruct(api: DataAPI, list: ListType, key: any): DataStruct;
+declare interface ListIFace<ListType = any, KeyType = any, ObjType = any, CTX = any> {
+  getStruct(api: DataAPI<CTX>, list: ListType, key: any): DataStruct<CTX>;
 
-  get(api: DataAPI, list: ListType, key: KeyType): ObjType;
+  get(api: DataAPI<CTX>, list: ListType, key: KeyType): ObjType;
 
-  getKey(api: DataAPI, list: ListType, obj: ObjType): any;
+  getKey(api: DataAPI<CTX>, list: ListType, obj: ObjType): any;
 
-  getActive?(api: DataAPI, list: ListType): ObjType | undefined;
+  getActive?(api: DataAPI<CTX>, list: ListType): ObjType | undefined;
 
-  setActive?(api: DataAPI, list: ListType, val: ObjType): void;
+  setActive?(api: DataAPI<CTX>, list: ListType, val: ObjType): void;
 
-  set?(api: DataAPI, list: ListType, key: KeyType, val: ObjType): void;
+  set?(api: DataAPI<CTX>, list: ListType, key: KeyType, val: ObjType): void;
 
-  getIter?(api: DataAPI, list: ListType): any;
+  getIter?(api: DataAPI<CTX>, list: ListType): any;
 
-  filter?(api: DataAPI, list: ListType, filter: string): any;
+  filter?(api: DataAPI<CTX>, list: ListType, filter: string): any;
 
-  getLength(api: DataAPI, list: ListType): number;
+  getLength(api: DataAPI<CTX>, list: ListType): number;
 }
 
 export type DataPathMap = {
-  [key: string]: DataPath;
+  [key: string]: DataPath<CTX>;
 };
 
-declare class DataStruct {
-  pathmap: DataPathMap;
+declare class DataStruct<CTX = any> {
+  pathmap: DataPathMap<CTX>;
 
   clear(): this;
 
-  dynamicStruct(path: string, apiname: string, uiname: string, existingStruct?: DataStruct): DataStruct;
+  dynamicStruct(path: string, apiname: string, uiname: string, existingStruct?: DataStruct<CTX>): DataStruct<CTX>;
 
-  struct(path: string, apiname: string, uiname: string, existingStruct?: DataStruct): DataStruct;
+  struct(path: string, apiname: string, uiname: string, existingStruct?: DataStruct<CTX>): DataStruct<CTX>;
 
-  color3(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  color3(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  color4(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  color4(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  arrayList(path: string, apiname: string, existingStruct: DataStruct, uiname: string, description?: string): DataPath;
+  arrayList(path: string, apiname: string, existingStruct: DataStruct, uiname: string, description?: string): DataPath<CTX>;
 
-  vectorList(size: number, path: string, apiname: string, uiname: string, description?: string): DataPath;
+  vectorList(size: number, path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  string(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  string(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  bool(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  bool(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  float(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  float(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  int(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  int(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  textblock(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  textblock(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  vec2(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  vec2(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  vec3(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  vec3(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  vec4(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  vec4(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  curve1d(path: string, apiname: string, uiname: string, description?: string): DataPath;
+  curve1d(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  enum(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath;
-  enum(path: string, apiname: string, enumdef: EnumProperty, uiname?: string, description?: string): DataPath;
+  enum(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
+  enum(path: string, apiname: string, enumdef: EnumProperty, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
 
   list<ListType, KeyType, ObjType>(
     path: string,
     apiname: string,
-    callbacks: ListIFace<ListType, KeyType, ObjType>
+    callbacks: ListIFace<ListType, KeyType, ObjType, CTX>
   ): DataPath;
 
-  flags(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath;
-  flags(path: string, apiname: string, enumdef: FlagProperty, uiname?: string, description?: string): DataPath;
+  flags(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
+  flags(path: string, apiname: string, enumdef: FlagProperty, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
 
   /** if `apiname` is undefined, will use `prop.apiname` if it's not empty, otherwise `path` */
-  fromToolProp(path: string, prop: ToolProperty<any>, apiname?: string): DataPath;
+  fromToolProp(path: string, prop: ToolProperty<any>, apiname?: string): DataPath<CTX>;
 
-  add(dpath: DataPath): DataStruct;
+  add(dpath: DataPath): DataStruct<CTX>;
 }

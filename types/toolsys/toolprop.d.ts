@@ -140,6 +140,14 @@ declare class EnumProperty extends ToolProperty<number> {
 
   addUINames(uinames: {[k: string]: string}): this;
   addDescriptions(descriptions: {[k: string]: string}): this;
+  updateDefinition(enumdef_or_prop: {[k:string|number]:string|number} | this): this;
+  /**
+   * Provide a callback to update the enum or flags property dynamically
+   * Callback should call enumProp.updateDefinition to update the property.
+   *
+   * @param metaCB: (enumProp: EnumProperty|FlagsProperty) => void
+   */
+  dynamicMeta(metaCB: (enumProp: this) => void): this;
 
   keys: { [k: string | number]: string | number };
   values: { [k: string | number]: string | number };

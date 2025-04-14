@@ -1282,6 +1282,10 @@ export class DataAPI extends ModelInterface {
       }
     }
 
+    if (prop && prop.type & (PropTypes.ENUM|PropFlags.FLAG)) {
+      prop.checkMeta()
+    }
+    
     return {
       dpath  : lastdpath,
       parent : lastobj2,
@@ -1506,6 +1510,7 @@ export function initSimpleController() {
 
 import {DataPathSetOp} from "./controller_ops.js";
 import {Curve1DProperty} from '../curve/curve1d_toolprop.js';
+import { EnumProperty, FlagProperty } from '../controller.js';
 
 let dpt = DataPathSetOp;
 

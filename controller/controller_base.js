@@ -85,6 +85,17 @@ export class DataPath {
     }
   }
 
+   /**
+   * Provide a callback to update an enum or flags property dynamically
+   * Callback should call enumProp.updateDefinition to update the property.
+   *
+   * @param metaCB: (enumProp: EnumProperty|FlagsProperty) => void
+   */
+   dynamicMeta(metaCB) {
+     this.data.dynamicMeta(metaCB)
+     return this
+   }
+
   evalMassSetFilter() {
     this.flag |= DataFlags.USE_EVAL_MASS_SET_PATHS;
     return this;
