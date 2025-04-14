@@ -2070,6 +2070,10 @@ CurveTypeData.register(BSplineCurve);
 
 
 function makeSplineTemplateIcons(size = 64) {
+  if (typeof document === 'undefined') {
+    /* inside a web worker? */
+    return
+  }
   let dpi = devicePixelRatio;
   size = ~~(size*dpi);
 
