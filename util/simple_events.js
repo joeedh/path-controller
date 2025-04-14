@@ -60,6 +60,11 @@ function debugDomEvents() {
 }
 
 function singletonMouseEvents() {
+  if (typeof document === 'undefined') {
+    // inside a worker?
+    return
+  }
+  
   let keys = ["mousedown", "mouseup", "mousemove"];
   for (let k of keys) {
     singleMouseCBs[k] = new Set();
