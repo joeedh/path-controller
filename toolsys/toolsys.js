@@ -1454,7 +1454,7 @@ export class ToolStack extends Array {
     }
   }
 
-  execTool(ctx, toolop) {
+  execTool(ctx, toolop, event = undefined) {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx);
     }
@@ -1504,6 +1504,9 @@ export class ToolStack extends Array {
         }
       }).bind(this);
 
+      if (event !== undefined) {
+        toolop._pointerId = event.pointerId
+      }
       //will handle calling .exec itself
       toolop.modalStart(ctx);
     } else {

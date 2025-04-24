@@ -5,7 +5,7 @@ export as namespace toolsys;
 import { Context } from "../core/context";
 
 import * as toolsys from "../../../path-controller/toolsys/toolsys.js";
-import { INumVector, Vector2 } from "../controller";
+import { DataAPI, DataStruct, INumVector, Vector2 } from "../controller";
 
 declare enum ToolFlags {
   PRIVATE = toolsys.ToolFlags.PRIVATE,
@@ -44,7 +44,7 @@ declare interface IToolOpConstructor<ToolOpCls extends ToolOp, InputSlots = {}, 
 }
 
 declare type SlotType<slot extends ToolProperty<any>> = slot["ValueTypeAlias"];
-declare type PropertySlots = { [k: string]: ToolProperty<any> }
+declare type PropertySlots = { [k: string]: ToolProperty<any> };
 declare class ToolOp<
   InputSlots extends PropertySlots = {},
   OutputSlots extends PropertySlots = {},
@@ -91,8 +91,8 @@ declare class ToolOp<
 
   modalEnd(wasCancelled: boolean): void;
 
-  resetTempGeom(): void
-  makeTempLine(v1: INumVector, v2: INumVector, color?: string)
+  resetTempGeom(): void;
+  makeTempLine(v1: INumVector, v2: INumVector, color?: string);
 }
 
 declare class ToolMacro extends ToolOp<any, any> {
@@ -100,3 +100,78 @@ declare class ToolMacro extends ToolOp<any, any> {
 }
 
 declare const ToolClasses: (typeof ToolOp)[];
+
+declare class ToolStack<ContextCls = Context, ModalContextCls = ContextCls> extends Array<
+  ToolOp<any, any, ContextCls, ModalContextCls>
+> {
+  head: ToolOp<any, any, ContextCls, ModalContextCls> | undefined;
+
+  limitMemory(maxmem?: number, ctx?: ContextCls | ModalContextCls): number;
+
+  calcMemSize(ctx?: ContextCls | ModalContextCls): number;
+
+  setRestrictedToolContext(ctx: ContextCls | ModalContextCls): void;
+
+  reset(ctx): void;
+
+  execOrRedo(
+    ctx: ContextCls | ModalContextCls,
+    tool: ToolOp<any, any, ContextCls, ModalContextCls>,
+    compareInputs?: boolean
+  ): boolean;
+
+  execTool(ctx: ContextCls | ModalContextCls, tool: ToolOp<any, any, ContextCls, ModalContextCls>, event?: PointerEvent): void;
+
+  toolCancel(ctx: ContextCls | ModalContextCls, tool: ToolOp<any, any, ContextCls, ModalContextCls>): void;
+
+  undo(): void;
+
+  rerun(tool: ToolOp<any, any, ContextCls, ModalContextCls>);
+
+  redo(): void;
+
+  /** returns raw bytes (TODO: spit out an array buffer) */
+  save(): number[];
+
+  rewind(): this;
+
+  replay(shouldStopCB?: (ctx: ContextCls | ModalContextCls) => boolean, onStep?: () => Promise<void>): Promise<this>;
+
+  /** note: makes sure tool classes are registered with nstructjs during save*/
+  _save(): void;
+}
+
+declare function buildToolOpAPI(api: DataAPI, clsToMap: new (...args: any[]) => any);
+
+/**
+ * Call this to build the tool property cache data binding API.
+ *
+ * If rootCtxClass is not undefined and insertToolDefaultsIntoContext is true
+ * then ".toolDefaults" will be automatically added to rootCtxClass's prototype
+ * if necessary.
+ *
+ * @param registerWithNStructjs defaults to true
+ * @param insertToolDefaultsIntoContext defaults to true.  automatically inserts `last_tool` and `toolDefaults`
+ *                                      into context class if necassary.
+ */
+declare function buildToolSysAPI(
+  api: DataAPI,
+  registerWithNStructjs?: boolean,
+  rootCtxStruct?: DataStruct,
+  rootCtxClass?: Context,
+  insertToolDefaultsIntoContext?: boolean
+);
+
+type AnyClass = new (...args: any) => any;
+declare class ToolPropertyCache {
+  static getPropKey(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
+  
+  useDefault(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
+  
+  has(cls: AnyClass, key: string, prop: ToolProperty<any>): boolean;
+
+  get<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): T | undefined
+  set<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): this | undefined
+}
+
+declare const SavedToolDefaults: ToolPropertyCache

@@ -22,7 +22,7 @@ export class ModelInterface {
     return ListIface;
   }
 
-  createTool(path, inputs = {}, constructor_argument = undefined) {
+  createTool(path, inputs = {}, unused = undefined) {
     throw new Error("implement me");
   }
 
@@ -42,13 +42,13 @@ export class ModelInterface {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
-  execTool(ctx, path, inputs = {}, constructor_argument = undefined, event = undefined) {
+  execTool(ctx, path, inputs = {}, unused = undefined, event = undefined) {
     return new Promise((accept, reject) => {
       let tool = path;
 
       try {
         if (typeof tool == "string" || !(tool instanceof ToolOp)) {
-          tool = this.createTool(ctx, path, inputs, constructor_argument);
+          tool = this.createTool(ctx, path, inputs, unused);
         }
       } catch (error) {
         print_stack(error);

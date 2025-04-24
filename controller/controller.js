@@ -41,17 +41,16 @@
  }
  </pre>
  */
-import * as toolprop from '../toolsys/toolprop.js';
-import * as parseutil from '../util/parseutil.js';
-import {print_stack} from '../util/util.js';
-import {ToolOp, UndoFlags, ToolFlags} from "../toolsys/toolsys.js";
-import {Vec2Property, Vec3Property, Vec4Property, PropTypes, PropFlags} from '../toolsys/toolprop.js';
-import * as toolprop_abstract from '../toolsys/toolprop_abstract.js';
-import * as util from '../util/util.js';
+import * as toolprop from "../toolsys/toolprop.js";
+import * as parseutil from "../util/parseutil.js";
+import { print_stack } from "../util/util.js";
+import { ToolOp } from "../toolsys/toolsys.js";
+import { PropTypes, PropFlags } from "../toolsys/toolprop.js";
+import * as util from "../util/util.js";
 
-import {DataPath, DataFlags, DataTypes, DataPathError, StructFlags, getTempProp} from './controller_base.js';
+import { DataPath, DataFlags, DataTypes, DataPathError, getTempProp } from "./controller_base.js";
 
-export * from './controller_base.js';
+export * from "./controller_base.js";
 
 let PUTLParseError = parseutil.PUTLParseError;
 
@@ -62,7 +61,7 @@ let tokens = [
     t.value = parseInt(t.value);
     return t;
   }),
-  tk('NUMBER', /-?[0-9]+\.[0-9]*/, (t) => {
+  tk("NUMBER", /-?[0-9]+\.[0-9]*/, (t) => {
     t.value = parseFloat(t.value);
     return t;
   }),
@@ -95,16 +94,14 @@ for (let i = 0; i < parserStack.length; i++) {
 }
 parserStack.cur = 0;
 
-import {
-  setImplementationClass, isVecProperty, ListIface
-} from './controller_base.js';
-import {initToolPaths, parseToolPath} from '../toolsys/toolpath.js';
-import {ModelInterface} from './controller_abstract.js';
+import { setImplementationClass, isVecProperty, ListIface } from "./controller_base.js";
+import { initToolPaths, parseToolPath } from "../toolsys/toolpath.js";
+import { ModelInterface } from "./controller_abstract.js";
 
-export {DataPathError, DataFlags} from './controller_base.js';
+export { DataPathError, DataFlags } from "./controller_base.js";
 
-import {ToolClasses} from '../toolsys/toolsys.js';
-import {ToolProperty, IntProperty} from "../toolsys/toolprop.js";
+import { ToolClasses } from "../toolsys/toolsys.js";
+import { ToolProperty, IntProperty } from "../toolsys/toolprop.js";
 
 let tool_classes = ToolClasses;
 
@@ -145,7 +142,6 @@ export function popReportName() {
   reportstack.pop();
 }
 
-
 export class DataList extends ListIface {
   constructor(callbacks) {
     super();
@@ -170,7 +166,7 @@ export class DataList extends ListIface {
       if (!(key in this.cbs)) {
         throw new DataPathError(`Missing ${key} callback in DataList`);
       }
-    }
+    };
   }
 
   /**
@@ -252,8 +248,7 @@ export class DataList extends ListIface {
 
     let obj = this.get(api, list, key);
 
-    if (obj === undefined)
-      return undefined;
+    if (obj === undefined) return undefined;
 
     return api.getStruct(obj.constructor);
   }
@@ -402,7 +397,8 @@ export class DataStruct {
       },
       function getStruct(api, list, key) {
         return structdef;
-      }]);
+      },
+    ]);
 
     return ret;
   }
@@ -463,7 +459,8 @@ export class DataStruct {
       },
       function getStruct(api, list, key) {
         return pstruct;
-      }]);
+      },
+    ]);
 
     return ret;
   }
@@ -875,7 +872,7 @@ export class DataAPI extends ModelInterface {
     }
 
     try {
-      ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser, dstruct)
+      ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser, dstruct);
     } catch (error) {
       //throw new DataPathError("bad path " + path);
       if (!(error instanceof DataPathError)) {
@@ -892,7 +889,7 @@ export class DataAPI extends ModelInterface {
 
     parserStack.cur--;
 
-    if (ret !== undefined && ret.prop && ret.dpath && (ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
+    if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
       ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj);
     }
 
@@ -900,7 +897,7 @@ export class DataAPI extends ModelInterface {
       let dummy = {
         datactx : ctx,
         datapath: inpath,
-        dataref : ret.obj
+        dataref : ret.obj,
       };
 
       let name = ret.dpath.ui_name_get.call(dummy);
@@ -1067,7 +1064,7 @@ export class DataAPI extends ModelInterface {
         prop = dpath.data;
       }
 
-      if (prop && (dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER)) {
+      if (prop && dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
         prop = this.getPropOverride(ctx, inpath, dpath, obj);
       }
 
@@ -1108,7 +1105,7 @@ export class DataAPI extends ModelInterface {
               obj = undefined;
             }
 
-            if (typeof obj === "string" && (prop.type & (PropTypes.ENUM | PropTypes.FLAG))) {
+            if (typeof obj === "string" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
               obj = prop.values[obj];
             }
 
@@ -1137,7 +1134,7 @@ export class DataAPI extends ModelInterface {
 
       if (t.type === "DOT") {
         p.next();
-      } else if (t.type === "EQUALS" && prop !== undefined && (prop.type & (PropTypes.ENUM | PropTypes.FLAG))) {
+      } else if (t.type === "EQUALS" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
         p.expect("EQUALS");
 
         let t2 = p.peeknext();
@@ -1161,7 +1158,7 @@ export class DataAPI extends ModelInterface {
 
         key = dpath.path;
         obj = !!(lastobj[key] == val);
-      } else if (t.type === "AND" && prop !== undefined && (prop.type & (PropTypes.ENUM | PropTypes.FLAG))) {
+      } else if (t.type === "AND" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
         p.expect("AND");
 
         let t2 = p.peeknext();
@@ -1185,7 +1182,7 @@ export class DataAPI extends ModelInterface {
 
         key = dpath.path;
         obj = !!(lastobj[key] & val);
-      } else if (t.type === "LSBRACKET" && prop !== undefined && (prop.type & (PropTypes.ENUM | PropTypes.FLAG))) {
+      } else if (t.type === "LSBRACKET" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
         p.expect("LSBRACKET");
 
         let t2 = p.peeknext();
@@ -1251,7 +1248,7 @@ export class DataAPI extends ModelInterface {
 
         obj = obj[num];
       } else if (t.type === "LSBRACKET") {
-        p.expect("LSBRACKET")
+        p.expect("LSBRACKET");
 
         if (lastobj && lastkey && typeof lastkey === "string" && lastkey.length > 0) {
           lastobj = lastobj[lastkey];
@@ -1282,10 +1279,10 @@ export class DataAPI extends ModelInterface {
       }
     }
 
-    if (prop && prop.type & (PropTypes.ENUM|PropFlags.FLAG)) {
-      prop.checkMeta()
+    if (prop && prop.type & (PropTypes.ENUM | PropFlags.FLAG)) {
+      prop.checkMeta();
     }
-    
+
     return {
       dpath  : lastdpath,
       parent : lastobj2,
@@ -1294,14 +1291,16 @@ export class DataAPI extends ModelInterface {
       key    : lastkey,
       dstruct: dstruct,
       prop   : prop,
-      subkey : subkey
+      subkey : subkey,
     };
   }
 
   _parsePathOverrides(path) {
-    let parts = ['', undefined, undefined];
+    let parts = ["", undefined, undefined];
 
-    const TOOLPATH = 0, NAME = 1, HOTKEY = 2;
+    const TOOLPATH = 0,
+      NAME = 1,
+      HOTKEY = 2;
     let part = TOOLPATH;
 
     for (let i = 0; i < path.length; i++) {
@@ -1333,11 +1332,11 @@ export class DataAPI extends ModelInterface {
    *  "app.some_tool()|Label::CustomHotkeyString"
    * */
   getToolDef(toolpath) {
-    let {path, uiname, hotkey} = this._parsePathOverrides(toolpath);
+    let { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
 
     let cls = this.parseToolPath(path);
     if (cls === undefined) {
-      throw new DataPathError("unknown path \"" + path + "\"");
+      throw new DataPathError('unknown path "' + path + '"');
     }
 
     let def = cls.tooldef();
@@ -1352,7 +1351,7 @@ export class DataAPI extends ModelInterface {
   }
 
   getToolPathHotkey(ctx, toolpath) {
-    let {path, uiname, hotkey} = this._parsePathOverrides(toolpath);
+    let { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
 
     if (hotkey) {
       return hotkey;
@@ -1470,19 +1469,19 @@ export class DataAPI extends ModelInterface {
       console.error("Unknown tool " + path);
     }
 
-    args = {...args}
+    args = { ...args };
 
     // feed inputs to invoke
-    const tooldef = cls._getFinalToolDef()
+    const tooldef = cls._getFinalToolDef();
     if (inputs !== undefined) {
       for (let k in inputs) {
         if (!(k in tooldef.inputs)) {
-          console.warn(cls.tooldef().uiname + ": Unknown tool property \"" + k + "\"");
+          console.warn(cls.tooldef().uiname + ': Unknown tool property "' + k + '"');
           continue;
         }
 
         if (!(k in args)) {
-          args[k] = inputs[k]
+          args[k] = inputs[k];
         }
       }
     }
@@ -1492,7 +1491,7 @@ export class DataAPI extends ModelInterface {
     if (inputs !== undefined) {
       for (let k in inputs) {
         if (!(k in tool.inputs)) {
-          console.warn(cls.tooldef().uiname + ": Unknown tool property \"" + k + "\"");
+          console.warn(cls.tooldef().uiname + ': Unknown tool property "' + k + '"');
           continue;
         }
 
@@ -1508,9 +1507,8 @@ export function initSimpleController() {
   initToolPaths();
 }
 
-import {DataPathSetOp} from "./controller_ops.js";
-import {Curve1DProperty} from '../curve/curve1d_toolprop.js';
-import { EnumProperty, FlagProperty } from '../controller.js';
+import { DataPathSetOp } from "./controller_ops.js";
+import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
 
 let dpt = DataPathSetOp;
 

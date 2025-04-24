@@ -165,7 +165,9 @@ export class LockedContext {
   progbar() {
     return this.ctx.progbar(...arguments);
   }
-
+  progressBar() {
+    return this.ctx.progbar !== undefined ? this.ctx.progbar(...arguments) : this.ctx.progressBar(...arguments);
+  }
   load(ctx) {
     //let keys = util.getAllKeys(ctx);
     let keys = ctx._props;

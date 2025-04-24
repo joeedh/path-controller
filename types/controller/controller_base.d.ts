@@ -13,7 +13,7 @@ declare interface PathPropMeta<T = any, PropType extends ToolProperty<any> = Too
 
 declare class DataAPI<CTX = any> {
   mapStruct(cls: Function, autoCreate?: boolean): DataStruct<CTX>;
-  mapStructCustom(cls: Function, callback: Function): DataStruct<CTX>
+  mapStructCustom(cls: Function, callback: Function): DataStruct<CTX>;
 
   hasStruct(cls: Function): Boolean;
 
@@ -25,8 +25,8 @@ declare class DataAPI<CTX = any> {
 
   massSetProp(ctx: CTX, massSetPath: string, value: any): void;
 
-  execTool(ctx: CTX, path: string, inputs?: any): ToolOp;
-  execTool(ctx: CTX, tool: ToolOp, inputs?: any): ToolOp;
+  execTool(ctx: CTX, path: string, inputs?: any, _unused: undefined, event?: PointerEvent): ToolOp;
+  execTool(ctx: CTX, tool: ToolOp, inputs?: any, _unused: undefined, event?: PointerEvent): ToolOp;
 }
 
 declare interface BoundProperty<CTX = any> {
@@ -38,8 +38,8 @@ declare interface DataPathCallBack<CTX = any> {
   (this: BoundProperty<CTX>, ...args: any[]);
 }
 
-export declare type BasicEvents = 'change'
-export declare type EnumEvents = BasicEvents|'meta'|'metaChange'
+export declare type BasicEvents = "change";
+export declare type EnumEvents = BasicEvents | "meta" | "metaChange";
 
 export declare class DataPath<CTX = any, EVENTS extends string = BasicEvents> {
   readOnly(): DataPath;
@@ -50,7 +50,7 @@ export declare class DataPath<CTX = any, EVENTS extends string = BasicEvents> {
 
   customGet(get: DataPathCallBack<CTX>): DataPath<CTX>;
 
-  dynamicMeta(metaCB: (enumProp: EnumProperty|FlagProperty) => void): DataPath<CTX>;
+  dynamicMeta(metaCB: (enumProp: EnumProperty | FlagProperty) => void): DataPath<CTX>;
 
   on(type: EVENTS, callback: DataPathCallBack<CTX>): DataPath<CTX>;
 
@@ -67,7 +67,7 @@ export declare class DataPath<CTX = any, EVENTS extends string = BasicEvents> {
   displayUnit(unit: string): DataPath<CTX>;
 
   /** Sets both baseUnit and displayUnit */
-  unit(unit: string): DataPath<CTX>
+  unit(unit: string): DataPath<CTX>;
 
   range(min: number, max: number): DataPath<CTX>;
 
@@ -100,11 +100,11 @@ export declare class DataPath<CTX = any, EVENTS extends string = BasicEvents> {
   description(tooltip: string): DataPath<CTX>;
 
   /* Evaluate mass set path filters using eval() */
-  evalMassSetFilter(): DataPath<CTX>
+  evalMassSetFilter(): DataPath<CTX>;
 
-  checkStrip(state?: boolean): DataPath<CTX>
+  checkStrip(state?: boolean): DataPath<CTX>;
 
-  data: ToolProperty<any>
+  data: ToolProperty<any>;
 }
 
 declare enum StructFlags {
@@ -148,7 +148,13 @@ declare class DataStruct<CTX = any> {
 
   color4(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
-  arrayList(path: string, apiname: string, existingStruct: DataStruct, uiname: string, description?: string): DataPath<CTX>;
+  arrayList(
+    path: string,
+    apiname: string,
+    existingStruct: DataStruct,
+    uiname: string,
+    description?: string
+  ): DataPath<CTX>;
 
   vectorList(size: number, path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
@@ -171,7 +177,13 @@ declare class DataStruct<CTX = any> {
   curve1d(path: string, apiname: string, uiname: string, description?: string): DataPath<CTX>;
 
   enum(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
-  enum(path: string, apiname: string, enumdef: EnumProperty, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
+  enum(
+    path: string,
+    apiname: string,
+    enumdef: EnumProperty,
+    uiname?: string,
+    description?: string
+  ): DataPath<CTX, EnumEvents>;
 
   list<ListType, KeyType, ObjType>(
     path: string,
@@ -180,7 +192,13 @@ declare class DataStruct<CTX = any> {
   ): DataPath;
 
   flags(path: string, apiname: string, enumdef: {}, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
-  flags(path: string, apiname: string, enumdef: FlagProperty, uiname?: string, description?: string): DataPath<CTX, EnumEvents>;
+  flags(
+    path: string,
+    apiname: string,
+    enumdef: FlagProperty,
+    uiname?: string,
+    description?: string
+  ): DataPath<CTX, EnumEvents>;
 
   /** if `apiname` is undefined, will use `prop.apiname` if it's not empty, otherwise `path` */
   fromToolProp(path: string, prop: ToolProperty<any>, apiname?: string): DataPath<CTX>;
