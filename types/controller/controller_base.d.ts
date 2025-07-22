@@ -25,8 +25,8 @@ declare class DataAPI<CTX = any> {
 
   massSetProp(ctx: CTX, massSetPath: string, value: any): void;
 
-  execTool(ctx: CTX, path: string, inputs?: any, _unused: undefined, event?: PointerEvent): ToolOp;
-  execTool(ctx: CTX, tool: ToolOp, inputs?: any, _unused: undefined, event?: PointerEvent): ToolOp;
+  execTool(ctx: CTX, path: string, inputs?: any, _unused?: undefined, event?: PointerEvent): ToolOp;
+  execTool(ctx: CTX, tool: ToolOp, inputs?: any, _unused?: undefined, event?: PointerEvent): ToolOp;
 }
 
 declare interface BoundProperty<CTX = any> {
