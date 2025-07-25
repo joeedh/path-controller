@@ -19,7 +19,9 @@ export declare class IDGen {
 
   copy(): this;
 
+  /** @deprecated */
   _cur: number;
+  cur: number;
 }
 
 export declare function time_ms(): number;
