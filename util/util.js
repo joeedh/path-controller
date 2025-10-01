@@ -1,6 +1,6 @@
 import './polyfill.js';
 import './struct.js';
-import './mobile-detect.cjs';
+import MobileDetect from './mobile-detect.js';
 import nstructjs from './struct.js';
 
 let f64tmp = new Float64Array(1);
@@ -222,28 +222,39 @@ export function pollTimer(id, interval) {
   return false;
 }
 
-let mdetect = undefined;
-let mret = undefined;
+let mobileDetect = undefined;
+let mobileDetectValue = undefined;
+let lastUserAgent = ''
 
 export function isMobile() {
-  if (!window.MobileDetect) {
-    return;
+  if (lastUserAgent !== navigator.userAgent) {
+    // user agent changed, e.g. devtools is in mobile mode (or not)
+    lastUserAgent = navigator.userAgent
+    mobileDetectValue = undefined
+    mobileDetect = undefined
   }
 
-  if (mret === undefined) {
-    mdetect = new MobileDetect(navigator.userAgent);
-    let ret = mdetect.mobile();
+  if (mobileDetectValue === undefined) {
+    let result 
 
-    if (typeof ret === "string") {
-      ret = ret.toLowerCase();
+    if (navigator.userAgent.search(/Mobi/) !== -1) {
+      // early exit
+      result = true
+    } else {
+      mobileDetect = new MobileDetect(navigator.userAgent);
+      result = mobileDetect.mobile();
     }
 
-    mret = ret;
+    if (typeof result === "string") {
+      result = result.toLowerCase();
+    }
+
+    mobileDetectValue = Boolean(result);
   }
 
-  return mret;
+  return mobileDetectValue;
 }
-
+window.isMobile = isMobile;
 export class SmartConsoleContext {
   constructor(name, console) {
     this.name = name;
