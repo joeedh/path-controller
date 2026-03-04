@@ -1,3 +1,4 @@
+import { ToolProperty } from "../controller";
 import * as util from "../util/util";
 
 export declare enum SplineTemplates {
@@ -13,6 +14,10 @@ export declare enum SplineTemplates {
   GUASSIAN = 9
 }
 
+
+export declare class Curve1DProperty extends ToolProperty<Curve1D> {
+  
+}
 //export declare type Curve1dType = 'bspline' | 'bounce' | 'elastic' | 'ease' | 'equation' | 'random' | 'guassian'
 
 export declare interface CurveTypeConstructor<Class, Type, ClassName> {
