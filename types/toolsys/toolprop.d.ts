@@ -1,6 +1,7 @@
 export as namespace toolprop;
 
 import { UnitType } from "../units/units";
+import { StructReader } from "../util/nstructjs";
 import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath";
 
 export type NumberConstraintBase =
@@ -56,6 +57,8 @@ declare class ToolProperty<T> {
   saveLastValue(): this;
   ignoreLastValue(): this;
 
+  loadSTRUCT(reader: StructReader<this>): void;
+  
   static calcRelativeStep(step: number, value: number, logBase: number): number;
 
   static makeUIName(name: string): string;
