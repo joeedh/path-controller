@@ -164,6 +164,8 @@ declare function buildToolSysAPI(
 
 type AnyClass = new (...args: any) => any;
 declare class ToolPropertyCache {
+  accessors: any
+  
   static getPropKey(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
   
   useDefault(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
