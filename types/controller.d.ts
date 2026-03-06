@@ -9,6 +9,7 @@ import * as util from './util/util';
 export {util}
 
 import * as math from './util/math';
+export * from './util/math';
 
 export {math}
 

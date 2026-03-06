@@ -16,7 +16,7 @@ export declare enum SplineTemplates {
 
 
 export declare class Curve1DProperty extends ToolProperty<Curve1D> {
-  
+  constructor(curve?: Curve1D);
 }
 //export declare type Curve1dType = 'bspline' | 'bounce' | 'elastic' | 'ease' | 'equation' | 'random' | 'guassian'
 

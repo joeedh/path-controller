@@ -200,5 +200,10 @@ export declare const PropTypes: {
 };
 
 declare class Mat4Property extends ToolProperty<Matrix4> {
-  constructor(val: Matrix4);
+  constructor(val?: Matrix4);
+}
+
+declare class FloatArrayProperty extends ToolProperty<number[]> {
+  constructor(val?: number[]);
+  [Symbol.iterator](): Iterator<number>;
 }

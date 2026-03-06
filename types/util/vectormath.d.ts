@@ -29,6 +29,20 @@ export declare class Matrix4Data {
   m44: number;
 }
 
+/** 
+ * Returns an iterable over the range [0, len) with primitive type (LEN|LEN-1...).
+ *
+ * Note: is optimized for GC, does not allocate new iterators instead 
+ * uses internal iterator stack.
+ */
+export declare type IndexRange<LEN extends number> = Iterable<LEN> 
+
+type Enumerate<N extends number, Acc extends number[] = []> =
+  Acc['length'] extends N
+    ? Acc[number]
+    : Enumerate<N, [...Acc, Acc['length']]>
+export declare function IndexRange<LEN extends number>(len: LEN): IndexRange<Enumerate<LEN>>
+
 export declare class Matrix4 {
   constructor(existing?: Matrix4 | number[]);
 
@@ -116,6 +130,7 @@ declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<numbe
 
   //[P: P extends indexUnions[LEN] ? number : never]: P extends IndexUnion<LEN> ? number : never;
 
+  LEN: LEN
   length: LEN | number;
 
   [P: number]: never;

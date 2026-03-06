@@ -10,6 +10,64 @@ export const EulerOrders = {
   ZYX: 5
 };
 
+var IndexRangeStack
+
+class _IndexRange {
+  start = 0
+  end = 0
+  i = 0
+  ret = {done: false, value: undefined}
+
+  constructor(start, end) {
+    this.start = start;
+    this.end = end;
+  }
+
+  [Symbol.iterator]() {
+    return this;
+  }
+
+  next() {
+    if (this.i < this.end) {
+      this.ret.done = false;
+      this.ret.value = this.i++;
+      return this.ret;
+    } else {
+      this.finish()
+      this.ret.done = true;
+      return this.ret;
+    }
+  }
+
+  finish() {
+    IndexRangeStack.cur--;
+  }
+
+  reset(start, end, i=0) {
+    this.start = start;
+    this.end = end;
+    this.i = i;
+    return this;
+  }
+
+  return() {
+    this.reset()
+    this.finish()
+    return this.ret
+  }
+}
+
+IndexRangeStack = []
+IndexRangeStack.cur = 0
+for (let i=0; i<2048; i++) {
+  IndexRangeStack[i] = new _IndexRange(0, 0)
+}
+export function IndexRange(len) {
+  return IndexRangeStack[IndexRangeStack.cur++].reset(0, len)
+}
+window.IndexRange = IndexRange
+window.IndexRangeStack = IndexRangeStack
+
 /**
  * @param mode one of 'es', 'commonjs', 'rjs'
  */
