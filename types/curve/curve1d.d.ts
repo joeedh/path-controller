@@ -26,7 +26,7 @@ export declare interface CurveTypeConstructor<Class, Type, ClassName> {
   define(): { typeName: ClassName, name: Type, uiname?: string };
 }
 
-export declare interface CurveTypeData<Class, Type, ClassName> {
+export declare class CurveTypeData<Class, Type, ClassName> {
   _typeTag: Type
 
   ['constructor']: CurveTypeConstructor<Class, Type, ClassName>
@@ -34,24 +34,35 @@ export declare interface CurveTypeData<Class, Type, ClassName> {
   get hasGUI(): boolean;
 
   evaluate(s: number): number;
+
+  loadJSON(json: any): void
 }
 
 interface CurveTypeDataIF {
   //_typeTag: Curve1dType
 }
 
-export declare class EquationCurve extends CurveTypeData<EquationCurve, 'equation', 'Equation'>, CurveTypeDataIF {
-  _typeTag: 'equation'
+export declare class EquationCurve extends CurveTypeData<EquationCurve, 'EquationCurve', 'EquationCurve'>, CurveTypeDataIF {
+  _typeTag: 'EquationCurve'
+  equation: string
+  update(): void
+  redraw(): void
 }
 
-export declare class BSplineCurve extends CurveTypeData<BSplineCurve, 'bspline', 'BSplineCurve'>, CurveTypeDataIF {
-  _typeTag: 'bspline'
+export declare class BSplineCurve extends CurveTypeData<BSplineCurve, 'BSplineCurve', 'BSplineCurve'>, CurveTypeDataIF {
+  _typeTag: 'BSplineCurve'
 
   loadTemplate(template: SplineTemplates): void
 }
 
-declare type Curve1dClass = BSplineCurve | EquationCurve
-type inferHelper = { bspline: BSplineCurve, equation: EquationCurve }
+export declare class GuassianCurve extends CurveTypeData<GuassianCurve, 'GuassianCurve', 'GuassianCurve'>, CurveTypeDataIF {
+  _typeTag: 'GuassianCurve'
+
+  loadTemplate(template: SplineTemplates): void
+}
+
+declare type Curve1dClass = BSplineCurve | EquationCurve | GuassianCurve
+type inferHelper = { BSplineCurve: BSplineCurve, EquationCurve: EquationCurve }
 
 export type Curve1DType = keyof { [P in keyof Curve1dClass as P extends '_typeTag' ? Curve1dClass[P] : never]: Curve1dClass[P] }
 //export type Curve1DType = 'bspline' | 'equation'
@@ -71,6 +82,8 @@ export declare class Curve1D {
   load(b: this): this;
 
   copy(): this;
+
+  getGenerator<T extends Curve1DType>(type: T): ClassFromCurve1DType<T>;
 
   switchGenerator<T extends Curve1DType>(type: T): ClassFromCurve1DType<T>;
 

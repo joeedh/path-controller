@@ -8,6 +8,11 @@ export declare function colinear(
   distLimit?: number
 ): boolean;
 
+export declare function aabb_sphere_isect(p: Vector3, r: number, min: Vector3, max: Vector3): boolean;
+export declare function trilinear_co(p: Vector3, boxverts: Vector3[]): Vector3;
+export declare function trilinear_v3(uvw: Vector3, boxverts: Vector3[]): Vector3;
+export declare function point_in_hex(p: Vector3, boxverts: Vector3[], boxfacecents?: Vector3[], boxfacenormals?: Vector3[]): boolean;
+
 export declare function closest_point_on_line(p: Vector3, v1: Vector3, v2: Vector3, clip?: boolean): [Vector3, number];
 
 export declare function aabb_isect_line_2d(a: Vector2, b: Vector2, min: Vector2, max: Vector2): boolean;

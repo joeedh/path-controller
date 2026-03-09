@@ -3148,20 +3148,14 @@ export function point_in_hex(p, boxverts, boxfacecents = undefined, boxfacenorma
     if (1) {
       t1.normalize();
       t2.normalize();
-
-      //console.log(i, "DOT", n.dot(t1).toFixed(5), n, t1);
     }
 
     if (t1.dot(t2) < 0) {
-      //console.log("\n");
-      ret = false;
       return false;
     }
   }
 
-  //console.log("\n");
   return ret;
-  //return true;
 }
 
 const boxverts_tmp = new Array(8);
