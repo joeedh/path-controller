@@ -137,6 +137,7 @@ export type DataPathMap = {
 
 declare class DataStruct<CTX = any> {
   pathmap: DataPathMap<CTX>;
+  name: string
 
   clear(): this;
 
