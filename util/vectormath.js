@@ -626,6 +626,18 @@ export function makeVector4(BaseVector, structName = 'vec4', structType = 'float
       return `rgba(${r},${g},${b},${a})`
     }
 
+    load2(b) {
+      this[0] = b[0]
+      this[1] = b[1]
+      return this
+    }
+    load3(b) {
+      this[0] = b[0]
+      this[1] = b[1]
+      this[2] = b[2]
+      return this
+    }
+    
     loadXYZW(x, y, z, w) {
       this[0] = x;
       this[1] = y;
@@ -805,6 +817,12 @@ export function makeVector3(BaseVector, structName = 'vec3', structType = 'float
       return \`rgb(\${r},\${g},\${b})\`
     }
 
+    load2(b) {
+      this[0] = b[0]
+      this[1] = b[1]
+      return this
+    }
+      
     loadXYZ(x, y, z) {
       this[0] = x;
       this[1] = y;

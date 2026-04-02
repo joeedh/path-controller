@@ -12,10 +12,10 @@ declare interface PathPropMeta<T = any, PropType extends ToolProperty<any> = Too
 }
 
 declare class DataAPI<CTX = any> {
-  mapStruct(cls: Function, autoCreate?: boolean): DataStruct<CTX>;
-  mapStructCustom(cls: Function, callback: Function): DataStruct<CTX>;
+  mapStruct<CLS>(cls: CLS, autoCreate?: boolean): DataStruct<CTX>;
+  mapStructCustom<CLS>(cls: CLS, callback: Function): DataStruct<CTX>;
 
-  hasStruct(cls: Function): Boolean;
+  hasStruct(cls: ClassConstructor): Boolean;
 
   resolvePath(ctx: CTX, path: string): PathPropMeta;
 
