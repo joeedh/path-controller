@@ -5,6 +5,10 @@ import {Vector2} from './vectormath.js';
 export let modalstack = [];
 let singleMouseCBs = {};
 
+function consolelog() {
+  //  onsole.log(...arguments)
+}
+
 function debugDomEvents() {
   let cbsymbol = Symbol("event-callback");
   let thsymbol = Symbol("debug-info");
@@ -447,7 +451,7 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
       if (cconst.DEBUG.domEvents) {
         pathDebugEvent(e);
       }
-
+      
       if (touchmap[type] in ret.handlers) {
         let type2 = touchmap[type];
 
@@ -609,7 +613,7 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
     } catch (error) {
       util.print_stack(error);
 
-      console.log("attempting fallback");
+      consolelog("attempting fallback");
 
       for (let k in ret.pointer) {
         if (k !== "elem" && k !== "pointerId") {
@@ -640,8 +644,6 @@ export function pushModalLight(obj, autoStopPropagation = true, elem, pointerId)
           obj[k2] = v;
         }
       }
-
-      console.log(obj);
 
       return pushModalLight(obj, autoStopPropagation);
     }
