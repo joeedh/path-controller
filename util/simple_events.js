@@ -336,7 +336,7 @@ export function pathDebugEvent(e, extra) {
   }
 }
 
-export function eventWasMouseDown(button = 0) {
+export function eventWasMouseDown(e, button = 0) {
   let mdown = false
   switch (e.pointerType) {
     case 'touch':
@@ -349,6 +349,7 @@ export function eventWasMouseDown(button = 0) {
       mdown = e.buttons === 1 << button
       break
   }
+  return mdown
 }
 
 /** Returns true if event came from a touchscreen or pen device */
