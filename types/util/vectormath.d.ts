@@ -47,6 +47,10 @@ export declare class Matrix4 {
 
   $matrix: Matrix4Data
 
+  /** calls this.clone() */
+  copy(): this
+  clone(): this
+
   decompose(loc: Vector3, rot: Vector3, scale: Vector3): this
 
   copyColumnTo(i: number, vec: Vector3 | Vector4): this

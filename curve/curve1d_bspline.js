@@ -1492,7 +1492,7 @@ class BSplineCurve extends CurveTypeData {
       altKey         : e.altKey,
       ctrlKey        : e.ctrlKey,
       isTouch        : true,
-      commandKey     : e.commandKey,
+      metaKey     : e.metaKey,
       stopPropagation: () => e.stopPropagation(),
       preventDefault : () => e.preventDefault(),
     };
