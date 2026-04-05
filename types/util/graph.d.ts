@@ -1,4 +1,4 @@
-import {Vector2} from "./vectormath";
+import { Vector2 } from "./vectormath";
 
 export declare function graphPack(nodes: any, margin_or_args = 15, steps = 10, updateCb?: any);
 

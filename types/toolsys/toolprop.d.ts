@@ -58,7 +58,7 @@ declare class ToolProperty<T> {
   ignoreLastValue(): this;
 
   loadSTRUCT(reader: StructReader<this>): void;
-  
+
   static calcRelativeStep(step: number, value: number, logBase: number): number;
 
   static makeUIName(name: string): string;
@@ -139,11 +139,11 @@ declare class Vec4Property extends NumberPropertyBase<Vector4> {
 declare class EnumProperty extends ToolProperty<number> {
   constructor(value?: any, enumdef?: {}, apiname?: string, uiname?: string, desription?: string);
 
-  addIcons(iconmap: {[k: string]: number}): this;
+  addIcons(iconmap: { [k: string]: number }): this;
 
-  addUINames(uinames: {[k: string]: string}): this;
-  addDescriptions(descriptions: {[k: string]: string}): this;
-  updateDefinition(enumdef_or_prop: {[k:string|number]:string|number} | this): this;
+  addUINames(uinames: { [k: string]: string }): this;
+  addDescriptions(descriptions: { [k: string]: string }): this;
+  updateDefinition(enumdef_or_prop: { [k: string | number]: string | number } | this): this;
   /**
    * Provide a callback to update the enum or flags property dynamically
    * Callback should call enumProp.updateDefinition to update the property.

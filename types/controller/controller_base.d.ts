@@ -28,7 +28,7 @@ declare class DataAPI<CTX = any> {
   execTool(ctx: CTX, path: string, inputs?: any, _unused?: undefined, event?: PointerEvent): ToolOp;
   execTool(ctx: CTX, tool: ToolOp, inputs?: any, _unused?: undefined, event?: PointerEvent): ToolOp;
 
-  createTool<T extends ToolOp = ToolOp>(ctx: CTX, path: string, inputs?: any): T
+  createTool<T extends ToolOp = ToolOp>(ctx: CTX, path: string, inputs?: any): T;
 }
 
 declare interface BoundProperty<CTX = any> {
@@ -139,7 +139,7 @@ export type DataPathMap = {
 
 declare class DataStruct<CTX = any> {
   pathmap: DataPathMap<CTX>;
-  name: string
+  name: string;
 
   clear(): this;
 

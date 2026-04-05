@@ -1,3 +1,1 @@
-export * from './types/controller'
-
-
+export * from "./types/controller";

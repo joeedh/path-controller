@@ -1,2 +1,1 @@
-export * from '../types/util/vectormath'
-
+export * from "../types/util/vectormath";

@@ -120,7 +120,11 @@ declare class ToolStack<ContextCls = Context, ModalContextCls = ContextCls> exte
     compareInputs?: boolean
   ): boolean;
 
-  execTool(ctx: ContextCls | ModalContextCls, tool: ToolOp<any, any, ContextCls, ModalContextCls>, event?: PointerEvent): void;
+  execTool(
+    ctx: ContextCls | ModalContextCls,
+    tool: ToolOp<any, any, ContextCls, ModalContextCls>,
+    event?: PointerEvent
+  ): void;
 
   toolCancel(ctx: ContextCls | ModalContextCls, tool: ToolOp<any, any, ContextCls, ModalContextCls>): void;
 
@@ -164,16 +168,16 @@ declare function buildToolSysAPI(
 
 type AnyClass = new (...args: any) => any;
 declare class ToolPropertyCache {
-  accessors: any
-  
+  accessors: any;
+
   static getPropKey(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
-  
+
   useDefault(cls: AnyClass, key: string, prop: ToolProperty<any>): string;
-  
+
   has(cls: AnyClass, key: string, prop: ToolProperty<any>): boolean;
 
-  get<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): T | undefined
-  set<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): this | undefined
+  get<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): T | undefined;
+  set<T>(cls: AnyClass, key: string, prop: ToolProperty<T>): this | undefined;
 }
 
-declare const SavedToolDefaults: ToolPropertyCache
+declare const SavedToolDefaults: ToolPropertyCache;

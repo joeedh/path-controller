@@ -1,24 +1,24 @@
-export * from './controller/controller_base';
+export * from "./controller/controller_base";
 
-import * as nstructjs from './util/nstructjs';
+import * as nstructjs from "./util/nstructjs";
 
-export {nstructjs}
+export { nstructjs };
 
-import * as util from './util/util';
+import * as util from "./util/util";
 
-export {util}
+export { util };
 
-import * as math from './util/math';
-export * from './util/math';
+import * as math from "./util/math";
+export * from "./util/math";
 
-export {math}
+export { math };
 
-export * from './util/graph';
-export * from './util/vectormath';
-export * from './toolsys/toolsys';
-export * from './toolsys/toolprop';
+export * from "./util/graph";
+export * from "./util/vectormath";
+export * from "./toolsys/toolsys";
+export * from "./toolsys/toolprop";
 
-export * from './polyfill';
+export * from "./polyfill";
 
 export class EnumKeyPair {
   constructor(key?: string, val?: string);
@@ -27,6 +27,6 @@ export class EnumKeyPair {
   val: string;
 }
 
-export * from './curve/curve1d'
-export * from './util/simple_events'
-export * from './util/solver'
+export * from "./curve/curve1d";
+export * from "./util/simple_events";
+export * from "./util/solver";
