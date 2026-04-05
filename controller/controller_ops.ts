@@ -18,7 +18,7 @@ import {
 
 import * as util from "../util/util.js";
 import { isVecProperty, getVecClass } from "./controller_base.js";
-import { ContextLike } from "./controller_abstract.js";
+import { ContextLike, ResolvedProp } from "./controller_abstract.js";
 
 type DataPathSetInputs = {
   dataPath: StringProperty;
@@ -36,7 +36,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
   _undo: Record<string, unknown> | undefined;
   hadError: boolean;
   id: unknown;
-  __ctx?: CTX
+  __ctx?: CTX;
 
   constructor() {
     super();
@@ -47,11 +47,11 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
   }
 
   setValue(ctx: CTX, val: unknown, object: unknown): void {
-    let prop = this.inputs.prop as unknown as Record<string, unknown>;
+    let prop = this.inputs.prop as unknown as ResolvedProp;
     let path = this.inputs.dataPath.getValue() as string;
 
-    if ((prop.type as number) & (PropTypes.ENUM | PropTypes.FLAG)) {
-      let rdef = ctx.api.resolvePath(ctx, path)
+    if (prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
+      let rdef = ctx.api.resolvePath(ctx, path);
       if (rdef?.subkey !== undefined) {
         let subkey: unknown = rdef.subkey;
         if (typeof subkey === "string") {
@@ -76,25 +76,25 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     }
   }
 
-  static create<CTX extends ContextLike> (
+  static create<CTX extends ContextLike>(
     ctx: CTX,
     datapath: string,
     value: unknown,
     id: unknown,
     massSetPath?: string
   ): DataPathSetOp<CTX> | undefined {
-    let rdef = ctx.api.resolvePath(ctx, datapath)
+    let rdef = ctx.api.resolvePath(ctx, datapath);
 
     if (rdef === undefined || rdef.prop === undefined) {
       console.warn("DataPathSetOp failed", rdef, rdef?.prop);
       return;
     }
 
-    let prop = rdef.prop
+    let prop = rdef.prop;
     let tool = new DataPathSetOp<CTX>();
 
-    tool.propType = prop.type as number;
-    tool.inputs.destType.setValue(prop.type as number);
+    tool.propType = prop.type;
+    tool.inputs.destType.setValue(prop.type);
 
     if (prop && (prop.flag as number) & PropFlags.USE_BASE_UNDO) {
       tool.inputs.fullSaveUndo.setValue(true);
@@ -103,8 +103,8 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     let mask = PropTypes.FLAG | PropTypes.ENUM;
     mask |= PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT;
 
-    if (rdef.subkey !== undefined && (prop.type as number) & mask) {
-      if ((prop.type as number) & (PropTypes.ENUM | PropTypes.FLAG)) {
+    if (rdef.subkey !== undefined && prop.type & mask) {
+      if (prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
         let i = datapath.length - 1;
 
         //chop off enum selector
@@ -113,7 +113,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
         }
 
         if (i >= 0) {
-          if (!value && (prop.type as number) === PropTypes.ENUM) {
+          if (!value && prop.type === PropTypes.ENUM) {
             /* This is a no-op. */
             return undefined;
           }
@@ -127,18 +127,19 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
       }
 
       let subkey: unknown = rdef.subkey;
-      if (typeof subkey !== "number") {
+      if (typeof subkey !== "number" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
+        // fetch the key from the enum/flag value
         subkey = (prop as unknown as EnumProperty).values[subkey as string];
       }
 
-      if ((prop.type as number) === PropTypes.FLAG) {
+      if (prop.type === PropTypes.FLAG) {
         tool.inputs.flagBit.setValue(subkey as number);
         tool.inputs.useFlagBit.setValue(true);
       }
 
-      if ((prop.type as number) === PropTypes.ENUM) {
+      if (prop.type === PropTypes.ENUM) {
         value = subkey;
-      } else if ((prop.type as number) === PropTypes.FLAG) {
+      } else if (prop.type === PropTypes.FLAG) {
         let value2 = ctx.api.getValue(ctx, datapath) as unknown;
 
         if (typeof value2 !== "number") {
@@ -194,7 +195,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
       return super.undoPre(ctx);
     }
 
-    if (this.__ctx) ctx = this.__ctx 
+    if (this.__ctx) ctx = this.__ctx;
 
     this._undo = {};
 
@@ -318,10 +319,10 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
   }
 
   modalStart(ctx: CTX) {
-    super.modalStart
+    super.modalStart;
     if (ctx.toLocked === undefined) {
-      console.warn('Warning: no toLocked in context class, this may lead to subtle undo behaviours')
-      console.warn('  (ctx locking creates a copy with values of the context at the time it as locked)')
+      console.warn("Warning: no toLocked in context class, this may lead to subtle undo behaviours");
+      console.warn("  (ctx locking creates a copy with values of the context at the time it as locked)");
     }
     this.__ctx = (ctx.toLocked ? ctx.toLocked() : ctx) as typeof this.__ctx;
 
@@ -330,7 +331,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 
     this.exec(this.__ctx as unknown as Record<string, unknown>);
     this.modalEnd(false);
-    return result
+    return result;
   }
 
   static tooldef() {

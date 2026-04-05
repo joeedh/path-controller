@@ -292,7 +292,9 @@ export class LockedContext {
     };
 
     for (let k in this.props) {
-      defineProp(k);
+      if (k !== 'ctx') {
+        defineProp(k);
+      }
     }
 
     this.ctx = ctx;

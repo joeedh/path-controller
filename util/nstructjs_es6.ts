@@ -1792,7 +1792,7 @@ export interface StructableClass {
   STRUCT?: string;
   structName?: string;
   name: string;
-  prototype: Record<string, unknown>;
+  prototype: any;
   newSTRUCT?: (loader: StructReader) => unknown;
   fromSTRUCT?: (loader: StructReader) => unknown;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2342,7 +2342,7 @@ class StructStructField extends StructFieldType {
     type: StructType
   ): unknown {
     let stt = manager.get_struct(type.data as string);
-    return manager.writeJSON(val as Record<string, unknown>, stt);
+    return manager.writeJSON(val as any, stt);
   }
 
   static unpackInto(manager: STRUCT, data: DataView, type: StructType, uctx: unpack_context, dest: unknown): unknown {
@@ -2395,7 +2395,7 @@ class StructTStructField extends StructFieldType {
 
     const keywords = (manager.constructor as typeof STRUCT).keywords;
 
-    let valObj = val as Record<string, unknown> & { constructor: StructableClass };
+    let valObj = val as any & { constructor: StructableClass };
 
     //make sure inheritance is correct
     if (valObj.constructor.structName !== type.data && val instanceof (cls as Function)) {
@@ -2428,7 +2428,7 @@ class StructTStructField extends StructFieldType {
       return typeof val + " is not an object";
     }
 
-    let valObj = val as Record<string, unknown>;
+    let valObj = val as any;
     let stt = manager.get_struct(valObj[key] as string);
     let cls: StructableClass = manager.get_struct_cls(stt.name) as StructableClass;
     let parentcls = manager.get_struct_cls(type.data as string);
@@ -2441,7 +2441,7 @@ class StructTStructField extends StructFieldType {
         break;
       }
 
-      cls = (cls.prototype as Record<string, unknown>).__proto__!.constructor as unknown as StructableClass;
+      cls = (cls.prototype as any).__proto__!.constructor as unknown as StructableClass;
     } while (cls && cls !== (Object as unknown));
 
     if (!ok) {
@@ -2461,7 +2461,7 @@ class StructTStructField extends StructFieldType {
   ): unknown {
     let key = type.jsonKeyword!;
 
-    let stt = manager.get_struct((val as Record<string, unknown>)[key] as string);
+    let stt = manager.get_struct((val as any)[key] as string);
 
     return manager.readJSON(val, stt, instance);
   }
@@ -2477,7 +2477,7 @@ class StructTStructField extends StructFieldType {
   ): string {
     let key = type.jsonKeyword!;
 
-    let stt = manager.get_struct((val as Record<string, unknown>)[key] as string);
+    let stt = manager.get_struct((val as any)[key] as string);
 
     return manager.formatJSON_intern(val, stt, _field as StructField, tlvl);
   }
@@ -2491,9 +2491,9 @@ class StructTStructField extends StructFieldType {
   ): unknown {
     const keywords = (manager.constructor as typeof STRUCT).keywords;
 
-    let valObj = val as Record<string, unknown> & { constructor: StructableClass };
+    let valObj = val as any & { constructor: StructableClass };
     let stt = manager.get_struct(valObj.constructor.structName!);
-    let ret = manager.writeJSON(val as Record<string, unknown>, stt) as Record<string, unknown>;
+    let ret = manager.writeJSON(val as any, stt) as any;
 
     ret[type.jsonKeyword!] = "" + stt.name;
 
@@ -2753,7 +2753,7 @@ class StructArrayField extends StructFieldType {
     type: StructType
   ): unknown[] {
     let arr = (val as unknown[]) || [];
-    let json: unknown[] = [];
+    let json: any[] = [];
 
     let itername = (type.data as { iname: string }).iname;
 
@@ -2920,7 +2920,7 @@ class StructIterField extends StructFieldType {
     type: StructType
   ): unknown[] {
     let arr = (val as Iterable<unknown>) || [];
-    let json: unknown[] = [];
+    let json: any[] = [];
 
     let itername = (type.data as { iname: string }).iname;
 
@@ -3162,7 +3162,7 @@ class StructIterKeysField extends StructFieldType {
       return;
     }
 
-    let valObj = val as Record<string, unknown>;
+    let valObj = val as any;
     let len = 0.0;
     for (let k in valObj) {
       len++;
@@ -3253,8 +3253,8 @@ class StructIterKeysField extends StructFieldType {
     field: StructField | FakeField,
     type: StructType
   ): unknown[] {
-    let valObj = (val as Record<string, unknown>) || {};
-    let json: unknown[] = [];
+    let valObj = (val as any) || {};
+    let json: any[] = [];
 
     let itername = (type.data as { iname: string }).iname;
 
@@ -3853,10 +3853,10 @@ function buildJSONParser(): parser {
     return ret;
   }
 
-  function p_Object(p: parser): Record<string, unknown> {
+  function p_Object(p: parser): any {
     p.expect("LBRACE");
 
-    let obj: Record<string, unknown> = {};
+    let obj: any = {};
 
     let first = true;
     let t = p.peeknext();
@@ -3962,24 +3962,24 @@ function printContext(buf: string, tokinfo: TokInfo | undefined, printColors: bo
 
 /* ---- global / debug ---- */
 
-var nGlobal: Record<string, unknown>;
+var nGlobal: any;
 
 if (typeof globalThis !== "undefined") {
-  nGlobal = globalThis as unknown as Record<string, unknown>;
+  nGlobal = globalThis as unknown as any;
 } else if (typeof window !== "undefined") {
-  nGlobal = window as unknown as Record<string, unknown>;
+  nGlobal = window as unknown as any;
 } else if (
   typeof globalThis !== "undefined" &&
-  typeof (globalThis as Record<string, unknown>)["global"] !== "undefined"
+  typeof (globalThis as any)["global"] !== "undefined"
 ) {
-  nGlobal = (globalThis as Record<string, unknown>)["global"] as Record<string, unknown>;
+  nGlobal = (globalThis as any)["global"] as any;
 } else if (typeof self !== "undefined") {
-  nGlobal = self as unknown as Record<string, unknown>;
+  nGlobal = self as unknown as any;
 } else {
   nGlobal = {};
 }
 
-const DEBUG: Record<string, unknown> = {};
+const DEBUG: any = {};
 
 function updateDEBUG(): void {
   for (let k in Object.keys(DEBUG)) {
@@ -3987,7 +3987,7 @@ function updateDEBUG(): void {
   }
 
   if (typeof nGlobal.DEBUG === "object") {
-    let dbg = nGlobal.DEBUG as Record<string, unknown>;
+    let dbg = nGlobal.DEBUG as any;
     for (let k in dbg) {
       DEBUG[k] = dbg[k];
     }
@@ -4122,14 +4122,14 @@ function define_empty_class(scls: typeof STRUCT, name: string): StructableClass 
 
   let keywords = scls.keywords;
 
-  (cls as unknown as Record<string, unknown>).STRUCT = name + " {\n  }\n";
+  (cls as unknown as any).STRUCT = name + " {\n  }\n";
   cls.structName = name;
 
   cls.prototype.loadSTRUCT = function (reader: StructReader) {
     reader(this);
   };
 
-  (cls as unknown as Record<string, unknown>).newSTRUCT = function () {
+  (cls as unknown as any).newSTRUCT = function () {
     return new (cls as unknown as new () => unknown)();
   };
 
@@ -4191,33 +4191,33 @@ class STRUCT {
 
   /** invoke loadSTRUCT methods on parent objects.  note that
    reader() is only called once.  it is called however.*/
-  static Super(obj: Record<string, unknown>, reader: StructReader): void {
+  static Super(obj: any, reader: StructReader): void {
     if (warninglvl > 0) {
       console.warn("deprecated");
     }
 
     reader(obj);
 
-    function reader2(_obj: Record<string, unknown>): void {}
+    function reader2(_obj: any): void {}
 
     let cls = (obj as { constructor?: StructableClass }).constructor;
     let bad =
       cls === undefined ||
       cls.prototype === undefined ||
-      (cls.prototype as Record<string, unknown>).__proto__ === undefined;
+      (cls.prototype as any).__proto__ === undefined;
 
     if (bad) {
       return;
     }
 
-    let parent = ((cls!.prototype as Record<string, unknown>).__proto__ as Record<string, unknown>)
+    let parent = ((cls!.prototype as any).__proto__ as any)
       .constructor as StructableClass;
     bad = bad || parent === undefined;
 
     if (
       !bad &&
       parent.prototype.loadSTRUCT &&
-      parent.prototype.loadSTRUCT !== (obj as Record<string, unknown>).loadSTRUCT
+      parent.prototype.loadSTRUCT !== (obj as any).loadSTRUCT
     ) {
       (parent.prototype.loadSTRUCT as Function).call(obj, reader2);
     }
@@ -4230,7 +4230,7 @@ class STRUCT {
     }
 
     let proto = cls.prototype;
-    let parent = ((proto as Record<string, unknown>).prototype as Record<string, unknown>)
+    let parent = ((proto as any).prototype as any)
       .constructor as StructableClass;
 
     let obj = parent.fromSTRUCT!(reader);
@@ -4344,8 +4344,8 @@ class STRUCT {
       }
     }
 
-    function formatType(type: StructType): Record<string, unknown> {
-      let ret: Record<string, unknown> = {};
+    function formatType(type: StructType): any {
+      let ret: any = {};
 
       ret.type = type.type;
 
@@ -4765,7 +4765,7 @@ class STRUCT {
 
     let fields = stt.fields;
     let thestruct = this;
-    let objRec = obj as Record<string, unknown>;
+    let objRec = obj as any;
     for (let i = 0; i < fields.length; i++) {
       let f = fields[i];
       let t1 = f.type;
@@ -4795,7 +4795,7 @@ class STRUCT {
    @param data : array to write data into,
    @param obj  : structable object
    */
-  write_object(data: number[] | undefined, obj: Record<string, unknown>): number[] {
+  write_object(data: number[] | undefined, obj: any): number[] {
     const keywords = (this.constructor as typeof STRUCT).keywords;
 
     let cls = (obj.constructor as StructableClass).structName!;
@@ -4817,11 +4817,11 @@ class STRUCT {
    @param uctx : internal parameter
    @return Instance of cls_or_struct_id
    */
-  readObject(
+  readObject<T, ARGS extends unknown[]>(
     data: DataView | Uint8Array | Uint8ClampedArray | number[],
-    cls_or_struct_id: StructableClass | number,
+    cls_or_struct_id: (new(...args: ARGS) => T) | number,
     uctx?: unpack_context
-  ): unknown {
+  ): T {
     if (data instanceof Uint8Array || data instanceof Uint8ClampedArray) {
       data = new DataView(data.buffer);
     } else if (data instanceof Array) {
@@ -4835,11 +4835,11 @@ class STRUCT {
    @param data array to write data into,
    @param obj structable object
    */
-  writeObject(data: number[], obj: Record<string, unknown>): number[] {
+  writeObject(data: number[], obj: any): number[] {
     return this.write_object(data, obj);
   }
 
-  writeJSON(obj: Record<string, unknown>, stt?: NStruct): Record<string, unknown> {
+  writeJSON(obj: any, stt?: NStruct): string {
     const keywords = (this.constructor as typeof STRUCT).keywords;
 
     let cls = obj.constructor as StructableClass;
@@ -4855,7 +4855,7 @@ class STRUCT {
 
     let fields = stt.fields;
     let thestruct = this;
-    let json: Record<string, unknown> = {};
+    let json: any = {};
 
     for (let i = 0; i < fields.length; i++) {
       let f = fields[i];
@@ -4891,10 +4891,10 @@ class STRUCT {
 
         if (isArray) {
           let arr = json2 as unknown[];
-          (json as Record<string, unknown>).length = arr.length;
+          json.length = arr.length;
 
           for (let i = 0; i < arr.length; i++) {
-            (json as Record<string, unknown>)[i] = arr[i];
+            json[i] = arr[i];
           }
         } else {
           Object.assign(json, json2);
@@ -4915,7 +4915,7 @@ class STRUCT {
     cls_or_struct_id: StructableClass | number,
     uctx?: unpack_context,
     objInstance?: unknown
-  ): unknown {
+  ): any {
     const keywords = (this.constructor as typeof STRUCT).keywords;
     let cls: StructableClass;
     let stt: NStruct;
@@ -4961,7 +4961,7 @@ class STRUCT {
     let was_run = false;
 
     function makeLoader(stt: NStruct): StructReader {
-      return function load(obj: Record<string, unknown>) {
+      return function load(obj: any) {
         if (was_run) {
           return;
         }
@@ -4987,12 +4987,12 @@ class STRUCT {
     let load = makeLoader(stt);
 
     if (cls.prototype.loadSTRUCT !== undefined) {
-      let obj = objInstance as Record<string, unknown> | undefined;
+      let obj = objInstance as any | undefined;
 
       if (!obj && cls.newSTRUCT !== undefined) {
-        obj = cls.newSTRUCT(load) as Record<string, unknown>;
+        obj = cls.newSTRUCT(load) as any;
       } else if (!obj) {
-        obj = new (cls as unknown as new () => Record<string, unknown>)();
+        obj = new (cls as unknown as new () => any)();
       }
 
       (obj!.loadSTRUCT as Function)(load);
@@ -5015,12 +5015,12 @@ class STRUCT {
       return cls.fromSTRUCT(load);
     } else {
       //default case, make new instance and then call load() on it
-      let obj = objInstance as Record<string, unknown> | undefined;
+      let obj = objInstance as any| undefined;
 
       if (!obj && cls.newSTRUCT !== undefined) {
-        obj = cls.newSTRUCT(load) as Record<string, unknown>;
+        obj = cls.newSTRUCT(load) as any;
       } else if (!obj) {
-        obj = new (cls as unknown as new () => Record<string, unknown>)();
+        obj = new (cls as unknown as new () => any)();
       }
 
       load(obj!);
@@ -5030,7 +5030,7 @@ class STRUCT {
   }
 
   validateJSON(
-    json: unknown,
+    json: any,
     cls_or_struct_id: StructableClass | NStruct | number,
     useInternalParser: boolean = true,
     useColors: boolean = true,
@@ -5074,7 +5074,7 @@ class STRUCT {
   }
 
   validateJSONIntern(
-    json: unknown,
+    json: any,
     cls_or_struct_id: StructableClass | NStruct | number,
     _abstractKey: string = "_structName"
   ): boolean {
@@ -5101,14 +5101,14 @@ class STRUCT {
       throw new Error("unknown class " + cls);
     }
 
-    let jsonObj = json as Record<string | symbol, unknown>;
+    let jsonObj = json as any;
     let fields = stt.fields;
     let flen = fields.length;
 
     let keys = new Set<string>();
     keys.add(_abstractKey);
 
-    let keyTestJson: Record<string, unknown> = jsonObj as Record<string, unknown>;
+    let keyTestJson: any = jsonObj as any;
 
     for (let i = 0; i < flen; i++) {
       let f = fields[i];
@@ -5126,7 +5126,7 @@ class STRUCT {
         keys.add("this");
         tinfo = jsonObj[TokSymbol as unknown as string] as TokInfo | undefined;
       } else {
-        val = (jsonObj as Record<string, unknown>)[f.name];
+        val = (jsonObj as any)[f.name];
         keys.add(f.name);
 
         tinfo = jsonObj[TokSymbol as unknown as string]
@@ -5171,7 +5171,7 @@ class STRUCT {
     }
 
     for (let k in keyTestJson) {
-      if (typeof (jsonObj as Record<string, unknown>)[k] === "symbol") {
+      if (typeof (jsonObj as any)[k] === "symbol") {
         //ignore symbols
         continue;
       }
@@ -5185,7 +5185,7 @@ class STRUCT {
     return true;
   }
 
-  readJSON(json: unknown, cls_or_struct_id: StructableClass | NStruct | number, objInstance?: unknown): unknown {
+  readJSON(json: any, cls_or_struct_id: StructableClass | NStruct | number, objInstance?: any): any {
     const keywords = (this.constructor as typeof STRUCT).keywords;
 
     let cls: StructableClass;
@@ -5212,7 +5212,7 @@ class STRUCT {
     let _fromJSON = sintern2.fromJSON;
 
     function makeLoader(stt: NStruct): StructReader {
-      return function load(obj: Record<string, unknown>) {
+      return function load(obj: any) {
         if (was_run) {
           return;
         }
@@ -5221,7 +5221,7 @@ class STRUCT {
 
         let fields = stt.fields;
         let flen = fields.length;
-        let jsonObj = json as Record<string, unknown>;
+        let jsonObj = json as any;
 
         for (let i = 0; i < flen; i++) {
           let f = fields[i];
@@ -5255,12 +5255,12 @@ class STRUCT {
     let load = makeLoader(stt);
 
     if (cls.prototype.loadSTRUCT !== undefined) {
-      let obj = objInstance as Record<string, unknown> | undefined;
+      let obj = objInstance as any | undefined;
 
       if (!obj && cls.newSTRUCT !== undefined) {
-        obj = cls.newSTRUCT(load) as Record<string, unknown>;
+        obj = cls.newSTRUCT(load) as any;
       } else if (!obj) {
-        obj = new (cls as unknown as new () => Record<string, unknown>)();
+        obj = new (cls as unknown as new () => any)();
       }
 
       (obj!.loadSTRUCT as Function)(load);
@@ -5276,12 +5276,12 @@ class STRUCT {
       return cls.fromSTRUCT(load);
     } else {
       //default case, make new instance and then call load() on it
-      let obj = objInstance as Record<string, unknown> | undefined;
+      let obj = objInstance as any | undefined;
 
       if (!obj && cls.newSTRUCT !== undefined) {
-        obj = cls.newSTRUCT(load) as Record<string, unknown>;
+        obj = cls.newSTRUCT(load) as any;
       } else if (!obj) {
-        obj = new (cls as unknown as new () => Record<string, unknown>)();
+        obj = new (cls as unknown as new () => any)();
       }
 
       load(obj!);
@@ -5290,11 +5290,11 @@ class STRUCT {
     }
   }
 
-  formatJSON_intern(json: unknown, stt: NStruct, field?: StructField, tlvl: number = 0): string {
+  formatJSON_intern(json: any, stt: NStruct, field?: StructField, tlvl: number = 0): string {
     const keywords = (this.constructor as typeof STRUCT).keywords;
     const addComments = this.formatCtx.addComments;
 
-    let jsonObj = json as Record<string, unknown>;
+    let jsonObj = json as any;
     let s = "{";
 
     if (addComments && field && field.comment.trim()) {
@@ -5330,7 +5330,7 @@ class STRUCT {
     return s;
   }
 
-  formatJSON(json: unknown, cls: StructableClass, addComments: boolean = true, validate: boolean = true): string {
+  formatJSON(json: any, cls: StructableClass, addComments: boolean = true, validate: boolean = true): string {
     const keywords = (this.constructor as typeof STRUCT).keywords;
 
     if (validate) {
@@ -5451,7 +5451,7 @@ let natob: (str: string) => string;
 
 if (typeof btoa === "undefined") {
   nbtoa = function btoa(str: string): string {
-    let BufferCls = (globalThis as Record<string, unknown>)["Buffer"] as {
+    let BufferCls = (globalThis as any)["Buffer"] as {
       from(s: string, enc: string): { toString(enc: string): string };
     };
     let buffer = BufferCls.from("" + str, "binary");
@@ -5459,7 +5459,7 @@ if (typeof btoa === "undefined") {
   };
 
   natob = function atob(str: string): string {
-    let BufferCls = (globalThis as Record<string, unknown>)["Buffer"] as {
+    let BufferCls = (globalThis as any)["Buffer"] as {
       from(s: string, enc: string): { toString(enc: string): string };
     };
     return BufferCls.from(str, "base64").toString("binary");
@@ -5524,7 +5524,7 @@ function versionCoerce(v: string | number[] | VersionObj | unknown): VersionObj 
       micro: arr[2],
     };
   } else if (typeof v === "object" && v !== null) {
-    let vObj = v as Record<string, unknown>;
+    let vObj = v as any;
     let test = (k: string) => k in vObj && typeof vObj[k] === "number";
 
     if (!test("major") || !test("minor") || !test("micro")) {
@@ -5591,7 +5591,7 @@ class FileHelper {
       let fp = new FileParams();
 
       for (let k in params) {
-        (fp as unknown as Record<string, unknown>)[k] = (params as unknown as Record<string, unknown>)[k];
+        (fp as unknown as any)[k] = (params as unknown as any)[k];
       }
       params = fp;
     }
@@ -5690,8 +5690,8 @@ class FileHelper {
         continue;
       }
 
-      let structName = (block.data as Record<string, unknown>).constructor
-        ? ((block.data as Record<string, unknown>).constructor as StructableClass).structName
+      let structName = (block.data as any).constructor
+        ? ((block.data as any).constructor as StructableClass).structName
         : undefined;
       if (structName === undefined || !(structName in struct.structs)) {
         throw new Error("Non-STRUCTable object " + block.data);
@@ -5700,7 +5700,7 @@ class FileHelper {
       let data2: number[] = [];
       let stt = struct.structs[structName];
 
-      struct.write_object(data2, block.data as Record<string, unknown>);
+      struct.write_object(data2, block.data as any);
 
       pack_static_string(data, block.type, 4);
       pack_int(data, data2.length);
@@ -5789,7 +5789,7 @@ function consoleLogger(...args: unknown[]): void {
  * @returns {*}
  */
 function validateJSON(
-  json: unknown,
+  json: any,
   cls: StructableClass,
   useInternalParser?: boolean,
   printColors: boolean = true,
@@ -5856,23 +5856,24 @@ function readObject(
   data: DataView | Uint8Array | Uint8ClampedArray | number[],
   cls: StructableClass | number,
   __uctx?: unpack_context
-): unknown {
+): any {
   return manager.readObject(data, cls, __uctx);
 }
 
 /**
  @param data : Array instance to write bytes to
  */
-function writeObject(data: number[], obj: Record<string, unknown>): number[] {
+function writeObject(data: number[], obj: any): number[] {
   return manager.writeObject(data, obj);
 }
 
-function writeJSON(obj: Record<string, unknown>): Record<string, unknown> {
+function writeJSON(obj: any): string {
   return manager.writeJSON(obj);
 }
 
+
 function formatJSON(
-  json: unknown,
+  json: any,
   cls: StructableClass,
   addComments: boolean = true,
   validate: boolean = true
@@ -5880,7 +5881,7 @@ function formatJSON(
   return manager.formatJSON(json, cls, addComments, validate);
 }
 
-function readJSON(json: unknown, class_or_struct_id: StructableClass | NStruct | number): unknown {
+function readJSON(json: any, class_or_struct_id: StructableClass | NStruct | number): unknown {
   return manager.readJSON(json, class_or_struct_id);
 }
 
