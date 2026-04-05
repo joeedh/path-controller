@@ -91,6 +91,7 @@ declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<numbe
   3: LEN extends 4 ? number : never;
 
   [Symbol.iterator](): Iterator<number>;
+  slice(start?: number, end?: number): this;
 
   sinterp(b: IBaseVector<NumLitHigher<LEN>>, t: number): this;
 
@@ -195,6 +196,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
+    slice = parent.prototype.slice;
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
@@ -554,6 +556,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
+    slice = parent.prototype.slice;
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
@@ -985,6 +988,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
+    slice = parent.prototype.slice;
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
