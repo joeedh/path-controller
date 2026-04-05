@@ -383,7 +383,9 @@ export function isMouseDown(e: Record<string, unknown>): number {
   return mdown;
 }
 
-export function pathDebugEvent(e: Record<string, unknown>, extra?: unknown): void {
+export function pathDebugEvent(event: Event, extra?: unknown): void {
+  const e = { ...event } as any;
+
   e.__prevdef = e.preventDefault;
   e.__stopprop = e.stopPropagation;
 
@@ -398,7 +400,14 @@ export function pathDebugEvent(e: Record<string, unknown>, extra?: unknown): voi
   };
 }
 
-export function eventWasMouseDown(e: PointerEvent, button: number = 0): boolean {
+export function eventWasMouseDown(e: PointerEvent | MouseEvent | TouchEvent, button: number = 0): boolean {
+  if (e instanceof MouseEvent && !(e instanceof PointerEvent)) {
+    return e.buttons === 1 << button;
+  }
+  if (e instanceof TouchEvent) {
+    return e.touches && e.touches.length > 0;
+  }
+
   let mdown = false;
   switch (e.pointerType) {
     case "touch":
@@ -502,9 +511,9 @@ export function _setModalAreaClass(cls: { lock(): void; unlock(): void }): void 
 
 export function pushPointerModal(
   obj: Record<string, unknown>,
-  elem: Element,
-  pointerId: number,
-  autoStopPropagation: boolean = true
+  elem?: Element,
+  pointerId?: number,
+  autoStopPropagation = true
 ): ModalState {
   return pushModalLight(obj, autoStopPropagation, elem, pointerId);
 }
@@ -592,7 +601,7 @@ export function pushModalLight(
   function make_default_touchhandler(type: string, _state: ModalState): EventHandler {
     return function (e: Event): void {
       if (cconst.DEBUG.domEvents) {
-        pathDebugEvent(e as unknown as Record<string, unknown>);
+        pathDebugEvent(e);
       }
 
       if (touchmap[type] in ret.handlers) {
@@ -642,7 +651,7 @@ export function pushModalLight(
   function make_handler(_type: string, key: string | undefined): EventHandler {
     return function (e: Event): void {
       if (cconst.DEBUG.domEvents) {
-        pathDebugEvent(e as unknown as Record<string, unknown>);
+        pathDebugEvent(e);
       }
 
       if (typeof key !== "string") {

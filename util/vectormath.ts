@@ -196,7 +196,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
-    slice = parent.prototype.slice;
+    slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
@@ -556,7 +556,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
-    slice = parent.prototype.slice;
+    slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
@@ -988,7 +988,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
-    slice = parent.prototype.slice;
+    slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `

@@ -1014,7 +1014,7 @@ export class ToolOp<
   }
 
   /**returns promise to be executed on modalEnd*/
-  modalStart(ctx: unknown): Promise<unknown> {
+  modalStart(ctx: ModalContextCls): Promise<unknown> {
     if (this.modalRunning) {
       console.warn("Warning, tool is already in modal mode consuming events");
       return this._promise!;

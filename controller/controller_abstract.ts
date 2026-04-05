@@ -1,14 +1,15 @@
-import { ToolOp } from "../toolsys/toolsys.js";
+import { ToolOp, type ToolStack } from "../toolsys/toolsys.js";
 import { print_stack } from "../util/util.js";
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
 import { ToolProperty } from "../toolsys/toolprop.js";
-import { DataPathError, isVecProperty, ListIface } from "./controller_base.js";
+import { DataPath, DataPathError, isVecProperty, ListIface } from "./controller_base.js";
+import type { DataAPI, DataStruct } from "./controller.js";
 
 /**
  * Resolved property from a data path, covering fields available
  * on ToolProperty subclasses (EnumProperty, FlagProperty, VecProperty, etc.)
  */
-interface ResolvedProp extends ToolProperty {
+export interface ResolvedProp extends ToolProperty {
   flag: number;
   type: number;
   dataref: unknown;
@@ -20,27 +21,25 @@ interface ResolvedProp extends ToolProperty {
   range: [number, number] | undefined;
 }
 
+export interface ContextLike<AppState = any, TS extends ToolStack = ToolStack> {
+  state: AppState
+  api: DataAPI<this>
+  toolstack: TS
+}
+
 /**
  * Result of resolvePath().
  */
 export interface ResolvePathResult {
-  obj: Record<string | number, unknown>;
-  parent: unknown;
+  dpath: DataPath;
+  parent: any;
+  obj: any;
+  value: any;
   key: string;
-  subkey: string | undefined;
-  value: unknown;
-  prop: ResolvedProp | undefined;
-  struct: unknown;
-  mass_set: string | undefined;
-}
-
-/** Minimal context interface used by ModelInterface methods */
-interface ContextLike {
-  toolstack: {
-    execOrRedo(ctx: ContextLike, toolop: ToolOp, compareInputs: boolean): unknown;
-    execTool(ctx: ContextLike, tool: ToolOp, event?: Event): void;
-  };
-  [key: string]: unknown;
+  dstruct: DataStruct;
+  prop?: ResolvedProp;
+  subkey?: string;
+  mass_set?: string
 }
 
 /** Tool definition result */
@@ -180,7 +179,7 @@ export class ModelInterface {
     return undefined;
   }
 
-  setValue(ctx: ContextLike, path: string, val: unknown, rootStruct?: unknown): void {
+  setValue<T = unknown>(ctx: ContextLike, path: string, val: T, rootStruct?: unknown): void {
     let res = this.resolvePath(ctx, path, undefined, rootStruct)!;
     let prop = res.prop;
 

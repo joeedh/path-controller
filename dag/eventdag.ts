@@ -17,7 +17,7 @@ export const SocketTypes = {
   OUTPUT: "outputs" as const,
 };
 
-type SocketType = "inputs" | "outputs";
+export type SocketType = "inputs" | "outputs";
 
 export interface SocketDef {
   typeName: string;
@@ -149,7 +149,7 @@ const NodeClasses: (new (...args: unknown[]) => NodeCapable)[] = [];
 
 //Interface
 export class NodeCapable {
-  graphNode: EventNode | undefined = undefined;
+  graphNode?: EventNode;
 
   static graphNodeDef: GraphNodeDef = {
     typeName: "",
@@ -507,9 +507,9 @@ export const PropSocketModes = {
   MAX    : 2,
 };
 
-type PropertyCallback = (newval: unknown, oldval: unknown) => unknown;
+type PropertyCallback<T = any> = (newval: T, oldval?: T) => T;
 
-export class PropertySocket extends EventSocket {
+export class PropertySocket<T = any> extends EventSocket {
   static socketDef: SocketDef = {
     typeName: "property_socket",
     uiName  : "Property Socket",
@@ -518,15 +518,15 @@ export class PropertySocket extends EventSocket {
 
   mixMode: number = PropSocketModes.REPLACE;
 
-  #binding: { obj: Record<string, unknown> | null; key: string } = {
+  #binding: { obj: any; key: string } = {
     obj: null,
     key: "",
   };
 
-  #callbacks: PropertyCallback[] = []; //(newval, oldval) => val
+  #callbacks: PropertyCallback<T>[] = []; //(newval, oldval) => val
   #invert: boolean = false; //Invert bool or number properties
 
-  oldValue: unknown = undefined;
+  oldValue?: T = undefined;
 
   mode(mixmode: number): this {
     this.mixMode = mixmode;
@@ -553,12 +553,12 @@ export class PropertySocket extends EventSocket {
     return this;
   }
 
-  get value(): unknown {
+  get value(): T | undefined {
     let bind = this.#binding;
     return bind.obj ? bind.obj[bind.key] : undefined;
   }
 
-  set value(v: unknown) {
+  set value(v: T) {
     let old = this.value;
     if (this.#callbacks.length > 0) {
       for (let cb of this.#callbacks) {
@@ -567,11 +567,11 @@ export class PropertySocket extends EventSocket {
     }
 
     if (this.#invert && (typeof v === "number" || typeof v === "boolean" || typeof v === "undefined")) {
-      v = !v;
+      v = !v as unknown as T;
     } else if (this.#invert && typeof v === "string") {
       let s = v.toLowerCase().trim();
       if (s in strBoolMap) {
-        v = strBoolMap[s];
+        v = strBoolMap[s] as unknown as T;
       }
     }
 
@@ -583,7 +583,7 @@ export class PropertySocket extends EventSocket {
     }
   }
 
-  bind(obj: Record<string, unknown>, key: string): this {
+  bind(obj: any, key: string): this {
     this.#binding.obj = obj;
     this.#binding.key = key;
 

@@ -54,7 +54,6 @@ import * as util from "../util/util.js";
 import { DataPath, DataFlags, DataTypes, DataPathError, getTempProp } from "./controller_base.js";
 
 export * from "./controller_base.js";
-
 let PUTLParseError = parseutil.PUTLParseError;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -102,7 +101,7 @@ parserStack.cur = 0;
 
 import { setImplementationClass, isVecProperty, ListIface } from "./controller_base.js";
 import { initToolPaths, parseToolPath } from "../toolsys/toolpath.js";
-import { ModelInterface } from "./controller_abstract.js";
+import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract.js";
 
 export { DataPathError, DataFlags } from "./controller_base.js";
 
@@ -648,7 +647,7 @@ let DummyIntProperty = new IntProperty();
 const CLS_API_KEY = Symbol("dp_map_id");
 const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
 
-export class DataAPI extends ModelInterface {
+export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   constructor() {
     super();
 
@@ -777,13 +776,13 @@ export class DataAPI extends ModelInterface {
 
 
   * */
-  massSetProp(ctx, massSetPath, value) {
+  massSetProp<T = unknown>(ctx: CTX, massSetPath: string, value: T) {
     for (let path of this.resolveMassSetPaths(ctx, massSetPath)) {
       this.setValue(ctx, path, value);
     }
   }
 
-  resolveMassSetPaths(ctx, massSetPath) {
+  resolveMassSetPaths(ctx: CTX, massSetPath) {
     if (massSetPath.startsWith("/")) {
       massSetPath = massSetPath.slice(1, massSetPath.length);
     }
@@ -869,7 +868,7 @@ export class DataAPI extends ModelInterface {
     return paths;
   }
 
-  resolvePath(ctx, inpath, ignoreExistence = false, dstruct = undefined) {
+  resolvePath(ctx: CTX, inpath: string, ignoreExistence = false, dstruct = undefined): ResolvePathResult | undefined {
     let parser = parserStack[parserStack.cur++];
     let ret = undefined;
 
@@ -934,7 +933,13 @@ export class DataAPI extends ModelInterface {
    @param ignoreExistence: don't try to get actual data associated with path,
     just want meta information
    */
-  resolvePath_intern(ctx, inpath, ignoreExistence = false, p = pathParser, dstruct = undefined) {
+  resolvePath_intern(
+    ctx,
+    inpath,
+    ignoreExistence = false,
+    p = pathParser,
+    dstruct = undefined
+  ): ResolvePathResult | undefined {
     inpath = inpath.replace("==", "=");
 
     p.input(inpath);
@@ -1515,6 +1520,7 @@ export function initSimpleController() {
 
 import { DataPathSetOp } from "./controller_ops.js";
 import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
+import { IControllerContextBase } from "./context.js";
 
 let dpt = DataPathSetOp;
 

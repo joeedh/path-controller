@@ -1620,7 +1620,11 @@ export class HashDigest {
     return this.hash;
   }
 
-  add(v: number | string | number[]): this {
+  add(v: number | string | number[] | boolean): this {
+    if (typeof v === "boolean") {
+      this.add(v ? 1 : 0);
+      return this
+    }
     if (typeof v === "string") {
       v = strhash(v);
     }

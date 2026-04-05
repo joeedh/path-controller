@@ -1032,7 +1032,7 @@ ${unroll("    $$: number;")}
     // @ts-expect-error
     length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
-    slice = parent.prototype.slice;
+    slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, \`

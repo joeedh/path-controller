@@ -5,6 +5,8 @@
 import * as util from "../util/util.js";
 
 import cconst from "../config/config.js";
+import type { DataAPI } from "./controller";
+import { ToolStack } from "../controller.js";
 
 declare global {
   interface SymbolConstructor {

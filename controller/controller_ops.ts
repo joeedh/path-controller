@@ -18,6 +18,7 @@ import {
 
 import * as util from "../util/util.js";
 import { isVecProperty, getVecClass } from "./controller_base.js";
+import { IControllerContextBase } from "./context.js";
 
 type DataPathSetInputs = {
   dataPath: StringProperty;
@@ -30,12 +31,12 @@ type DataPathSetInputs = {
   [k: string]: ToolProperty;
 };
 
-export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
+export class DataPathSetOp<CTX extends IControllerContextBase = IControllerContextBase> extends ToolOp<DataPathSetInputs, {}, CTX> {
   propType: number;
   _undo: Record<string, unknown> | undefined;
   hadError: boolean;
   id: unknown;
-  __ctx: { api: Record<string, Function>; toolstack: unknown; toLocked(): unknown } | undefined;
+  __ctx?: CTX
 
   constructor() {
     super();
@@ -45,12 +46,12 @@ export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
     this.hadError = false;
   }
 
-  setValue(ctx: Record<string, unknown>, val: unknown, object: unknown): void {
+  setValue(ctx: CTX, val: unknown, object: unknown): void {
     let prop = this.inputs.prop as unknown as Record<string, unknown>;
     let path = this.inputs.dataPath.getValue() as string;
 
     if ((prop.type as number) & (PropTypes.ENUM | PropTypes.FLAG)) {
-      let rdef = (ctx.api as Record<string, Function>).resolvePath(ctx, path) as Record<string, unknown>;
+      let rdef = ctx.api.resolvePath(ctx, path) as Record<string, unknown>;
       if (rdef.subkey !== undefined) {
         let subkey: unknown = rdef.subkey;
         if (typeof subkey === "string") {
@@ -75,14 +76,14 @@ export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
     }
   }
 
-  static create(
-    ctx: Record<string, unknown>,
+  static create<CTX extends IControllerContextBase>(
+    ctx: CTX,
     datapath: string,
     value: unknown,
     id: unknown,
     massSetPath?: string
-  ): DataPathSetOp | undefined {
-    let rdef = (ctx.api as Record<string, Function>).resolvePath(ctx, datapath) as Record<string, unknown> | undefined;
+  ): DataPathSetOp<CTX> | undefined {
+    let rdef = ctx.api.resolvePath(ctx, datapath)
 
     if (rdef === undefined || rdef.prop === undefined) {
       console.warn("DataPathSetOp failed", rdef, rdef?.prop);
@@ -138,7 +139,7 @@ export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
       if ((prop.type as number) === PropTypes.ENUM) {
         value = subkey;
       } else if ((prop.type as number) === PropTypes.FLAG) {
-        let value2 = (ctx.api as Record<string, Function>).getValue(ctx, datapath) as unknown;
+        let value2 = ctx.api.getValue(ctx, datapath) as unknown;
 
         if (typeof value2 !== "number") {
           value2 = typeof value2 === "boolean" ? (value as number) & 1 : 0;
@@ -189,12 +190,12 @@ export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
     );
   }
 
-  undoPre(ctx: Record<string, unknown>): void {
+  undoPre(ctx: CTX): void {
     if (this.inputs.fullSaveUndo.getValue()) {
       return super.undoPre(ctx);
     }
 
-    if (this.__ctx) ctx = this.__ctx as unknown as Record<string, unknown>;
+    if (this.__ctx) ctx = this.__ctx 
 
     this._undo = {};
 
@@ -317,15 +318,16 @@ export class DataPathSetOp extends ToolOp<DataPathSetInputs> {
     }
   }
 
-  // @ts-expect-error ctx type is narrower than base class expectation
-  modalStart(ctx: Record<string, unknown>): void {
+  modalStart(ctx: CTX) {
+    super.modalStart
     this.__ctx = (ctx as { toLocked(): unknown }).toLocked() as typeof this.__ctx;
 
     //save full, modal ctx
-    super.modalStart(this.__ctx);
+    const result = super.modalStart(this.__ctx!);
 
     this.exec(this.__ctx as unknown as Record<string, unknown>);
     this.modalEnd(false);
+    return result
   }
 
   static tooldef() {
