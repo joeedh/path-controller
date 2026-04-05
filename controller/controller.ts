@@ -364,16 +364,16 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     type VecList = number[][];
     type Vec = number[];
     let ret = this.list<VecList, number, Vec>(path, apiname, {
-      getIter(api, list) {
+      getIter(api: DataAPI, list: VecList) {
         return list[Symbol.iterator]();
       },
-      getLength(api, list) {
+      getLength(api: DataAPI, list: VecList) {
         return list.length;
       },
-      get(api, list, key) {
+      get(api: DataAPI, list: VecList, key: number) {
         return list[key];
       },
-      set(api, list, key, val) {
+      set(api: DataAPI, list: VecList, key: number, val: Vec) {
         if (typeof key == "string") {
           key = parseInt(key);
         }
@@ -384,10 +384,10 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
 
         list[key] = val;
       },
-      getKey(api, list, obj) {
-        return list.indexOf(obj);
+      getKey(api: DataAPI, list: VecList, value: Vec) {
+        return list.indexOf(value);
       },
-      getStruct(api, list, key) {
+      getStruct(api: DataAPI, list: VecList, key: number) {
         return pstruct;
       },
     });
@@ -546,7 +546,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
 
   add(dpath: DataPath) {
     if (dpath.apiname in this.pathmap) {
-      if (window.DEBUG.datapaths) {
+      if (window.DEBUG?.datapaths) {
         console.warn("Overriding existing member '" + dpath.apiname + "' in datapath struct", this.name);
       }
 

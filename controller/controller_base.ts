@@ -8,10 +8,8 @@ import type { DataAPI, DataStruct } from "./controller.js";
 import type { ContextLike, ModelInterface } from "./controller_abstract.js";
 
 declare global {
-  interface Window {
-    DEBUG: {
-      datapaths?: boolean;
-    };
+  interface PathUXDebug {
+    datapaths?: boolean;
   }
 }
 

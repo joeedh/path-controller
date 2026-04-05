@@ -76,6 +76,8 @@ import { PropFlags, PropTypes } from "./toolprop.js";
 import { DataPath } from "../controller/controller_base.js";
 import * as util from "../util/util.js";
 import { Context } from "../controller/context.js";
+import { ContextLike } from "../controller.js";
+import { StructReader } from "../util/nstructjs.js";
 
 // Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
 
@@ -159,7 +161,6 @@ export type SlotType<slot extends ToolProperty<unknown>> = slot extends ToolProp
 /* ------------------------------------------------------------------ */
 
 export let ToolClasses: ToolOpConstructor[] = [];
-(window as Window)._ToolClasses = ToolClasses;
 
 export function setContextClass(_cls: unknown): void {
   console.warn("setContextClass is deprecated");
@@ -1197,10 +1198,9 @@ toolsys.MacroLink {
   destProps      : string;
 }
 `;
-nstructjs.register(MacroLink as unknown as import("../util/nstructjs_es6.js").StructableClass);
+nstructjs.register(MacroLink);
 
 export const MacroClasses: Record<string, MacroClassType> = {};
-(window as Window)._MacroClasses = MacroClasses;
 
 let macroidgen: number = 0;
 
@@ -1615,20 +1615,25 @@ nstructjs.register(ToolMacro as unknown as import("../util/nstructjs_es6.js").St
 /*  ToolStack                                                         */
 /* ------------------------------------------------------------------ */
 
-export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> extends Array<ToolOp> {
+// avoid loop in type systme
+type TSContext = Omit<ContextLike, "toolstack">;
+
+// we can't ContextLike due to cyclic dependency
+// created with the TS default in ContextLike itself
+export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalContextCls = ContextCls> extends Array<ToolOp> {
   static STRUCT: string;
 
   memLimit!: number;
   enforceMemLimit!: boolean;
   cur!: number;
-  ctx: unknown;
+  ctx: ContextCls;
   modalRunning!: number;
   modal_running!: boolean;
-  toolctx: unknown;
+  toolctx?: ContextCls;
   _undo_branch: ToolOp[] | undefined;
   _stack!: ToolOp[];
 
-  constructor(ctx?: unknown) {
+  constructor(ctx: ContextCls) {
     super();
 
     this.memLimit = 512 * 1024 * 1024;
@@ -1646,7 +1651,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     return this[this.cur];
   }
 
-  limitMemory(maxmem: number = this.memLimit, ctx: unknown = this.ctx): number {
+  limitMemory(maxmem: number = this.memLimit, ctx = this.ctx): number {
     if (maxmem === undefined) {
       throw new Error("maxmem cannot be undefined");
     }
@@ -1678,7 +1683,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     return this.calcMemSize(ctx);
   }
 
-  calcMemSize(ctx: unknown = this.ctx): number {
+  calcMemSize(ctx: ContextCls = this.ctx): number {
     let tot = 0;
 
     for (let tool of this) {
@@ -1693,11 +1698,11 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     return tot;
   }
 
-  setRestrictedToolContext(ctx: unknown): void {
+  setRestrictedToolContext(ctx: ContextCls): void {
     this.toolctx = ctx;
   }
 
-  reset(ctx?: unknown): void {
+  reset(ctx?: ContextCls): void {
     if (ctx !== undefined) {
       this.ctx = ctx;
     }
@@ -1714,7 +1719,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
    *
    * @param compareInputs : check if toolstack head has identical input values, defaults to false
    * */
-  execOrRedo(ctx: unknown, tool: ToolOp, compareInputs: boolean = false): boolean {
+  execOrRedo(ctx: ContextCls, tool: ToolOp, compareInputs: boolean = false): boolean {
     let head = this.head;
 
     let ok = compareInputs ? ToolOp.Equals(head, tool) : !!head && head.constructor === tool.constructor;
@@ -1740,7 +1745,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     }
   }
 
-  execTool(ctx: unknown, toolop: ToolOp, event?: PointerEvent): void {
+  execTool(ctx: ContextCls, toolop: ToolOp, event?: PointerEvent): void {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx);
     }
@@ -1750,7 +1755,10 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
       return;
     }
 
-    let tctx = (ctx as Record<string, Function>).toLocked();
+    if (!("toLocked" in ctx)) {
+      console.warn("warning: context does not support locking, could lead to undo errors");
+    }
+    let tctx = ctx.toLocked ? ctx.toLocked() : ctx;
 
     let undoflag = (toolop.constructor as unknown as ToolOpConstructor).tooldef().undoflag;
     if (toolop.undoflag !== undefined) {
@@ -1803,7 +1811,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     }
   }
 
-  toolCancel(ctx: unknown, tool: ToolOp): void {
+  toolCancel(ctx: ContextCls, tool: ToolOp): void {
     if (tool._was_redo) {
       //also set by toolstack.redo
       //ignore tool cancel requests on redo
@@ -1913,7 +1921,7 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
    onstep is a callback, if it returns a promise that promise will be
    waited on, otherwise execution is queue with window.setTimeout().
    */
-  replay(cb?: (ctx: unknown) => unknown, onStep?: () => unknown): Promise<unknown> {
+  replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown): Promise<unknown> {
     let cur = this.cur;
 
     this.rewind();
@@ -1960,8 +1968,8 @@ export class ToolStack<ContextCls = unknown, ModalContextCls = ContextCls> exten
     });
   }
 
-  loadSTRUCT(reader: (obj: Record<string, unknown>) => void): void {
-    reader(this as unknown as Record<string, unknown>);
+  loadSTRUCT(reader: StructReader<this>) {
+    reader(this);
 
     for (let item of this._stack) {
       this.push(item);
@@ -1997,9 +2005,10 @@ toolsys.ToolStack {
   _stack : array(abstract(toolsys.ToolOp)) | this._save();
 }
 `;
-nstructjs.register(ToolStack as unknown as import("../util/nstructjs_es6.js").StructableClass);
+nstructjs.register(ToolStack);
 
-(window as Window)._testToolStackIO = function (): ToolStack {
+/*
+(window as any)._testToolStackIO = function (): ToolStack {
   let data: number[] = [];
   let cls = ((window as Window)._appstate as Record<string, unknown>).toolstack!
     .constructor as unknown as import("../util/nstructjs_es6.js").StructableClass;
@@ -2020,6 +2029,7 @@ nstructjs.register(ToolStack as unknown as import("../util/nstructjs_es6.js").St
 
   return toolstack;
 };
+*/
 
 /* ------------------------------------------------------------------ */
 /*  API builders                                                      */
