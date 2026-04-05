@@ -1,8 +1,7 @@
-// @ts-nocheck -- TODO(ts-conversion): vector indexing with variable indices needs IndexRange pattern
 "use strict";
 
 import * as util from "./util.js";
-import { Vector3 } from "./vectormath.js";
+import { Number3, Vector3 } from "./vectormath.js";
 
 //'ni' is shorthand for 'nodeindex', a point into the typed array data structure
 
@@ -195,8 +194,8 @@ export class KDTree {
       let n = cachering.next() as KDNodeInfo;
 
       for (let i = 0; i < 3; i++) {
-        n.min[i] = data[ni + i];
-        n.max[i] = data[ni + 3 + i];
+        n.min[i as Number3] = data[ni + i];
+        n.max[i as Number3] = data[ni + 3 + i];
       }
 
       n.id = ni;
@@ -331,15 +330,15 @@ export class KDTree {
     let max2 = (_split_tmps.next() as InstanceType<typeof Vector3>).zero!();
 
     for (let i = 0; i < 3; i++) {
-      min1[i] = data[ni + i];
-      max1[i] = data[ni + NXMAX + i];
+      min1[i as Number3] = data[ni + i];
+      max1[i as Number3] = data[ni + NXMAX + i];
     }
 
     min2.load!(min1);
     max2.load!(max1);
 
-    max1[bestaxis] = bestsplit!;
-    min2[bestaxis] = bestsplit!;
+    max1[bestaxis as Number3] = bestsplit!;
+    min2[bestaxis as Number3] = bestsplit!;
 
     let c1 = this.newNode(min1, max1);
     let c2 = this.newNode(min2, max2);
@@ -404,7 +403,7 @@ export class KDTree {
               b = data[ni2 + i + 3];
 
             //console.log(a, b, p[i], r);
-            ok += p[i] + 2 * r >= a && p[i] - 2 * r <= b ? 1 : 0;
+            ok += p[i as Number3]! + 2 * r >= a && p[i as Number3]! - 2 * r <= b ? 1 : 0;
           }
 
           if (ok == 3) {
@@ -523,15 +522,15 @@ export class KDTree {
     let max = new Vector3(undefined as unknown as number[]);
 
     for (let i = 0; i < 3; i++) {
-      min[i] = this.data[this.root + i];
-      max[i] = this.data[this.root + 3 + i];
+      min[i as Number3] = this.data[this.root + i];
+      max[i as Number3] = this.data[this.root + 3 + i];
     }
 
     let root = new BalanceNode(min, max);
 
     this.iterAllPoints((p: KDPoint) => {
       for (let j = 0; j < 3; j++) {
-        root.push(p.co[j]);
+        root.push(p.co[j as Number3]!);
       }
 
       root.push(p.id!);
@@ -557,7 +556,7 @@ export class KDTree {
       let size = 0;
 
       for (let axis = 0; axis < 3; axis++) {
-        size = Math.max(size, node.max[axis] - node.min[axis]);
+        size = Math.max(size, node.max[axis as Number3]! - node.min[axis as Number3]!);
       }
 
       for (let axis = 0; axis < 3; axis++) {
@@ -586,7 +585,7 @@ export class KDTree {
         }
         fit = Math.abs(fit);
 
-        let aspect = (node.max[axis] - node.min[axis]) / size;
+        let aspect = (node.max[axis as Number3]! - node.min[axis as Number3]!) / size;
 
         if (aspect > 0 && aspect < 1) aspect = 1 / aspect;
 
@@ -615,11 +614,11 @@ export class KDTree {
       min.load!(node.min);
       max.load!(node.max);
 
-      max[bestaxis!] = bestpos!;
+      max[bestaxis! as Number3] = bestpos!;
       let n1 = new BalanceNode(min, max);
 
       max.load!(node.max);
-      min[bestaxis!] = bestpos!;
+      min[bestaxis! as Number3] = bestpos!;
       let n2 = new BalanceNode(min, max);
 
       for (let i = 0; i < node.length; i += 4) {

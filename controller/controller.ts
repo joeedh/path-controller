@@ -1,6 +1,3 @@
-// @ts-nocheck — This file is in the process of being fully typed.
-// The DataAPI system uses highly dynamic path resolution with eval() and
-// runtime property lookups. Full strict typing requires a separate pass.
 /**
 
  This is the main datapath controller module, inspired by Blender's RNA system.
@@ -51,30 +48,45 @@ import { ToolOp } from "../toolsys/toolsys.js";
 import { PropTypes, PropFlags } from "../toolsys/toolprop.js";
 import * as util from "../util/util.js";
 
-import { DataPath, DataFlags, DataTypes, DataPathError, getTempProp } from "./controller_base.js";
+import {
+  DataPath,
+  DataFlags,
+  DataTypes,
+  DataPathError,
+  getTempProp,
+  ListIFace,
+  ListFuncs,
+  DataList,
+  DataPathToolProperty,
+} from "./controller_base.js";
+
+declare global {
+  interface SymbolConstructor {
+    ToolID: symbol;
+  }
+}
 
 export * from "./controller_base.js";
 let PUTLParseError = parseutil.PUTLParseError;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type AnyRec = Record<string, any>;
+import type { TokFunc } from "../util/parseutil.js";
 
-let tk = (name: string, re: RegExp, func?: (t: AnyRec) => AnyRec | undefined) => new parseutil.tokdef(name, re, func);
+let tk = (name: string, re: RegExp, func?: TokFunc) => new parseutil.tokdef(name, re, func);
 let tokens = [
   tk("ID", /[a-zA-Z_$]+[a-zA-Z_$0-9]*/),
-  tk("NUM", /-?[0-9]+/, (t: AnyRec) => {
-    t.value = parseInt(t.value);
+  tk("NUM", /-?[0-9]+/, (t) => {
+    t.value = "" + parseInt(t.value);
     return t;
   }),
-  tk("NUMBER", /-?[0-9]+\.[0-9]*/, (t: AnyRec) => {
-    t.value = parseFloat(t.value);
+  tk("NUMBER", /-?[0-9]+\.[0-9]*/, (t) => {
+    t.value = "" + parseFloat(t.value);
     return t;
   }),
-  tk("STRLIT", /'.*?'/, (t: AnyRec) => {
+  tk("STRLIT", /'.*?'/, (t) => {
     t.value = t.value.slice(1, t.value.length - 1);
     return t;
   }),
-  tk("STRLIT", /".*?"/, (t: AnyRec) => {
+  tk("STRLIT", /".*?"/, (t) => {
     t.value = t.value.slice(1, t.value.length - 1);
     return t;
   }),
@@ -83,7 +95,7 @@ let tokens = [
   tk("LSBRACKET", /\[/),
   tk("RSBRACKET", /\]/),
   tk("AND", /\&/),
-  tk("WS", /[ \t\n\r]+/, (_t: AnyRec) => undefined), //drop token
+  tk("WS", /[ \t\n\r]+/, () => undefined), //drop token
 ];
 
 let lexer = new parseutil.lexer(tokens, (t) => {
@@ -93,15 +105,15 @@ let lexer = new parseutil.lexer(tokens, (t) => {
 
 export let pathParser = new parseutil.parser(lexer);
 
-let parserStack = new Array(32);
+let parserStack = new Array<parseutil.parser>(32);
 for (let i = 0; i < parserStack.length; i++) {
   parserStack[i] = pathParser.copy();
 }
-parserStack.cur = 0;
+let parserStackCur = 0;
 
-import { setImplementationClass, isVecProperty, ListIface } from "./controller_base.js";
+import { setImplementationClass, isVecProperty } from "./controller_base.js";
 import { initToolPaths, parseToolPath } from "../toolsys/toolpath.js";
-import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract.js";
+import { ContextLike, ModelInterface, ResolvedProp, ResolvePathResult } from "./controller_abstract.js";
 
 export { DataPathError, DataFlags } from "./controller_base.js";
 
@@ -113,21 +125,24 @@ let tool_classes = ToolClasses;
 let tool_idgen = 1;
 Symbol.ToolID = Symbol("toolid");
 
-function toolkey(cls) {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type AnyClass = Record<string | symbol, any>;
+
+function toolkey(cls: AnyClass): number {
   if (!(Symbol.ToolID in cls)) {
     cls[Symbol.ToolID] = tool_idgen++;
   }
 
-  return cls[Symbol.ToolID];
+  return cls[Symbol.ToolID] as number;
 }
 
 let lt = util.time_ms();
-let lastmsg = undefined;
+let lastmsg: string | undefined = undefined;
 let lcount = 0;
 
 let reportstack = ["api"];
 
-export function pushReportName(name) {
+export function pushReportName(name: string): void {
   if (reportstack.length > 1024) {
     console.trace("eerk, reportstack overflowed");
     reportstack.length = 0;
@@ -137,7 +152,7 @@ export function pushReportName(name) {
   reportstack.push(name);
 }
 
-function report(msg) {
+function report(msg: string): void {
   let name = reportstack.length === 0 ? "api" : reportstack[reportstack.length - 1];
 
   util.console.context(name).warn(msg);
@@ -147,120 +162,15 @@ export function popReportName() {
   reportstack.pop();
 }
 
-export class DataList extends ListIface {
-  constructor(callbacks) {
-    super();
+export class DataStruct<CTX extends ContextLike = ContextLike> {
+  members: DataPath[];
+  name: string;
+  pathmap: Record<string, DataPath>;
+  flag: number;
+  dpath: DataPath | undefined;
+  inheritFlag: number;
 
-    if (callbacks === undefined) {
-      throw new DataPathError("missing callbacks argument to DataList");
-    }
-
-    this.cb = {};
-
-    if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
-      for (let k in callbacks) {
-        this.cb[k] = callbacks[k];
-      }
-    } else {
-      for (let cb of callbacks) {
-        this.cb[cb.name] = cb;
-      }
-    }
-
-    let check = (key) => {
-      if (!(key in this.cbs)) {
-        throw new DataPathError(`Missing ${key} callback in DataList`);
-      }
-    };
-  }
-
-  /**
-   Generic list API.
-
-   * Callbacks is an array of name functions, like so:
-   - function getStruct(api, list, key) //return DataStruct type of object in key, key is optional if omitted return base type of all objects?
-   - function get(api, list, key)
-   - function set(api, list, key, val) //this one has default behavior: list[key] = val
-   - function getLength(api, list)
-   - function getActive(api, list)
-   - function setActive(api, list, key)
-   - function getIter(api, list)
-   - function getKey(api, list, object) returns object's key in this list, either a string or a number
-   * */
-
-  copy() {
-    let ret = new DataList([this.cb.get]);
-
-    for (let k in this.cb) {
-      ret.cb[k] = this.cb[k];
-    }
-
-    return ret;
-  }
-
-  get(api, list, key) {
-    return this.cb.get(api, list, key);
-  }
-
-  getLength(api, list) {
-    this._check("getLength");
-    return this.cb.getLength(api, list);
-  }
-
-  _check(cb) {
-    if (!(cb in this.cb)) {
-      throw new DataPathError(cb + " not supported by this list");
-    }
-  }
-
-  set(api, list, key, val) {
-    if (this.cb.set === undefined) {
-      list[key] = val;
-    } else {
-      this.cb.set(api, list, key, val);
-    }
-  }
-
-  getIter(api, list) {
-    this._check("getIter");
-    return this.cb.getIter(api, list);
-  }
-
-  filter(api, list, bitmask) {
-    this._check("filter");
-    return this.cb.filter(api, list, bitmask);
-  }
-
-  getActive(api, list) {
-    this._check("getActive");
-    return this.cb.getActive(api, list);
-  }
-
-  setActive(api, list, key) {
-    this._check("setActive");
-    this.cb.setActive(api, list, key);
-  }
-
-  getKey(api, list, obj) {
-    this._check("getKey");
-    return this.cb.getKey(api, list, obj);
-  }
-
-  getStruct(api, list, key) {
-    if (this.cb.getStruct !== undefined) {
-      return this.cb.getStruct(api, list, key);
-    }
-
-    let obj = this.get(api, list, key);
-
-    if (obj === undefined) return undefined;
-
-    return api.getStruct(obj.constructor);
-  }
-}
-
-export class DataStruct {
-  constructor(members = [], name = "unnamed") {
+  constructor(members: DataPath[] | undefined = [], name = "unnamed") {
     this.members = [];
     this.name = name;
     this.pathmap = {};
@@ -269,19 +179,19 @@ export class DataStruct {
 
     this.inheritFlag = 0;
 
-    for (let m of members) {
+    for (let m of members ?? []) {
       this.add(m);
     }
   }
 
-  clear() {
+  clear(): this {
     this.pathmap = {};
     this.members = [];
 
     return this;
   }
 
-  copy() {
+  copy(): DataStruct {
     let ret = new DataStruct();
 
     ret.name = this.name;
@@ -295,7 +205,7 @@ export class DataStruct {
       //direct properties
 
       if (m2.type === DataTypes.PROP) {
-        m2.data = m2.data.copy();
+        m2.data = (m2.data as ToolProperty).copy() as unknown as typeof m2.data;
       }
 
       ret.add(m2);
@@ -315,10 +225,10 @@ export class DataStruct {
    * @param default_struct : default struct if one can't be looked up
    * @returns {*}
    */
-  dynamicStruct(path, apiname, uiname, default_struct = undefined) {
+  dynamicStruct(path: string, apiname: string, uiname: string, default_struct?: DataStruct): DataStruct {
     let ret = default_struct ? default_struct : new DataStruct();
 
-    let dpath = new DataPath(path, apiname, ret, DataTypes.DYNAMIC_STRUCT);
+    let dpath = new DataPath(path, apiname, ret as unknown as ToolProperty, DataTypes.DYNAMIC_STRUCT);
     ret.inheritFlag |= this.inheritFlag;
 
     ret.dpath = dpath;
@@ -327,10 +237,10 @@ export class DataStruct {
     return ret;
   }
 
-  struct(path, apiname, uiname, existing_struct = undefined) {
+  struct(path: string, apiname: string, uiname: string, existing_struct?: DataStruct): DataStruct {
     let ret = existing_struct ? existing_struct : new DataStruct();
 
-    let dpath = new DataPath(path, apiname, ret, DataTypes.STRUCT);
+    let dpath = new DataPath(path, apiname, ret as unknown as ToolProperty, DataTypes.STRUCT);
     ret.inheritFlag |= this.inheritFlag;
 
     ret.dpath = dpath;
@@ -339,22 +249,22 @@ export class DataStruct {
     return ret;
   }
 
-  customGet(getter) {
-    this.dpath.customGet(getter);
+  customGet(getter: (this: ToolProperty) => unknown): this {
+    this.dpath!.customGet(getter);
 
     return this;
   }
 
-  customGetSet(getter, setter) {
-    this.dpath.customGetSet(getter, setter);
+  customGetSet(getter: (this: ToolProperty) => unknown, setter: (this: ToolProperty, val: unknown) => void): this {
+    this.dpath!.customGetSet(getter, setter);
 
     return this;
   }
 
-  color3(path, apiname, uiname, description) {
+  color3(path: string, apiname: string, uiname: string, description: string): DataPath {
     let ret = this.vec3(path, apiname, uiname, description);
 
-    ret.data.subtype = toolprop.PropSubTypes.COLOR;
+    (ret.data as ToolProperty).subtype = toolprop.PropSubTypes.COLOR;
     ret.range(0, 1);
     ret.simpleSlider();
 
@@ -363,10 +273,10 @@ export class DataStruct {
     return ret;
   }
 
-  color4(path, apiname, uiname, description = uiname) {
+  color4(path: string, apiname: string, uiname: string, description = uiname): DataPath {
     let ret = this.vec4(path, apiname, uiname, description);
 
-    ret.data.subtype = toolprop.PropSubTypes.COLOR;
+    (ret.data as ToolProperty).subtype = toolprop.PropSubTypes.COLOR;
     ret.range(0, 1);
     ret.simpleSlider();
 
@@ -375,18 +285,24 @@ export class DataStruct {
     return ret;
   }
 
-  arrayList(path, apiname, structdef, uiname, description) {
-    let ret = this.list(path, apiname, [
-      function getIter(api, list) {
+  arrayList<T extends number = number>(
+    path: string,
+    apiname: string,
+    structdef: DataStruct,
+    uiname: string,
+    description: string
+  ): DataPath {
+    let ret = this.list<number[], number, number>(path, apiname, {
+      getIter(api: DataAPI, list: T[]) {
         return list[Symbol.iterator]();
       },
-      function getLength(api, list) {
+      getLength(api: DataAPI, list: T[]) {
         return list.length;
       },
-      function get(api, list, key) {
+      get(api: DataAPI, list: T[], key: number) {
         return list[key];
       },
-      function set(api, list, key, val) {
+      set(api: DataAPI, list: T[], key: number, val: T) {
         if (typeof key === "string") {
           key = parseInt(key);
         }
@@ -397,26 +313,33 @@ export class DataStruct {
 
         list[key] = val;
       },
-      function getKey(api, list, obj) {
-        return list.indexOf(obj);
+      getKey(api: DataAPI, list: T[], value: T) {
+        return list.indexOf(value);
       },
-      function getStruct(api, list, key) {
+      getStruct(api: DataAPI, list: T[], key: string | number) {
         return structdef;
       },
-    ]);
+    });
 
     return ret;
   }
 
-  color3List(path, apiname, uiname, description) {
+  color3List(path: string, apiname: string, uiname: string, description: string): DataPath {
     return this.vectorList(3, path, apiname, uiname, description, toolprop.PropSubTypes.COLOR);
   }
 
-  color4List(path, apiname, uiname, description) {
+  color4List(path: string, apiname: string, uiname: string, description: string): DataPath {
     return this.vectorList(4, path, apiname, uiname, description, toolprop.PropSubTypes.COLOR);
   }
 
-  vectorList(size, path, apiname, uiname, description, subtype) {
+  vectorList(
+    size: number,
+    path: string,
+    apiname: string,
+    uiname: string,
+    description: string,
+    subtype: number
+  ): DataPath {
     let type;
 
     switch (size) {
@@ -438,17 +361,19 @@ export class DataStruct {
     let pstruct = new DataStruct(undefined, "Vector");
     pstruct.vec3("", "co", "Coords", "Coordinates");
 
-    let ret = this.list(path, apiname, [
-      function getIter(api, list) {
+    type VecList = number[][];
+    type Vec = number[];
+    let ret = this.list<VecList, number, Vec>(path, apiname, {
+      getIter(api, list) {
         return list[Symbol.iterator]();
       },
-      function getLength(api, list) {
+      getLength(api, list) {
         return list.length;
       },
-      function get(api, list, key) {
+      get(api, list, key) {
         return list[key];
       },
-      function set(api, list, key, val) {
+      set(api, list, key, val) {
         if (typeof key == "string") {
           key = parseInt(key);
         }
@@ -459,18 +384,18 @@ export class DataStruct {
 
         list[key] = val;
       },
-      function getKey(api, list, obj) {
+      getKey(api, list, obj) {
         return list.indexOf(obj);
       },
-      function getStruct(api, list, key) {
+      getStruct(api, list, key) {
         return pstruct;
       },
-    ]);
+    });
 
     return ret;
   }
 
-  bool(path, apiname, uiname, description) {
+  bool(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.BoolProperty(undefined, apiname, uiname, description);
 
     let dpath = new DataPath(path, apiname, prop);
@@ -478,7 +403,7 @@ export class DataStruct {
     return dpath;
   }
 
-  vec2(path, apiname, uiname, description) {
+  vec2(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.Vec2Property(undefined, apiname, uiname, description);
 
     let dpath = new DataPath(path, apiname, prop);
@@ -486,7 +411,7 @@ export class DataStruct {
     return dpath;
   }
 
-  vec3(path, apiname, uiname, description) {
+  vec3(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.Vec3Property(undefined, apiname, uiname, description);
     //prop.uiname = uiname;
 
@@ -495,7 +420,7 @@ export class DataStruct {
     return dpath;
   }
 
-  vec4(path, apiname, uiname, description) {
+  vec4(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.Vec4Property(undefined, apiname, uiname, description);
     //prop.uiname = uiname;
 
@@ -504,7 +429,7 @@ export class DataStruct {
     return dpath;
   }
 
-  float(path, apiname, uiname, description) {
+  float(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.FloatProperty(0, apiname, uiname, description);
 
     let dpath = new DataPath(path, apiname, prop);
@@ -512,7 +437,7 @@ export class DataStruct {
     return dpath;
   }
 
-  textblock(path, apiname, uiname, description) {
+  textblock(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.StringProperty(undefined, apiname, uiname, description);
     prop.multiLine = true;
 
@@ -521,7 +446,7 @@ export class DataStruct {
     return dpath;
   }
 
-  report(path, apiname, uiname, description) {
+  report(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.ReportProperty(undefined, apiname, uiname, description);
 
     let dpath = new DataPath(path, apiname, prop);
@@ -529,7 +454,7 @@ export class DataStruct {
     return dpath;
   }
 
-  string(path, apiname, uiname, description) {
+  string(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new toolprop.StringProperty(undefined, apiname, uiname, description);
 
     let dpath = new DataPath(path, apiname, prop);
@@ -537,7 +462,7 @@ export class DataStruct {
     return dpath;
   }
 
-  int(path, apiname, uiname, description, prop = undefined) {
+  int(path: string, apiname: string, uiname?: string, description?: string, prop?: IntProperty) {
     if (!prop) {
       prop = new toolprop.IntProperty(0, apiname, uiname, description);
     }
@@ -547,7 +472,7 @@ export class DataStruct {
     return dpath;
   }
 
-  curve1d(path, apiname, uiname, description) {
+  curve1d(path: string, apiname: string, uiname?: string, description?: string) {
     let prop = new Curve1DProperty(undefined);
 
     prop.apiname = apiname;
@@ -559,7 +484,7 @@ export class DataStruct {
     return dpath;
   }
 
-  enum(path, apiname, enumdef, uiname, description) {
+  enum(path: string, apiname: string, enumdef: any, uiname?: string, description?: string) {
     let prop;
 
     if (enumdef instanceof toolprop.EnumProperty) {
@@ -573,9 +498,12 @@ export class DataStruct {
     return dpath;
   }
 
-  list(path, apiname, funcs) {
-    let array = new DataList(funcs);
-
+  list<ListType = any, KeyType = any, ObjType = any>(
+    path: string,
+    apiname: string,
+    funcs: ListIFace<DataAPI, ListType, KeyType, ObjType, CTX> | ListFuncs<DataAPI, ListType, KeyType, ObjType, CTX>
+  ) {
+    let array = new DataList<DataAPI, ListType, KeyType, ObjType, CTX>(funcs);
     let dpath = new DataPath(path, apiname, array);
     dpath.type = DataTypes.ARRAY;
 
@@ -583,7 +511,7 @@ export class DataStruct {
     return dpath;
   }
 
-  flags(path, apiname, enumdef, uiname, description) {
+  flags(path: string, apiname: string, enumdef: any, uiname?: string, description?: string) {
     let prop;
 
     if (enumdef === undefined || !(enumdef instanceof toolprop.ToolProperty)) {
@@ -597,7 +525,7 @@ export class DataStruct {
     return dpath;
   }
 
-  remove(m) {
+  remove(m: string | DataPath) {
     if (typeof m === "string") {
       m = this.pathmap[m];
     }
@@ -610,36 +538,34 @@ export class DataStruct {
     this.members.remove(m);
   }
 
-  fromToolProp(path, prop, apiname = prop.apiname.length > 0 ? prop.apiname : path) {
+  fromToolProp(path: string, prop: ToolProperty, apiname = prop.apiname?.length ? prop.apiname : path) {
     let dpath = new DataPath(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
 
-  add(m) {
-    if (m.apiname in this.pathmap) {
+  add(dpath: DataPath) {
+    if (dpath.apiname in this.pathmap) {
       if (window.DEBUG.datapaths) {
-        console.warn("Overriding existing member '" + m.apiname + "' in datapath struct", this.name);
+        console.warn("Overriding existing member '" + dpath.apiname + "' in datapath struct", this.name);
       }
 
-      this.remove(this.pathmap[m.apiname]);
+      this.remove(this.pathmap[dpath.apiname]);
     }
 
-    m.flag |= this.inheritFlag;
+    dpath.flag |= this.inheritFlag;
 
-    this.members.push(m);
-    m.parent = this;
+    this.members.push(dpath);
+    dpath.parent = this;
 
-    this.pathmap[m.apiname] = m;
+    this.pathmap[dpath.apiname] = dpath;
 
     return this;
   }
 }
 
 let _map_struct_idgen = 1;
-let _map_structs = {};
-
-window._debug__map_structs = _map_structs; //global for debugging purposes only
+let _map_structs = {} as { [k: string]: DataStruct };
 
 let _dummypath = new DataPath();
 
@@ -648,6 +574,9 @@ const CLS_API_KEY = Symbol("dp_map_id");
 const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
 
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
+  rootContextStruct: DataStruct | undefined;
+  structs: DataStruct[] = [];
+
   constructor() {
     super();
 
@@ -655,17 +584,13 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     this.structs = [];
   }
 
-  get list() {
-    return undefined;
-  }
-
-  static toolRegistered(cls) {
+  static toolRegistered(cls: any) {
     return ToolOp.isRegistered(cls);
     //let key = toolkey(cls);
     //return key in tool_classes;
   }
 
-  static registerTool(cls) {
+  static registerTool(cls: any) {
     console.warn("Outdated function simple_controller.DataAPI.registerTool called");
 
     return ToolOp.register(cls);
@@ -681,25 +606,25 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return this.structs;
   }
 
-  setRoot(sdef) {
+  setRoot(sdef: DataStruct) {
     this.rootContextStruct = sdef;
   }
 
-  hasStruct(cls) {
+  hasStruct(cls: any) {
     return cls.hasOwnProperty(CLS_API_KEY);
   }
 
-  getStruct(cls) {
+  getStruct(cls: any) {
     return this.mapStruct(cls, false);
   }
 
-  mergeStructs(dest, src) {
+  mergeStructs(dest: DataStruct<CTX>, src: DataStruct<CTX>) {
     for (let m of src.members) {
       dest.add(m.copy());
     }
   }
 
-  inheritStruct(cls, parent, auto_create_parent = false) {
+  inheritStruct(cls: any, parent: any, auto_create_parent = false) {
     let st = this.mapStruct(parent, auto_create_parent);
 
     if (st === undefined) {
@@ -721,7 +646,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    * @returns {IterableIterator<*>}
    */
 
-  _addClass(cls, dstruct) {
+  _addClass(cls: any, dstruct: DataStruct) {
     let key = _map_struct_idgen++;
     cls[CLS_API_KEY] = key;
 
@@ -733,12 +658,12 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   /* Associate cls with a DataStruct
    * via callback, which will be called
    * with an instance of cls as its argument*/
-  mapStructCustom(cls, callback) {
+  mapStructCustom(cls: any, callback: (instance: any) => void) {
     this.mapStruct(cls, true);
     cls[CLS_API_KEY_CUSTOM] = callback;
   }
 
-  mapStruct(cls, auto_create = true, name = cls.name) {
+  mapStruct(cls: any, auto_create = true, name = cls.name as string) {
     let key;
 
     if (!cls.hasOwnProperty(CLS_API_KEY)) {
@@ -759,7 +684,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   //used for tagging error messages
-  pushReportContext(name) {
+  pushReportContext(name: string) {
     pushReportName(name);
   }
 
@@ -782,7 +707,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
   }
 
-  resolveMassSetPaths(ctx: CTX, massSetPath) {
+  resolveMassSetPaths(ctx: CTX, massSetPath: string): string[] {
     if (massSetPath.startsWith("/")) {
       massSetPath = massSetPath.slice(1, massSetPath.length);
     }
@@ -792,14 +717,20 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
     if (start < 0 || end < 0) {
       throw new DataPathError("Invalid mass set datapath: " + massSetPath);
-      return;
     }
 
     let prefix = massSetPath.slice(0, start - 1);
     let filter = massSetPath.slice(start + 1, end);
     let suffix = massSetPath.slice(end + 2, massSetPath.length);
 
-    let rdef = this.resolvePath(ctx, prefix);
+    let rdef1 = this.resolvePath(ctx, prefix);
+    if (rdef1 === undefined) {
+      throw new DataPathError('unknown path: "' + prefix + '"');
+    }
+
+    // applyFilter isn't inferring rdef1 without the | undefined bleh
+    // thus this hack
+    const rdef = rdef1!;
 
     if (!(rdef.prop instanceof DataList)) {
       throw new DataPathError("massSetPath expected a path resolving to a DataList: " + massSetPath);
@@ -810,7 +741,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     let list = rdef.prop;
     let api = ctx.api;
 
-    function applyFilter(obj) {
+    function applyFilter(obj: any) {
       const forceEval = rdef.dpath.flag & DataFlags.USE_EVAL_MASS_SET_PATHS;
 
       if (obj === undefined) {
@@ -830,7 +761,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           return api.getValue(obj, path, st);
         } catch (error) {
           if (!(error instanceof DataPathError)) {
-            util.print_stack(error);
+            util.print_stack(error as Error);
             console.error("Error in datapath callback");
           }
 
@@ -855,7 +786,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
         this.getValue(ctx, path);
       } catch (error) {
         if (!(error instanceof DataPathError)) {
-          util.print_stack(error);
+          util.print_stack(error as Error);
           console.error(path + ": Error in datapath API");
         }
 
@@ -869,7 +800,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   resolvePath(ctx: CTX, inpath: string, ignoreExistence = false, dstruct = undefined): ResolvePathResult | undefined {
-    let parser = parserStack[parserStack.cur++];
+    let parser = parserStack[parserStackCur++];
     let ret = undefined;
 
     if (inpath[0] === "/") {
@@ -881,21 +812,21 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     } catch (error) {
       //throw new DataPathError("bad path " + path);
       if (!(error instanceof DataPathError)) {
-        util.print_stack(error);
+        util.print_stack(error as Error);
         report("error while evaluating path " + inpath);
       }
 
       if (window.DEBUG && window.DEBUG.datapaths) {
-        util.print_stack(error);
+        util.print_stack(error as Error);
       }
 
       ret = undefined;
     }
 
-    parserStack.cur--;
+    parserStackCur--;
 
     if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
-      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj);
+      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj) as unknown as ResolvedProp<CTX>;
     }
 
     if (ret !== undefined && ret.prop && ret.dpath && ret.dpath.ui_name_get) {
@@ -905,7 +836,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
         dataref : ret.obj,
       };
 
-      let name = ret.dpath.ui_name_get.call(dummy);
+      let name = ret.dpath.ui_name_get.call(dummy as unknown as ToolProperty);
 
       ret.prop.uiname = "" + name;
     }
@@ -913,7 +844,14 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return ret;
   }
 
-  getPropOverride(ctx, path, dpath, obj, prop = dpath.data) {
+  getPropOverride(
+    ctx: CTX,
+    path: string,
+    dpath: DataPath,
+    obj: any,
+    prop = dpath.data as unknown as ResolvedProp<CTX>
+  ) {
+    // add extra context members temporarily
     prop.ctx = ctx;
     prop.datapath = path;
     prop.dataref = obj;
@@ -921,8 +859,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     let newprop = getTempProp(prop.type);
     prop.copyTo(newprop);
 
-    dpath.propGetter.call(prop, newprop);
-    prop.ctx = prop.datapath = prop.dataref = undefined;
+    dpath.propGetter!.call(prop, newprop);
+
+    // clear extra context members
+    const anyProp = prop as any;
+    anyProp.ctx = anyProp.datapath = anyProp.dataref = undefined;
 
     return newprop;
   }
@@ -934,11 +875,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     just want meta information
    */
   resolvePath_intern(
-    ctx,
-    inpath,
+    ctx: CTX,
+    inpath: string,
     ignoreExistence = false,
     p = pathParser,
-    dstruct = undefined
+    dstruct?: DataStruct
   ): ResolvePathResult | undefined {
     inpath = inpath.replace("==", "=");
 
@@ -946,8 +887,8 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
     dstruct = dstruct || this.rootContextStruct;
 
-    let obj = ctx;
-    let lastobj = ctx;
+    let obj = ctx as any;
+    let lastobj = ctx as any;
     let subkey;
     let lastobj2 = undefined;
     let lastkey = undefined;
@@ -955,7 +896,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     let lastdpath = undefined;
 
     function p_key() {
-      let t = p.peeknext();
+      let t = p.peeknext()!;
       if (t.type === "NUM" || t.type === "STRLIT") {
         p.next();
         return t.value;
@@ -967,7 +908,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     let _i = 0;
     while (!p.at_end()) {
       let key = p.expect("ID");
-      let dpath = dstruct.pathmap[key];
+      let dpath = dstruct!.pathmap[key];
 
       lastdpath = dpath;
 
@@ -978,12 +919,12 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
           prop = DummyIntProperty;
 
-          prop.name = "length";
+          (prop as any).name = "length";
           prop.flag = PropFlags.READ_ONLY;
 
           dpath = _dummypath;
           dpath.type = DataTypes.PROP;
-          dpath.data = prop;
+          dpath.data = prop as unknown as DataPathToolProperty;
           dpath.struct = dpath.parent = dstruct;
           dpath.flag = DataFlags.READ_ONLY;
           dpath.path = "length";
@@ -1029,7 +970,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       let dynstructobj = undefined;
 
       if (dpath.type === DataTypes.STRUCT) {
-        dstruct = dpath.data;
+        dstruct = dpath.data as DataStruct;
       } else if (dpath.type === DataTypes.DYNAMIC_STRUCT) {
         let ok = false;
 
@@ -1037,16 +978,16 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           let obj2;
 
           if (dpath.flag & DataFlags.USE_CUSTOM_GETSET) {
-            let fakeprop = dpath.getSet;
+            let fakeprop = dpath.getSet!;
             fakeprop.ctx = ctx;
             fakeprop.dataref = obj;
             fakeprop.datapath = inpath;
 
-            obj2 = fakeprop.get();
+            obj2 = (fakeprop as any).get();
 
             fakeprop.ctx = fakeprop.datapath = fakeprop.dataref = undefined;
           } else {
-            obj2 = obj[dpath.path];
+            obj2 = (obj as any)[dpath.path];
           }
 
           dynstructobj = obj2;
@@ -1058,11 +999,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
               dstruct = this.mapStruct(obj2.constructor, false);
             }
           } else {
-            dstruct = dpath.data;
+            dstruct = dpath.data as DataStruct;
           }
 
           if (dstruct === undefined) {
-            dstruct = dpath.data;
+            dstruct = dpath.data as DataStruct;
           }
 
           ok = dstruct !== undefined;
@@ -1090,7 +1031,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           if (obj === undefined && !ignoreExistence) {
             throw new DataPathError("no data for " + inpath);
           } else if (obj !== undefined) {
-            obj = obj[key.trim()];
+            obj = (obj as any)[key.trim()];
           }
         }
       } else {
@@ -1100,10 +1041,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
         lastkey = dpath.path;
 
         if (dpath.flag & DataFlags.USE_CUSTOM_GETSET) {
-          let fakeprop = dpath.getSet;
+          let fakeprop = dpath.getSet!;
 
           if (!fakeprop && dpath.type === DataTypes.PROP) {
-            let prop = dpath.data;
+            let prop = dpath.data as any;
 
             prop.ctx = ctx;
             prop.dataref = obj;
@@ -1112,7 +1053,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
             try {
               obj = prop.getValue();
             } catch (error) {
-              util.print_stack(error);
+              util.print_stack(error as Error);
               obj = undefined;
             }
 
@@ -1126,7 +1067,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
             fakeprop.dataref = obj;
             fakeprop.datapath = inpath;
 
-            obj = fakeprop.get();
+            obj = (fakeprop as any).get();
             fakeprop.ctx = fakeprop.datapath = fakeprop.dataref = undefined;
           }
         } else if (obj === undefined && !ignoreExistence) {
@@ -1145,91 +1086,107 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
       if (t.type === "DOT") {
         p.next();
-      } else if (t.type === "EQUALS" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
+      } else if (
+        t.type === "EQUALS" &&
+        prop !== undefined &&
+        (prop as ToolProperty).type & (PropTypes.ENUM | PropTypes.FLAG)
+      ) {
         p.expect("EQUALS");
 
         let t2 = p.peeknext();
         let type = t2 && t2.type === "ID" ? "ID" : "NUM";
 
-        let val = p.expect(type);
+        let val = p.expect(type) as string | number;
 
         let val1 = val;
 
         if (typeof val == "string") {
-          val = prop.values[val];
+          val = (prop as toolprop.EnumProperty).values[val];
         }
 
         if (val === undefined) {
           throw new DataPathError("unknown value " + val1);
         }
 
-        if (val in prop.keys) {
-          subkey = prop.keys[val];
+        if (val in (prop as toolprop.EnumProperty).keys) {
+          subkey = (prop as toolprop.EnumProperty).keys[val];
         }
 
         key = dpath.path;
         obj = !!(lastobj[key] == val);
-      } else if (t.type === "AND" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
+      } else if (
+        t.type === "AND" &&
+        prop !== undefined &&
+        (prop as ToolProperty).type & (PropTypes.ENUM | PropTypes.FLAG)
+      ) {
         p.expect("AND");
 
         let t2 = p.peeknext();
         let type = t2 && t2.type === "ID" ? "ID" : "NUM";
 
-        let val = p.expect(type);
+        let val = p.expect(type) as string | number;
 
         let val1 = val;
 
         if (typeof val == "string") {
-          val = prop.values[val];
+          val = (prop as toolprop.EnumProperty).values[val];
         }
 
         if (val === undefined) {
           throw new DataPathError("unknown value " + val1);
         }
 
-        if (val in prop.keys) {
-          subkey = prop.keys[val];
+        if (val in (prop as toolprop.EnumProperty).keys) {
+          subkey = (prop as toolprop.EnumProperty).keys[val];
         }
 
         key = dpath.path;
-        obj = !!(lastobj[key] & val);
-      } else if (t.type === "LSBRACKET" && prop !== undefined && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
+        obj = !!(lastobj[key] & (val as number));
+      } else if (
+        t.type === "LSBRACKET" &&
+        prop !== undefined &&
+        (prop as toolprop.EnumProperty).type & (PropTypes.ENUM | PropTypes.FLAG)
+      ) {
         p.expect("LSBRACKET");
 
         let t2 = p.peeknext();
         let type = t2 && t2.type === "ID" ? "ID" : "NUM";
 
-        let val = p.expect(type);
+        let val = p.expect(type) as string | number;
 
         let val1 = val;
 
+        const enumProp = prop as toolprop.EnumProperty;
+
         if (typeof val == "string") {
-          val = prop.values[val];
+          val = enumProp.values[val];
         }
 
         if (val === undefined) {
-          console.warn(inpath, prop.values, val1, prop);
+          console.warn(inpath, enumProp.values, val1, prop);
           throw new DataPathError("unknown value " + val1);
         }
 
-        if (val in prop.keys) {
-          subkey = prop.keys[val];
+        if (val in enumProp.keys) {
+          subkey = enumProp.keys[val];
         }
 
         let bitfield;
         key = dpath.path;
 
-        if (!(prop.flag & PropFlags.USE_CUSTOM_GETSET)) {
+        if (!(enumProp.flag & PropFlags.USE_CUSTOM_GETSET)) {
           bitfield = lastobj ? lastobj[key] : 0;
         } else {
-          prop.dataref = lastobj;
-          prop.datapath = inpath;
-          prop.ctx = ctx;
+          // XXX
+          const anyProp = enumProp as any;
+          anyProp.dataref = lastobj;
+          anyProp.datapath = inpath;
+          anyProp.ctx = ctx;
 
           try {
-            bitfield = prop.getValue();
+            bitfield = enumProp.getValue();
           } catch (error) {
-            util.print_stack(error);
+            util.print_stack(error as Error);
 
             bitfield = NaN;
           }
@@ -1238,10 +1195,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
         if (lastobj === undefined && !ignoreExistence) {
           throw new DataPathError("no data for path " + inpath);
         } else if (lastobj !== undefined) {
-          if (prop.type === PropTypes.ENUM) {
+          if (enumProp.type === PropTypes.ENUM) {
             obj = !!(bitfield === val);
           } else {
-            obj = !!(bitfield & val);
+            obj = !!(bitfield & (val as number));
           }
         }
 
@@ -1253,7 +1210,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
         subkey = num;
 
-        if (prop !== undefined && !(prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT))) {
+        if (
+          prop !== undefined &&
+          !((prop as ToolProperty).type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT))
+        ) {
           lastobj = obj;
         }
 
@@ -1279,7 +1239,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           throw new DataPathError(inpath + ": list has no entry " + lastkey);
         }
 
-        if (p.peeknext() !== undefined && p.peeknext().type === "DOT") {
+        if (p.peeknext() !== undefined && p.peeknext()?.type === "DOT") {
           p.next();
         }
       }
@@ -1290,23 +1250,23 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       }
     }
 
-    if (prop && prop.type & (PropTypes.ENUM | PropFlags.FLAG)) {
-      prop.checkMeta();
+    if (prop && (prop as ToolProperty).type & (PropTypes.ENUM | PropFlags.FLAG)) {
+      (prop as toolprop.EnumProperty).checkMeta();
     }
 
     return {
-      dpath  : lastdpath,
+      dpath  : lastdpath!,
       parent : lastobj2,
       obj    : lastobj,
       value  : obj,
-      key    : lastkey,
-      dstruct: dstruct,
-      prop   : prop,
+      key    : lastkey!,
+      dstruct: dstruct!,
+      prop   : prop as ResolvedProp,
       subkey : subkey,
     };
   }
 
-  _parsePathOverrides(path) {
+  _parsePathOverrides(path: string) {
     let parts = ["", undefined, undefined];
 
     const TOOLPATH = 0,
@@ -1333,7 +1293,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     return {
-      path  : parts[TOOLPATH].trim(),
+      path  : parts[TOOLPATH]!.trim(),
       uiname: parts[NAME] ? parts[NAME].trim() : undefined,
       hotkey: parts[HOTKEY] ? parts[HOTKEY].trim() : undefined,
     };
@@ -1342,7 +1302,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   /** Get tooldef for path, applying any modifications, e.g.:
    *  "app.some_tool()|Label::CustomHotkeyString"
    * */
-  getToolDef(toolpath) {
+  getToolDef(toolpath: string) {
     let { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
 
     let cls = this.parseToolPath(path);
@@ -1351,9 +1311,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     let def = cls.tooldef();
-    if (uiname) {
-      def.uiname = uiname;
-    }
+    def.uiname = uiname ?? def.uiname ?? path;
     if (hotkey) {
       def.hotkey = hotkey;
     }
@@ -1361,7 +1319,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return def;
   }
 
-  getToolPathHotkey(ctx, toolpath) {
+  getToolPathHotkey(ctx: CTX, toolpath: string) {
     let { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
 
     if (hotkey) {
@@ -1371,25 +1329,25 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     try {
       return this.#getToolPathHotkey_intern(ctx, path);
     } catch (error) {
-      print_stack(error);
+      print_stack(error as Error);
       util.console.context("api").log("failed to fetch tool path: " + path);
 
       return undefined;
     }
   }
 
-  #getToolPathHotkey_intern(ctx, path) {
-    let screen = ctx.screen;
+  #getToolPathHotkey_intern(ctx: CTX, path: string) {
+    let screen = (ctx as any).screen;
     let this2 = this;
 
-    function searchKeymap(keymap) {
+    function searchKeymap(keymap: KeyMap) {
       if (keymap === undefined) {
         return undefined;
       }
 
-      let ret;
+      let ret: string | undefined;
 
-      function search(cb) {
+      function search(cb: (tool: string) => boolean) {
         if (ret) {
           return;
         }
@@ -1440,10 +1398,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       }
     }
 
-    return this.keymap ? searchKeymap(this.keymap) : false;
+    return (this as any).keymap ? searchKeymap((this as any).keymap) : undefined;
   }
 
-  parseToolPath(path) {
+  parseToolPath(path: string) {
     try {
       return parseToolPath(path).toolclass;
     } catch (error) {
@@ -1456,15 +1414,15 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
   }
 
-  parseToolArgs(path) {
+  parseToolArgs(path: string) {
     return parseToolPath(path).args;
   }
 
-  createTool(ctx, path, inputs = {}) {
+  createTool(ctx: CTX, path: string, inputs: any = {}) {
     let cls;
     let args;
 
-    if (typeof path == "string" || path instanceof String) {
+    if (typeof path == "string") {
       //parseToolPath will raise DataPathError if path is malformed
       let tpath = parseToolPath(path);
 
@@ -1483,11 +1441,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     args = { ...args };
 
     // feed inputs to invoke
-    const tooldef = cls._getFinalToolDef();
+    const tooldef = (cls as any)._getFinalToolDef();
     if (inputs !== undefined) {
       for (let k in inputs) {
         if (!(k in tooldef.inputs)) {
-          console.warn(cls.tooldef().uiname + ': Unknown tool property "' + k + '"');
+          console.warn(cls!.tooldef().uiname + ': Unknown tool property "' + k + '"');
           continue;
         }
 
@@ -1497,16 +1455,16 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       }
     }
 
-    let tool = cls.invoke(ctx, args);
+    let tool = cls!.invoke(ctx, args);
 
     if (inputs !== undefined) {
       for (let k in inputs) {
         if (!(k in tool.inputs)) {
-          console.warn(cls.tooldef().uiname + ': Unknown tool property "' + k + '"');
+          console.warn(cls!.tooldef().uiname + ': Unknown tool property "' + k + '"');
           continue;
         }
 
-        tool.inputs[k].setValue(inputs[k]);
+        (tool.inputs as any)[k].setValue(inputs[k]);
       }
     }
 
@@ -1520,7 +1478,7 @@ export function initSimpleController() {
 
 import { DataPathSetOp } from "./controller_ops.js";
 import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
-import { IControllerContextBase } from "./context.js";
+import { KeyMap } from "../controller.js";
 
 let dpt = DataPathSetOp;
 
@@ -1528,7 +1486,7 @@ export function getDataPathToolOp() {
   return dpt;
 }
 
-export function setDataPathToolOp(cls) {
+export function setDataPathToolOp(cls: any) {
   ToolOp.unregister(DataPathSetOp);
 
   if (!ToolOp.isRegistered(cls)) {

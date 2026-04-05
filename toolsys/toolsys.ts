@@ -721,7 +721,7 @@ export class ToolOp<
     return ToolClasses.indexOf(cls) >= 0;
   }
 
-  static unregister(cls: ToolOpConstructor): void {
+  static unregister(cls: any): void {
     if (ToolClasses.indexOf(cls) >= 0) {
       (ToolClasses as unknown as unknown[]).remove(cls);
     }

@@ -2,8 +2,18 @@ import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
 import { Quat, Vector2, Vector3, Vector4 } from "../util/vectormath.js";
 import * as toolprop_abstract from "../toolsys/toolprop_abstract.js";
 import * as toolprop from "../toolsys/toolprop.js";
-import { print_stack, cachering } from "../util/util.js";
+import { cachering } from "../util/util.js";
 import { ToolProperty } from "../toolsys/toolprop.js";
+import type { DataAPI, DataStruct } from "./controller.js";
+import type { ContextLike, ModelInterface } from "./controller_abstract.js";
+
+declare global {
+  interface Window {
+    DEBUG: {
+      datapaths?: boolean;
+    };
+  }
+}
 
 export const DataFlags = {
   READ_ONLY              : 1,
@@ -28,7 +38,7 @@ type DataTypeValue = (typeof DataTypes)[keyof typeof DataTypes];
  * via its fluent builder pattern. These methods exist at runtime but live
  * on subclasses rather than the ToolProperty base class.
  */
-interface DataPathToolProperty extends ToolProperty {
+export interface DataPathToolProperty extends ToolProperty {
   /* Narrow nullable base-class fields for builder usage */
   flag: number;
   uiname: string;
@@ -108,18 +118,19 @@ interface DataPathGetSet {
   ctx: unknown;
 }
 
-export class DataPath {
+export class DataPath<CTX extends ContextLike = ContextLike> {
   type: DataTypeValue;
-  data: DataPathToolProperty;
+  data: DataPathToolProperty | DataList | DataStruct<CTX>;
   apiname: string;
   path: string;
   flag: number;
   struct: unknown;
+  parent?: unknown;
   propGetter?: (prop: ToolProperty) => void;
   getSet?: DataPathGetSet;
   ui_name_get?: (this: ToolProperty) => string;
 
-  constructor(path?: string, apiname?: string, prop?: ToolProperty, type: DataTypeValue = DataTypes.PROP) {
+  constructor(path?: string, apiname?: string, prop?: ToolProperty | DataList, type: DataTypeValue = DataTypes.PROP) {
     this.type = type;
     this.data = prop as DataPathToolProperty;
     this.apiname = apiname!;
@@ -139,7 +150,7 @@ export class DataPath {
    * @param metaCB: (enumProp: EnumProperty|FlagsProperty) => void
    */
   dynamicMeta(metaCB: (prop: ToolProperty) => void): this {
-    this.data.dynamicMeta(metaCB);
+    (this.data as DataPathToolProperty).dynamicMeta(metaCB);
     return this;
   }
 
@@ -164,7 +175,7 @@ export class DataPath {
   /** this property should not be treated as something
    *  that should be kept track off in the undo stack*/
   noUndo(): this {
-    this.data.flag |= PropFlags.NO_UNDO;
+    (this.data as DataPathToolProperty).flag |= PropFlags.NO_UNDO;
     return this;
   }
 
@@ -176,7 +187,7 @@ export class DataPath {
     this.flag |= DataFlags.READ_ONLY;
 
     if (this.type === DataTypes.PROP) {
-      this.data.flag |= PropFlags.READ_ONLY;
+      (this.data as DataPathToolProperty).flag |= PropFlags.READ_ONLY;
     }
 
     return this;
@@ -203,7 +214,7 @@ export class DataPath {
    * */
   customPropCallback(callback: (prop: ToolProperty) => void): this {
     this.flag |= DataFlags.USE_CUSTOM_PROP_GETTER;
-    this.data.flag |= PropFlags.USE_CUSTOM_PROP_GETTER;
+    (this.data as DataPathToolProperty).flag |= PropFlags.USE_CUSTOM_PROP_GETTER;
     this.propGetter = callback;
 
     return this;
@@ -222,13 +233,14 @@ export class DataPath {
     this.flag |= DataFlags.USE_CUSTOM_GETSET;
 
     if (this.type !== DataTypes.DYNAMIC_STRUCT && this.type !== DataTypes.STRUCT) {
-      this.data.flag |= PropFlags.USE_CUSTOM_GETSET;
-      this.data._getValue = this.data.getValue;
-      this.data._setValue = this.data.setValue;
+      const data = this.data as DataPathToolProperty;
+      data.flag |= PropFlags.USE_CUSTOM_GETSET;
+      data._getValue = data.getValue;
+      data._setValue = data.setValue;
 
-      if (get) this.data.getValue = get;
+      if (get) data.getValue = get;
 
-      if (set) this.data.setValue = set;
+      if (set) data.setValue = set;
     } else {
       this.getSet = {
         get,
@@ -260,7 +272,7 @@ export class DataPath {
    */
   on(type: string, cb: (...args: unknown[]) => void): this {
     if (this.type == DataTypes.PROP) {
-      this.data.on(type, cb);
+      (this.data as DataPathToolProperty).on(type, cb);
     } else {
       throw new Error("invalid call to DataPath.on");
     }
@@ -270,28 +282,29 @@ export class DataPath {
 
   off(type: string, cb: (...args: unknown[]) => void): void {
     if (this.type === DataTypes.PROP) {
-      this.data.off(type, cb);
+      (this.data as DataPathToolProperty).off(type, cb);
     }
   }
 
   simpleSlider(): this {
-    this.data.flag |= PropFlags.SIMPLE_SLIDER;
-    this.data.flag &= ~PropFlags.FORCE_ROLLER_SLIDER;
+    const data = this.data as DataPathToolProperty;
+    data.flag |= PropFlags.SIMPLE_SLIDER;
+    data.flag &= ~PropFlags.FORCE_ROLLER_SLIDER;
     return this;
   }
 
   rollerSlider(): this {
-    this.data.flag &= ~PropFlags.SIMPLE_SLIDER;
-    this.data.flag |= PropFlags.FORCE_ROLLER_SLIDER;
+    (this.data as DataPathToolProperty).flag &= ~PropFlags.SIMPLE_SLIDER;
+    (this.data as DataPathToolProperty).flag |= PropFlags.FORCE_ROLLER_SLIDER;
 
     return this;
   }
 
   checkStrip(state: boolean = true): this {
     if (state) {
-      this.data.flag |= PropFlags.FORCE_ENUM_CHECKBOXES;
+      (this.data as DataPathToolProperty).flag |= PropFlags.FORCE_ENUM_CHECKBOXES;
     } else {
-      this.data.flag &= ~PropFlags.FORCE_ENUM_CHECKBOXES;
+      (this.data as DataPathToolProperty).flag &= ~PropFlags.FORCE_ENUM_CHECKBOXES;
     }
 
     return this;
@@ -304,12 +317,12 @@ export class DataPath {
   }
 
   baseUnit(unit: string): this {
-    this.data.setBaseUnit(unit);
+    (this.data as DataPathToolProperty).setBaseUnit(unit);
     return this;
   }
 
   displayUnit(unit: string): this {
-    this.data.setDisplayUnit(unit);
+    (this.data as DataPathToolProperty).setDisplayUnit(unit);
     return this;
   }
 
@@ -318,27 +331,27 @@ export class DataPath {
   }
 
   editAsBaseUnit(): this {
-    this.data.flag |= PropFlags.EDIT_AS_BASE_UNIT;
+    (this.data as DataPathToolProperty).flag |= PropFlags.EDIT_AS_BASE_UNIT;
     return this;
   }
 
   range(min: number, max: number): this {
-    this.data.setRange(min, max);
+    (this.data as DataPathToolProperty).setRange(min, max);
     return this;
   }
 
   uiRange(min: number, max: number): this {
-    this.data.setUIRange(min, max);
+    (this.data as DataPathToolProperty).setUIRange(min, max);
     return this;
   }
 
   decimalPlaces(n: number): this {
-    this.data.setDecimalPlaces(n);
+    (this.data as DataPathToolProperty).setDecimalPlaces(n);
     return this;
   }
 
   sliderDisplayExp(f: number): this {
-    this.data.setSliderDisplayExp(f);
+    (this.data as DataPathToolProperty).setSliderDisplayExp(f);
     return this;
   }
 
@@ -357,34 +370,34 @@ export class DataPath {
   }
 
   expRate(exp: number): this {
-    this.data.setExpRate(exp);
+    (this.data as DataPathToolProperty).setExpRate(exp);
     return this;
   }
 
   slideSpeed(speed: number): this {
-    this.data.setSlideSpeed(speed);
+    (this.data as DataPathToolProperty).setSlideSpeed(speed);
     return this;
   }
 
   /**adds a slider for moving vector component sliders simultaneously*/
   uniformSlider(state: boolean = true): this {
-    this.data.uniformSlider(state);
+    (this.data as DataPathToolProperty).uniformSlider(state);
 
     return this;
   }
 
   radix(r: number): this {
-    this.data.setRadix(r);
+    (this.data as DataPathToolProperty).setRadix(r);
     return this;
   }
 
   relativeStep(s: number): this {
-    this.data.setRelativeStep(s);
+    (this.data as DataPathToolProperty).setRelativeStep(s);
     return this;
   }
 
   step(s: number): this {
-    this.data.setStep(s);
+    (this.data as DataPathToolProperty).setStep(s);
     return this;
   }
 
@@ -395,46 +408,46 @@ export class DataPath {
    * */
   fullSaveUndo(): this {
     this.flag |= DataFlags.USE_FULL_UNDO;
-    this.data.flag |= PropFlags.USE_BASE_UNDO;
+    (this.data as DataPathToolProperty).flag |= PropFlags.USE_BASE_UNDO;
 
     return this;
   }
 
   icon(i: number): this {
-    this.data.setIcon(i);
+    (this.data as DataPathToolProperty).setIcon(i);
     return this;
   }
 
   icon2(i: number): this {
-    this.data.setIcon2(i);
+    (this.data as DataPathToolProperty).setIcon2(i);
     return this;
   }
 
   icons(icons: Record<string, number>): this {
     //for enum/flag properties
-    this.data.addIcons(icons);
+    (this.data as DataPathToolProperty).addIcons(icons);
     return this;
   }
 
   /** secondary icons (e.g. disabled states) */
   icons2(icons: Record<string, number>): this {
-    this.data.addIcons2(icons);
+    (this.data as DataPathToolProperty).addIcons2(icons);
     return this;
   }
 
   descriptions(description_map: Record<string, string>): this {
     //for enum/flag properties
-    this.data.addDescriptions(description_map);
+    (this.data as DataPathToolProperty).addDescriptions(description_map);
     return this;
   }
 
   uiNames(uinames: Record<string, string>): this {
-    this.data.addUINames(uinames);
+    (this.data as DataPathToolProperty).addUINames(uinames);
     return this;
   }
 
   description(d: string): this {
-    this.data.description = d;
+    (this.data as DataPathToolProperty).description = d;
     return this;
   }
 }
@@ -444,40 +457,154 @@ export const StructFlags = {
   //via the DataPathToolOp
 } as const;
 
-/** Minimal interface for ModelInterface to avoid circular imports */
-interface ModelInterfaceLike {
-  prefix: string;
+export interface ListIFace<
+  DataAPIType extends ModelInterface = ModelInterface,
+  ListType = any,
+  KeyType = any,
+  ValType = any,
+  CTX extends ContextLike = ContextLike,
+> {
+  getStruct(api: DataAPIType, list: ListType, key: KeyType): DataStruct | undefined;
+  get(api: DataAPIType, list: ListType, key: KeyType): ValType;
+  getKey(api: DataAPIType, list: ListType, obj: ValType): any;
+  getActive?(api: DataAPIType, list: ListType): ValType | undefined;
+  setActive?(api: DataAPIType, list: ListType, val: ValType): void;
+  set?(api: DataAPIType, list: ListType, key: KeyType, val: ValType): void;
+  getIter?(api: DataAPIType, list: ListType): Iterable<ValType>;
+  filter?(api: DataAPIType, list: ListType, filter: number | string): Iterable<ValType>;
+  getLength(api: DataAPIType, list: ListType): number;
 }
 
-export class ListIface {
-  getStruct(api: ModelInterfaceLike, list: unknown, key: string | number): unknown {
-    return undefined;
+//second form of list interface
+export type ListFuncs<
+  DataAPIType extends ModelInterface = ModelInterface,
+  ListType = any,
+  KeyType = any,
+  ObjType = any,
+  CTX extends ContextLike = ContextLike,
+> = (
+  | Required<ListIFace<DataAPIType, ListType, KeyType, ObjType, CTX>>[keyof ListIFace]
+  | ((api: ModelInterface<CTX>, list: ListType, key: KeyType, val: ObjType) => void)
+)[];
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type ListCallback = (...args: any[]) => any;
+type ListCallbackMap = Record<string, ListCallback>;
+
+export class DataList<
+  DataAPIType extends ModelInterface = ModelInterface,
+  ListType = any,
+  KeyType = any,
+  ValType = any,
+  CTX extends ContextLike = ContextLike,
+> implements ListIFace<DataAPIType, ListType, KeyType, ValType, CTX>
+{
+  cb: ListCallbackMap;
+
+  // XXX
+  constructor(callbacks: any) {
+    if (callbacks === undefined) {
+      throw new DataPathError("missing callbacks argument to DataList");
+    }
+
+    this.cb = {};
+
+    if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
+      for (let k in callbacks) {
+        this.cb[k] = callbacks[k];
+      }
+    } else {
+      for (let cb of callbacks) {
+        this.cb[cb.name] = cb;
+      }
+    }
+
+    let check = (key: string) => {
+      if (!(key in this.cb)) {
+        throw new DataPathError(`Missing ${key} callback in DataList`);
+      }
+    };
   }
 
-  get(api: ModelInterfaceLike, list: unknown, key: string | number): unknown {
-    return undefined;
+  /**
+   Generic list API.
+
+   * Callbacks is an array of name functions, like so:
+   - function getStruct(api, list, key) //return DataStruct type of object in key, key is optional if omitted return base type of all objects?
+   - function get(api, list, key)
+   - function set(api, list, key, val) //this one has default behavior: list[key] = val
+   - function getLength(api, list)
+   - function getActive(api, list)
+   - function setActive(api, list, key)
+   - function getIter(api, list)
+   - function getKey(api, list, object) returns object's key in this list, either a string or a number
+   * */
+
+  copy(): DataList {
+    let ret = new DataList([this.cb.get]);
+
+    for (let k in this.cb) {
+      ret.cb[k] = this.cb[k];
+    }
+
+    return ret;
   }
 
-  getKey(api: ModelInterfaceLike, list: unknown, obj: unknown): string | number | undefined {
-    return undefined;
+  get(api: DataAPIType, list: ListType, key: KeyType): ValType {
+    return this.cb.get(api, list, key);
   }
 
-  getActive(api: ModelInterfaceLike, list: unknown): unknown {
-    return undefined;
+  getLength(api: DataAPIType, list: ListType): number {
+    this._check("getLength");
+    return this.cb.getLength(api, list);
   }
 
-  setActive(api: ModelInterfaceLike, list: unknown, val: unknown): void {}
-
-  set(api: ModelInterfaceLike, list: Record<string | number, unknown>, key: string | number, val: unknown): void {
-    list[key] = val;
+  _check(cb: string): void {
+    if (!(cb in this.cb)) {
+      throw new DataPathError(cb + " not supported by this list");
+    }
   }
 
-  getIter(): Iterable<unknown> | undefined {
-    return undefined;
+  set(api: DataAPIType, list: ListType, key: KeyType, val: ValType): void {
+    if (this.cb.set !== undefined) {
+      this.cb.set(api, list, key, val);
+    }
   }
 
-  filter(api: ModelInterfaceLike, list: unknown, filter: unknown): unknown {
-    return undefined;
+  getIter(api: DataAPIType, list: ListType): Iterable<ValType> {
+    this._check("getIter");
+    return this.cb.getIter(api, list);
+  }
+
+  filter(api: DataAPIType, list: ListType, filter: number | string): Iterable<ValType> {
+    this._check("filter");
+    return this.cb.filter(api, list, filter);
+  }
+
+  getActive(api: DataAPIType, list: ListType): ValType | undefined {
+    this._check("getActive");
+    return this.cb.getActive(api, list);
+  }
+
+  setActive(api: DataAPIType, list: ListType, value: ValType): void {
+    this._check("setActive");
+    this.cb.setActive(api, list, value);
+  }
+
+  getKey(api: DataAPIType, list: ListType, value: ValType): string | number | undefined {
+    this._check("getKey");
+    return this.cb.getKey(api, list, value);
+  }
+
+  getStruct(api: DataAPIType, list: ListType, key: KeyType): DataStruct | undefined {
+    if (this.cb.getStruct !== undefined) {
+      return this.cb.getStruct(api, list, key);
+    }
+
+    let obj = this.get(api, list, key) as any | undefined;
+    if (obj === undefined) return undefined;
+
+    return (api as unknown as DataAPI<CTX>).getStruct(obj.constructor);
   }
 }
 

@@ -1690,7 +1690,7 @@ class BSplineCurve extends CurveTypeData {
     slider.setValue(this.deg);
 
     let last_deg = this.deg;
-    slider.update.after(() => {
+    slider.updateAfter(() => {
       if (last_deg !== this.deg) {
         console.log("degree update", this.deg);
         last_deg = this.deg;

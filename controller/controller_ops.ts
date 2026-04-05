@@ -18,7 +18,7 @@ import {
 
 import * as util from "../util/util.js";
 import { isVecProperty, getVecClass } from "./controller_base.js";
-import { IControllerContextBase } from "./context.js";
+import { ContextLike } from "./controller_abstract.js";
 
 type DataPathSetInputs = {
   dataPath: StringProperty;
@@ -31,7 +31,7 @@ type DataPathSetInputs = {
   [k: string]: ToolProperty;
 };
 
-export class DataPathSetOp<CTX extends IControllerContextBase = IControllerContextBase> extends ToolOp<DataPathSetInputs, {}, CTX> {
+export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp<DataPathSetInputs, {}, CTX> {
   propType: number;
   _undo: Record<string, unknown> | undefined;
   hadError: boolean;
@@ -51,11 +51,11 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
     let path = this.inputs.dataPath.getValue() as string;
 
     if ((prop.type as number) & (PropTypes.ENUM | PropTypes.FLAG)) {
-      let rdef = ctx.api.resolvePath(ctx, path) as Record<string, unknown>;
-      if (rdef.subkey !== undefined) {
+      let rdef = ctx.api.resolvePath(ctx, path)
+      if (rdef?.subkey !== undefined) {
         let subkey: unknown = rdef.subkey;
         if (typeof subkey === "string") {
-          subkey = (rdef.prop as Record<string, Record<string, unknown>>).values[subkey];
+          subkey = (rdef.prop as unknown as EnumProperty).values[subkey];
         }
 
         this.inputs.flagBit.setValue(subkey as number);
@@ -76,7 +76,7 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
     }
   }
 
-  static create<CTX extends IControllerContextBase>(
+  static create<CTX extends ContextLike> (
     ctx: CTX,
     datapath: string,
     value: unknown,
@@ -90,8 +90,8 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
       return;
     }
 
-    let prop = rdef.prop as Record<string, unknown>;
-    let tool = new DataPathSetOp();
+    let prop = rdef.prop
+    let tool = new DataPathSetOp<CTX>();
 
     tool.propType = prop.type as number;
     tool.inputs.destType.setValue(prop.type as number);
@@ -128,7 +128,7 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
 
       let subkey: unknown = rdef.subkey;
       if (typeof subkey !== "number") {
-        subkey = (prop as Record<string, Record<string, unknown>>).values[subkey as string];
+        subkey = (prop as unknown as EnumProperty).values[subkey as string];
       }
 
       if ((prop.type as number) === PropTypes.FLAG) {
@@ -168,7 +168,6 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
     tool.id = id;
 
     tool.setValue(ctx, value, rdef.obj);
-
     return tool;
   }
 
@@ -204,13 +203,13 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
     if ((this.inputs.massSetPath.getValue() as string).trim()) {
       let massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
 
-      paths = new Set((ctx.api as Record<string, Function>).resolveMassSetPaths(ctx, massSetPath) as string[]);
+      paths = new Set(ctx.api.resolveMassSetPaths(ctx, massSetPath) as string[]);
     }
 
     paths.add(this.inputs.dataPath.getValue() as string);
 
     for (let path of paths) {
-      let val = (ctx.api as Record<string, Function>).getValue(ctx, path) as unknown;
+      let val = ctx.api.getValue(ctx, path) as unknown;
 
       if (typeof val === "object" && val !== null) {
         val = (val as { copy(): unknown }).copy();
@@ -320,7 +319,11 @@ export class DataPathSetOp<CTX extends IControllerContextBase = IControllerConte
 
   modalStart(ctx: CTX) {
     super.modalStart
-    this.__ctx = (ctx as { toLocked(): unknown }).toLocked() as typeof this.__ctx;
+    if (ctx.toLocked === undefined) {
+      console.warn('Warning: no toLocked in context class, this may lead to subtle undo behaviours')
+      console.warn('  (ctx locking creates a copy with values of the context at the time it as locked)')
+    }
+    this.__ctx = (ctx.toLocked ? ctx.toLocked() : ctx) as typeof this.__ctx;
 
     //save full, modal ctx
     const result = super.modalStart(this.__ctx!);

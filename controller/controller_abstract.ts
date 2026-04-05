@@ -1,19 +1,19 @@
-import { ToolOp, type ToolStack } from "../toolsys/toolsys.js";
+import { ToolDef, ToolOp, type ToolStack } from "../toolsys/toolsys.js";
 import { print_stack } from "../util/util.js";
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
-import { ToolProperty } from "../toolsys/toolprop.js";
-import { DataPath, DataPathError, isVecProperty, ListIface } from "./controller_base.js";
+import { EnumProperty, ToolProperty } from "../toolsys/toolprop.js";
+import { DataList, DataPath, DataPathError, isVecProperty } from "./controller_base.js";
 import type { DataAPI, DataStruct } from "./controller.js";
 
 /**
  * Resolved property from a data path, covering fields available
  * on ToolProperty subclasses (EnumProperty, FlagProperty, VecProperty, etc.)
  */
-export interface ResolvedProp extends ToolProperty {
+export interface ResolvedProp<CTX extends ContextLike = ContextLike> extends ToolProperty {
   flag: number;
   type: number;
   dataref: unknown;
-  ctx: unknown;
+  ctx: CTX;
   datapath: string;
   values: Record<string, number>;
   keys: Record<string | number, string | number>;
@@ -25,35 +25,25 @@ export interface ContextLike<AppState = any, TS extends ToolStack = ToolStack> {
   state: AppState
   api: DataAPI<this>
   toolstack: TS
+  toLocked?(): this
 }
 
 /**
  * Result of resolvePath().
  */
-export interface ResolvePathResult {
+export interface ResolvePathResult<CTX extends ContextLike = ContextLike> {
   dpath: DataPath;
   parent: any;
   obj: any;
   value: any;
   key: string;
   dstruct: DataStruct;
-  prop?: ResolvedProp;
-  subkey?: string;
+  prop?: ResolvedProp<CTX>;
+  subkey?: string | number;
   mass_set?: string
 }
 
-/** Tool definition result */
-interface ToolDef {
-  uiname: string;
-  toolpath: string;
-  description?: string;
-  icon?: number;
-  inputs?: Record<string, ToolProperty>;
-  outputs?: Record<string, ToolProperty>;
-  [key: string]: unknown;
-}
-
-export class ModelInterface {
+export class ModelInterface<CTX extends ContextLike = ContextLike> {
   prefix: string;
 
   constructor() {
@@ -64,15 +54,10 @@ export class ModelInterface {
     throw new Error("implement me");
   }
 
-  getToolPathHotkey(ctx: ContextLike, path: string): string | undefined {
+  getToolPathHotkey(ctx: CTX, path: string): string | undefined {
     return undefined;
   }
-
-  get list(): typeof ListIface {
-    throw new Error("implement me");
-    return ListIface;
-  }
-
+  
   createTool(
     ctxOrPath: ContextLike | string,
     pathOrInputs?: string | Record<string, unknown>,
@@ -94,16 +79,16 @@ export class ModelInterface {
    *
    * @param compareInputs : check if toolstack head has identical input values, defaults to false
    * */
-  execOrRedo(ctx: ContextLike, toolop: ToolOp, compareInputs: boolean = false): unknown {
+  execOrRedo(ctx: CTX, toolop: ToolOp, compareInputs: boolean = false): unknown {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
   execTool(
-    ctx: ContextLike,
+    ctx: CTX,
     path: string | ToolOp,
     inputs: Record<string, unknown> = {},
     unused: unknown = undefined,
-    event: Event | undefined = undefined
+    event: PointerEvent | undefined = undefined
   ): Promise<ToolOp> {
     return new Promise((accept, reject) => {
       let tool: string | ToolOp = path;
@@ -147,12 +132,12 @@ export class ModelInterface {
   }
 
   //not yet supported by path.ux's controller implementation
-  massSetProp(ctx: ContextLike, mass_set_path: string, value: unknown): void {
+  massSetProp(ctx: CTX, mass_set_path: string, value: unknown): void {
     throw new Error("implement me");
   }
 
   /** takes a mass_set_path and returns an array of individual paths */
-  resolveMassSetPaths(ctx: ContextLike, mass_set_path: string): string[] {
+  resolveMassSetPaths(ctx: CTX, mass_set_path: string): string[] {
     throw new Error("implement me");
   }
 
@@ -171,15 +156,15 @@ export class ModelInterface {
    * }
    */
   resolvePath(
-    ctx: ContextLike,
+    ctx: CTX,
     path: string,
     ignoreExistence?: boolean,
     rootStruct?: unknown
-  ): ResolvePathResult | undefined {
+  ): ResolvePathResult<CTX> | undefined {
     return undefined;
   }
 
-  setValue<T = unknown>(ctx: ContextLike, path: string, val: T, rootStruct?: unknown): void {
+  setValue<T = unknown>(ctx: CTX, path: string, val: T, rootStruct?: unknown): void {
     let res = this.resolvePath(ctx, path, undefined, rootStruct)!;
     let prop = res.prop;
 
@@ -193,7 +178,7 @@ export class ModelInterface {
       prop.datapath = path;
 
       if (res.subkey !== undefined) {
-        let val2: unknown = prop.getValue();
+        let val2: any = prop.getValue();
         if (typeof val2 === "object" && val2 !== null && "copy" in val2) {
           val2 = (val2 as { copy(): unknown }).copy();
         }
@@ -207,7 +192,7 @@ export class ModelInterface {
 
           val = val2;
         } else if (prop.type === PropTypes.ENUM) {
-          val = prop.values[res.subkey];
+          val = (prop as unknown as EnumProperty).values[res.subkey!] as T;
         } else {
           (val2 as Record<string, unknown>)[res.subkey] = val;
           val = val2;
@@ -231,7 +216,7 @@ export class ModelInterface {
       use_range = use_range && typeof val === "number" ? 1 : 0;
 
       if (use_range && prop.range !== undefined) {
-        val = Math.min(Math.max(val as number, prop.range[0]), prop.range[1]);
+        val = Math.min(Math.max(val as number, prop.range[0]), prop.range[1]) as T;
       }
     }
 
@@ -253,7 +238,7 @@ export class ModelInterface {
           res.obj[res.key] = (res.obj[res.key] as number) & ~ival;
         }
       } else if (typeof val === "number" || typeof val === "boolean") {
-        val = typeof val === "boolean" ? (val as unknown as number) & 1 : val;
+        val = (typeof val === "boolean" ? (val as unknown as number) & 1 : val) as T;
 
         res.obj[res.key] = val;
       } else {
@@ -269,12 +254,12 @@ export class ModelInterface {
       for (let i = 0; i < (res.obj as unknown as unknown[]).length; i++) {
         (res.obj as Record<number, unknown>)[i] = (val as Record<number, unknown>)[i];
       }
-    } else if (!(prop !== undefined && prop instanceof ListIface)) {
+    } else if (!(prop !== undefined && prop instanceof DataList)) {
       res.obj[res.key] = val;
     }
 
-    if (prop !== undefined && prop instanceof ListIface) {
-      prop.set(this as unknown as { prefix: string }, res.obj, res.key, val);
+    if (prop !== undefined && prop instanceof DataList) {
+      prop.set(this, res.obj, res.key, val);
     } else if (prop !== undefined) {
       prop.dataref = res.obj;
       prop.datapath = path;
@@ -284,7 +269,7 @@ export class ModelInterface {
     }
   }
 
-  getDescription(ctx: ContextLike, path: string): string {
+  getDescription(ctx: CTX, path: string): string {
     let rdef = this.resolvePath(ctx, path);
     if (rdef === undefined) {
       throw new DataPathError("invalid path " + path);
@@ -323,7 +308,7 @@ export class ModelInterface {
     return rdef.prop.description ? rdef.prop.description : rdef.prop.uiname ?? "";
   }
 
-  validPath(ctx: ContextLike, path: string, rootStruct?: unknown): boolean {
+  validPath(ctx: CTX, path: string, rootStruct?: unknown): boolean {
     try {
       this.getValue(ctx, path, rootStruct);
       return true;
@@ -336,7 +321,7 @@ export class ModelInterface {
     return false;
   }
 
-  getPropName(ctx: ContextLike, path: string): string {
+  getPropName(ctx: CTX, path: string): string {
     let i = path.length - 1;
     while (i >= 0 && path[i] !== ".") {
       i--;
@@ -358,7 +343,7 @@ export class ModelInterface {
     return path;
   }
 
-  getValue(ctx: ContextLike, path: string, rootStruct: unknown = undefined): unknown {
+  getValue(ctx: CTX, path: string, rootStruct: unknown = undefined): unknown {
     if (typeof ctx == "string") {
       throw new Error("You forgot to pass context to getValue");
     }
