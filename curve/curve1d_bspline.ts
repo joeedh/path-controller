@@ -115,11 +115,7 @@ export function mySafeJSONParse(buf: string): unknown {
   return JSON.parse(buf, (_key, _val) => {});
 }
 
-(window as unknown as Record<string, unknown>).mySafeJSONStringify = mySafeJSONStringify;
-
 const bin_cache: Record<string, number> = {};
-(window as unknown as Record<string, unknown>)._bin_cache = bin_cache;
-
 const eval2_rets = util.cachering.fromConstructor(Vector2, 32);
 
 /*
@@ -160,8 +156,6 @@ export function binomial(n: number, i: number): number {
 
   return ret;
 }
-
-(window as unknown as Record<string, unknown>).bin = binomial;
 
 import { CurveFlags, TangentModes, CurveTypeData, CurveTypeDataConstructor } from "./curve1d_base";
 import {
@@ -817,7 +811,6 @@ class BSplineCache {
 }
 
 const splineCache = new BSplineCache();
-(window as unknown as Record<string, unknown>)._splineCache = splineCache;
 
 let _idgen = 1;
 
@@ -2340,7 +2333,6 @@ export function initSplineTemplates() {
   }
 
   makeSplineTemplateIcons();
-  (window as unknown as Record<string, unknown>)._SplineTemplateIcons = SplineTemplateIcons;
   console.log("Loaded 1d spline templates");
 }
 
