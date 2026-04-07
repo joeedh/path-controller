@@ -193,7 +193,6 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     0: number;
     1: number;
     // this is set by the parent class
-    // @ts-expect-error
     declare length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
@@ -553,7 +552,6 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     1: number;
     2: number;
     // this is set by the parent class
-    // @ts-expect-error
     declare length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
@@ -985,7 +983,6 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     2: number;
     3: number;
     // this is set by the parent class
-    // @ts-expect-error
     declare length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];

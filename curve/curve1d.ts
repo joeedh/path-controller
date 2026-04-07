@@ -32,8 +32,6 @@ export function mySafeJSONParse(buf: string): unknown {
   return JSON.parse(buf, (_key, _val) => {});
 }
 
-window.mySafeJSONStringify = mySafeJSONStringify as unknown as typeof window.mySafeJSONStringify;
-
 export { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base.js";
 import { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base.js";
 
@@ -219,7 +217,7 @@ export class Curve1D {
       gen.parent = this;
     }
 
-    for (let k in json as Record<string, unknown>) {
+    for (let k in json ) {
       if (k === "generators") {
         continue;
       }

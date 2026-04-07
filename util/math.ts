@@ -37,7 +37,7 @@ type Vec3 = Vector3Instance;
 type Vec4 = Vector4Instance;
 
 /** Writable numeric-indexable type, compatible with Vector2/3/4 and plain arrays */
-interface VectorLike {
+interface MyVectorLike {
   [index: number]: number;
   readonly length: number;
 }
@@ -52,9 +52,9 @@ function cacheRing<T>(ring: { next(): unknown }): CacheRing<T> {
 }
 
 /* Vec types used as function params -- accept both vectors and plain arrays */
-type Vec2Like = Vec2 | VectorLike;
-type Vec3Like = Vec3 | VectorLike;
-type Vec4Like = Vec4 | VectorLike;
+type Vec2Like = Vec2 | MyVectorLike;
+type Vec3Like = Vec3 | MyVectorLike;
+type Vec4Like = Vec4 | MyVectorLike;
 
 let dtvtmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
@@ -85,7 +85,7 @@ export function quad_bilinear(v1: number, v2: number, v3: number, v4: number, u:
  ff := solve({f1, f2}, {u, v});
 
  */
-function quad_uv_2d(p: VectorLike, v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): Vec2 {
+function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): Vec2 {
   let u: number, v: number;
 
   let v2x = v2[0] - v1[0];
@@ -220,7 +220,7 @@ let cvrets: CacheRing<ClosestCurveRets> = cacheRing<ClosestCurveRets>(
 let cvarrays = new util.ArrayPool();
 let cvtmp = new Array(1024);
 
-export function closestPoint(p: VectorLike, curve: AbstractCurve, mode: number): void {
+export function closestPoint(p: MyVectorLike, curve: AbstractCurve, mode: number): void {
   let steps = 5;
   let s = 0,
     ds = 1.0 / steps;
@@ -236,7 +236,7 @@ export function closestPoint(p: VectorLike, curve: AbstractCurve, mode: number):
 let poly_normal_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 let pncent = new Vector3();
 
-export function normal_poly(vs: VectorLike[]): Vec3 {
+export function normal_poly(vs: MyVectorLike[]): Vec3 {
   if (vs.length === 3) {
     return poly_normal_tmps.next().load(normal_tri(vs[0], vs[1], vs[2]));
   } else if (vs.length === 4) {
@@ -335,7 +335,7 @@ let calc_proj_refs: CacheRing<number[]> = cacheRing<number[]>(new util.cachering
  v4
 
  */
-export function dihedral_v3_sqr(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): number {
+export function dihedral_v3_sqr(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): number {
   let bx = v2[0] - v1[0];
   let by = v2[1] - v1[1];
   let bz = v2[2] - v1[2];
@@ -360,7 +360,7 @@ export function dihedral_v3_sqr(v1: VectorLike, v2: VectorLike, v3: VectorLike, 
 
 let tet_area_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
-export function tet_volume(a: VectorLike, b: VectorLike, c: VectorLike, d: VectorLike): number {
+export function tet_volume(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, d: MyVectorLike): number {
   let a2 = tet_area_tmps.next().load(a);
   let b2 = tet_area_tmps.next().load(b);
   let c2 = tet_area_tmps.next().load(c);
@@ -374,7 +374,7 @@ export function tet_volume(a: VectorLike, b: VectorLike, c: VectorLike, d: Vecto
   return a2.dot(b2) / 6.0;
 }
 
-export function calc_projection_axes(no: VectorLike): number[] {
+export function calc_projection_axes(no: MyVectorLike): number[] {
   let ax = Math.abs(no[0]),
     ay = Math.abs(no[1]),
     az = Math.abs(no[2]);
@@ -397,7 +397,7 @@ export function calc_projection_axes(no: VectorLike): number[] {
 
 let _avtmps = util.cachering.fromConstructor(Vector3, 128);
 
-function inrect_3d(p: VectorLike, min: VectorLike, max: VectorLike): boolean {
+function inrect_3d(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   let ok = p[0] >= min[0] && p[0] <= max[0];
   ok = ok && p[1] >= min[1] && p[1] <= max[1];
   ok = ok && p[2] >= min[2] && p[2] <= max[2];
@@ -405,7 +405,7 @@ function inrect_3d(p: VectorLike, min: VectorLike, max: VectorLike): boolean {
   return ok;
 }
 
-export function aabb_isect_line_3d(v1: VectorLike, v2: VectorLike, min: VectorLike, max: VectorLike): boolean {
+export function aabb_isect_line_3d(v1: MyVectorLike, v2: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   let inside = inrect_3d(v1, min, max);
   inside = inside || inrect_3d(v2, min, max);
 
@@ -426,11 +426,11 @@ export function aabb_isect_line_3d(v1: VectorLike, v2: VectorLike, min: VectorLi
 }
 
 export function aabb_isect_cylinder_3d(
-  v1: VectorLike,
-  v2: VectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
   radius: number,
-  min: VectorLike,
-  max: VectorLike
+  min: MyVectorLike,
+  max: MyVectorLike
 ): boolean {
   let inside = inrect_3d(v1, min, max);
   inside = inside || inrect_3d(v2, min, max);
@@ -459,14 +459,14 @@ export function aabb_isect_cylinder_3d(
 }
 
 export function barycentric_v2(
-  p: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
   axis1: number = 0,
   axis2: number = 1,
-  out: VectorLike | undefined = undefined
-): VectorLike {
+  out: MyVectorLike | undefined = undefined
+): MyVectorLike {
   let div =
     v2[axis1] * v3[axis2] -
     v2[axis2] * v3[axis1] +
@@ -527,7 +527,7 @@ off fort;
 
 **/
 
-function _linedis2(co: VectorLike, v1: VectorLike, v2: VectorLike): number {
+function _linedis2(co: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike): number {
   let v1x = v1[0] - co[0];
   let v1y = v1[1] - co[1];
   let v1z = v1[2] - co[2];
@@ -573,13 +573,13 @@ let cpt_mat2 = new Matrix4();
 let cpt_b = new Vector3();
 
 export function closest_point_on_quad(
-  p: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
-  v4: VectorLike,
-  n: VectorLike | undefined,
-  uvw: VectorLike | undefined
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  v4: MyVectorLike,
+  n: MyVectorLike | undefined,
+  uvw: MyVectorLike | undefined
 ): ClosestTriRet {
   let a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
   let b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
@@ -588,12 +588,12 @@ export function closest_point_on_quad(
 }
 
 export function closest_point_on_tri(
-  p: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
-  n: VectorLike | undefined,
-  uvw: VectorLike | undefined
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  n: MyVectorLike | undefined,
+  uvw: MyVectorLike | undefined
 ): ClosestTriRet {
   let op = p;
 
@@ -760,10 +760,10 @@ export function closest_point_on_tri(
 }
 
 export function dist_to_tri_v3_old(
-  co: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
+  co: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
   no: Vec3 | undefined = undefined
 ): number {
   let lno: Vec3;
@@ -803,7 +803,7 @@ export function dist_to_tri_v3_old(
 
   let dis = 1e17;
 
-  function linedis2d(a: VectorLike, b: VectorLike, c: VectorLike): number {
+  function linedis2d(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike): number {
     let dx1 = a[0] - b[0];
     let dy1 = a[1] - b[1];
     let dx2 = c[0] - b[0];
@@ -821,7 +821,7 @@ export function dist_to_tri_v3_old(
   let tmp = dtvtmps.next();
   let tmp2 = dtvtmps.next();
 
-  function linedis3d(a: VectorLike, b: Vec3, c: Vec3): number {
+  function linedis3d(a: MyVectorLike, b: Vec3, c: Vec3): number {
     tmp.load(a).sub(b);
     tmp2.load(c).sub(b).normalize();
 
@@ -870,7 +870,13 @@ export function dist_to_tri_v3_old(
   return dis;
 }
 
-export function dist_to_tri_v3(p: VectorLike, v1: VectorLike, v2: VectorLike, v3: VectorLike, n?: Vec3): number {
+export function dist_to_tri_v3(
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  n?: Vec3
+): number {
   return dist_to_tri_v3_old(p, v1, v2, v3, n);
   //return Math.sqrt(Math.abs(dist_to_tri_v3_sqr(p, v1, v2, v3, n)));
 }
@@ -917,7 +923,13 @@ off fort;
 
 let _dt3s_n = new Vector3();
 
-export function dist_to_tri_v3_sqr(p: VectorLike, v1: VectorLike, v2: VectorLike, v3: VectorLike, n?: Vec3): number {
+export function dist_to_tri_v3_sqr(
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  n?: Vec3
+): number {
   if (n === undefined) {
     n = _dt3s_n;
     n.load(normal_tri(v1, v2, v3));
@@ -1203,7 +1215,12 @@ export function tri_area(v1: Vec3, v2: Vec3, v3: Vec3): number {
   return Math.sqrt(s);
 }
 
-export function aabb_overlap_area(pos1: VectorLike, size1: VectorLike, pos2: VectorLike, size2: VectorLike): number {
+export function aabb_overlap_area(
+  pos1: MyVectorLike,
+  size1: MyVectorLike,
+  pos2: MyVectorLike,
+  size2: MyVectorLike
+): number {
   let r1 = 0.0,
     r2 = 0.0;
 
@@ -1236,7 +1253,12 @@ export function aabb_overlap_area(pos1: VectorLike, size1: VectorLike, pos2: Vec
  * @param {*} size2
  */
 
-export function aabb_isect_2d(pos1: VectorLike, size1: VectorLike, pos2: VectorLike, size2: VectorLike): boolean {
+export function aabb_isect_2d(
+  pos1: MyVectorLike,
+  size1: MyVectorLike,
+  pos2: MyVectorLike,
+  size2: MyVectorLike
+): boolean {
   let ret = 0;
   for (let i = 0; i < 2; i++) {
     let a = pos1[i];
@@ -1248,7 +1270,12 @@ export function aabb_isect_2d(pos1: VectorLike, size1: VectorLike, pos2: VectorL
   return ret === 2;
 }
 
-export function aabb_isect_3d(pos1: VectorLike, size1: VectorLike, pos2: VectorLike, size2: VectorLike): boolean {
+export function aabb_isect_3d(
+  pos1: MyVectorLike,
+  size1: MyVectorLike,
+  pos2: MyVectorLike,
+  size2: MyVectorLike
+): boolean {
   let ret = 0;
 
   for (let i = 0; i < 3; i++) {
@@ -1287,10 +1314,10 @@ let aabb_intersect_rets: CacheRing<AABBIntersectRet> = cacheRing<AABBIntersectRe
  * @param {*} size2
  */
 export function aabb_intersect_2d(
-  pos1: VectorLike,
-  size1: VectorLike,
-  pos2: VectorLike,
-  size2: VectorLike
+  pos1: MyVectorLike,
+  size1: MyVectorLike,
+  pos2: MyVectorLike,
+  size2: MyVectorLike
 ): AABBIntersectRet | undefined {
   let v1 = aabb_intersect_vs.next().load(pos1);
   let v2 = aabb_intersect_vs.next().load(pos1).add(size1);
@@ -1446,7 +1473,12 @@ _test_aabb_intersect_2d.timer = function timer(rate: number = 500): void {
 
 let aabb_intersect_vs3: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
-export function aabb_intersect_3d(min1: VectorLike, max1: VectorLike, min2: VectorLike, max2: VectorLike): boolean {
+export function aabb_intersect_3d(
+  min1: MyVectorLike,
+  max1: MyVectorLike,
+  min2: MyVectorLike,
+  max2: MyVectorLike
+): boolean {
   let tot = 0;
 
   for (let i = 0; i < 2; i++) {
@@ -1472,7 +1504,7 @@ export function aabb_intersect_3d(min1: VectorLike, max1: VectorLike, min2: Vect
  */
 export function aabb_union(
   a: { [k: number]: { [k: number]: number; length: number } },
-  b: { [k: number]: VectorLike }
+  b: { [k: number]: MyVectorLike }
 ): typeof a {
   for (let i = 0; i < 2; i++) {
     for (let j = 0; j < a[i].length; j++) {
@@ -1484,10 +1516,10 @@ export function aabb_union(
 }
 
 export function aabb_union_2d(
-  pos1: VectorLike,
-  size1: VectorLike,
-  pos2: VectorLike,
-  size2: VectorLike
+  pos1: MyVectorLike,
+  size1: MyVectorLike,
+  pos2: MyVectorLike,
+  size2: MyVectorLike
 ): AABBIntersectRet {
   let v1 = aabb_intersect_vs.next();
   let v2 = aabb_intersect_vs.next();
@@ -1584,8 +1616,8 @@ if (FLOAT_MIN != FLOAT_MIN || FLOAT_MAX != FLOAT_MAX) {
 let _static_grp_points4 = new Array(4);
 let _static_grp_points8 = new Array(8);
 
-export function get_rect_points(p: VectorLike, size: VectorLike): VectorLike[] {
-  let cs: VectorLike[];
+export function get_rect_points(p: MyVectorLike, size: MyVectorLike): MyVectorLike[] {
+  let cs: MyVectorLike[];
   if (p.length === 2) {
     cs = _static_grp_points4;
     cs[0] = p;
@@ -1608,7 +1640,7 @@ export function get_rect_points(p: VectorLike, size: VectorLike): VectorLike[] {
   return cs;
 }
 
-export function get_rect_lines(p: VectorLike, size: VectorLike): VectorLike[][] {
+export function get_rect_lines(p: MyVectorLike, size: MyVectorLike): MyVectorLike[][] {
   let ps = get_rect_points(p, size);
   if (p.length === 2) {
     return [
@@ -1641,18 +1673,18 @@ export function get_rect_lines(p: VectorLike, size: VectorLike): VectorLike[][] 
   }
 }
 
-let $vs_simple_tri_aabb_isect: VectorLike[] = [
-  0 as unknown as VectorLike,
-  0 as unknown as VectorLike,
-  0 as unknown as VectorLike,
+let $vs_simple_tri_aabb_isect: MyVectorLike[] = [
+  0 as unknown as MyVectorLike,
+  0 as unknown as MyVectorLike,
+  0 as unknown as MyVectorLike,
 ];
 
 export function simple_tri_aabb_isect(
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
-  min: VectorLike,
-  max: VectorLike
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  min: MyVectorLike,
+  max: MyVectorLike
 ): boolean {
   $vs_simple_tri_aabb_isect[0] = v1;
   $vs_simple_tri_aabb_isect[1] = v2;
@@ -1669,10 +1701,10 @@ export function simple_tri_aabb_isect(
 
 export class MinMax {
   totaxis: number;
-  min: number | VectorLike;
-  max: number | VectorLike;
-  _min: number | VectorLike;
-  _max: number | VectorLike;
+  min: number | MyVectorLike;
+  max: number | MyVectorLike;
+  _min: number | MyVectorLike;
+  _max: number | MyVectorLike;
   _static_mr_co: unknown[];
   _static_mr_cs: unknown[];
   static STRUCT: string;
@@ -1683,20 +1715,20 @@ export class MinMax {
     }
     this.totaxis = totaxis;
     if (totaxis !== 1) {
-      let cls: { new (n: number): VectorLike };
+      let cls: { new (n: number): MyVectorLike };
 
       switch (totaxis) {
         case 2:
-          cls = Vector2 as unknown as { new (n: number): VectorLike };
+          cls = Vector2 as unknown as { new (n: number): MyVectorLike };
           break;
         case 3:
-          cls = Vector3 as unknown as { new (n: number): VectorLike };
+          cls = Vector3 as unknown as { new (n: number): MyVectorLike };
           break;
         case 4:
-          cls = Vector4 as unknown as { new (n: number): VectorLike };
+          cls = Vector4 as unknown as { new (n: number): MyVectorLike };
           break;
         default:
-          cls = Array as unknown as { new (n: number): VectorLike };
+          cls = Array as unknown as { new (n: number): MyVectorLike };
           break;
       }
 
@@ -1727,10 +1759,10 @@ export class MinMax {
       this._min = mm.min;
       this._max = mm.max;
     } else {
-      this.min = new Vector3(mm.min as VectorLike);
-      this.max = new Vector3(mm.max as VectorLike);
-      this._min = new Vector3(mm._min as VectorLike);
-      this._max = new Vector3(mm._max as VectorLike);
+      this.min = new Vector3(mm.min as MyVectorLike);
+      this.max = new Vector3(mm.max as MyVectorLike);
+      this._min = new Vector3(mm._min as MyVectorLike);
+      this._max = new Vector3(mm._max as MyVectorLike);
     }
   }
 
@@ -1750,7 +1782,7 @@ export class MinMax {
     }
   }
 
-  minmax_rect(p: VectorLike, size: VectorLike): void {
+  minmax_rect(p: MyVectorLike, size: MyVectorLike): void {
     let totaxis = this.totaxis;
     let cs = this._static_mr_cs;
     if (totaxis === 2) {
@@ -1775,7 +1807,7 @@ export class MinMax {
     }
   }
 
-  minmax(p: number | VectorLike): void {
+  minmax(p: number | MyVectorLike | vectormath.VectorLike<2 | 3 | 4>): void {
     let totaxis = this.totaxis;
 
     if (totaxis === 1) {
@@ -1786,7 +1818,7 @@ export class MinMax {
         mn = this.min as { [k: number]: number };
       let _mx = this._max as { [k: number]: number },
         mx = this.max as { [k: number]: number };
-      let pv = p as VectorLike;
+      let pv = p as MyVectorLike;
       _mn[0] = mn[0] = Math.min(_mn[0], pv[0]);
       _mn[1] = mn[1] = Math.min(_mn[1], pv[1]);
       _mx[0] = mx[0] = Math.max(_mx[0], pv[0]);
@@ -1796,7 +1828,7 @@ export class MinMax {
         mn = this.min as { [k: number]: number };
       let _mx = this._max as { [k: number]: number },
         mx = this.max as { [k: number]: number };
-      let pv = p as VectorLike;
+      let pv = p as MyVectorLike;
       _mn[0] = mn[0] = Math.min(_mn[0], pv[0]);
       _mn[1] = mn[1] = Math.min(_mn[1], pv[1]);
       _mn[2] = mn[2] = Math.min(_mn[2], pv[2]);
@@ -1808,7 +1840,7 @@ export class MinMax {
         mn = this.min as { [k: number]: number };
       let _mx = this._max as { [k: number]: number },
         mx = this.max as { [k: number]: number };
-      let pv = p as VectorLike;
+      let pv = p as MyVectorLike;
       for (let i = 0; i < totaxis; i++) {
         _mn[i] = mn[i] = Math.min(_mn[i], pv[i]);
         _mx[i] = mx[i] = Math.max(_mx[i], pv[i]);
@@ -1819,7 +1851,7 @@ export class MinMax {
 MinMax.STRUCT =
   "\n  math.MinMax {\n    min     : vec3;\n    max     : vec3;\n    _min    : vec3;\n    _max    : vec3;\n    totaxis : int;\n  }\n";
 
-export function winding_axis(a: VectorLike, b: VectorLike, c: VectorLike, up_axis: number): boolean {
+export function winding_axis(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, up_axis: number): boolean {
   let xaxis = (up_axis + 1) % 3;
   let yaxis = (up_axis + 2) % 3;
 
@@ -1841,9 +1873,9 @@ export function winding_axis(a: VectorLike, b: VectorLike, c: VectorLike, up_axi
 
 /** returns false if clockwise */
 export function winding(
-  a: VectorLike,
-  b: VectorLike,
-  c: VectorLike,
+  a: MyVectorLike,
+  b: MyVectorLike,
+  c: MyVectorLike,
   zero_z: boolean = false,
   tol: number = 0.0
 ): boolean {
@@ -1856,9 +1888,9 @@ export function winding(
 }
 
 export function inrect_2d(
-  p: VectorLike | undefined,
-  pos: VectorLike | undefined,
-  size: VectorLike | undefined
+  p: MyVectorLike | undefined,
+  pos: MyVectorLike | undefined,
+  size: MyVectorLike | undefined
 ): boolean {
   if (p === undefined || pos === undefined || size === undefined) {
     console.trace();
@@ -1871,7 +1903,7 @@ export function inrect_2d(
 
 let $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
 
-export function aabb_isect_line_2d(v1: VectorLike, v2: VectorLike, min: VectorLike, max: VectorLike): boolean {
+export function aabb_isect_line_2d(v1: MyVectorLike, v2: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   if (point_in_aabb_2d(v1, min, max) || point_in_aabb(v2, min, max)) {
     return true;
   }
@@ -1898,7 +1930,7 @@ export function aabb_isect_line_2d(v1: VectorLike, v2: VectorLike, min: VectorLi
   return false;
 }
 
-export function expand_rect2d(pos: { [k: number]: number }, size: { [k: number]: number }, margin: VectorLike): void {
+export function expand_rect2d(pos: { [k: number]: number }, size: { [k: number]: number }, margin: MyVectorLike): void {
   pos[0] -= Math.floor(margin[0]);
   pos[1] -= Math.floor(margin[1]);
   size[0] += Math.floor(margin[0] * 2.0);
@@ -1924,9 +1956,9 @@ export function expand_line(l: [Vec3, Vec3], margin: number): [Vec3, Vec3] {
 }
 
 export function colinear(
-  a: VectorLike & { length: number },
-  b: VectorLike,
-  c: VectorLike,
+  a: MyVectorLike & { length: number },
+  b: MyVectorLike,
+  c: MyVectorLike,
   limit: number = 2.2e-16,
   distLimit: number = 0.00001 ** 2
 ): boolean {
@@ -1956,9 +1988,9 @@ export function colinear(
 }
 
 export function colinear2d(
-  a: VectorLike,
-  b: VectorLike,
-  c: VectorLike,
+  a: MyVectorLike,
+  b: MyVectorLike,
+  c: MyVectorLike,
   limit: number = 0.00001,
   precise: boolean = false
 ): boolean {
@@ -2057,10 +2089,10 @@ export function corner_normal(vec1: Vec3, vec2: Vec3, width: number): Vec3 {
 
 //test_segment is optional, true
 export function line_line_isect(
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
-  v4: VectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  v4: MyVectorLike,
   test_segment: boolean = true
 ): Vec3 | number | undefined {
   if (test_segment && !line_line_cross(v1, v2, v3, v4)) {
@@ -2106,7 +2138,7 @@ export function line_line_isect(
   }
 }
 
-export function line_line_cross(a: VectorLike, b: VectorLike, c: VectorLike, d: VectorLike): boolean {
+export function line_line_cross(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, d: MyVectorLike): boolean {
   /*
   let limit=feps*1000;
   if (Math.abs(l1[0].vectorDistance(l2[0])+l1[1].vectorDistance(l2[0])-l1[0].vectorDistance(l1[1]))<limit) {
@@ -2137,7 +2169,7 @@ let _asi_v4 = new Vector3();
 let _asi_v5 = new Vector3();
 let _asi_v6 = new Vector3();
 
-export function point_in_aabb_2d(p: VectorLike, min: VectorLike, max: VectorLike): boolean {
+export function point_in_aabb_2d(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1];
 }
 
@@ -2148,7 +2180,7 @@ let _asi2d_v4 = new Vector2();
 let _asi2d_v5 = new Vector2();
 let _asi2d_v6 = new Vector2();
 
-export function aabb_sphere_isect_2d(p: VectorLike, r: number, min: VectorLike, max: VectorLike): boolean {
+export function aabb_sphere_isect_2d(p: MyVectorLike, r: number, min: MyVectorLike, max: MyVectorLike): boolean {
   let v1 = _asi2d_v1,
     v2 = _asi2d_v2,
     v3 = _asi2d_v3,
@@ -2216,7 +2248,7 @@ export function aabb_sphere_isect_2d(p: VectorLike, r: number, min: VectorLike, 
   return ret;
 }
 
-export function point_in_aabb(p: VectorLike, min: VectorLike, max: VectorLike): boolean {
+export function point_in_aabb(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1] && p[2] >= min[2] && p[2] <= max[2];
 }
 
@@ -2227,7 +2259,7 @@ for (let i = 0; i < 8; i++) {
 
 let aabb_sphere_isect_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
-export function aabb_sphere_isect(p: VectorLike, r: number, min: VectorLike, max: VectorLike): boolean {
+export function aabb_sphere_isect(p: MyVectorLike, r: number, min: MyVectorLike, max: MyVectorLike): boolean {
   let lp: Vec3;
   let lmin: Vec3;
   let lmax: Vec3;
@@ -2304,7 +2336,7 @@ export function aabb_sphere_isect(p: VectorLike, r: number, min: VectorLike, max
   return false;
 }
 
-export function aabb_sphere_dist(p: VectorLike, min: VectorLike, max: VectorLike): number {
+export function aabb_sphere_dist(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): number {
   let lp: Vec3;
   let lmin: Vec3;
   let lmax: Vec3;
@@ -2382,14 +2414,14 @@ export function aabb_sphere_dist(p: VectorLike, min: VectorLike, max: VectorLike
   return mindis === undefined ? 1e17 : mindis;
 }
 
-export function point_in_tri(p: VectorLike, v1: VectorLike, v2: VectorLike, v3: VectorLike): boolean {
+export function point_in_tri(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
   let w1 = winding(p, v1, v2);
   let w2 = winding(p, v2, v3);
   let w3 = winding(p, v3, v1);
   return w1 === w2 && w2 === w3;
 }
 
-export function convex_quad(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): boolean {
+export function convex_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): boolean {
   return (line_line_cross as Function)([v1, v3], [v2, v4]);
 }
 
@@ -2407,7 +2439,7 @@ export function isNum(f: number): boolean {
 
 const _normal_tri_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
-export function normal_tri(v1: VectorLike, v2: VectorLike, v3: VectorLike): Vec3 {
+export function normal_tri(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): Vec3 {
   let x1 = v2[0] - v1[0];
   let y1 = v2[1] - v1[1];
   let z1 = v2[2] - v1[2];
@@ -2458,7 +2490,7 @@ let _q1 = new Vector3(),
   _q2 = new Vector3(),
   _q3 = new Vector3();
 
-export function normal_quad(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): Vec3 {
+export function normal_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): Vec3 {
   _q1.load(normal_tri(v1, v2, v3));
   _q2.load(normal_tri(v2, v3, v4));
 
@@ -2466,7 +2498,7 @@ export function normal_quad(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: 
   return _q1;
 }
 
-export function normal_quad_old(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): Vec3 {
+export function normal_quad_old(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): Vec3 {
   let n = normal_tri(v1, v2, v3);
   $n2_normal_quad[0] = n[0];
   $n2_normal_quad[1] = n[1];
@@ -2491,10 +2523,10 @@ let _li_vi = new Vector3();
 
 //calc_t is optional, false
 export function line_isect(
-  v1: VectorLike,
-  v2: VectorLike,
-  v3: VectorLike,
-  v4: VectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
+  v3: MyVectorLike,
+  v4: MyVectorLike,
   calc_t?: boolean
 ): [Vec3, number, number?] {
   if (calc_t === undefined) {
@@ -2532,9 +2564,9 @@ let dt2l_v4 = new Vector2();
 let dt2l_v5 = new Vector2();
 
 export function dist_to_line_2d(
-  p: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
   clip: boolean = true,
   closest_co_out: { [k: number]: number } | undefined = undefined,
   t_out: number | undefined = undefined
@@ -2573,7 +2605,7 @@ let dt3l_v3 = new Vector3();
 let dt3l_v4 = new Vector3();
 let dt3l_v5 = new Vector3();
 
-export function dist_to_line_sqr(p: VectorLike, v1: VectorLike, v2: VectorLike, clip: boolean = true): number {
+export function dist_to_line_sqr(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, clip: boolean = true): number {
   let px = p[0] - v1[0];
   let py = p[1] - v1[1];
   let pz = p.length < 3 ? 0.0 : p[2] - v1[2];
@@ -2607,7 +2639,7 @@ export function dist_to_line_sqr(p: VectorLike, v1: VectorLike, v2: VectorLike, 
   return (v2x - px) * (v2x - px) + (v2y - py) * (v2y - py) + (v2z - pz) * (v2z - pz);
 }
 
-export function dist_to_line(p: VectorLike, v1: VectorLike, v2: VectorLike, clip: boolean = true): number {
+export function dist_to_line(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, clip: boolean = true): number {
   return Math.sqrt(dist_to_line_sqr(p, v1, v2, clip));
 }
 
@@ -2691,9 +2723,9 @@ let _closest_point_rets: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
 let _closest_tmps = [new Vector3(), new Vector3(), new Vector3()];
 
 export function closest_point_on_line(
-  p: VectorLike,
-  v1: VectorLike,
-  v2: VectorLike,
+  p: MyVectorLike,
+  v1: MyVectorLike,
+  v2: MyVectorLike,
   clip: boolean = true
 ): [Vec3, number] {
   let l1 = _closest_tmps[0],
@@ -2740,7 +2772,7 @@ let _circ_from_line_tan_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number
   }, 64)
 );
 
-export function circ_from_line_tan(a: VectorLike, b: VectorLike, t: VectorLike): [Vec3, number] {
+export function circ_from_line_tan(a: MyVectorLike, b: MyVectorLike, t: MyVectorLike): [Vec3, number] {
   let p1 = _circ_from_line_tan_vs.next();
   let t2 = _circ_from_line_tan_vs.next();
   let n1 = _circ_from_line_tan_vs.next();
@@ -2785,7 +2817,7 @@ let _circ_from_line_tan2d_ret: CacheRing<[Vec2, number]> = cacheRing<[Vec2, numb
   }, 64)
 );
 
-export function circ_from_line_tan_2d(a: VectorLike, b: VectorLike, t: VectorLike): [Vec2, number] {
+export function circ_from_line_tan_2d(a: MyVectorLike, b: MyVectorLike, t: MyVectorLike): [Vec2, number] {
   let la: Vec3 = _circ_from_line_tan2d_vs.next().load(a);
   let lb: Vec3 = _circ_from_line_tan2d_vs.next().load(b);
   let lt: Vec3 = _circ_from_line_tan2d_vs.next().load(t);
@@ -2886,7 +2918,7 @@ let _get_tri_circ_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
   })
 );
 
-export function get_tri_circ(a: VectorLike, b: VectorLike, c: VectorLike): [Vec3, number] {
+export function get_tri_circ(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike): [Vec3, number] {
   let v1 = _gtc_v1;
   let v2 = _gtc_v2;
   let e1 = _gtc_e1;
@@ -2947,7 +2979,7 @@ export function get_tri_circ(a: VectorLike, b: VectorLike, c: VectorLike): [Vec3
 
 export function gen_circle(
   m: { make_vert(v: Vec3): unknown; make_edge(a: unknown, b: unknown): unknown },
-  origin: VectorLike,
+  origin: MyVectorLike,
   r: number,
   stfeps: number
 ): unknown[] {
@@ -2996,7 +3028,7 @@ export function makeCircleMesh(gl: unknown, radius: number, stfeps: number): unk
   return mesh;
 }
 
-export function minmax_verts(verts: Iterable<{ co: VectorLike }>): [Vec3, Vec3] {
+export function minmax_verts(verts: Iterable<{ co: MyVectorLike }>): [Vec3, Vec3] {
   let min = new Vector3([1000000000000.0, 1000000000000.0, 1000000000000.0]);
   let max = new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
   for (let v of verts) {
@@ -3008,14 +3040,14 @@ export function minmax_verts(verts: Iterable<{ co: VectorLike }>): [Vec3, Vec3] 
   return [min, max];
 }
 
-export function unproject(vec: VectorLike, ipers: Matrix4, iview: Matrix4): Vec3 {
+export function unproject(vec: MyVectorLike, ipers: Matrix4, iview: Matrix4): Vec3 {
   let newvec = new Vector3(vec);
   newvec.multVecMatrix(ipers);
   newvec.multVecMatrix(iview);
   return newvec;
 }
 
-export function project(vec: VectorLike, pers: Matrix4, view: Matrix4): Vec3 {
+export function project(vec: MyVectorLike, pers: Matrix4, view: Matrix4): Vec3 {
   let newvec = new Vector3(vec);
   newvec.multVecMatrix(pers);
   newvec.multVecMatrix(view);
@@ -3029,7 +3061,7 @@ let _sh_end = [];
 
 let static_cent_gbw = new Vector3();
 
-export function get_boundary_winding(points: VectorLike[]): boolean {
+export function get_boundary_winding(points: MyVectorLike[]): boolean {
   let cent = static_cent_gbw.zero();
   if (points.length === 0) return false;
   for (let i = 0; i < points.length; i++) {
@@ -3053,13 +3085,13 @@ export function get_boundary_winding(points: VectorLike[]): boolean {
 export class PlaneOps {
   axis: [number, number, number];
 
-  constructor(normal: VectorLike) {
+  constructor(normal: MyVectorLike) {
     let no = normal;
     this.axis = [0, 0, 0];
     this.reset_axis(normal);
   }
 
-  reset_axis(no: VectorLike): void {
+  reset_axis(no: MyVectorLike): void {
     let ax, ay, az;
     let nx = Math.abs(no[0]),
       ny = Math.abs(no[1]),
@@ -3080,7 +3112,7 @@ export class PlaneOps {
     this.axis = [ax, ay, az];
   }
 
-  convex_quad(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): boolean {
+  convex_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): boolean {
     let ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], v1[ax[2]]]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], v2[ax[2]]]);
@@ -3089,7 +3121,7 @@ export class PlaneOps {
     return convex_quad(v1, v2, v3, v4);
   }
 
-  line_isect(v1: VectorLike, v2: VectorLike, v3: VectorLike, v4: VectorLike): [Vec3, number, number?] {
+  line_isect(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): [Vec3, number, number?] {
     let ax = this.axis;
     let orig1 = v1,
       orig2 = v2;
@@ -3105,7 +3137,7 @@ export class PlaneOps {
     return ret;
   }
 
-  line_line_cross(l1: [VectorLike, VectorLike], l2: [VectorLike, VectorLike]): boolean {
+  line_line_cross(l1: [MyVectorLike, MyVectorLike], l2: [MyVectorLike, MyVectorLike]): boolean {
     let ax = this.axis;
     let v1 = l1[0],
       v2 = l1[1],
@@ -3118,7 +3150,7 @@ export class PlaneOps {
     return (line_line_cross as Function)([v1, v2], [v3, v4]);
   }
 
-  winding(v1: VectorLike, v2: VectorLike, v3: VectorLike): boolean {
+  winding(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
     let ax = this.axis;
     if (v1 === undefined) console.trace();
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
@@ -3127,7 +3159,7 @@ export class PlaneOps {
     return winding(v1, v2, v3);
   }
 
-  colinear(v1: VectorLike, v2: VectorLike, v3: VectorLike): boolean {
+  colinear(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
     let ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
@@ -3135,7 +3167,7 @@ export class PlaneOps {
     return colinear(v1, v2, v3);
   }
 
-  get_boundary_winding(points: VectorLike[]): boolean {
+  get_boundary_winding(points: MyVectorLike[]): boolean {
     let ax = this.axis;
     let cent = new Vector3();
     if (points.length === 0) return false;
@@ -3176,10 +3208,10 @@ let _isrp_ret = new Vector3();
 let isect_ray_plane_rets = util.cachering.fromConstructor(Vector3, 256);
 
 export function isect_ray_plane(
-  planeorigin: VectorLike,
-  planenormal: VectorLike,
-  rayorigin: VectorLike,
-  raynormal: VectorLike
+  planeorigin: MyVectorLike,
+  planenormal: MyVectorLike,
+  rayorigin: MyVectorLike,
+  raynormal: MyVectorLike
 ): Vec3 | undefined {
   let po = planeorigin,
     pn = planenormal,
@@ -3318,7 +3350,7 @@ function lreport(..._args: unknown[]): void {
   //console.log(...arguments);
 }
 
-export function trilinear_v3(uvw: VectorLike, boxverts: VectorLike[]): Vec3 {
+export function trilinear_v3(uvw: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
   let [u, v, w] = uvw;
 
   const a1x = boxverts[0][0],
@@ -3434,8 +3466,8 @@ for (let i = 0; i < 6; i++) {
 }
 
 export function point_in_hex(
-  p: VectorLike,
-  boxverts: VectorLike[],
+  p: MyVectorLike,
+  boxverts: MyVectorLike[],
   boxfacecents: Vec3[] | undefined = undefined,
   boxfacenormals: Vec3[] | undefined = undefined
 ): boolean {
@@ -3501,7 +3533,7 @@ for (let i = 0; i < 8; i++) {
   boxverts_tmp[i] = new Vector3();
 }
 
-export function trilinear_co(p: VectorLike, boxverts: VectorLike[]): Vec3 {
+export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
   let uvw = tril_co_rets.next();
 
   uvw.zero();
@@ -3617,7 +3649,7 @@ export function trilinear_co(p: VectorLike, boxverts: VectorLike[]): Vec3 {
 }
 
 //newton-raphson
-export function trilinear_co2(p: VectorLike, boxverts: VectorLike[], uvw: Vector3): Vec3 {
+export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Vector3): Vec3 {
   //let uvw = tril_co_rets.next();
   let grad = tril_co_tmps.next();
 
@@ -3712,7 +3744,7 @@ export function trilinear_co2(p: VectorLike, boxverts: VectorLike[], uvw: Vector
 let angle_tri_v3_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 let angle_tri_v3_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
-export function tri_angles(v1: VectorLike, v2: VectorLike, v3: VectorLike): Vec3 {
+export function tri_angles(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): Vec3 {
   let t1 = angle_tri_v3_vs.next().load(v1).sub(v2);
   let t2 = angle_tri_v3_vs.next().load(v3).sub(v2);
   let t3 = angle_tri_v3_vs.next().load(v2).sub(v3);
@@ -3739,7 +3771,11 @@ export function tri_angles(v1: VectorLike, v2: VectorLike, v3: VectorLike): Vec3
 let angle_v2_temps: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 32));
 let angle_v3_temps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
-export function angle_between_vecs(v1: VectorLike & { length: number }, vcent: VectorLike, v2: VectorLike): number {
+export function angle_between_vecs(
+  v1: MyVectorLike & { length: number },
+  vcent: MyVectorLike,
+  v2: MyVectorLike
+): number {
   let t1: Vec2 | Vec3, t2: Vec2 | Vec3;
 
   if (v1.length === 2) {

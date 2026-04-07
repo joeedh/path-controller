@@ -1,5 +1,7 @@
 /* ---- color / terminal utilities ---- */
 
+type StructJSONValue = any
+
 interface ColorMap {
   [key: string]: number;
 }
@@ -2340,7 +2342,7 @@ class StructStructField extends StructFieldType {
     _obj: unknown,
     _field: StructField | FakeField,
     type: StructType
-  ): unknown {
+  ): StructJSONValue {
     let stt = manager.get_struct(type.data as string);
     return manager.writeJSON(val as any, stt);
   }
@@ -2488,7 +2490,7 @@ class StructTStructField extends StructFieldType {
     _obj: unknown,
     _field: StructField | FakeField,
     type: StructType
-  ): unknown {
+  ): StructJSONValue {
     const keywords = (manager.constructor as typeof STRUCT).keywords;
 
     let valObj = val as any & { constructor: StructableClass };
@@ -4839,7 +4841,7 @@ class STRUCT {
     return this.write_object(data, obj);
   }
 
-  writeJSON(obj: any, stt?: NStruct): string {
+  writeJSON(obj: any, stt?: NStruct): StructJSONValue {
     const keywords = (this.constructor as typeof STRUCT).keywords;
 
     let cls = obj.constructor as StructableClass;
@@ -5867,7 +5869,7 @@ function writeObject(data: number[], obj: any): number[] {
   return manager.writeObject(data, obj);
 }
 
-function writeJSON(obj: any): string {
+function writeJSON(obj: any): StructJSONValue {
   return manager.writeJSON(obj);
 }
 

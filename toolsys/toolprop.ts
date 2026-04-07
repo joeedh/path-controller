@@ -1223,7 +1223,7 @@ export class EnumProperty extends ToolProperty<number> {
 
   constructor(
     string_or_int?: string | number,
-    valid_values?: Record<string, number> | string[] | String,
+    valid_values?: Record<string, number> | string[],
     apiname?: string,
     uiname?: string,
     description?: string,
@@ -1242,7 +1242,7 @@ export class EnumProperty extends ToolProperty<number> {
 
     if (valid_values === undefined) return;
 
-    if (valid_values instanceof Array || valid_values instanceof String) {
+    if (valid_values instanceof Array) {
       for (var i = 0; i < valid_values.length; i++) {
         this.values[valid_values[i] as string] = valid_values[i] as string;
         this.keys[valid_values[i] as string] = valid_values[i] as string;
@@ -1532,7 +1532,7 @@ export class FlagProperty extends EnumProperty {
 
   constructor(
     string_or_int?: string | number,
-    valid_values?: Record<string, number> | string[] | String,
+    valid_values?: Record<string, number>,
     apiname?: string,
     uiname?: string,
     description?: string,

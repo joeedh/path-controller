@@ -1029,7 +1029,7 @@ function create${name}${vecsize}(parent: typeof Array | typeof Float32Array, str
   return class ${name}${vecsize} extends parent {
 ${unroll("    $$: number;")}
     // this is set by the parent class
-    // @ts-expect-error
+    // @ts-ignore
     declare length: number
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];

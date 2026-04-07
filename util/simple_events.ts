@@ -1,6 +1,7 @@
 import * as util from "./util.js";
 import cconst from "../config/config.js";
 import { Vector2 } from "./vectormath.js";
+import { ContextLike } from "../controller.js";
 
 declare global {
   interface Window {
@@ -27,16 +28,16 @@ export interface ModalState {
   };
 }
 
-export let modalstack: ModalState[] = [];
-let singleMouseCBs: Record<string, Set<(e: Event) => void>> = {};
+export const modalstack: ModalState[] = [];
+const singleMouseCBs: Record<string, Set<(e: Event) => void>> = {};
 
 function consolelog(..._args: unknown[]): void {
   //  onsole.log(...arguments)
 }
 
 function debugDomEvents(): void {
-  let cbsymbol = Symbol("event-callback");
-  let thsymbol = Symbol("debug-info");
+  const cbsymbol = Symbol("event-callback");
+  const thsymbol = Symbol("debug-info");
 
   let idgen = 0;
 
@@ -51,8 +52,8 @@ function debugDomEvents(): void {
     return "" + et[thsymbol] + ":" + type + ":" + JSON.stringify(options);
   }
 
-  let addEventListener = EventTarget.prototype.addEventListener;
-  let removeEventListener = EventTarget.prototype.removeEventListener;
+  const addEventListener = EventTarget.prototype.addEventListener;
+  const removeEventListener = EventTarget.prototype.removeEventListener;
 
   EventTarget.prototype.addEventListener = function (
     this: EventTarget & Record<symbol, number>,
@@ -62,12 +63,12 @@ function debugDomEvents(): void {
   ): void {
     init(this as unknown as Record<symbol, number>);
 
-    let cbRec = cb as unknown as Record<symbol, Set<string>>;
+    const cbRec = cb as unknown as Record<symbol, Set<string>>;
     if (!cbRec[cbsymbol]) {
       cbRec[cbsymbol] = new Set();
     }
 
-    let key = getkey(this as unknown as Record<symbol, number>, type, options);
+    const key = getkey(this as unknown as Record<symbol, number>, type, options);
     cbRec[cbsymbol].add(key);
 
     return addEventListener.call(this, type, cb, options);
@@ -81,13 +82,13 @@ function debugDomEvents(): void {
   ): void {
     init(this as unknown as Record<symbol, number>);
 
-    let cbRec = cb as unknown as Record<symbol, Set<string>>;
+    const cbRec = cb as unknown as Record<symbol, Set<string>>;
     if (!cbRec[cbsymbol]) {
       console.error("Invalid callback in removeEventListener for", type, this, cb);
       return;
     }
 
-    let key = getkey(this as unknown as Record<symbol, number>, type, options);
+    const key = getkey(this as unknown as Record<symbol, number>, type, options);
 
     if (!cbRec[cbsymbol].has(key)) {
       console.error("Callback not in removeEventListener;", type, this, cb);
@@ -112,36 +113,36 @@ function singletonMouseEventsInit(): SingletonMouseEventsResult | undefined {
     return;
   }
 
-  let keys = ["mousedown", "mouseup", "mousemove"];
-  for (let k of keys) {
+  const keys = ["mousedown", "mouseup", "mousemove"];
+  for (const k of keys) {
     singleMouseCBs[k] = new Set();
   }
 
   let ddd = -1.0;
   window.testSingleMouseUpEvent = (type = "mousedown") => {
-    let id = ddd++;
+    const id = ddd++;
     singleMouseEvent(() => {
       console.log("mouse event", id);
     }, type);
   };
 
-  let _mpos = new Vector2(undefined as unknown as number[]);
+  const _mpos = new Vector2(undefined as unknown as number[]);
 
   function doSingleCbs(e: Event, type: string): void {
-    let list = singleMouseCBs[type];
+    const list = singleMouseCBs[type];
     singleMouseCBs[type] = new Set();
 
-    let ev = e as unknown as Record<string, unknown>;
+    const ev = e as unknown as Record<string, unknown>;
 
     if (ev.type !== "touchend" && ev.type !== "touchcancel") {
-      let touches = ev.touches as TouchList | undefined;
+      const touches = ev.touches as TouchList | undefined;
       _mpos[0] = (touches && touches.length > 0 ? touches[0].pageX : (ev.x as number)) as number;
       _mpos[1] = (touches && touches.length > 0 ? touches[0].pageY : (ev.y as number)) as number;
     }
 
-    let touches = ev.touches as TouchList | undefined;
+    const touches = ev.touches as TouchList | undefined;
     if (touches) {
-      let ev2 = copyEvent(e) as Record<string, unknown>;
+      const ev2 = copyEvent(e) as Record<string, unknown>;
 
       ev2.type = type;
       if (touches.length > 0) {
@@ -155,7 +156,7 @@ function singletonMouseEventsInit(): SingletonMouseEventsResult | undefined {
       e = ev2 as unknown as Event;
     }
 
-    for (let cb of list) {
+    for (const cb of list) {
       try {
         cb(e);
       } catch (error) {
@@ -251,7 +252,7 @@ export class DoubleClickHandler {
   down: number;
   last: number;
   up: number;
-  dblEvent: Record<string, unknown> | undefined;
+  dblEvent: any | undefined;
   mdown: boolean;
   start_mpos: InstanceType<typeof Vector2>;
 
@@ -277,12 +278,12 @@ export class DoubleClickHandler {
   }
 
   _on_mousemove_impl(e: Event): void {
-    let ev = e as unknown as Record<string, unknown>;
-    let mpos = new Vector2(undefined as unknown as number[]);
+    const ev = e as unknown as Record<string, unknown>;
+    const mpos = new Vector2(undefined as unknown as number[]);
     mpos[0] = ev.x as number;
     mpos[1] = ev.y as number;
 
-    let dist = mpos.vectorDistance!(this.start_mpos) * devicePixelRatio;
+    const dist = mpos.vectorDistance!(this.start_mpos) * devicePixelRatio;
 
     if (dist > 11) {
       //console.log("cancel", dist);
@@ -296,7 +297,7 @@ export class DoubleClickHandler {
     this.update();
   }
 
-  mousedown(e: Record<string, unknown>): void {
+  mousedown(e: MouseEvent): void {
     //console.log("mdown", e.x, e.y);
 
     if (!this.last) {
@@ -312,14 +313,14 @@ export class DoubleClickHandler {
     if (isMouseDown(e)) {
       this.mdown = true;
 
-      let cpy = Object.assign({}, e) as Record<string, unknown>;
+      const cpy = Object.assign({}, e) as any;
 
       this.start_mpos[0] = e.x as number;
       this.start_mpos[1] = e.y as number;
 
       singleMouseEvent(this._on_mousemove, "mousemove");
 
-      if ((e.type as string).search("touch") >= 0 && (e.touches as TouchList).length > 0) {
+      if ((e.type as string).search("touch") >= 0 && e instanceof TouchEvent && (e.touches as TouchList).length > 0) {
         cpy.x = cpy.pageX = (e.touches as TouchList)[0].pageX;
         cpy.y = cpy.pageY = (e.touches as TouchList)[1].pageY;
       } else {
@@ -369,18 +370,8 @@ export class DoubleClickHandler {
   }
 }
 
-export function isMouseDown(e: Record<string, unknown>): number {
-  let mdown: number = 0;
-
-  if (e.touches !== undefined) {
-    mdown = (e.touches as TouchList).length > 0 ? 1 : 0;
-  } else {
-    mdown = e.buttons as number;
-  }
-
-  mdown = mdown & 1;
-
-  return mdown;
+export function isMouseDown(e: MouseEvent | PointerEvent | TouchEvent): boolean {
+  return eventWasMouseDown(e);
 }
 
 export function pathDebugEvent(event: Event, extra?: unknown): void {
@@ -424,9 +415,9 @@ export function eventWasMouseDown(e: PointerEvent | MouseEvent | TouchEvent, but
 }
 
 /** Returns true if event came from a touchscreen or pen device */
-export function eventWasTouch(e: Event): boolean {
-  let ev = e as unknown as Record<string, unknown>;
-  let ret: unknown = (ev.sourceCapabilities as Record<string, unknown>)?.firesTouchEvents;
+export function eventWasTouch(e: MouseEvent): boolean {
+  const ev = e as any;
+  let ret: unknown = (ev.sourceCapabilities as any)?.firesTouchEvents;
   ret = ret || ev.was_touch;
   ret = ret || e instanceof TouchEvent;
   ret = ret || ev.touches !== undefined;
@@ -438,22 +429,22 @@ export function eventWasTouch(e: Event): boolean {
   return !!ret;
 }
 
-export function copyEvent(e: Event | Record<string, unknown>): Record<string, unknown> {
-  let ret: Record<string | symbol, unknown> = {};
+export function copyEvent(e: Event): any {
+  const ret: Record<string | symbol, unknown> = {};
   let keys: (string | symbol)[] = [];
 
-  for (let k in e) {
+  for (const k in e) {
     keys.push(k);
   }
 
   keys = keys.concat(Object.getOwnPropertySymbols(e));
   keys = keys.concat(Object.getOwnPropertyNames(e));
 
-  for (let k of keys) {
+  for (const k of keys) {
     let v: unknown;
 
     try {
-      v = (e as Record<string | symbol, unknown>)[k];
+      v = e[k as keyof typeof e];
     } catch (error) {
       console.warn("read error for event key", k);
       continue;
@@ -474,22 +465,22 @@ export function copyEvent(e: Event | Record<string, unknown>): Record<string, un
 /* Late-bound class references for screen/modal area */
 let Screen: (new (...args: unknown[]) => HTMLElement) | undefined;
 
-export function _setScreenClass(cls: new (...args: unknown[]) => HTMLElement): void {
+export function _setScreenClass(cls: any): void {
   Screen = cls;
 }
 
 function findScreen(): Record<string, unknown> | undefined {
-  let rec = (n: Node): Record<string, unknown> | undefined => {
+  const rec = (n: Node): Record<string, unknown> | undefined => {
     for (let i = 0; i < n.childNodes.length; i++) {
-      let n2 = n.childNodes[i];
+      const n2 = n.childNodes[i];
       if (n2 && typeof n2 === "object" && Screen && n2 instanceof Screen) {
         return n2 as unknown as Record<string, unknown>;
       }
     }
 
     for (let i = 0; i < n.childNodes.length; i++) {
-      let n2 = n.childNodes[i];
-      let ret = rec(n2);
+      const n2 = n.childNodes[i];
+      const ret = rec(n2);
       if (ret) {
         return ret;
       }
@@ -564,20 +555,20 @@ export function pushModalLight(
     keys = new Set(["keydown", "keyup", "keypress", "mousewheel"]);
   }
 
-  let ret: ModalState = {
+  const ret: ModalState = {
     keys,
     handlers : {},
     last_mpos: [0, 0],
   };
 
-  let touchmap: Record<string, string> = {
+  const touchmap: Record<string, string> = {
     touchstart : "mousedown",
     touchmove  : "mousemove",
     touchend   : "mouseup",
     touchcancel: "mouseup",
   };
 
-  let mpos = [0, 0];
+  const mpos = [0, 0];
 
   let screen = findScreen();
   if (screen) {
@@ -587,11 +578,11 @@ export function pushModalLight(
   }
 
   function handleAreaContext(): void {
-    let screen = findScreen();
+    const screen = findScreen();
     if (screen) {
-      let sarea = (screen.findScreenArea as Function)(mpos[0], mpos[1]) as Record<string, unknown> | undefined;
-      if (sarea && sarea.area) {
-        let area = sarea.area as Record<string, Function>;
+      const sarea = (screen.findScreenArea as Function)(mpos[0], mpos[1]) as Record<string, unknown> | undefined;
+      if (sarea?.area) {
+        const area = sarea.area as Record<string, Function>;
         area.push_ctx_active();
         area.pop_ctx_active();
       }
@@ -605,9 +596,9 @@ export function pushModalLight(
       }
 
       if (touchmap[type] in ret.handlers) {
-        let type2 = touchmap[type];
+        const type2 = touchmap[type];
 
-        let e2 = copyEvent(e);
+        const e2 = copyEvent(e);
 
         e2.was_touch = true;
         e2.type = type2;
@@ -615,7 +606,7 @@ export function pushModalLight(
         e2.touches = (e as TouchEvent).touches;
 
         if ((e as TouchEvent).touches.length > 0) {
-          let t = (e as TouchEvent).touches[0];
+          const t = (e as TouchEvent).touches[0];
 
           mpos[0] = t.pageX;
           mpos[1] = t.pageY;
@@ -678,9 +669,9 @@ export function pushModalLight(
     };
   }
 
-  let found: Record<string, number> = {};
+  const found: Record<string, number> = {};
 
-  for (let k of keys) {
+  for (const k of keys) {
     let key: string | undefined;
 
     if (obj[k]) key = k;
@@ -699,20 +690,20 @@ export function pushModalLight(
       found[k] = 1;
     }
 
-    let handler: EventHandler = make_handler(k, key);
+    const handler: EventHandler = make_handler(k, key);
     ret.handlers[k] = handler;
 
-    let settings: AddEventListenerOptions = (handler.settings = { passive: false, capture: true });
+    const settings: AddEventListenerOptions = (handler.settings = { passive: false, capture: true });
     window.addEventListener(k, handler, settings);
   }
 
-  for (let k in touchmap) {
+  for (const k in touchmap) {
     if (!(k in found)) {
       //console.log("making touch handler for", '"' + k + '"', ret.handlers[k]);
 
       ret.handlers[k] = make_default_touchhandler(k, ret);
 
-      let settings: AddEventListenerOptions = (ret.handlers[k].settings = { passive: false, capture: true });
+      const settings: AddEventListenerOptions = (ret.handlers[k].settings = { passive: false, capture: true });
       window.addEventListener(k, ret.handlers[k], settings);
     }
   }
@@ -724,7 +715,7 @@ export function pushModalLight(
     };
 
     function make_pointer(k: string): void {
-      let k2 = "on_" + k;
+      const k2 = "on_" + k;
 
       ret.pointer![k] = function (e: Event): void {
         if (obj[k2] !== undefined) {
@@ -750,7 +741,7 @@ export function pushModalLight(
     make_pointer("pointerexit");
     make_pointer("pointercancel");
 
-    for (let k in ret.pointer) {
+    for (const k in ret.pointer) {
       if (k !== "elem" && k !== "pointerId") {
         elem.addEventListener(k, ret.pointer[k] as EventListener);
       }
@@ -763,7 +754,7 @@ export function pushModalLight(
 
       consolelog("attempting fallback");
 
-      for (let k in ret.pointer) {
+      for (const k in ret.pointer) {
         if (k !== "elem" && k !== "pointerId") {
           elem.removeEventListener(k, ret.pointer[k] as EventListener);
         }
@@ -774,19 +765,19 @@ export function pushModalLight(
       modalstack.push(ret);
       popModalLight(ret);
 
-      for (let k in obj) {
+      for (const k in obj) {
         if (k === "pointercancel" || k === "pointerend" || k === "pointerstart") {
           continue;
         }
 
         if (k.startsWith("pointer")) {
-          let k2 = k.replace(/pointer/, "mouse");
+          const k2 = k.replace(/pointer/, "mouse");
           if (k2 in obj) {
             console.warn("warning, existing mouse handler", k2);
             continue;
           }
 
-          let v = obj[k];
+          const v = obj[k];
           obj[k] = undefined;
 
           obj[k2] = v;
@@ -814,7 +805,7 @@ export function popModalLight(state: ModalState | undefined): void {
   }
 
   if (state !== modalstack[modalstack.length - 1]) {
-    if (modalstack.indexOf(state) < 0) {
+    if (!modalstack.includes(state)) {
       console.warn("Error in popModalLight; modal handler not found");
       return;
     } else {
@@ -822,7 +813,7 @@ export function popModalLight(state: ModalState | undefined): void {
     }
   }
 
-  for (let k in state.handlers) {
+  for (const k in state.handlers) {
     //console.log(k);
     window.removeEventListener(k, state.handlers[k], state.handlers[k].settings);
   }
@@ -836,7 +827,7 @@ export function popModalLight(state: ModalState | undefined): void {
   }
 
   if (state.pointer) {
-    let elem = state.pointer.elem;
+    const elem = state.pointer.elem;
 
     try {
       elem.releasePointerCapture(state.pointer.pointerId);
@@ -844,7 +835,7 @@ export function popModalLight(state: ModalState | undefined): void {
       util.print_stack(error as Error);
     }
 
-    for (let k in state.pointer) {
+    for (const k in state.pointer) {
       if (k !== "elem" && k !== "pointerId") {
         elem.removeEventListener(k, state.pointer[k] as EventListener);
       }
@@ -916,7 +907,7 @@ for (var k in keymap_latin_1) {
   }
 }
 
-var keymap_latin_1_rev: Record<number, string> = {};
+const keymap_latin_1_rev: Record<number, string> = {};
 for (var k in keymap_latin_1) {
   keymap_latin_1_rev[keymap_latin_1[k]] = k;
 }
@@ -925,27 +916,22 @@ export var keymap: Record<string, number> = keymap_latin_1;
 export var reverse_keymap: Record<number, string> = keymap_latin_1_rev;
 
 export class HotKey {
-  action: string | ((ctx: Record<string, unknown>) => void);
+  action: string | ((ctx: ContextLike) => void);
   mods: string[];
   key: number;
   uiname: string | undefined;
 
   /**action can be a callback or a toolpath string*/
-  constructor(
-    key: string,
-    modifiers: string[],
-    action: string | ((ctx: Record<string, unknown>) => void),
-    uiname?: string
-  ) {
+  constructor(key: string, modifiers: string[], action: string | ((ctx: ContextLike) => void), uiname?: string) {
     this.action = action;
     this.mods = modifiers;
     this.key = keymap[key];
     this.uiname = uiname;
   }
 
-  exec(ctx: Record<string, unknown>): void {
+  exec(ctx: ContextLike): void {
     if (typeof this.action == "string") {
-      (ctx.api as Record<string, Function>).execTool(ctx, this.action);
+      ctx.api.execTool(ctx, this.action);
     } else {
       this.action(ctx);
     }
@@ -989,13 +975,13 @@ export class KeyMap extends Array<HotKey> {
 
     this.pathid = pathid;
 
-    for (let hk of hotkeys) {
+    for (const hk of hotkeys) {
       this.add(hk);
     }
   }
 
-  handle(ctx: Record<string, unknown>, e: KeyboardEvent): boolean {
-    let mods = new Set<string>();
+  handle(ctx: ContextLike, e: KeyboardEvent): boolean {
+    const mods = new Set<string>();
     if (e.shiftKey) mods.add("shift");
     if (e.altKey) mods.add("alt");
     if (e.ctrlKey) {
@@ -1006,7 +992,7 @@ export class KeyMap extends Array<HotKey> {
       mods.add("command");
     }
 
-    for (let hk of this) {
+    for (const hk of this) {
       let ok = e.keyCode === hk.key;
       if (!ok) continue;
 
