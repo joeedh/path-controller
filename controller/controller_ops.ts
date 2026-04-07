@@ -1,23 +1,16 @@
 import { ToolOp, ToolFlags } from "../toolsys/toolsys.js";
-import type { ToolProperty } from "../toolsys/toolprop.js";
+import type { FlagProperty, ToolProperty } from "../toolsys/toolprop.js";
 import {
   PropTypes,
   PropFlags,
   BoolProperty,
   IntProperty,
   FloatProperty,
-  FlagProperty,
   EnumProperty,
   StringProperty,
-  Vec3Property,
-  Vec2Property,
-  Vec4Property,
-  QuatProperty,
-  Mat4Property,
 } from "../toolsys/toolprop.js";
 
 import * as util from "../util/util.js";
-import { isVecProperty, getVecClass } from "./controller_base.js";
 import { ContextLike, ResolvedProp } from "./controller_abstract.js";
 
 type DataPathSetInputs = {
@@ -220,55 +213,49 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     }
   }
 
-  undo(ctx: Record<string, unknown>): void {
-    if (this.__ctx) ctx = this.__ctx as unknown as Record<string, unknown>;
+  undo(ctx: CTX): void {
+    if (this.__ctx) ctx = this.__ctx as CTX;
 
     if (this.inputs.fullSaveUndo.getValue()) {
       return super.undo(ctx);
     }
 
     for (let path in this._undo) {
-      let rdef = (ctx.api as Record<string, Function>).resolvePath(ctx, path) as Record<string, unknown>;
+      let rdef = ctx.api.resolvePath(ctx, path);
 
-      if (
-        rdef.prop !== undefined &&
-        ((rdef.prop as Record<string, unknown>).type as number) & (PropTypes.ENUM | PropTypes.FLAG)
-      ) {
+      if (rdef !== undefined && (rdef.prop?.type ?? 0) & (PropTypes.ENUM | PropTypes.FLAG)) {
         let old = (rdef.obj as Record<string, unknown>)[rdef.key as string];
 
         if (rdef.subkey) {
           let key: unknown = rdef.subkey;
+          const prop = rdef.prop as unknown as EnumProperty | FlagProperty;
 
           if (typeof key !== "number") {
-            key = (rdef.prop as Record<string, Record<string, unknown>>).values[key as string];
+            key = prop.values[key as string];
           }
 
-          if ((rdef.prop as Record<string, unknown>).type === PropTypes.FLAG) {
+          if (prop.type === PropTypes.FLAG) {
             if (this._undo![path]) {
-              (rdef.obj as Record<string, number>)[rdef.key as string] |= key as number;
+              rdef.obj[rdef.key as string] |= key as number;
             } else {
-              (rdef.obj as Record<string, number>)[rdef.key as string] &= ~(key as number);
+              rdef.obj[rdef.key as string] &= ~(key as number);
             }
           } else {
-            (rdef.obj as Record<string, unknown>)[rdef.key as string] = key;
+            rdef.obj[rdef.key as string] = key;
           }
         } else {
-          (rdef.obj as Record<string, unknown>)[rdef.key as string] = this._undo![path];
+          rdef.obj[rdef.key as string] = this._undo![path];
         }
 
-        let rprop = rdef.prop as Record<string, unknown>;
+        let rprop = rdef.prop as ResolvedProp<CTX>;
         rprop.dataref = rdef.obj;
         rprop.datapath = path;
         rprop.ctx = ctx;
 
-        (rprop as Record<string, Function>)._fire(
-          "change",
-          (rdef.obj as Record<string, unknown>)[rdef.key as string],
-          old
-        );
+        rprop._fire("change", (rdef.obj as Record<string, unknown>)[rdef.key as string], old);
       } else {
         try {
-          (ctx.api as Record<string, Function>).setValue(ctx, path, this._undo![path]);
+          ctx.api.setValue(ctx, path, this._undo![path]);
         } catch (error) {
           util.print_stack(error as Error);
           console.warn("Failed to set property in undo for DataPathSetOp");
@@ -277,17 +264,17 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     }
   }
 
-  exec(ctx: Record<string, unknown>): void {
+  exec(ctx: CTX): void {
     //use saved ctx we got from modal start
     if (this.__ctx) {
-      ctx = this.__ctx as unknown as Record<string, unknown>;
+      ctx = this.__ctx;
     }
 
     let path = this.inputs.dataPath.getValue() as string;
     let massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
 
     try {
-      (ctx.api as Record<string, Function>).setValue(ctx, path, this.inputs.prop.getValue());
+      ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
       this.hadError = false;
     } catch (error) {
       console.log((error as Error).stack);
@@ -307,7 +294,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
         value = !!(value & bit) as unknown as number;
       }
       try {
-        (ctx.api as Record<string, Function>).massSetProp(ctx, massSetPath, value);
+        ctx.api.massSetProp(ctx, massSetPath, value);
       } catch (error) {
         console.log((error as Error).stack);
         console.log((error as Error).message);
@@ -319,7 +306,6 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
   }
 
   modalStart(ctx: CTX) {
-    super.modalStart;
     if (ctx.toLocked === undefined) {
       console.warn("Warning: no toLocked in context class, this may lead to subtle undo behaviours");
       console.warn("  (ctx locking creates a copy with values of the context at the time it as locked)");
@@ -329,7 +315,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     //save full, modal ctx
     const result = super.modalStart(this.__ctx!);
 
-    this.exec(this.__ctx as unknown as Record<string, unknown>);
+    this.exec(this.__ctx!);
     this.modalEnd(false);
     return result;
   }

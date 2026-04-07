@@ -21,7 +21,29 @@ export interface ResolvedProp<CTX extends ContextLike = ContextLike> extends Too
   range: [number, number] | undefined;
 }
 
-export interface ContextLike<AppState = any, TS extends ToolStack = ToolStack> {
+type ToolOpAny = ToolOp<any, any, any, any> | ToolOp
+
+export interface IToolStack {
+  head: ToolOpAny
+  [k: number]: ToolOpAny
+  length: number
+  cur: number
+  limitMemory(maxmem?: number, ctx?: unknown): number
+  calcMemSize(ctx?: unknown): number
+  setRestrictedToolContext(ctx: unknown):void
+  reset(ctx?: unknown):void
+  execOrRedo(ctx: unknown, tool : ToolOpAny, compareInputs?: boolean): boolean
+  execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): void
+  toolCancel(ctx: unknown, toolop: ToolOpAny): void
+  undo(ctx: unknown): void
+  redo(ctx: unknown): void
+  rerun(tool?: ToolOpAny): void
+  save(): number[]
+  rewind(): this
+  replay(cb?: (ctx: unknown) => unknown, onStep?: () => unknown): Promise<unknown>
+}
+
+export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack> {
   state: AppState
   api: DataAPI<this>
   toolstack: TS

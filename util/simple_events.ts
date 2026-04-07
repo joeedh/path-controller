@@ -961,7 +961,7 @@ export class HotKey {
   }
 }
 
-export class KeyMap extends Array<HotKey> {
+export class KeyMap<CTX extends ContextLike = ContextLike> extends Array<HotKey> {
   pathid: string;
 
   /**
@@ -980,7 +980,7 @@ export class KeyMap extends Array<HotKey> {
     }
   }
 
-  handle(ctx: ContextLike, e: KeyboardEvent): boolean {
+  handle(ctx: CTX, e: KeyboardEvent): boolean {
     const mods = new Set<string>();
     if (e.shiftKey) mods.add("shift");
     if (e.altKey) mods.add("alt");
