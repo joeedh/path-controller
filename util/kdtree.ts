@@ -10,71 +10,71 @@ import { Number3, Vector3 } from "./vectormath.js";
 const MAXPOINTS = 16;
 const MAXDEPTH = 1024;
 
-let log_everything = false;
+const log_everything = false;
 
 /*seems like embedding the points in the nodes, while wasteful of memory,
   should be more cache efficient than referencing another typed array*/
-const NXMIN = 0,
-  NYMIN = 1,
-  NZMIN = 2,
-  NXMAX = 3,
-  NYMAX = 4,
-  NZMAX = 5,
-  NSPLITPLANE = 6,
-  NSPLITPOS = 7,
-  NCHILDA = 8,
-  NCHILDB = 9,
-  NTOTPOINT = 10,
-  TOTN = 11 + MAXPOINTS * 4;
+const NXMIN = 0;
+const NYMIN = 1;
+const NZMIN = 2;
+const NXMAX = 3;
+const NYMAX = 4;
+const NZMAX = 5;
+const NSPLITPLANE = 6;
+const NSPLITPOS = 7;
+const NCHILDA = 8;
+const NCHILDB = 9;
+const NTOTPOINT = 10;
+const TOTN = 11 + MAXPOINTS * 4;
 
 //points are stored (x, y, z, id);
 
-let _insert_split_out = [0, 0];
-let _split_tmps = util.cachering.fromConstructor(Vector3, 1024);
-let _insert_tmps = util.cachering.fromConstructor(Vector3, 1024);
-let _split_tmps_2 = util.cachering.fromConstructor(Vector3, 1024);
-let _foreach_tmp = new Vector3(undefined as unknown as number[]);
-let _tmp = new Vector3(undefined as unknown as number[]);
+const _insert_split_out = [0, 0];
+const _split_tmps = util.cachering.fromConstructor(Vector3, 1024);
+const _insert_tmps = util.cachering.fromConstructor(Vector3, 1024);
+const _split_tmps_2 = util.cachering.fromConstructor(Vector3, 1024);
+const _foreach_tmp = new Vector3();
+const _tmp = new Vector3();
 
 interface KDPoint {
-  co: InstanceType<typeof Vector3>;
+  co: Vector3;
   id: number | undefined;
 }
 
 interface KDNodeInfo {
-  min: InstanceType<typeof Vector3>;
-  max: InstanceType<typeof Vector3>;
+  min: Vector3;
+  max: Vector3;
   splitpos: number | undefined;
   splitplane: number | undefined;
   id: number | undefined;
 }
 
 export class KDTree {
-  min: InstanceType<typeof Vector3>;
-  max: InstanceType<typeof Vector3>;
+  min: Vector3;
+  max: Vector3;
   last_warn_time: number;
   _point_cachering: util.cachering<KDPoint>;
   _node_cachering: util.cachering<KDNodeInfo>;
-  _search_cachering: util.cachering<InstanceType<typeof Vector3>>;
+  _search_cachering: util.cachering<Vector3>;
   usednodes: number;
   data: Float64Array;
   maxdepth: number;
   totpoint: number;
   root: number;
 
-  constructor(min: number[] | InstanceType<typeof Vector3>, max: number[] | InstanceType<typeof Vector3>) {
+  constructor(min: number[] | Vector3, max: number[] | Vector3) {
     this.min = new Vector3(min);
     this.max = new Vector3(max);
 
     this.last_warn_time = util.time_ms();
 
     this._point_cachering = new util.cachering(() => {
-      return { co: new Vector3(undefined as unknown as number[]), id: undefined };
+      return { co: new Vector3(), id: undefined };
     }, 512);
     this._node_cachering = new util.cachering(() => {
       return {
-        min       : new Vector3(undefined as unknown as number[]),
-        max       : new Vector3(undefined as unknown as number[]),
+        min       : new Vector3(),
+        max       : new Vector3(),
         splitpos  : undefined,
         splitplane: undefined,
         id        : undefined,
@@ -90,13 +90,13 @@ export class KDTree {
     this.root = this.newNode(min, max);
   }
 
-  newNode(min: number[] | InstanceType<typeof Vector3>, max: number[] | InstanceType<typeof Vector3>): number {
-    let maxnodes = this.data.length / TOTN;
+  newNode(min: number[] | Vector3, max: number[] | Vector3): number {
+    const maxnodes = this.data.length / TOTN;
 
     if (this.usednodes >= maxnodes) {
-      let newdata = new Float64Array(this.data.length * 2);
-      let data = this.data;
-      let ilen = data.length;
+      const newdata = new Float64Array(this.data.length * 2);
+      const data = this.data;
+      const ilen = data.length;
 
       for (let i = 0; i < ilen; i++) {
         newdata[i] = data[i];
@@ -105,20 +105,20 @@ export class KDTree {
       this.data = newdata;
     }
 
-    let ni = this.usednodes * TOTN;
-    let data = this.data;
+    const ni = this.usednodes * TOTN;
+    const data = this.data;
 
     for (let j = ni; j < ni + TOTN; j++) {
       data[j] = 0;
     }
 
-    data[ni + NXMIN] = (min as number[])[0];
-    data[ni + NYMIN] = (min as number[])[1];
-    data[ni + NZMIN] = (min as number[])[2];
+    data[ni + NXMIN] = min[0];
+    data[ni + NYMIN] = min[1];
+    data[ni + NZMIN] = min[2];
 
-    data[ni + NXMAX] = (max as number[])[0];
-    data[ni + NYMAX] = (max as number[])[1];
-    data[ni + NZMAX] = (max as number[])[2];
+    data[ni + NXMAX] = max[0];
+    data[ni + NYMAX] = max[1];
+    data[ni + NZMAX] = max[2];
 
     this.usednodes++;
 
@@ -131,8 +131,8 @@ export class KDTree {
       z = 0.0;
     }
 
-    let recurse = (ni: number, depth: number): void => {
-      let data = this.data;
+    const recurse = (ni: number, depth: number): void => {
+      const data = this.data;
 
       if (depth >= this.maxdepth) {
         if (log_everything || util.time_ms() - this.last_warn_time > 500) {
@@ -145,16 +145,16 @@ export class KDTree {
 
       //not a leaf node?
       if (data[ni + NCHILDA] != 0) {
-        let axis = data[ni + NSPLITPLANE];
-        let split = data[ni + NSPLITPOS];
+        const axis = data[ni + NSPLITPLANE];
+        const split = data[ni + NSPLITPOS];
 
-        let paxis = axis == 0 ? x : axis == 1 ? y : z;
+        const paxis = axis == 0 ? x : axis == 1 ? y : z;
 
         if (paxis == split) {
           //handle case of points exactly on boundary
           //distribute point randomly to children
 
-          let child = !!(Math.random() > 0.5);
+          const child = !!(Math.random() > 0.5);
           //console.log("exact!", child, p[axis], split, axis);
 
           recurse(data[ni + NCHILDA + (child ? 1 : 0)], depth + 1);
@@ -187,11 +187,11 @@ export class KDTree {
   }
 
   forEachNode(cb: (n: KDNodeInfo) => void, thisvar?: unknown): void {
-    let cachering = this._node_cachering;
-    let data = this.data;
+    const cachering = this._node_cachering;
+    const data = this.data;
 
-    let recurse = (ni: number): void => {
-      let n = cachering.next() as KDNodeInfo;
+    const recurse = (ni: number): void => {
+      const n = cachering.next() as KDNodeInfo;
 
       for (let i = 0; i < 3; i++) {
         n.min[i as Number3] = data[ni + i];
@@ -218,20 +218,20 @@ export class KDTree {
   }
 
   iterAllPoints(cb: (p: KDPoint) => void, thisvar?: unknown): void {
-    let cachering = this._point_cachering;
+    const cachering = this._point_cachering;
 
-    let recurse = (ni: number): void => {
-      let data = this.data;
+    const recurse = (ni: number): void => {
+      const data = this.data;
 
       if (data[ni + NCHILDA] != 0) {
         recurse(data[ni + NCHILDA]);
         recurse(data[ni + NCHILDB]);
       } else {
-        let totpoint = data[ni + NTOTPOINT];
+        const totpoint = data[ni + NTOTPOINT];
         let j = ni + NTOTPOINT + 1;
 
         for (let i = 0; i < totpoint; i++) {
-          let p = cachering.next() as KDPoint;
+          const p = cachering.next() as KDPoint;
 
           p.co[0] = data[j++];
           p.co[1] = data[j++];
@@ -268,8 +268,8 @@ export class KDTree {
     //find best split axis
     for (let axis = 0; axis < 3; axis++) {
       let centroid = 0;
-      let amin = 1e17,
-        amax = -1e17;
+      let amin = 1e17;
+      let amax = -1e17;
 
       for (let j = 0, k = startk; j < totp; j++, k += 4) {
         centroid += data[k + axis];
@@ -324,10 +324,10 @@ export class KDTree {
     //      console.log(bestsplit, bestaxis, ni);
 
     //split
-    let min1 = (_split_tmps.next() as InstanceType<typeof Vector3>).zero!();
-    let max1 = (_split_tmps.next() as InstanceType<typeof Vector3>).zero!();
-    let min2 = (_split_tmps.next() as InstanceType<typeof Vector3>).zero!();
-    let max2 = (_split_tmps.next() as InstanceType<typeof Vector3>).zero!();
+    const min1 = (_split_tmps.next() as Vector3).zero!();
+    const max1 = (_split_tmps.next() as Vector3).zero!();
+    const min2 = (_split_tmps.next() as Vector3).zero!();
+    const max2 = (_split_tmps.next() as Vector3).zero!();
 
     for (let i = 0; i < 3; i++) {
       min1[i as Number3] = data[ni + i];
@@ -340,8 +340,8 @@ export class KDTree {
     max1[bestaxis as Number3] = bestsplit!;
     min2[bestaxis as Number3] = bestsplit!;
 
-    let c1 = this.newNode(min1, max1);
-    let c2 = this.newNode(min2, max2);
+    const c1 = this.newNode(min1, max1);
+    const c2 = this.newNode(min2, max2);
 
     data = this.data;
 
@@ -366,7 +366,7 @@ export class KDTree {
   }
 
   forEachPoint(x: number, y: number, r: number, callback: (id: number) => boolean | void, thisvar?: unknown): void {
-    let p = _foreach_tmp;
+    const p = _foreach_tmp;
 
     p[0] = x;
     p[1] = y;
@@ -376,31 +376,26 @@ export class KDTree {
   }
 
   //if callback returns true then the search will stop
-  search(
-    p: number[] | InstanceType<typeof Vector3>,
-    r: number,
-    callback: (id: number) => boolean | void,
-    thisvar?: unknown
-  ): void {
+  search(p: number[] | Vector3, r: number, callback: (id: number) => boolean | void, thisvar?: unknown): void {
     let stop = false;
 
-    let data = this.data;
-    let cachering = this._point_cachering;
-    let co = this._search_cachering.next() as InstanceType<typeof Vector3>;
+    const data = this.data;
+    const cachering = this._point_cachering;
+    const co = this._search_cachering.next() as Vector3;
 
-    let recurse = (ni: number): void => {
+    const recurse = (ni: number): void => {
       if (stop) {
         return;
       }
 
       if (data[ni + NCHILDA] != 0) {
         for (let si = 0; si < 2; si++) {
-          let ni2 = data[ni + NCHILDA + si];
+          const ni2 = data[ni + NCHILDA + si];
           let ok = 0;
 
           for (let i = 0; i < 3; i++) {
-            let a = data[ni2 + i],
-              b = data[ni2 + i + 3];
+            const a = data[ni2 + i];
+            const b = data[ni2 + i + 3];
 
             //console.log(a, b, p[i], r);
             ok += p[i as Number3]! + 2 * r >= a && p[i as Number3]! - 2 * r <= b ? 1 : 0;
@@ -411,7 +406,7 @@ export class KDTree {
           }
         }
       } else if (data[ni + NCHILDA] == 0) {
-        let totp = data[ni + NTOTPOINT];
+        const totp = data[ni + NTOTPOINT];
         let k = ni + NTOTPOINT + 1;
 
         for (let j = 0; j < totp; j++, k += 4) {
@@ -419,9 +414,9 @@ export class KDTree {
           co[1] = data[k + 1];
           co[2] = data[k + 2];
 
-          let dx = co[0] - p[0];
-          let dy = co[1] - p[1];
-          let dz = (p as number[]).length > 2 ? co[2] - p[2] : 0;
+          const dx = co[0] - p[0];
+          const dy = co[1] - p[1];
+          const dz = (p as number[]).length > 2 ? co[2] - p[2] : 0;
 
           if (dx * dx + dy * dy + dz * dz < r * r) {
             let dostop: boolean | void;
@@ -445,9 +440,9 @@ export class KDTree {
   }
 
   draw(g: CanvasRenderingContext2D): void {
-    let d = this.data;
+    const d = this.data;
 
-    let recurse = (ni: number): void => {
+    const recurse = (ni: number): void => {
       g.beginPath();
       g.rect(d[ni + NXMIN], d[ni + NYMIN], d[ni + NXMAX] - d[ni + NXMIN], d[ni + NYMAX] - d[ni + NYMIN]);
       g.strokeStyle = "orange";
@@ -458,18 +453,18 @@ export class KDTree {
         //leaf node?
         g.fill();
 
-        let r = (0.25 * (this.max[0] - this.min[0])) / Math.sqrt(this.totpoint);
-        let totpoint = d[ni + NTOTPOINT];
+        const r = (0.25 * (this.max[0] - this.min[0])) / Math.sqrt(this.totpoint);
+        const totpoint = d[ni + NTOTPOINT];
 
         g.beginPath();
 
         for (let i = 0; i < totpoint * 4; i += 4) {
-          let i2 = ni + NTOTPOINT + 1 + i;
+          const i2 = ni + NTOTPOINT + 1 + i;
 
-          let x = d[i2],
-            y = d[i2 + 1],
-            z = d[i2 + 2],
-            id = d[i2 + 3];
+          const x = d[i2];
+          const y = d[i2 + 1];
+          const z = d[i2 + 2];
+          const id = d[i2 + 3];
 
           g.moveTo(x, y);
           g.arc(x, y, r, -Math.PI, Math.PI);
@@ -498,14 +493,14 @@ export class KDTree {
     */
 
     class BalanceNode extends Array<number> {
-      min: InstanceType<typeof Vector3>;
-      max: InstanceType<typeof Vector3>;
+      min: Vector3;
+      max: Vector3;
       bestpos: number | undefined;
       bestaxis: number | undefined;
       bestfit: number | undefined;
       nodes: [BalanceNode | undefined, BalanceNode | undefined];
 
-      constructor(min: InstanceType<typeof Vector3>, max: InstanceType<typeof Vector3>) {
+      constructor(min: Vector3, max: Vector3) {
         super();
 
         this.min = new Vector3(min);
@@ -518,15 +513,15 @@ export class KDTree {
       }
     }
 
-    let min = new Vector3(undefined as unknown as number[]);
-    let max = new Vector3(undefined as unknown as number[]);
+    const min = new Vector3();
+    const max = new Vector3();
 
     for (let i = 0; i < 3; i++) {
       min[i as Number3] = this.data[this.root + i];
       max[i as Number3] = this.data[this.root + 3 + i];
     }
 
-    let root = new BalanceNode(min, max);
+    const root = new BalanceNode(min, max);
 
     this.iterAllPoints((p: KDPoint) => {
       for (let j = 0; j < 3; j++) {
@@ -536,7 +531,7 @@ export class KDTree {
       root.push(p.id!);
     });
 
-    let recurse = (node: BalanceNode, depth: number): void => {
+    const recurse = (node: BalanceNode, depth: number): void => {
       if (depth >= this.maxdepth) {
         if (log_everything || util.time_ms() - this.last_warn_time > 500) {
           console.warn("Malformed data: failed to insert point during balancing, depth:", depth);
@@ -550,9 +545,9 @@ export class KDTree {
         return;
       }
 
-      let bestfit: number | undefined = undefined,
-        bestpos: number | undefined = undefined,
-        bestaxis: number | undefined = undefined;
+      let bestfit: number | undefined;
+      let bestpos: number | undefined;
+      let bestaxis: number | undefined;
       let size = 0;
 
       for (let axis = 0; axis < 3; axis++) {
@@ -561,8 +556,8 @@ export class KDTree {
 
       for (let axis = 0; axis < 3; axis++) {
         let centroid = 0;
-        let amin = 1e17,
-          amax = -1e17;
+        let amin = 1e17;
+        let amax = -1e17;
 
         for (let i = 0; i < node.length; i += 4) {
           centroid += node[i + axis];
@@ -579,14 +574,12 @@ export class KDTree {
         centroid /= node.length / 4;
 
         let fit = 0;
-
         for (let i = 0; i < node.length; i += 4) {
           fit += node[i + axis] < centroid ? -1 : 1;
         }
         fit = Math.abs(fit);
 
         let aspect = (node.max[axis as Number3]! - node.min[axis as Number3]!) / size;
-
         if (aspect > 0 && aspect < 1) aspect = 1 / aspect;
 
         if (fit != node.length / 4 && aspect > 0.001) {
@@ -615,14 +608,14 @@ export class KDTree {
       max.load!(node.max);
 
       max[bestaxis! as Number3] = bestpos!;
-      let n1 = new BalanceNode(min, max);
+      const n1 = new BalanceNode(min, max);
 
       max.load!(node.max);
       min[bestaxis! as Number3] = bestpos!;
-      let n2 = new BalanceNode(min, max);
+      const n2 = new BalanceNode(min, max);
 
       for (let i = 0; i < node.length; i += 4) {
-        let child = node[i + bestaxis!] < bestpos! ? n1 : n2;
+        const child = node[i + bestaxis!] < bestpos! ? n1 : n2;
 
         for (let j = 0; j < 4; j++) {
           child.push(node[i + j]);
@@ -644,13 +637,13 @@ export class KDTree {
     this.usednodes = 0;
     this.root = this.newNode(root.min, root.max);
 
-    let recurse2 = (node: BalanceNode, ni: number): void => {
+    const recurse2 = (node: BalanceNode, ni: number): void => {
       if (node.nodes[0] !== undefined) {
         this.data[ni + NSPLITPLANE] = node.bestaxis!;
         this.data[ni + NSPLITPOS] = node.bestpos!;
 
-        let n1 = this.newNode(node.nodes[0].min, node.nodes[0].max);
-        let n2 = this.newNode(node.nodes[1]!.min, node.nodes[1]!.max);
+        const n1 = this.newNode(node.nodes[0].min, node.nodes[0].max);
+        const n2 = this.newNode(node.nodes[1]!.min, node.nodes[1]!.max);
 
         this.data[ni + NCHILDA] = n1;
         this.data[ni + NCHILDB] = n2;
@@ -659,7 +652,7 @@ export class KDTree {
         recurse2(node.nodes[1]!, n2);
       } else {
         //console.log("yay, found points", ni, node.length/4);
-        let data = this.data;
+        const data = this.data;
 
         data[ni + NTOTPOINT] = node.length / 4;
 

@@ -4997,6 +4997,9 @@ class STRUCT {
         obj = new (cls as unknown as new () => any)();
       }
 
+      if (!obj?.loadSTRUCT) {
+        debugger
+      }
       (obj!.loadSTRUCT as Function)(load);
 
       if (!was_run) {

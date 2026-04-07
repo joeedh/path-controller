@@ -87,7 +87,7 @@ export class Unit {
       return undefined;
     }
 
-    for (let cls of Units) {
+    for (const cls of Units) {
       if (cls.unitDefine().name === name) {
         return cls;
       }
@@ -117,9 +117,9 @@ export class Unit {
 
   static validate(string: string): boolean {
     string = normString(string);
-    let def = this.unitDefine();
+    const def = this.unitDefine();
 
-    let m = string.match(def.pattern!);
+    const m = string.match(def.pattern!);
     if (!m) return false;
 
     return m[0] === string;
@@ -190,7 +190,7 @@ export class InchUnit extends Unit {
 
   static parse(string: string): number {
     string = string.toLowerCase();
-    let i = string.indexOf("i");
+    const i = string.indexOf("i");
 
     if (i >= 0) {
       string = string.slice(0, i);
@@ -216,7 +216,7 @@ export class InchUnit extends Unit {
 
 Unit.register(InchUnit);
 
-let foot_re = /((-?\d+(\.\d*)?ft)(-?\d+(\.\d*)?(in|inch))?)|(-?\d+(\.\d*)?(in|inch))$/;
+const foot_re = /((-?\d+(\.\d*)?ft)(-?\d+(\.\d*)?(in|inch))?)|(-?\d+(\.\d*)?(in|inch))$/;
 
 export class FootUnit extends Unit {
   static unitDefine(): UnitDefinition {
@@ -231,14 +231,14 @@ export class FootUnit extends Unit {
 
   static parse(string: string): number {
     string = normString(string);
-    let i = string.search("ft");
+    const i = string.search("ft");
     let parts: string[] = [];
-    let vft = 0.0,
-      vin = 0.0;
+    let vft = 0.0;
+    let vin = 0.0;
 
     if (i >= 0) {
       parts = string.split("ft");
-      let j = parts[1].search("in");
+      const j = parts[1].search("in");
 
       if (j >= 0) {
         parts = [parts[0]].concat(parts[1].split("in"));
@@ -265,8 +265,8 @@ export class FootUnit extends Unit {
   }
 
   static buildString(value: number, decimals: number = 2): string {
-    let vft = myfloor(value);
-    let vin = ((value + FLT_EPSILONE * 2) * 12) % 12;
+    const vft = myfloor(value);
+    const vin = ((value + FLT_EPSILONE * 2) * 12) % 12;
 
     if (vft === 0.0) {
       return myToFixed(vin, decimals) + " in";
@@ -283,7 +283,7 @@ export class FootUnit extends Unit {
 
 Unit.register(FootUnit);
 
-let square_foot_re =
+const square_foot_re =
   /((-?\d+(\.\d*)?ft(\u00b2)?)(-?\d+(\.\d*)?(in|inch)(\u00b2)?)?)|(-?\d+(\.\d*)?(in|inch)(\u00b2)?)$/;
 
 export class SquareFootUnit extends FootUnit {
@@ -303,8 +303,8 @@ export class SquareFootUnit extends FootUnit {
   }
 
   static buildString(value: number, decimals: number = 2): string {
-    let vft = myfloor(value);
-    let vin = ((value + FLT_EPSILONE * 2) * 12) % 12;
+    const vft = myfloor(value);
+    const vin = ((value + FLT_EPSILONE * 2) * 12) % 12;
 
     if (vft === 0.0) {
       return myToFixed(vin, decimals) + " in\u00b2";
@@ -440,13 +440,13 @@ export function setMetric(val: boolean): void {
   Unit.isMetric = val;
 }
 
-let numre1 = /[+\-]?[0-9]+(\.[0-9]*)?$/;
-let numre2 = /[+\-]?[0-9]?(\.[0-9]*)+$/;
-let hexre1 = /[+\-]?[0-9a-fA-F]+h$/;
-let hexre2 = /[+\-]?0x[0-9a-fA-F]+$/;
-let binre = /[+\-]?0b[01]+$/;
-let expre = /[+\-]?[0-9]+(\.[0-9]*)?[eE]\-?[0-9]+$/;
-let intre = /[+\-]?[0-9]+$/;
+const numre1 = /[+\-]?[0-9]+(\.[0-9]*)?$/;
+const numre2 = /[+\-]?[0-9]?(\.[0-9]*)+$/;
+const hexre1 = /[+\-]?[0-9a-fA-F]+h$/;
+const hexre2 = /[+\-]?0x[0-9a-fA-F]+$/;
+const binre = /[+\-]?0b[01]+$/;
+const expre = /[+\-]?[0-9]+(\.[0-9]*)?[eE]\-?[0-9]+$/;
+const intre = /[+\-]?[0-9]+$/;
 
 function isnumber(s: string): boolean {
   s = ("" + s).trim();
@@ -458,14 +458,14 @@ function isnumber(s: string): boolean {
   return test(intre) || test(numre1) || test(numre2) || test(hexre1) || test(hexre2) || test(binre) || test(expre);
 }
 
-export function parseValueIntern(string: string, baseUnit: string | UnitClass | undefined = undefined): number {
+export function parseValueIntern(string: string, baseUnit?: string | UnitClass | undefined): number {
   string = string.trim();
   if (string[0] === ".") {
     string = "0" + string;
   }
 
   if (typeof baseUnit === "string") {
-    let base = Unit.getUnit(baseUnit);
+    const base = Unit.getUnit(baseUnit);
 
     if (base === undefined && baseUnit !== "none") {
       console.warn("Unknown unit " + baseUnit);
@@ -478,7 +478,7 @@ export function parseValueIntern(string: string, baseUnit: string | UnitClass | 
   //unannotated string?
   if (isnumber(string)) {
     //assume base unit
-    let f = parseFloat(string);
+    const f = parseFloat(string);
 
     return f;
   }
@@ -487,8 +487,8 @@ export function parseValueIntern(string: string, baseUnit: string | UnitClass | 
     console.warn("No base unit in units.js:parseValueIntern");
   }
 
-  for (let unit of Units) {
-    let def = unit.unitDefine();
+  for (const unit of Units) {
+    const def = unit.unitDefine();
 
     if (unit.validate(string)) {
       console.log(unit);
@@ -507,13 +507,9 @@ export function parseValueIntern(string: string, baseUnit: string | UnitClass | 
 }
 
 /* if displayUnit is undefined, final value will be converted from displayUnit to baseUnit */
-export function parseValue(
-  string: string,
-  baseUnit: string | undefined = undefined,
-  displayUnit: string | undefined = undefined
-): number {
-  let displayUnitCls = Unit.getUnit(displayUnit);
-  let baseUnitCls = Unit.getUnit(baseUnit);
+export function parseValue(string: string, baseUnit?: string | undefined, displayUnit?: string | undefined): number {
+  const displayUnitCls = Unit.getUnit(displayUnit);
+  const baseUnitCls = Unit.getUnit(baseUnit);
 
   let f = parseValueIntern(string, displayUnitCls || baseUnitCls);
 
@@ -533,8 +529,8 @@ export function isNumber(string: string): boolean {
     return true;
   }
 
-  for (let unit of Units) {
-    let def = unit.unitDefine();
+  for (const unit of Units) {
+    const def = unit.unitDefine();
 
     if (unit.validate(string)) {
       return true;

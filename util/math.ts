@@ -13,16 +13,9 @@
 
 import * as util from "./util.js";
 import * as vectormath from "./vectormath.js";
+import { VectorLikeOrHigher } from "./vectormath";
 
-import {
-  Vector2,
-  Vector3,
-  Vector4,
-  Matrix4,
-  Quat,
-} from "./vectormath.js";
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { Vector2, Vector3, Vector4, Matrix4, Quat } from "./vectormath.js";
 
 /*
  * Type aliases for vector instances used throughout this geometry module.
@@ -52,9 +45,9 @@ type Vec2Like = Vec2 | MyVectorLike;
 type Vec3Like = Vec3 | MyVectorLike;
 type Vec4Like = Vec4 | MyVectorLike;
 
-let dtvtmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const dtvtmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
-let quad_co_rets2: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 512));
+const quad_co_rets2: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 512));
 
 export function quad_bilinear(v1: number, v2: number, v3: number, v4: number, u: number, v: number): number {
   return -((v1 - v2) * u - v1 - (u * v1 - u * v2 + u * v3 - u * v4 - v1 + v4) * v);
@@ -82,18 +75,19 @@ export function quad_bilinear(v1: number, v2: number, v3: number, v4: number, u:
 
  */
 function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): Vec2 {
-  let u: number, v: number;
+  let u: number;
+  let v: number;
 
-  let v2x = v2[0] - v1[0];
-  let v2y = v2[1] - v1[1];
-  let v3x = v3[0] - v1[0];
-  let v3y = v3[1] - v1[1];
-  let v4x = v4[0] - v1[0];
-  let v4y = v4[1] - v1[1];
+  const v2x = v2[0] - v1[0];
+  const v2y = v2[1] - v1[1];
+  const v3x = v3[0] - v1[0];
+  const v3y = v3[1] - v1[1];
+  const v4x = v4[0] - v1[0];
+  const v4y = v4[1] - v1[1];
 
-  let x = p[0] - v1[0];
-  let y = p[1] - v1[1];
-  let sqrt = Math.sqrt;
+  const x = p[0] - v1[0];
+  const y = p[1] - v1[1];
+  const sqrt = Math.sqrt;
 
   let A =
     2 *
@@ -106,13 +100,15 @@ function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyV
     (v4x - x) ** 2 * v2y ** 2 +
     (v4y - y) ** 2 * v2x ** 2;
 
-  let B = v4x * y - v4y * x + v3y * x - v3x * y;
+  const B = v4x * y - v4y * x + v3y * x - v3x * y;
 
   let C1 = 2 * (v3x - v4x) * v2y - 2 * (v3y - v4y) * v2x;
   let C2 = 2 * (v3x * v4y - v3y * v4x + v2y * v4x) - 2 * v2x * v4y;
 
-  let u1: number, u2: number;
-  let v1_out: number, v2_out: number;
+  let u1: number;
+  let u2: number;
+  let v1_out: number;
+  let v2_out: number;
 
   if (A < 0.0) {
     console.log("A was < 0", A);
@@ -127,7 +123,7 @@ function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyV
 
     console.log("C1 bad");
 
-    let l = Math.sqrt(dx * dx + dy * dy);
+    const l = Math.sqrt(dx * dx + dy * dy);
     if (l > 0.000001) {
       dx /= l * l;
       dy /= l * l;
@@ -141,14 +137,15 @@ function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyV
 
   if (Math.abs(C2) < 0.00001) {
     //perfectly 90 degrees?
-    let dx, dy;
+    let dx;
+    let dy;
 
     dx = v3x - v2x;
     dy = v3y - v2y;
 
     console.log("C2 bad");
 
-    let l = Math.sqrt(dx ** 2 + dy ** 2);
+    const l = Math.sqrt(dx ** 2 + dy ** 2);
     if (l > 0.00001) {
       dx /= l * l;
       dy /= l * l;
@@ -160,10 +157,10 @@ function quad_uv_2d(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyV
     v2_out = (-(B + sqrt(A) + (v4y + y) * v2x) + (v4x + x) * v2y) / C2;
   }
 
-  let ret = quad_co_rets2.next();
+  const ret = quad_co_rets2.next();
 
-  let d1 = (u1 - 0.5) ** 2 + (v1_out - 0.5) ** 2;
-  let d2 = (u2 - 0.5) ** 2 + (v2_out - 0.5) ** 2;
+  const d1 = (u1 - 0.5) ** 2 + (v1_out - 0.5) ** 2;
+  const d2 = (u2 - 0.5) ** 2 + (v2_out - 0.5) ** 2;
 
   if (d1 < d2) {
     ret[0] = u1;
@@ -184,7 +181,7 @@ export const ClosestModes = {
   ALL      : 4,
 };
 
-let advs: CacheRing<Vec4> = cacheRing<Vec4>(util.cachering.fromConstructor(Vector4, 128));
+const advs: CacheRing<Vec4> = cacheRing<Vec4>(util.cachering.fromConstructor(Vector4, 128));
 
 export class AbstractCurve {
   evaluate(t: number): Vec3 {
@@ -210,27 +207,27 @@ export class ClosestCurveRets {
   }
 }
 
-let cvrets: CacheRing<ClosestCurveRets> = cacheRing<ClosestCurveRets>(
+const cvrets: CacheRing<ClosestCurveRets> = cacheRing<ClosestCurveRets>(
   util.cachering.fromConstructor(ClosestCurveRets, 2048)
 );
-let cvarrays = new util.ArrayPool();
-let cvtmp = new Array(1024);
+const cvarrays = new util.ArrayPool();
+const cvtmp = new Array(1024);
 
 export function closestPoint(p: MyVectorLike, curve: AbstractCurve, mode: number): void {
-  let steps = 5;
-  let s = 0,
-    ds = 1.0 / steps;
+  const steps = 5;
+  let s = 0;
+  const ds = 1.0 / steps;
 
-  let ri = 0;
+  const ri = 0;
 
   for (let i = 0; i < steps; i++, s += ds) {
-    let c1 = curve.evaluate(s);
-    let c2 = curve.evaluate(s + ds);
+    const c1 = curve.evaluate(s);
+    const c2 = curve.evaluate(s + ds);
   }
 }
 
-let poly_normal_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
-let pncent = new Vector3();
+const poly_normal_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const pncent = new Vector3();
 
 export function normal_poly(vs: MyVectorLike[]): Vec3 {
   if (vs.length === 3) {
@@ -243,23 +240,23 @@ export function normal_poly(vs: MyVectorLike[]): Vec3 {
     return poly_normal_tmps.next().zero();
   }
 
-  let cent = pncent.zero();
+  const cent = pncent.zero();
   let tot = 0;
 
-  for (let v of vs) {
+  for (const v of vs) {
     cent.add(v as unknown as Vector3);
     tot++;
   }
 
   cent.mulScalar(1.0 / tot);
-  let n = poly_normal_tmps.next().zero();
+  const n = poly_normal_tmps.next().zero();
 
   for (let i = 0; i < vs.length; i++) {
-    let a = vs[i];
-    let b = vs[(i + 1) % vs.length];
-    let c = cent;
+    const a = vs[i];
+    const b = vs[(i + 1) % vs.length];
+    const c = cent;
 
-    let n2 = normal_tri(a as unknown as MyVectorLike, b as unknown as MyVectorLike, c as unknown as MyVectorLike);
+    const n2 = normal_tri(a as unknown as MyVectorLike, b as unknown as MyVectorLike, c as unknown as MyVectorLike);
     n.add(n2);
   }
 
@@ -283,8 +280,8 @@ off fort;
 
 */
 
-let barycentric_v2_rets: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 2048));
-let calc_proj_refs: CacheRing<number[]> = cacheRing<number[]>(new util.cachering(() => [0, 0], 64));
+const barycentric_v2_rets: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 2048));
+const calc_proj_refs: CacheRing<number[]> = cacheRing<number[]>(new util.cachering(() => [0, 0], 64));
 
 /*
   a b c d
@@ -332,17 +329,17 @@ let calc_proj_refs: CacheRing<number[]> = cacheRing<number[]>(new util.cachering
 
  */
 export function dihedral_v3_sqr(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): number {
-  let bx = v2[0] - v1[0];
-  let by = v2[1] - v1[1];
-  let bz = v2[2] - v1[2];
+  const bx = v2[0] - v1[0];
+  const by = v2[1] - v1[1];
+  const bz = v2[2] - v1[2];
 
-  let cx = v3[0] - v1[0];
-  let cy = v3[1] - v1[1];
-  let cz = v3[2] - v1[2];
+  const cx = v3[0] - v1[0];
+  const cy = v3[1] - v1[1];
+  const cz = v3[2] - v1[2];
 
-  let dx = v4[0] - v1[0];
-  let dy = v4[1] - v1[1];
-  let dz = v4[2] - v1[2];
+  const dx = v4[0] - v1[0];
+  const dy = v4[1] - v1[1];
+  const dz = v4[2] - v1[2];
 
   return (
     ((bx * cz - bz * cx) * (cx * dz - cz * dx) +
@@ -354,13 +351,13 @@ export function dihedral_v3_sqr(v1: MyVectorLike, v2: MyVectorLike, v3: MyVector
   );
 }
 
-let tet_area_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const tet_area_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
 export function tet_volume(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, d: MyVectorLike): number {
-  let a2 = tet_area_tmps.next().load(a as unknown as Vector3);
-  let b2 = tet_area_tmps.next().load(b as unknown as Vector3);
-  let c2 = tet_area_tmps.next().load(c as unknown as Vector3);
-  let d2 = tet_area_tmps.next().load(d as unknown as Vector3);
+  const a2 = tet_area_tmps.next().load(a as unknown as Vector3);
+  const b2 = tet_area_tmps.next().load(b as unknown as Vector3);
+  const c2 = tet_area_tmps.next().load(c as unknown as Vector3);
+  const d2 = tet_area_tmps.next().load(d as unknown as Vector3);
 
   a2.sub(d2);
   b2.sub(d2);
@@ -371,11 +368,11 @@ export function tet_volume(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, d:
 }
 
 export function calc_projection_axes(no: MyVectorLike): number[] {
-  let ax = Math.abs((no as unknown as number[])[0]),
-    ay = Math.abs((no as unknown as number[])[1]),
-    az = Math.abs((no as unknown as number[])[2]);
+  const ax = Math.abs((no as unknown as number[])[0]);
+  const ay = Math.abs((no as unknown as number[])[1]);
+  const az = Math.abs((no as unknown as number[])[2]);
 
-  let ret = calc_proj_refs.next();
+  const ret = calc_proj_refs.next();
 
   if (ax > ay && ax > az) {
     ret[0] = 1;
@@ -391,12 +388,20 @@ export function calc_projection_axes(no: MyVectorLike): number[] {
   return ret;
 }
 
-let _avtmps = util.cachering.fromConstructor(Vector3, 128);
+const _avtmps = util.cachering.fromConstructor(Vector3, 128);
 
 function inrect_3d(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
-  let ok = (p as unknown as number[])[0] >= (min as unknown as number[])[0] && (p as unknown as number[])[0] <= (max as unknown as number[])[0];
-  ok = ok && (p as unknown as number[])[1] >= (min as unknown as number[])[1] && (p as unknown as number[])[1] <= (max as unknown as number[])[1];
-  ok = ok && (p as unknown as number[])[2] >= (min as unknown as number[])[2] && (p as unknown as number[])[2] <= (max as unknown as number[])[2];
+  let ok =
+    (p as unknown as number[])[0] >= (min as unknown as number[])[0] &&
+    (p as unknown as number[])[0] <= (max as unknown as number[])[0];
+  ok =
+    ok &&
+    (p as unknown as number[])[1] >= (min as unknown as number[])[1] &&
+    (p as unknown as number[])[1] <= (max as unknown as number[])[1];
+  ok =
+    ok &&
+    (p as unknown as number[])[2] >= (min as unknown as number[])[2] &&
+    (p as unknown as number[])[2] <= (max as unknown as number[])[2];
 
   return ok;
 }
@@ -409,14 +414,22 @@ export function aabb_isect_line_3d(v1: MyVectorLike, v2: MyVectorLike, min: MyVe
     return true;
   }
 
-  let cent = _avtmps.next().load(min as unknown as Vector3).interp(max as unknown as Vector3, 0.5);
+  const cent = _avtmps
+    .next()
+    .load(min as unknown as Vector3)
+    .interp(max as unknown as Vector3, 0.5);
 
-  let cpl = closest_point_on_line(cent as unknown as MyVectorLike, v1 as unknown as MyVectorLike, v2 as unknown as MyVectorLike, true);
+  const cpl = closest_point_on_line(
+    cent as unknown as MyVectorLike,
+    v1 as unknown as MyVectorLike,
+    v2 as unknown as MyVectorLike,
+    true
+  );
   if (!cpl) {
     return false;
   }
 
-  let p = cpl[0];
+  const p = cpl[0];
 
   return inrect_3d(p as unknown as MyVectorLike, min, max);
 }
@@ -435,23 +448,38 @@ export function aabb_isect_cylinder_3d(
     return true;
   }
 
-  let cent = _avtmps.next().load(min as unknown as Vector3).interp(max as unknown as Vector3, 0.5);
+  const cent = _avtmps
+    .next()
+    .load(min as unknown as Vector3)
+    .interp(max as unknown as Vector3, 0.5);
 
-  let cpl = closest_point_on_line(cent as unknown as MyVectorLike, v1 as unknown as MyVectorLike, v2 as unknown as MyVectorLike, true);
+  const cpl = closest_point_on_line(
+    cent as unknown as MyVectorLike,
+    v1 as unknown as MyVectorLike,
+    v2 as unknown as MyVectorLike,
+    true
+  );
   if (!cpl) {
     return false;
   }
 
-  let p = cpl[0];
+  const p = cpl[0];
 
-  let size = _avtmps.next().load(max as unknown as Vector3).sub(min as unknown as Vector3);
+  const size = _avtmps
+    .next()
+    .load(max as unknown as Vector3)
+    .sub(min as unknown as Vector3);
 
   size.mulScalar(0.5);
   size.addScalar(radius); //*(3**0.5));
 
   p.sub(cent).abs();
 
-  return (p as unknown as number[])[0] <= (size as unknown as number[])[0] && (p as unknown as number[])[1] <= (size as unknown as number[])[1] && (p as unknown as number[])[2] <= (size as unknown as number[])[2];
+  return (
+    (p as unknown as number[])[0] <= (size as unknown as number[])[0] &&
+    (p as unknown as number[])[1] <= (size as unknown as number[])[1] &&
+    (p as unknown as number[])[2] <= (size as unknown as number[])[2]
+  );
 }
 
 export function barycentric_v2(
@@ -461,12 +489,12 @@ export function barycentric_v2(
   v3: MyVectorLike,
   axis1: number = 0,
   axis2: number = 1,
-  out: MyVectorLike | undefined = undefined
+  out?: MyVectorLike | undefined
 ): MyVectorLike {
-  let v2arr = v2 as unknown as number[];
-  let v3arr = v3 as unknown as number[];
-  let v1arr = v1 as unknown as number[];
-  let parr = p as unknown as number[];
+  const v2arr = v2 as unknown as number[];
+  const v3arr = v3 as unknown as number[];
+  const v1arr = v1 as unknown as number[];
+  const parr = p as unknown as number[];
 
   let div =
     v2arr[axis1] * v3arr[axis2] -
@@ -478,13 +506,13 @@ export function barycentric_v2(
     div = 0.00001;
   }
 
-  let u =
+  const u =
     (v2arr[axis1] * v3arr[axis2] -
       v2arr[axis2] * v3arr[axis1] +
       (v2arr[axis2] - v3arr[axis2]) * parr[axis1] -
       (v2arr[axis1] - v3arr[axis1]) * parr[axis2]) /
     div;
-  let v =
+  const v =
     (-(v1arr[axis1] * v3arr[axis2] - v1arr[axis2] * v3arr[axis1] + (v1arr[axis2] - v3arr[axis2]) * parr[axis1]) +
       (v1arr[axis1] - v3arr[axis1]) * parr[axis2]) /
     div;
@@ -529,15 +557,15 @@ off fort;
 **/
 
 function _linedis2(co: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike): number {
-  let v1x = v1[0] - co[0];
-  let v1y = v1[1] - co[1];
-  let v1z = v1[2] - co[2];
+  const v1x = v1[0] - co[0];
+  const v1y = v1[1] - co[1];
+  const v1z = v1[2] - co[2];
 
-  let v2x = v2[0] - co[0];
-  let v2y = v2[1] - co[1];
-  let v2z = v2[2] - co[2];
+  const v2x = v2[0] - co[0];
+  const v2y = v2[1] - co[1];
+  const v2z = v2[2] - co[2];
 
-  let dis =
+  const dis =
     (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1y - v2y) - v1y) ** 2 +
     (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1z - v2z) - v1z) ** 2 +
     (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1x - v2x) - v1x) ** 2;
@@ -551,7 +579,7 @@ interface ClosestTriRet {
   dist: number;
 }
 
-let closest_p_tri_rets: CacheRing<ClosestTriRet> = cacheRing<ClosestTriRet>(
+const closest_p_tri_rets: CacheRing<ClosestTriRet> = cacheRing<ClosestTriRet>(
   new util.cachering(() => {
     return {
       co  : new Vector3(),
@@ -561,17 +589,17 @@ let closest_p_tri_rets: CacheRing<ClosestTriRet> = cacheRing<ClosestTriRet>(
   }, 512)
 );
 
-let cpt_v1 = new Vector3();
-let cpt_v2 = new Vector3();
-let cpt_v3 = new Vector3();
-let cpt_v4 = new Vector3();
-let cpt_v5 = new Vector3();
-let cpt_v6 = new Vector3();
-let cpt_p = new Vector3();
-let cpt_n = new Vector3();
-let cpt_mat = new Matrix4();
-let cpt_mat2 = new Matrix4();
-let cpt_b = new Vector3();
+const cpt_v1 = new Vector3();
+const cpt_v2 = new Vector3();
+const cpt_v3 = new Vector3();
+const cpt_v4 = new Vector3();
+const cpt_v5 = new Vector3();
+const cpt_v6 = new Vector3();
+const cpt_p = new Vector3();
+const cpt_n = new Vector3();
+const cpt_mat = new Matrix4();
+const cpt_mat2 = new Matrix4();
+const cpt_b = new Vector3();
 
 export function closest_point_on_quad(
   p: MyVectorLike,
@@ -582,8 +610,8 @@ export function closest_point_on_quad(
   n: MyVectorLike | undefined,
   uvw: MyVectorLike | undefined
 ): ClosestTriRet {
-  let a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
-  let b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
+  const a = closest_point_on_tri(p, v1, v2, v3, n, uvw);
+  const b = closest_point_on_tri(p, v1, v3, v4, n, uvw);
 
   return a.dist <= b.dist ? a : b;
 }
@@ -596,7 +624,7 @@ export function closest_point_on_tri(
   n: MyVectorLike | undefined,
   uvw: MyVectorLike | undefined
 ): ClosestTriRet {
-  let op = p;
+  const op = p;
 
   if (uvw) {
     (uvw as { [k: number]: number })[0] = (uvw as { [k: number]: number })[1] = 0.0;
@@ -605,14 +633,20 @@ export function closest_point_on_tri(
     }
   }
 
-  let lv1: Vec3 = cpt_v1.load(v1 as unknown as Vector3);
-  let lv2: Vec3 = cpt_v2.load(v2 as unknown as Vector3);
-  let lv3: Vec3 = cpt_v3.load(v3 as unknown as Vector3);
-  let lp: Vec3 = cpt_p.load(p as unknown as Vector3);
+  const lv1: Vec3 = cpt_v1.load(v1 as unknown as Vector3);
+  const lv2: Vec3 = cpt_v2.load(v2 as unknown as Vector3);
+  const lv3: Vec3 = cpt_v3.load(v3 as unknown as Vector3);
+  const lp: Vec3 = cpt_p.load(p as unknown as Vector3);
 
   let ln: Vec3;
   if (n === undefined) {
-    ln = cpt_n.load(normal_tri(lv1 as unknown as MyVectorLike, lv2 as unknown as MyVectorLike, lv3 as unknown as MyVectorLike) as unknown as Vector3);
+    ln = cpt_n.load(
+      normal_tri(
+        lv1 as unknown as MyVectorLike,
+        lv2 as unknown as MyVectorLike,
+        lv3 as unknown as MyVectorLike
+      ) as unknown as Vector3
+    );
   } else {
     ln = cpt_n.load(n as unknown as Vector3);
   }
@@ -630,13 +664,14 @@ export function closest_point_on_tri(
     should investigate if this is really necassary.
    */
 
-  let ax1: number, ax2: number;
-  let ax = Math.abs(ln[0]),
-    ay = Math.abs(ln[1]),
-    az = Math.abs(ln[2]);
+  let ax1: number;
+  let ax2: number;
+  const ax = Math.abs(ln[0]);
+  const ay = Math.abs(ln[1]);
+  const az = Math.abs(ln[2]);
   if (ax === 0.0 && ay === 0.0 && az === 0.0) {
     console.log("eek1", ln, lv1, lv2, lv3);
-    let ret = closest_p_tri_rets.next();
+    const ret = closest_p_tri_rets.next();
 
     ret.dist = 1e17;
     ret.co.zero();
@@ -660,15 +695,15 @@ export function closest_point_on_tri(
     ax3 = 2;
   }
 
-  let mat = cpt_mat;
-  let mat2 = cpt_mat2;
+  const mat = cpt_mat;
+  const mat2 = cpt_mat2;
   mat.makeIdentity();
 
-  let m = mat.$matrix;
+  const m = mat.$matrix;
 
-  let lv1arr = lv1 as unknown as number[];
-  let lv2arr = lv2 as unknown as number[];
-  let lv3arr = lv3 as unknown as number[];
+  const lv1arr = lv1 as unknown as number[];
+  const lv2arr = lv2 as unknown as number[];
+  const lv3arr = lv3 as unknown as number[];
 
   m.m11 = lv1arr[ax1];
   m.m12 = lv2arr[ax1];
@@ -694,9 +729,9 @@ export function closest_point_on_tri(
 
   mat.transpose();
 
-  let b = cpt_b.zero();
+  const b = cpt_b.zero();
 
-  let lparr = lp as unknown as number[];
+  const lparr = lp as unknown as number[];
   (b as unknown as number[])[0] = lparr[ax1];
   (b as unknown as number[])[1] = lparr[ax2];
   //(b as unknown as number[])[2] = lparr[ax3];
@@ -709,7 +744,7 @@ export function closest_point_on_tri(
 
   if (mat.invert() === null) {
     console.log("eek2", (mat as unknown as { determinant(): number }).determinant(), ax1, ax2, ln);
-    let ret = closest_p_tri_rets.next();
+    const ret = closest_p_tri_rets.next();
 
     ret.dist = 1e17;
     ret.co.zero();
@@ -749,11 +784,11 @@ export function closest_point_on_tri(
     }
   }
 
-  let x = lv1[0] * u + lv2[0] * v + lv3[0] * w;
-  let y = lv1[1] * u + lv2[1] * v + lv3[1] * w;
-  let z = lv1[2] * u + lv2[2] * v + lv3[2] * w;
+  const x = lv1[0] * u + lv2[0] * v + lv3[0] * w;
+  const y = lv1[1] * u + lv2[1] * v + lv3[1] * w;
+  const z = lv1[2] * u + lv2[2] * v + lv3[2] * w;
 
-  let ret = closest_p_tri_rets.next();
+  const ret = closest_p_tri_rets.next();
 
   ret.co.loadXYZ(x, y, z);
   ret.uv[0] = u;
@@ -770,33 +805,41 @@ export function dist_to_tri_v3_old(
   v1: MyVectorLike,
   v2: MyVectorLike,
   v3: MyVectorLike,
-  no: Vec3 | undefined = undefined
+  no?: Vec3 | undefined
 ): number {
   let lno: Vec3;
   if (!no) {
-    lno = dtvtmps.next().load(normal_tri(v1 as unknown as MyVectorLike, v2 as unknown as MyVectorLike, v3 as unknown as MyVectorLike) as unknown as Vector3);
+    lno = dtvtmps
+      .next()
+      .load(
+        normal_tri(
+          v1 as unknown as MyVectorLike,
+          v2 as unknown as MyVectorLike,
+          v3 as unknown as MyVectorLike
+        ) as unknown as Vector3
+      );
   } else {
     lno = no;
   }
 
-  let p = dtvtmps.next().load(co as unknown as Vector3);
+  const p = dtvtmps.next().load(co as unknown as Vector3);
   p.sub(v1 as unknown as Vector3);
 
-  let planedis = -p.dot(lno);
+  const planedis = -p.dot(lno);
 
-  let [axis, axis2] = calc_projection_axes(lno);
+  const [axis, axis2] = calc_projection_axes(lno);
 
-  let p1 = dtvtmps.next();
-  let p2 = dtvtmps.next();
-  let p3 = dtvtmps.next();
+  const p1 = dtvtmps.next();
+  const p2 = dtvtmps.next();
+  const p3 = dtvtmps.next();
 
-  let v1arr = v1 as unknown as number[];
-  let v2arr = v2 as unknown as number[];
-  let v3arr = v3 as unknown as number[];
+  const v1arr = v1 as unknown as number[];
+  const v2arr = v2 as unknown as number[];
+  const v3arr = v3 as unknown as number[];
 
-  let p1arr = p1 as unknown as number[];
-  let p2arr = p2 as unknown as number[];
-  let p3arr = p3 as unknown as number[];
+  const p1arr = p1 as unknown as number[];
+  const p2arr = p2 as unknown as number[];
+  const p3arr = p3 as unknown as number[];
 
   p1arr[0] = v1arr[axis];
   p1arr[1] = v1arr[axis2];
@@ -810,9 +853,9 @@ export function dist_to_tri_v3_old(
   p3arr[1] = v3arr[axis2];
   p3arr[2] = 0.0;
 
-  let pp = dtvtmps.next();
-  let pparr = pp as unknown as number[];
-  let coarr = co as unknown as number[];
+  const pp = dtvtmps.next();
+  const pparr = pp as unknown as number[];
+  const coarr = co as unknown as number[];
   pparr[0] = coarr[axis];
   pparr[1] = coarr[axis2];
   pparr[2] = 0.0;
@@ -820,8 +863,8 @@ export function dist_to_tri_v3_old(
   let dis = 1e17;
 
   function linedis2d(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike): number {
-    let dx1 = a[0] - b[0];
-    let dy1 = a[1] - b[1];
+    const dx1 = a[0] - b[0];
+    const dy1 = a[1] - b[1];
     let dx2 = c[0] - b[0];
     let dy2 = c[1] - b[1];
 
@@ -834,12 +877,15 @@ export function dist_to_tri_v3_old(
     return Math.abs(dx1 * dy2 - dx2 * dy1);
   }
 
-  let tmp = dtvtmps.next();
-  let tmp2 = dtvtmps.next();
+  const tmp = dtvtmps.next();
+  const tmp2 = dtvtmps.next();
 
   function linedis3d(a: MyVectorLike, b: Vec3, c: Vec3): number {
     tmp.load(a as unknown as Vector3).sub(b);
-    tmp2.load(c as unknown as Vector3).sub(b).normalize();
+    tmp2
+      .load(c as unknown as Vector3)
+      .sub(b)
+      .normalize();
 
     let t = tmp.dot(tmp2);
     t = Math.min(Math.max(t, 0.0), b.vectorDistance(c));
@@ -860,7 +906,7 @@ export function dist_to_tri_v3_old(
   dis = Math.min(dis, linedis3d(co, v3, v1));
 
   if (0) {
-    let uv = barycentric_v2(pp, p1, p2, p3);
+    const uv = barycentric_v2(pp, p1, p2, p3);
 
     let w = 1.0 - uv[0] - uv[1];
     uv[0] = Math.min(Math.max(uv[0], 0.0), 1.0);
@@ -937,7 +983,7 @@ off fort;
 
 */
 
-let _dt3s_n = new Vector3();
+const _dt3s_n = new Vector3();
 
 export function dist_to_tri_v3_sqr(
   p: MyVectorLike,
@@ -948,18 +994,22 @@ export function dist_to_tri_v3_sqr(
 ): number {
   if (n === undefined) {
     n = _dt3s_n;
-    n.load(normal_tri(v1 as unknown as Vector3, v2 as unknown as Vector3, v3 as unknown as Vector3) as unknown as Vector3);
+    n.load(
+      normal_tri(v1 as unknown as Vector3, v2 as unknown as Vector3, v3 as unknown as Vector3) as unknown as Vector3
+    );
   }
 
   // Cast all the MyVectorLike to number arrays for indexing
-  let parr = p as unknown as number[];
-  let v1arr = v1 as unknown as number[];
-  let v2arr = v2 as unknown as number[];
-  let v3arr = v3 as unknown as number[];
-  let narr = n as unknown as number[];
+  const parr = p as unknown as number[];
+  const v1arr = v1 as unknown as number[];
+  const v2arr = v2 as unknown as number[];
+  const v3arr = v3 as unknown as number[];
+  const narr = n as unknown as number[];
 
   // find projection axis;
-  let axis1: number, axis2: number, axis3: number;
+  let axis1: number;
+  let axis2: number;
+  let axis3: number;
   let nx = narr[0] < 0.0 ? -narr[0] : narr[0];
   let ny = narr[1] < 0.0 ? -narr[1] : narr[1];
   let nz = narr[2] < 0.0 ? -narr[2] : narr[2];
@@ -985,33 +1035,33 @@ export function dist_to_tri_v3_sqr(
   let planedis = (parr[0] - v1arr[0]) * narr[0] + (parr[1] - v1arr[1]) * narr[1] + (parr[2] - v1arr[2]) * narr[2];
   planedis = planedis < 0.0 ? -planedis : planedis;
 
-  let ax = v1arr[axis1],
-    ay = v1arr[axis2],
-    az = v1arr[axis3];
+  const ax = v1arr[axis1];
+  const ay = v1arr[axis2];
+  const az = v1arr[axis3];
 
-  let bx = v2arr[axis1] - ax,
-    by = v2arr[axis2] - ay,
-    bz = v2arr[axis3] - az;
-  let cx = v3arr[axis1] - ax,
-    cy = v3arr[axis2] - ay,
-    cz = v3arr[axis3] - az;
+  const bx = v2arr[axis1] - ax;
+  const by = v2arr[axis2] - ay;
+  const bz = v2arr[axis3] - az;
+  const cx = v3arr[axis1] - ax;
+  const cy = v3arr[axis2] - ay;
+  const cz = v3arr[axis3] - az;
 
-  let bx2 = bx * bx,
-    by2 = by * by,
-    bz2 = bz * bz,
-    cx2 = cx * cx,
-    cy2 = cy * cy,
-    cz2 = cz * cz;
+  const bx2 = bx * bx;
+  const by2 = by * by;
+  const bz2 = bz * bz;
+  const cx2 = cx * cx;
+  const cy2 = cy * cy;
+  const cz2 = cz * cz;
 
-  let x1 = parr[axis1] - ax;
-  let y1 = parr[axis2] - ay;
-  let z1 = parr[axis3] - az;
+  const x1 = parr[axis1] - ax;
+  const y1 = parr[axis2] - ay;
+  const z1 = parr[axis3] - az;
 
   const testf = 0.0;
 
-  let l1 = Math.sqrt(bx ** 2 + by ** 2);
-  let l2 = Math.sqrt((cx - bx) ** 2 + (cy - by) ** 2);
-  let l3 = Math.sqrt(cx ** 2 + cy ** 2);
+  const l1 = Math.sqrt(bx ** 2 + by ** 2);
+  const l2 = Math.sqrt((cx - bx) ** 2 + (cy - by) ** 2);
+  const l3 = Math.sqrt(cx ** 2 + cy ** 2);
 
   let s1 = x1 * by - y1 * bx < testf;
   let s2 = (x1 - bx) * (cy - by) - (y1 - by) * (cx - bx) < testf;
@@ -1049,12 +1099,15 @@ export function dist_to_tri_v3_sqr(
         cz2 = cz*cz;*/
   }
 
-  let mask = (Number(s1) & 1) | (Number(s2) << 1) | (Number(s3) << 2);
+  const mask = (Number(s1) & 1) | (Number(s2) << 1) | (Number(s3) << 2);
   if (mask === 0 || mask === 7) {
     return planedis * planedis;
   }
 
-  let d1: number, d2: number, d3: number, div: number;
+  let d1: number;
+  let d2: number;
+  let d3: number;
+  let div: number;
 
   /*
 //\  3|
@@ -1068,7 +1121,9 @@ export function dist_to_tri_v3_sqr(
 */
 
   let dis = 0.0;
-  let lx, ly, lz;
+  let lx;
+  let ly;
+  let lz;
 
   lx = bx;
   ly = by;
@@ -1192,7 +1247,7 @@ export function dist_to_tri_v3_sqr(
   //mul = 1.0;
 
   if (0) {
-    let odis = dis;
+    const odis = dis;
 
     dis = x1 ** 2 + y1 ** 2 + z1 ** 2;
 
@@ -1225,12 +1280,12 @@ export function dist_to_tri_v3_sqr(
   return dis * mul + planedis * planedis;
 }
 
-let tri_area_temps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const tri_area_temps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
 export function tri_area(v1: Vec3, v2: Vec3, v3: Vec3): number {
-  let l1 = v1.vectorDistance(v2);
-  let l2 = v2.vectorDistance(v3);
-  let l3 = v3.vectorDistance(v1);
+  const l1 = v1.vectorDistance(v2);
+  const l2 = v2.vectorDistance(v3);
+  const l3 = v3.vectorDistance(v1);
 
   let s = (l1 + l2 + l3) / 2.0;
   s = s * (s - l1) * (s - l2) * (s - l3);
@@ -1239,19 +1294,19 @@ export function tri_area(v1: Vec3, v2: Vec3, v3: Vec3): number {
 }
 
 export function aabb_overlap_area(
-  pos1: MyVectorLike,
-  size1: MyVectorLike,
-  pos2: MyVectorLike,
-  size2: MyVectorLike
+  pos1: VectorLikeOrHigher<2, Vector2>,
+  size1: VectorLikeOrHigher<2, Vector2>,
+  pos2: VectorLikeOrHigher<2, Vector2>,
+  size2: VectorLikeOrHigher<2, Vector2>
 ): number {
-  let r1 = 0.0,
-    r2 = 0.0;
+  let r1 = 0.0;
+  let r2 = 0.0;
 
   for (let i = 0; i < 2; i++) {
-    let a1 = pos1[i],
-      a2 = pos2[i];
-    let b1 = pos1[i] + size1[i];
-    let b2 = pos2[i] + size2[i];
+    const a1 = pos1[i];
+    const a2 = pos2[i];
+    const b1 = pos1[i] + size1[i];
+    const b2 = pos2[i] + size2[i];
 
     if (b1 >= a2 && b2 >= a1) {
       let r = Math.abs(a2 - b1);
@@ -1284,10 +1339,10 @@ export function aabb_isect_2d(
 ): boolean {
   let ret = 0;
   for (let i = 0; i < 2; i++) {
-    let a = pos1[i];
-    let b = pos1[i] + size1[i];
-    let c = pos2[i];
-    let d = pos2[i] + size2[i];
+    const a = pos1[i];
+    const b = pos1[i] + size1[i];
+    const c = pos2[i];
+    const d = pos2[i] + size2[i];
     if (b >= c && a <= d) ret += 1;
   }
   return ret === 2;
@@ -1302,25 +1357,25 @@ export function aabb_isect_3d(
   let ret = 0;
 
   for (let i = 0; i < 3; i++) {
-    let a = pos1[i];
-    let b = pos1[i] + size1[i];
+    const a = pos1[i];
+    const b = pos1[i] + size1[i];
 
-    let c = pos2[i];
-    let d = pos2[i] + size2[i];
+    const c = pos2[i];
+    const d = pos2[i] + size2[i];
 
     if (b >= c && a <= d) ret += 1;
   }
   return ret === 3;
 }
 
-let aabb_intersect_vs: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 32));
+const aabb_intersect_vs: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 32));
 
 interface AABBIntersectRet {
   pos: Vec2;
   size: Vec2;
 }
 
-let aabb_intersect_rets: CacheRing<AABBIntersectRet> = cacheRing<AABBIntersectRet>(
+const aabb_intersect_rets: CacheRing<AABBIntersectRet> = cacheRing<AABBIntersectRet>(
   new util.cachering(() => {
     return {
       pos : new Vector2(),
@@ -1342,22 +1397,28 @@ export function aabb_intersect_2d(
   pos2: MyVectorLike,
   size2: MyVectorLike
 ): AABBIntersectRet | undefined {
-  let v1 = aabb_intersect_vs.next().load(pos1 as unknown as Vector2);
-  let v2 = aabb_intersect_vs.next().load(pos1 as unknown as Vector2).add(size1 as unknown as Vector2);
-  let v3 = aabb_intersect_vs.next().load(pos2 as unknown as Vector2);
-  let v4 = aabb_intersect_vs.next().load(pos2 as unknown as Vector2).add(size2 as unknown as Vector2);
+  const v1 = aabb_intersect_vs.next().load(pos1 as unknown as Vector2);
+  const v2 = aabb_intersect_vs
+    .next()
+    .load(pos1 as unknown as Vector2)
+    .add(size1 as unknown as Vector2);
+  const v3 = aabb_intersect_vs.next().load(pos2 as unknown as Vector2);
+  const v4 = aabb_intersect_vs
+    .next()
+    .load(pos2 as unknown as Vector2)
+    .add(size2 as unknown as Vector2);
 
-  let min = aabb_intersect_vs.next().zero();
-  let max = aabb_intersect_vs.next().zero();
+  const min = aabb_intersect_vs.next().zero();
+  const max = aabb_intersect_vs.next().zero();
 
   let tot = 0;
 
-  let v1arr = v1 as unknown as number[];
-  let v2arr = v2 as unknown as number[];
-  let v3arr = v3 as unknown as number[];
-  let v4arr = v4 as unknown as number[];
-  let minarr = min as unknown as number[];
-  let maxarr = max as unknown as number[];
+  const v1arr = v1 as unknown as number[];
+  const v2arr = v2 as unknown as number[];
+  const v3arr = v3 as unknown as number[];
+  const v4arr = v4 as unknown as number[];
+  const minarr = min as unknown as number[];
+  const maxarr = max as unknown as number[];
 
   for (let i = 0; i < 2; i++) {
     if (v2arr[i] >= v3arr[i] && v1arr[i] <= v4arr[i]) {
@@ -1372,7 +1433,7 @@ export function aabb_intersect_2d(
     return undefined;
   }
 
-  let ret = aabb_intersect_rets.next();
+  const ret = aabb_intersect_rets.next();
   ret.pos.load(min);
   ret.size.load(max).sub(min);
 
@@ -1400,19 +1461,19 @@ export function aabb_intersect_2d(
   canvas.style.position = "absolute";
   canvas.style["z-index"] = "1000";
 
-  let g = (canvas as unknown as Record<string, unknown>).g as CanvasRenderingContext2D;
+  const g = (canvas as unknown as Record<string, unknown>).g as CanvasRenderingContext2D;
   g.clearRect(0, 0, canvas.width, canvas.height);
 
-  let sz = 800;
-  let a1 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
-  let a2 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
-  let b1 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
-  let b2 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
+  const sz = 800;
+  const a1 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
+  const a2 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
+  const b1 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
+  const b2 = new Vector2([Math.random() * sz, Math.random() * sz]).floor();
 
-  let p1 = new Vector2();
-  let s1 = new Vector2();
-  let p2 = new Vector2();
-  let s2 = new Vector2();
+  const p1 = new Vector2();
+  const s1 = new Vector2();
+  const p2 = new Vector2();
+  const s2 = new Vector2();
 
   p1.load(a1).min(a2);
   s1.load(a1).max(a2);
@@ -1440,7 +1501,7 @@ export function aabb_intersect_2d(
   g.fillStyle = "rgba(75, 100, 255, 1.0)";
   g.fill();
 
-  let ret = aabb_intersect_2d(p1, s1, p2, s2);
+  const ret = aabb_intersect_2d(p1, s1, p2, s2);
 
   if (ret) {
     g.beginPath();
@@ -1481,7 +1542,7 @@ _test_aabb_intersect_2d.stop = function stop(): void {
 _test_aabb_intersect_2d.end = function end(): void {
   _test_aabb_intersect_2d.stop();
 
-  let canvas = document.getElementById("test_canvas");
+  const canvas = document.getElementById("test_canvas");
   if (canvas) {
     canvas.remove();
   }
@@ -1501,7 +1562,7 @@ _test_aabb_intersect_2d.timer = function timer(rate: number = 500): void {
   }, rate);
 };
 
-let aabb_intersect_vs3: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const aabb_intersect_vs3: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
 export function aabb_intersect_3d(
   min1: MyVectorLike,
@@ -1551,10 +1612,10 @@ export function aabb_union_2d(
   pos2: MyVectorLike,
   size2: MyVectorLike
 ): AABBIntersectRet {
-  let v1 = aabb_intersect_vs.next();
-  let v2 = aabb_intersect_vs.next();
-  let min = aabb_intersect_vs.next();
-  let max = aabb_intersect_vs.next();
+  const v1 = aabb_intersect_vs.next();
+  const v2 = aabb_intersect_vs.next();
+  const min = aabb_intersect_vs.next();
+  const max = aabb_intersect_vs.next();
   v1.load(pos1 as unknown as Vector3).add(size1 as unknown as Vector3);
   v2.load(pos2 as unknown as Vector3).add(size2 as unknown as Vector3);
 
@@ -1562,7 +1623,7 @@ export function aabb_union_2d(
   max.load(v1 as unknown as Vector3).max(v2 as unknown as Vector3);
 
   max.sub(min);
-  let ret = aabb_intersect_rets.next();
+  const ret = aabb_intersect_rets.next();
 
   ret.pos.load(min);
   ret.pos.load(max);
@@ -1576,7 +1637,7 @@ function init_prototype(
   cls: { prototype: Record<string, unknown> },
   proto: Record<string, unknown>
 ): Record<string, unknown> {
-  for (let k in proto) {
+  for (const k in proto) {
     cls.prototype[k] = proto[k];
   }
 
@@ -1590,14 +1651,14 @@ function inherit(
 ): Record<string, unknown> {
   cls.prototype = Object.create(parent.prototype);
 
-  for (let k in proto) {
+  for (const k in proto) {
     cls.prototype[k] = proto[k];
   }
 
   return cls.prototype;
 }
 
-let set = util.set;
+const set = util.set;
 
 //everything below here was compiled from es6 code
 //variables starting with $ are function static local vars,
@@ -1605,7 +1666,8 @@ let set = util.set;
 //
 //except for $_mh and $_swapt.  they were used with a C macro
 //preprocessor.
-let $_mh: unknown, $_swapt: unknown;
+let $_mh: unknown;
+let $_swapt: unknown;
 
 //XXX destroy me
 export const feps = 2.22e-16;
@@ -1614,8 +1676,8 @@ export const COLINEAR = 1;
 export const LINECROSS = 2;
 export const COLINEAR_ISECT = 3;
 
-let _cross_vec1 = new Vector3();
-let _cross_vec2 = new Vector3();
+const _cross_vec1 = new Vector3();
+const _cross_vec2 = new Vector3();
 
 export const SQRT2 = Math.sqrt(2.0);
 export const FEPS_DATA = {
@@ -1643,8 +1705,8 @@ if (FLOAT_MIN != FLOAT_MIN || FLOAT_MAX != FLOAT_MAX) {
 }
 */
 
-let _static_grp_points4 = new Array(4);
-let _static_grp_points8 = new Array(8);
+const _static_grp_points4 = new Array(4);
+const _static_grp_points8 = new Array(8);
 
 export function get_rect_points(p: MyVectorLike, size: MyVectorLike): MyVectorLike[] {
   let cs: MyVectorLike[];
@@ -1671,7 +1733,7 @@ export function get_rect_points(p: MyVectorLike, size: MyVectorLike): MyVectorLi
 }
 
 export function get_rect_lines(p: MyVectorLike, size: MyVectorLike): MyVectorLike[][] {
-  let ps = get_rect_points(p, size);
+  const ps = get_rect_points(p, size);
   if (p.length === 2) {
     return [
       [ps[0], ps[1]],
@@ -1680,13 +1742,13 @@ export function get_rect_lines(p: MyVectorLike, size: MyVectorLike): MyVectorLik
       [ps[3], ps[0]],
     ];
   } else if (p.length === 3) {
-    let l1 = [
+    const l1 = [
       [ps[0], ps[1]],
       [ps[1], ps[2]],
       [ps[2], ps[3]],
       [ps[3], ps[0]],
     ];
-    let l2 = [
+    const l2 = [
       [ps[4], ps[5]],
       [ps[5], ps[6]],
       [ps[6], ps[7]],
@@ -1703,7 +1765,7 @@ export function get_rect_lines(p: MyVectorLike, size: MyVectorLike): MyVectorLik
   }
 }
 
-let $vs_simple_tri_aabb_isect: MyVectorLike[] = [
+const $vs_simple_tri_aabb_isect: MyVectorLike[] = [
   0 as unknown as MyVectorLike,
   0 as unknown as MyVectorLike,
   0 as unknown as MyVectorLike,
@@ -1777,7 +1839,7 @@ export class MinMax {
   }
 
   static fromSTRUCT(reader: (obj: MinMax) => void): MinMax {
-    let ret = new MinMax();
+    const ret = new MinMax();
     reader(ret);
     return ret;
   }
@@ -1797,7 +1859,7 @@ export class MinMax {
   }
 
   reset(): void {
-    let totaxis = this.totaxis;
+    const totaxis = this.totaxis;
     if (totaxis === 1) {
       this.min = this.max = 0;
       this._min = FLOAT_MAX;
@@ -1814,7 +1876,7 @@ export class MinMax {
 
   minmax_rect(p: MyVectorLike, size: MyVectorLike): void {
     let totaxis = this.totaxis;
-    let cs = this._static_mr_cs;
+    const cs = this._static_mr_cs;
     if (totaxis === 2) {
       cs[0] = p;
       cs[1] = [p[0] + size[0], p[1]];
@@ -1838,27 +1900,27 @@ export class MinMax {
   }
 
   minmax(p: number | MyVectorLike | vectormath.VectorLike<2 | 3 | 4>): void {
-    let totaxis = this.totaxis;
+    const totaxis = this.totaxis;
 
     if (totaxis === 1) {
       this._min = this.min = Math.min(this._min as number, p as number);
       this._max = this.max = Math.max(this._max as number, p as number);
     } else if (totaxis === 2) {
-      let _mn = this._min as { [k: number]: number },
-        mn = this.min as { [k: number]: number };
-      let _mx = this._max as { [k: number]: number },
-        mx = this.max as { [k: number]: number };
-      let pv = p as MyVectorLike;
+      const _mn = this._min as { [k: number]: number };
+      const mn = this.min as { [k: number]: number };
+      const _mx = this._max as { [k: number]: number };
+      const mx = this.max as { [k: number]: number };
+      const pv = p as MyVectorLike;
       _mn[0] = mn[0] = Math.min(_mn[0], pv[0]);
       _mn[1] = mn[1] = Math.min(_mn[1], pv[1]);
       _mx[0] = mx[0] = Math.max(_mx[0], pv[0]);
       _mx[1] = mx[1] = Math.max(_mx[1], pv[1]);
     } else if (totaxis === 3) {
-      let _mn = this._min as { [k: number]: number },
-        mn = this.min as { [k: number]: number };
-      let _mx = this._max as { [k: number]: number },
-        mx = this.max as { [k: number]: number };
-      let pv = p as MyVectorLike;
+      const _mn = this._min as { [k: number]: number };
+      const mn = this.min as { [k: number]: number };
+      const _mx = this._max as { [k: number]: number };
+      const mx = this.max as { [k: number]: number };
+      const pv = p as MyVectorLike;
       _mn[0] = mn[0] = Math.min(_mn[0], pv[0]);
       _mn[1] = mn[1] = Math.min(_mn[1], pv[1]);
       _mn[2] = mn[2] = Math.min(_mn[2], pv[2]);
@@ -1866,11 +1928,11 @@ export class MinMax {
       _mx[1] = mx[1] = Math.max(_mx[1], pv[1]);
       _mx[2] = mx[2] = Math.max(_mx[2], pv[2]);
     } else {
-      let _mn = this._min as { [k: number]: number },
-        mn = this.min as { [k: number]: number };
-      let _mx = this._max as { [k: number]: number },
-        mx = this.max as { [k: number]: number };
-      let pv = p as MyVectorLike;
+      const _mn = this._min as { [k: number]: number };
+      const mn = this.min as { [k: number]: number };
+      const _mx = this._max as { [k: number]: number };
+      const mx = this.max as { [k: number]: number };
+      const pv = p as MyVectorLike;
       for (let i = 0; i < totaxis; i++) {
         _mn[i] = mn[i] = Math.min(_mn[i], pv[i]);
         _mx[i] = mx[i] = Math.max(_mx[i], pv[i]);
@@ -1882,22 +1944,22 @@ MinMax.STRUCT =
   "\n  math.MinMax {\n    min     : vec3;\n    max     : vec3;\n    _min    : vec3;\n    _max    : vec3;\n    totaxis : int;\n  }\n";
 
 export function winding_axis(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike, up_axis: number): boolean {
-  let xaxis = (up_axis + 1) % 3;
-  let yaxis = (up_axis + 2) % 3;
+  const xaxis = (up_axis + 1) % 3;
+  const yaxis = (up_axis + 2) % 3;
 
-  let x1 = a[xaxis],
-    y1 = a[yaxis];
-  let x2 = b[xaxis],
-    y2 = b[yaxis];
-  let x3 = c[xaxis],
-    y3 = c[yaxis];
+  const x1 = a[xaxis];
+  const y1 = a[yaxis];
+  const x2 = b[xaxis];
+  const y2 = b[yaxis];
+  const x3 = c[xaxis];
+  const y3 = c[yaxis];
 
-  let dx1 = x1 - x2,
-    dy1 = y1 - y2;
-  let dx2 = x3 - x2,
-    dy2 = y3 - y2;
+  const dx1 = x1 - x2;
+  const dy1 = y1 - y2;
+  const dx2 = x3 - x2;
+  const dy2 = y3 - y2;
 
-  let f = dx1 * dy2 - dy1 * dx2;
+  const f = dx1 * dy2 - dy1 * dx2;
   return f >= 0.0;
 }
 
@@ -1909,10 +1971,10 @@ export function winding(
   zero_z: boolean = false,
   tol: number = 0.0
 ): boolean {
-  let dx1 = b[0] - a[0];
-  let dy1 = b[1] - a[1];
-  let dx2 = c[0] - a[0];
-  let dy2 = c[1] - a[1];
+  const dx1 = b[0] - a[0];
+  const dy1 = b[1] - a[1];
+  const dx2 = c[0] - a[0];
+  const dy2 = c[1] - a[1];
 
   return dx1 * dy2 - dy1 * dx2 > tol;
 }
@@ -1931,14 +1993,14 @@ export function inrect_2d(
   return p[0] >= pos[0] && p[0] <= pos[0] + size[0] && p[1] >= pos[1] && p[1] <= pos[1] + size[1];
 }
 
-let $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
+const $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
 
 export function aabb_isect_line_2d(v1: MyVectorLike, v2: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   if (point_in_aabb_2d(v1, min, max) || point_in_aabb(v2, min, max)) {
     return true;
   }
 
-  let lines = $ps_aabb_isect_line_2d;
+  const lines = $ps_aabb_isect_line_2d;
   lines[0][0] = min[0];
   lines[0][1] = min[1];
 
@@ -1968,14 +2030,14 @@ export function expand_rect2d(pos: { [k: number]: number }, size: { [k: number]:
 }
 
 export function expand_line(l: [Vec3, Vec3], margin: number): [Vec3, Vec3] {
-  let c = new Vector3();
+  const c = new Vector3();
   c.add(l[0]);
   c.add(l[1]);
   c.mulScalar(0.5);
   l[0].sub(c);
   l[1].sub(c);
-  let l1 = l[0].vectorLength();
-  let l2 = l[1].vectorLength();
+  const l1 = l[0].vectorLength();
+  const l2 = l[1].vectorLength();
   l[0].normalize();
   l[1].normalize();
   l[0].mulScalar(margin + l1);
@@ -1992,16 +2054,16 @@ export function colinear(
   limit: number = 2.2e-16,
   distLimit: number = 0.00001 ** 2
 ): boolean {
-  let t1 = _cross_vec1;
-  let t2 = _cross_vec2;
+  const t1 = _cross_vec1;
+  const t2 = _cross_vec2;
 
-  let t1arr = t1 as unknown as number[];
-  let t2arr = t2 as unknown as number[];
-  let aarr = a as unknown as number[];
-  let barr = b as unknown as number[];
-  let carr = c as unknown as number[];
+  const t1arr = t1 as unknown as number[];
+  const t2arr = t2 as unknown as number[];
+  const aarr = a as unknown as number[];
+  const barr = b as unknown as number[];
+  const carr = c as unknown as number[];
 
-  let axes = a.length;
+  const axes = a.length;
 
   for (let i = 0; i < axes; i++) {
     t1arr[i] = barr[i] - aarr[i];
@@ -2030,14 +2092,14 @@ export function colinear2d(
   limit: number = 0.00001,
   precise: boolean = false
 ): boolean {
-  let dx1 = a[0] - b[0];
-  let dy1 = a[1] - b[1];
-  let dx2 = c[0] - b[0];
-  let dy2 = c[1] - b[1];
+  const dx1 = a[0] - b[0];
+  const dy1 = a[1] - b[1];
+  const dx2 = c[0] - b[0];
+  const dy2 = c[1] - b[1];
 
   let det = Math.abs(dx1 * dy2 - dy1 * dx2);
   if (precise) {
-    let len = (dx1 ** 2 + dy1 ** 2) ** 0.5 + (dx2 ** 2 + dy2 ** 2) ** 0.5;
+    const len = (dx1 ** 2 + dy1 ** 2) ** 0.5 + (dx2 ** 2 + dy2 ** 2) ** 0.5;
     if (len <= 0.00001) {
       return true;
     }
@@ -2048,25 +2110,25 @@ export function colinear2d(
   return det <= limit;
 }
 
-let _llc_l1 = [new Vector3(), new Vector3()];
-let _llc_l2 = [new Vector3(), new Vector3()];
-let _llc_l3 = [new Vector3(), new Vector3()];
-let _llc_l4 = [new Vector3(), new Vector3()];
+const _llc_l1 = [new Vector3(), new Vector3()];
+const _llc_l2 = [new Vector3(), new Vector3()];
+const _llc_l3 = [new Vector3(), new Vector3()];
+const _llc_l4 = [new Vector3(), new Vector3()];
 
-let lli_v1 = new Vector3(),
-  lli_v2 = new Vector3(),
-  lli_v3 = new Vector3(),
-  lli_v4 = new Vector3();
+const lli_v1 = new Vector3();
+const lli_v2 = new Vector3();
+const lli_v3 = new Vector3();
+const lli_v4 = new Vector3();
 
-let _zero_cn = new Vector3();
-let _tmps_cn: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
-let _rets_cn: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const _zero_cn = new Vector3();
+const _tmps_cn: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const _rets_cn: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
 //vec1, vec2 should both be normalized
 export function corner_normal(vec1: Vec3, vec2: Vec3, width: number): Vec3 {
-  let ret = _rets_cn.next().zero();
+  const ret = _rets_cn.next().zero();
 
-  let vec = _tmps_cn.next().zero();
+  const vec = _tmps_cn.next().zero();
   vec.load(vec1).add(vec2).normalize();
 
   /*
@@ -2094,13 +2156,13 @@ export function corner_normal(vec1: Vec3, vec2: Vec3, width: number): Vec3 {
   vec1 = _tmps_cn.next().load(vec1).mulScalar(width);
   vec2 = _tmps_cn.next().load(vec2).mulScalar(width);
 
-  let p1 = _tmps_cn.next().load(vec1);
-  let p2 = _tmps_cn.next().load(vec2);
+  const p1 = _tmps_cn.next().load(vec1);
+  const p2 = _tmps_cn.next().load(vec2);
 
   vec1.addFac(vec1, 0.01);
   vec2.addFac(vec2, 0.01);
 
-  let sc = 1.0;
+  const sc = 1.0;
 
   p1[0] += vec1[1] * sc;
   p1[1] += -vec1[0] * sc;
@@ -2108,7 +2170,7 @@ export function corner_normal(vec1: Vec3, vec2: Vec3, width: number): Vec3 {
   p2[0] += -vec2[1] * sc;
   p2[1] += vec2[0] * sc;
 
-  let p = line_line_isect(vec1, p1, vec2, p2, false);
+  const p = line_line_isect(vec1, p1, vec2, p2, false);
 
   if (p === undefined || p === COLINEAR_ISECT || p.dot(p) < 0.000001) {
     ret.load(vec1).add(vec2).normalize().mulScalar(width);
@@ -2153,22 +2215,22 @@ export function line_line_isect(
   
   */
 
-  let xa1 = v1[0],
-    xa2 = v2[0],
-    ya1 = v1[1],
-    ya2 = v2[1];
-  let xb1 = v3[0],
-    xb2 = v4[0],
-    yb1 = v3[1],
-    yb2 = v4[1];
+  const xa1 = v1[0];
+  const xa2 = v2[0];
+  const ya1 = v1[1];
+  const ya2 = v2[1];
+  const xb1 = v3[0];
+  const xb2 = v4[0];
+  const yb1 = v3[1];
+  const yb2 = v4[1];
 
-  let div = (xa1 - xa2) * (yb1 - yb2) - (xb1 - xb2) * (ya1 - ya2);
+  const div = (xa1 - xa2) * (yb1 - yb2) - (xb1 - xb2) * (ya1 - ya2);
   if (Math.abs(div) < 0.00000001) {
     //parallel but intersecting lines.
     return COLINEAR_ISECT;
   } else {
     //intersection exists
-    let t1 = -((ya1 - yb2) * xb1 - (yb1 - yb2) * xa1 - (ya1 - yb1) * xb2) / div;
+    const t1 = -((ya1 - yb2) * xb1 - (yb1 - yb2) * xa1 - (ya1 - yb1) * xb2) / div;
 
     return lli_v1.load(v1).interp(v2, t1);
   }
@@ -2191,44 +2253,44 @@ export function line_line_cross(a: MyVectorLike, b: MyVectorLike, c: MyVectorLik
   }
   //*/
 
-  let w1 = winding(a, b, c);
-  let w2 = winding(c, a, d);
-  let w3 = winding(a, b, d);
-  let w4 = winding(c, b, d);
+  const w1 = winding(a, b, c);
+  const w2 = winding(c, a, d);
+  const w3 = winding(a, b, d);
+  const w4 = winding(c, b, d);
   return w1 === w2 && w3 === w4 && w1 !== w3;
 }
 
-let _asi_v1 = new Vector3();
-let _asi_v2 = new Vector3();
-let _asi_v3 = new Vector3();
-let _asi_v4 = new Vector3();
-let _asi_v5 = new Vector3();
-let _asi_v6 = new Vector3();
+const _asi_v1 = new Vector3();
+const _asi_v2 = new Vector3();
+const _asi_v3 = new Vector3();
+const _asi_v4 = new Vector3();
+const _asi_v5 = new Vector3();
+const _asi_v6 = new Vector3();
 
 export function point_in_aabb_2d(p: MyVectorLike, min: MyVectorLike, max: MyVectorLike): boolean {
   return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1];
 }
 
-let _asi2d_v1 = new Vector2();
-let _asi2d_v2 = new Vector2();
-let _asi2d_v3 = new Vector2();
-let _asi2d_v4 = new Vector2();
-let _asi2d_v5 = new Vector2();
-let _asi2d_v6 = new Vector2();
+const _asi2d_v1 = new Vector2();
+const _asi2d_v2 = new Vector2();
+const _asi2d_v3 = new Vector2();
+const _asi2d_v4 = new Vector2();
+const _asi2d_v5 = new Vector2();
+const _asi2d_v6 = new Vector2();
 
 export function aabb_sphere_isect_2d(p: MyVectorLike, r: number, min: MyVectorLike, max: MyVectorLike): boolean {
-  let v1 = _asi2d_v1,
-    v2 = _asi2d_v2,
-    v3 = _asi2d_v3,
-    mvec = _asi2d_v4;
-  let v4 = _asi2d_v5;
+  const v1 = _asi2d_v1;
+  const v2 = _asi2d_v2;
+  const v3 = _asi2d_v3;
+  const mvec = _asi2d_v4;
+  const v4 = _asi2d_v5;
 
-  let lp: Vec2 = _asi2d_v6.load(p);
+  const lp: Vec2 = _asi2d_v6.load(p);
   v1.load(lp);
   v2.load(lp);
 
-  let lmin: Vec3 = _asi_v5.load(min);
-  let lmax: Vec3 = _asi_v6.load(max);
+  const lmin: Vec3 = _asi_v5.load(min);
+  const lmax: Vec3 = _asi_v6.load(max);
 
   mvec
     .load(lmax)
@@ -2288,21 +2350,21 @@ export function point_in_aabb(p: MyVectorLike, min: MyVectorLike, max: MyVectorL
   return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1] && p[2] >= min[2] && p[2] <= max[2];
 }
 
-let asi_rect = new Array(8);
+const asi_rect = new Array(8);
 for (let i = 0; i < 8; i++) {
   asi_rect[i] = new Vector3();
 }
 
-let aabb_sphere_isect_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const aabb_sphere_isect_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
 
 export function aabb_sphere_isect(p: MyVectorLike, r: number, min: MyVectorLike, max: MyVectorLike): boolean {
   let lp: Vec3;
   let lmin: Vec3;
   let lmax: Vec3;
   {
-    let p1 = aabb_sphere_isect_vs.next().load(p);
-    let min1 = aabb_sphere_isect_vs.next().load(min);
-    let max1 = aabb_sphere_isect_vs.next().load(max);
+    const p1 = aabb_sphere_isect_vs.next().load(p);
+    const min1 = aabb_sphere_isect_vs.next().load(min);
+    const max1 = aabb_sphere_isect_vs.next().load(max);
     if (p.length === 2) {
       p1[2] = 0.0;
     }
@@ -2318,20 +2380,20 @@ export function aabb_sphere_isect(p: MyVectorLike, r: number, min: MyVectorLike,
     lmax = max1;
   }
 
-  let cent = aabb_sphere_isect_vs.next().load(lmin).interp(lmax, 0.5);
+  const cent = aabb_sphere_isect_vs.next().load(lmin).interp(lmax, 0.5);
   lp.sub(cent);
   lmin.sub(cent);
   lmax.sub(cent);
 
   r *= r;
 
-  let isect = point_in_aabb(lp, lmin, lmax);
+  const isect = point_in_aabb(lp, lmin, lmax);
 
   if (isect) {
     return true;
   }
 
-  let rect = asi_rect;
+  const rect = asi_rect;
 
   rect[0].loadXYZ(lmin[0], lmin[1], lmin[2]);
   rect[1].loadXYZ(lmin[0], lmax[1], lmin[2]);
@@ -2349,25 +2411,25 @@ export function aabb_sphere_isect(p: MyVectorLike, r: number, min: MyVectorLike,
     }
   }
 
-  let p2 = aabb_sphere_isect_vs.next().load(lp);
+  const p2 = aabb_sphere_isect_vs.next().load(lp);
 
-  let p2arr = p2 as unknown as number[];
-  let lparr = lp as unknown as number[];
-  let lminarr = lmin as unknown as number[];
-  let lmaxarr = lmax as unknown as number[];
+  const p2arr = p2 as unknown as number[];
+  const lparr = lp as unknown as number[];
+  const lminarr = lmin as unknown as number[];
+  const lmaxarr = lmax as unknown as number[];
 
   for (let i = 0; i < 3; i++) {
     p2.load(lp);
 
-    let i2 = (i + 1) % 3;
-    let i3 = (i + 2) % 3;
+    const i2 = (i + 1) % 3;
+    const i3 = (i + 2) % 3;
 
     p2arr[i] = p2arr[i] < 0.0 ? lminarr[i] : lmaxarr[i];
 
     p2arr[i2] = Math.min(Math.max(p2arr[i2], lminarr[i2]), lmaxarr[i2]);
     p2arr[i3] = Math.min(Math.max(p2arr[i3], lminarr[i3]), lmaxarr[i3]);
 
-    let isect2 = p2.vectorDistanceSqr(lp) <= r;
+    const isect2 = p2.vectorDistanceSqr(lp) <= r;
 
     if (isect2) {
       return true;
@@ -2382,9 +2444,9 @@ export function aabb_sphere_dist(p: MyVectorLike, min: MyVectorLike, max: MyVect
   let lmin: Vec3;
   let lmax: Vec3;
   {
-    let p1 = aabb_sphere_isect_vs.next().load(p);
-    let min1 = aabb_sphere_isect_vs.next().load(min);
-    let max1 = aabb_sphere_isect_vs.next().load(max);
+    const p1 = aabb_sphere_isect_vs.next().load(p);
+    const min1 = aabb_sphere_isect_vs.next().load(min);
+    const max1 = aabb_sphere_isect_vs.next().load(max);
     if (p.length === 2) {
       p1[2] = 0.0;
     }
@@ -2400,18 +2462,18 @@ export function aabb_sphere_dist(p: MyVectorLike, min: MyVectorLike, max: MyVect
     lmax = max1;
   }
 
-  let cent = aabb_sphere_isect_vs.next().load(lmin).interp(lmax, 0.5);
+  const cent = aabb_sphere_isect_vs.next().load(lmin).interp(lmax, 0.5);
   lp.sub(cent);
   lmin.sub(cent);
   lmax.sub(cent);
 
-  let isect = point_in_aabb(lp, lmin, lmax);
+  const isect = point_in_aabb(lp, lmin, lmax);
 
   if (isect) {
     return 0.0;
   }
 
-  let rect = asi_rect;
+  const rect = asi_rect;
 
   rect[0].loadXYZ(lmin[0], lmin[1], lmin[2]);
   rect[1].loadXYZ(lmin[0], lmax[1], lmin[2]);
@@ -2426,32 +2488,32 @@ export function aabb_sphere_dist(p: MyVectorLike, min: MyVectorLike, max: MyVect
   let mindis: number | undefined;
 
   for (let i = 0; i < 8; i++) {
-    let dis = lp.vectorDistanceSqr(rect[i]);
+    const dis = lp.vectorDistanceSqr(rect[i]);
 
     if (mindis === undefined || dis < mindis) {
       mindis = dis;
     }
   }
 
-  let p2 = aabb_sphere_isect_vs.next().load(lp);
+  const p2 = aabb_sphere_isect_vs.next().load(lp);
 
-  let p2arr = p2 as unknown as number[];
-  let lparr = lp as unknown as number[];
-  let lminarr = lmin as unknown as number[];
-  let lmaxarr = lmax as unknown as number[];
+  const p2arr = p2 as unknown as number[];
+  const lparr = lp as unknown as number[];
+  const lminarr = lmin as unknown as number[];
+  const lmaxarr = lmax as unknown as number[];
 
   for (let i = 0; i < 3; i++) {
     p2.load(lp);
 
-    let i2 = (i + 1) % 3;
-    let i3 = (i + 2) % 3;
+    const i2 = (i + 1) % 3;
+    const i3 = (i + 2) % 3;
 
     p2arr[i] = p2arr[i] < 0.0 ? lminarr[i] : lmaxarr[i];
 
     p2arr[i2] = Math.min(Math.max(p2arr[i2], lminarr[i2]), lmaxarr[i2]);
     p2arr[i3] = Math.min(Math.max(p2arr[i3], lminarr[i3]), lmaxarr[i3]);
 
-    let dis = p2.vectorDistanceSqr(lp);
+    const dis = p2.vectorDistanceSqr(lp);
     if (mindis === undefined || dis < mindis) {
       mindis = dis;
     }
@@ -2461,9 +2523,9 @@ export function aabb_sphere_dist(p: MyVectorLike, min: MyVectorLike, max: MyVect
 }
 
 export function point_in_tri(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
-  let w1 = winding(p, v1, v2);
-  let w2 = winding(p, v2, v3);
-  let w3 = winding(p, v3, v1);
+  const w1 = winding(p, v1, v2);
+  const w2 = winding(p, v2, v3);
+  const w3 = winding(p, v3, v1);
   return w1 === w2 && w2 === w3;
 }
 
@@ -2471,9 +2533,9 @@ export function convex_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike
   return (line_line_cross as Function)([v1, v3], [v2, v4]);
 }
 
-let $e1_normal_tri = new Vector3();
-let $e3_normal_tri = new Vector3();
-let $e2_normal_tri = new Vector3();
+const $e1_normal_tri = new Vector3();
+const $e3_normal_tri = new Vector3();
+const $e2_normal_tri = new Vector3();
 
 export function isNum(f: number): boolean {
   let ok = typeof f === "number";
@@ -2497,7 +2559,9 @@ export function normal_tri(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike)
     throw new Error("NaN in normal_tri");
   }
 
-  let x3, y3, z3;
+  let x3;
+  let y3;
+  let z3;
 
   x1 = v2[0] - v1[0];
   y1 = v2[1] - v1[1];
@@ -2517,7 +2581,7 @@ export function normal_tri(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike)
   y3 *= len;
   z3 *= len;
 
-  let n = _normal_tri_rets.next();
+  const n = _normal_tri_rets.next();
 
   if (!isNum(x3 + y3 + z3)) {
     throw new Error("NaN!");
@@ -2530,11 +2594,11 @@ export function normal_tri(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike)
   return n;
 }
 
-let $n2_normal_quad = new Vector3();
+const $n2_normal_quad = new Vector3();
 
-let _q1 = new Vector3(),
-  _q2 = new Vector3(),
-  _q3 = new Vector3();
+const _q1 = new Vector3();
+const _q2 = new Vector3();
+const _q3 = new Vector3();
 
 export function normal_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): Vec3 {
   _q1.load(normal_tri(v1, v2, v3));
@@ -2565,7 +2629,7 @@ export function normal_quad_old(v1: MyVectorLike, v2: MyVectorLike, v3: MyVector
   return $n2_normal_quad;
 }
 
-let _li_vi = new Vector3();
+const _li_vi = new Vector3();
 
 //calc_t is optional, false
 export function line_isect(
@@ -2578,17 +2642,17 @@ export function line_isect(
   if (calc_t === undefined) {
     calc_t = false;
   }
-  let div = (v2[0] - v1[0]) * (v4[1] - v3[1]) - (v2[1] - v1[1]) * (v4[0] - v3[0]);
+  const div = (v2[0] - v1[0]) * (v4[1] - v3[1]) - (v2[1] - v1[1]) * (v4[0] - v3[0]);
   if (div === 0.0) return [new Vector3(), COLINEAR, 0.0];
-  let vi = _li_vi;
+  const vi = _li_vi;
   vi[0] = 0;
   vi[1] = 0;
   vi[2] = 0;
   vi[0] = ((v3[0] - v4[0]) * (v1[0] * v2[1] - v1[1] * v2[0]) - (v1[0] - v2[0]) * (v3[0] * v4[1] - v3[1] * v4[0])) / div;
   vi[1] = ((v3[1] - v4[1]) * (v1[0] * v2[1] - v1[1] * v2[0]) - (v1[1] - v2[1]) * (v3[0] * v4[1] - v3[1] * v4[0])) / div;
   if (calc_t || v1.length === 3) {
-    let n1 = new Vector2(v2).sub(v1);
-    let n2 = new Vector2(vi).sub(v1);
+    const n1 = new Vector2(v2).sub(v1);
+    const n2 = new Vector2(vi).sub(v1);
     let t = n2.vectorLength() / n1.vectorLength();
     n1.normalize();
     n2.normalize();
@@ -2603,25 +2667,25 @@ export function line_isect(
   return [vi, LINECROSS];
 }
 
-let dt2l_v1 = new Vector2();
-let dt2l_v2 = new Vector2();
-let dt2l_v3 = new Vector2();
-let dt2l_v4 = new Vector2();
-let dt2l_v5 = new Vector2();
+const dt2l_v1 = new Vector2();
+const dt2l_v2 = new Vector2();
+const dt2l_v3 = new Vector2();
+const dt2l_v4 = new Vector2();
+const dt2l_v5 = new Vector2();
 
 export function dist_to_line_2d(
   p: MyVectorLike,
   v1: MyVectorLike,
   v2: MyVectorLike,
   clip: boolean = true,
-  closest_co_out: { [k: number]: number } | undefined = undefined,
-  t_out: number | undefined = undefined
+  closest_co_out?: { [k: number]: number } | undefined,
+  t_out?: number | undefined
 ): number {
-  let lv1 = dt2l_v4.load(v1);
-  let lv2 = dt2l_v5.load(v2);
+  const lv1 = dt2l_v4.load(v1);
+  const lv2 = dt2l_v5.load(v2);
 
-  let n = dt2l_v1;
-  let vec = dt2l_v3;
+  const n = dt2l_v1;
+  const vec = dt2l_v3;
 
   n.load(lv2).sub(lv1).normalize();
   vec.load(p).sub(lv1);
@@ -2645,15 +2709,15 @@ export function dist_to_line_2d(
   return n.vectorDistance(p);
 }
 
-let dt3l_v1 = new Vector3();
-let dt3l_v2 = new Vector3();
-let dt3l_v3 = new Vector3();
-let dt3l_v4 = new Vector3();
-let dt3l_v5 = new Vector3();
+const dt3l_v1 = new Vector3();
+const dt3l_v2 = new Vector3();
+const dt3l_v3 = new Vector3();
+const dt3l_v4 = new Vector3();
+const dt3l_v5 = new Vector3();
 
 export function dist_to_line_sqr(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike, clip: boolean = true): number {
-  let px = p[0] - v1[0];
-  let py = p[1] - v1[1];
+  const px = p[0] - v1[0];
+  const py = p[1] - v1[1];
   let pz = p.length < 3 ? 0.0 : p[2] - v1[2];
 
   pz = pz === undefined ? 0.0 : pz;
@@ -2662,13 +2726,13 @@ export function dist_to_line_sqr(p: MyVectorLike, v1: MyVectorLike, v2: MyVector
   let v2y = v2[1] - v1[1];
   let v2z = v2.length < 3 ? 0.0 : v2[2] - v1[2];
 
-  let len = v2x * v2x + v2y * v2y + v2z * v2z;
+  const len = v2x * v2x + v2y * v2y + v2z * v2z;
 
   if (len === 0.0) {
     return Math.sqrt(px * px + py * py + pz * pz);
   }
 
-  let len2 = 1.0 / len;
+  const len2 = 1.0 / len;
   v2x *= len2;
   v2y *= len2;
   v2z *= len2;
@@ -2690,13 +2754,13 @@ export function dist_to_line(p: MyVectorLike, v1: MyVectorLike, v2: MyVectorLike
 }
 
 //p cam be 2d, 3d, or 4d point, v1/v2 however must be full homogenous coordinates
-let _cplw_vs4: CacheRing<Vec4> = cacheRing<Vec4>(util.cachering.fromConstructor(Vector4, 64));
-let _cplw_vs3: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
-let _cplw_vs2: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 64));
+const _cplw_vs4: CacheRing<Vec4> = cacheRing<Vec4>(util.cachering.fromConstructor(Vector4, 64));
+const _cplw_vs3: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const _cplw_vs2: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 64));
 
 function wclip(x1: number, x2: number, w1: number, w2: number, near: number): number {
-  let r1 = near * w1 - x1;
-  let r2 = (w1 - w2) * near - (x1 - x2);
+  const r1 = near * w1 - x1;
+  const r2 = (w1 - w2) * near - (x1 - x2);
 
   if (r2 === 0.0) return 0.0;
 
@@ -2715,18 +2779,18 @@ function clip(a: number, b: number, znear: number): number {
   in front of the near clipping plane otherwise, returns 0
  */
 export function clip_line_w(_v1: Vec4, _v2: Vec4, znear: number, zfar: number): boolean {
-  let v1 = _cplw_vs4.next().load(_v1);
-  let v2 = _cplw_vs4.next().load(_v2);
+  const v1 = _cplw_vs4.next().load(_v1);
+  const v2 = _cplw_vs4.next().load(_v2);
 
   //are we fully behind the view plane?
   if (v1[2] < 1.0 && v2[2] < 1.0) return false;
 
   function doclip1(v1: Vec4, v2: Vec4, axis: number): void {
     if (v1[axis] / v1[3] < -1) {
-      let t = wclip(v1[axis], v2[axis], v1[3], v2[3], -1);
+      const t = wclip(v1[axis], v2[axis], v1[3], v2[3], -1);
       v1.interp(v2, t);
     } else if (v1[axis] / v1[3] > 1) {
-      let t = wclip(v1[axis], v2[axis], v1[3], v2[3], 1);
+      const t = wclip(v1[axis], v2[axis], v1[3], v2[3], 1);
       v1.interp(v2, t);
     }
   }
@@ -2738,10 +2802,10 @@ export function clip_line_w(_v1: Vec4, _v2: Vec4, znear: number, zfar: number): 
 
   function dozclip(v1: Vec4, v2: Vec4): void {
     if (v1[2] < 1) {
-      let t = clip(v1[2], v2[2], 1);
+      const t = clip(v1[2], v2[2], 1);
       v1.interp(v2, t);
     } else if (v2[2] < 1) {
-      let t = clip(v2[2], v1[2], 1);
+      const t = clip(v2[2], v1[2], 1);
       v2.interp(v1, t);
     }
   }
@@ -2759,14 +2823,14 @@ export function clip_line_w(_v1: Vec4, _v2: Vec4, znear: number, zfar: number): 
 }
 
 //clip is optional, true.  clip point to lie within line segment v1->v2
-let _closest_point_on_line_cache: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
-let _closest_point_rets: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
+const _closest_point_on_line_cache: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 64));
+const _closest_point_rets: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
   new util.cachering(function () {
     return [0, 0];
   }, 64)
 );
 
-let _closest_tmps = [new Vector3(), new Vector3(), new Vector3()];
+const _closest_tmps = [new Vector3(), new Vector3(), new Vector3()];
 
 export function closest_point_on_line(
   p: MyVectorLike,
@@ -2774,8 +2838,8 @@ export function closest_point_on_line(
   v2: MyVectorLike,
   clip: boolean = true
 ): [Vec3, number] {
-  let l1 = _closest_tmps[0],
-    l2 = _closest_tmps[1];
+  const l1 = _closest_tmps[0];
+  const l2 = _closest_tmps[1];
   let len: number = 0;
 
   l1.load(v2).sub(v1);
@@ -2794,9 +2858,9 @@ export function closest_point_on_line(
     t = t > len ? len : t;
   }
 
-  let co = _closest_point_on_line_cache.next();
+  const co = _closest_point_on_line_cache.next();
   co.load(l1).mulScalar(t).add(v1);
-  let ret = _closest_point_rets.next();
+  const ret = _closest_point_rets.next();
 
   ret[0] = co;
   ret[1] = t;
@@ -2811,30 +2875,30 @@ export function closest_point_on_line(
   
   note that t need not be normalized, this function
   does that itself*/
-let _circ_from_line_tan_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
-let _circ_from_line_tan_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
+const _circ_from_line_tan_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const _circ_from_line_tan_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
   new util.cachering(function () {
     return [new Vector3(), 0];
   }, 64)
 );
 
 export function circ_from_line_tan(a: MyVectorLike, b: MyVectorLike, t: MyVectorLike): [Vec3, number] {
-  let p1 = _circ_from_line_tan_vs.next();
-  let t2 = _circ_from_line_tan_vs.next();
-  let n1 = _circ_from_line_tan_vs.next();
+  const p1 = _circ_from_line_tan_vs.next();
+  const t2 = _circ_from_line_tan_vs.next();
+  const n1 = _circ_from_line_tan_vs.next();
 
   p1.load(a).sub(b);
   t2.load(t).normalize();
   n1.load(p1).normalize().cross(t2).cross(t2).normalize();
 
-  let ax = p1[0],
-    ay = p1[1],
-    az = p1[2],
-    nx = n1[0],
-    ny = n1[1],
-    nz = n1[2];
+  const ax = p1[0];
+  const ay = p1[1];
+  const az = p1[2];
+  const nx = n1[0];
+  const ny = n1[1];
+  const nz = n1[2];
   let r = -(ax * ax + ay * ay + az * az);
-  let div = 2 * (ax * nx + ay * ny + az * nz);
+  const div = 2 * (ax * nx + ay * ny + az * nz);
 
   if (Math.abs(div) > 0.000001) {
     r /= div;
@@ -2842,7 +2906,7 @@ export function circ_from_line_tan(a: MyVectorLike, b: MyVectorLike, t: MyVector
     r = 1000000.0;
   }
 
-  let ret = _circ_from_line_tan_ret.next();
+  const ret = _circ_from_line_tan_ret.next();
   ret[0].load(n1).mulScalar(r).add(a);
   ret[1] = r;
 
@@ -2856,46 +2920,48 @@ export function circ_from_line_tan(a: MyVectorLike, b: MyVectorLike, t: MyVector
 
   note that t need not be normalized, this function
   does that itself*/
-let _circ_from_line_tan2d_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
-let _circ_from_line_tan2d_ret: CacheRing<[Vec2, number]> = cacheRing<[Vec2, number]>(
+const _circ_from_line_tan2d_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const _circ_from_line_tan2d_ret: CacheRing<[Vec2, number]> = cacheRing<[Vec2, number]>(
   new util.cachering(function () {
     return [new Vector2(), 0];
   }, 64)
 );
 
 export function circ_from_line_tan_2d(a: MyVectorLike, b: MyVectorLike, t: MyVectorLike): [Vec2, number] {
-  let la: Vec3 = _circ_from_line_tan2d_vs.next().load(a);
-  let lb: Vec3 = _circ_from_line_tan2d_vs.next().load(b);
-  let lt: Vec3 = _circ_from_line_tan2d_vs.next().load(t);
+  const la: Vec3 = _circ_from_line_tan2d_vs.next().load(a);
+  const lb: Vec3 = _circ_from_line_tan2d_vs.next().load(b);
+  const lt: Vec3 = _circ_from_line_tan2d_vs.next().load(t);
 
   la[2] = lb[2] = lt[2] = 0.0;
 
-  let p1 = _circ_from_line_tan2d_vs.next();
-  let t2 = _circ_from_line_tan2d_vs.next();
-  let n1 = _circ_from_line_tan2d_vs.next();
+  const p1 = _circ_from_line_tan2d_vs.next();
+  const t2 = _circ_from_line_tan2d_vs.next();
+  const n1 = _circ_from_line_tan2d_vs.next();
 
   p1.load(la).sub(lb);
   t2.load(lt).normalize();
   n1.load(p1).normalize().cross(t2).cross(t2).normalize();
 
   if (1) {
-    let cx: number, cy: number, r: number;
-    let x1 = la[0],
-      y1 = la[1];
-    let x2 = lb[0],
-      y2 = lb[1];
-    let tanx1 = lt[0],
-      tany1 = lt[1];
+    let cx: number;
+    let cy: number;
+    let r: number;
+    const x1 = la[0];
+    const y1 = la[1];
+    const x2 = lb[0];
+    const y2 = lb[1];
+    const tanx1 = lt[0];
+    const tany1 = lt[1];
 
-    let div = 4.0 * ((x1 - x2) * tany1 - (y1 - y2) * tanx1) ** 2;
-    let div2 = 2.0 * (x1 - x2) * tany1 - 2.0 * (y1 - y2) * tanx1;
+    const div = 4.0 * ((x1 - x2) * tany1 - (y1 - y2) * tanx1) ** 2;
+    const div2 = 2.0 * (x1 - x2) * tany1 - 2.0 * (y1 - y2) * tanx1;
 
     if (Math.abs(div) < 0.0001 || Math.abs(div2) < 0.0001) {
-      let ret = _circ_from_line_tan2d_ret.next();
+      const ret = _circ_from_line_tan2d_ret.next();
 
       ret[0].load(la).interp(lb, 0.5);
-      let dx = la[1] - lb[1];
-      let dy = lb[0] - la[0];
+      const dx = la[1] - lb[1];
+      const dy = lb[0] - la[0];
 
       r = 1000000.0;
 
@@ -2911,27 +2977,27 @@ export function circ_from_line_tan_2d(a: MyVectorLike, b: MyVectorLike, t: MyVec
 
     r = (((y1 - y2) ** 2 + x2 ** 2 + (x1 - 2.0 * x2) * x1) ** 2 * (tanx1 ** 2 + tany1 ** 2)) / div;
 
-    let midx = la[0] * 0.5 + lb[0] * 0.5;
-    let midy = la[1] * 0.5 + lb[1] * 0.5;
+    const midx = la[0] * 0.5 + lb[0] * 0.5;
+    const midy = la[1] * 0.5 + lb[1] * 0.5;
 
     //mirror
     cx = 2.0 * midx - cx;
     cy = 2.0 * midy - cy;
 
-    let ret = _circ_from_line_tan2d_ret.next();
+    const ret = _circ_from_line_tan2d_ret.next();
     ret[0].loadXY(cx, cy);
     ret[1] = Math.sqrt(r);
 
     return ret;
   } else {
-    let ax = p1[0],
-      ay = p1[1],
-      az = p1[2],
-      nx = n1[0],
-      ny = n1[1],
-      nz = n1[2];
+    const ax = p1[0];
+    const ay = p1[1];
+    const az = p1[2];
+    const nx = n1[0];
+    const ny = n1[1];
+    const nz = n1[2];
     let r = -(ax * ax + ay * ay + az * az);
-    let div = 2 * (ax * nx + ay * ny + az * nz);
+    const div = 2 * (ax * nx + ay * ny + az * nz);
 
     if (Math.abs(div) > 0.000001) {
       r /= div;
@@ -2939,7 +3005,7 @@ export function circ_from_line_tan_2d(a: MyVectorLike, b: MyVectorLike, t: MyVec
       r = 1000000.0;
     }
 
-    let ret = _circ_from_line_tan2d_ret.next();
+    const ret = _circ_from_line_tan2d_ret.next();
     ret[0].load(n1).mulScalar(r).add(la);
     ret[1] = r;
 
@@ -2949,40 +3015,40 @@ export function circ_from_line_tan_2d(a: MyVectorLike, b: MyVectorLike, t: MyVec
   return undefined as never;
 }
 
-let _gtc_e1 = new Vector3();
-let _gtc_e2 = new Vector3();
-let _gtc_e3 = new Vector3();
-let _gtc_p1 = new Vector3();
-let _gtc_p2 = new Vector3();
-let _gtc_v1 = new Vector3();
-let _gtc_v2 = new Vector3();
-let _gtc_p12 = new Vector3();
-let _gtc_p22 = new Vector3();
-let _get_tri_circ_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
+const _gtc_e1 = new Vector3();
+const _gtc_e2 = new Vector3();
+const _gtc_e3 = new Vector3();
+const _gtc_p1 = new Vector3();
+const _gtc_p2 = new Vector3();
+const _gtc_v1 = new Vector3();
+const _gtc_v2 = new Vector3();
+const _gtc_p12 = new Vector3();
+const _gtc_p22 = new Vector3();
+const _get_tri_circ_ret: CacheRing<[Vec3, number]> = cacheRing<[Vec3, number]>(
   new util.cachering(function () {
     return [0, 0];
   })
 );
 
 export function get_tri_circ(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike): [Vec3, number] {
-  let v1 = _gtc_v1;
-  let v2 = _gtc_v2;
-  let e1 = _gtc_e1;
-  let e2 = _gtc_e2;
-  let e3 = _gtc_e3;
-  let p1 = _gtc_p1;
-  let p2 = _gtc_p2;
+  const v1 = _gtc_v1;
+  const v2 = _gtc_v2;
+  const e1 = _gtc_e1;
+  const e2 = _gtc_e2;
+  const e3 = _gtc_e3;
+  const p1 = _gtc_p1;
+  const p2 = _gtc_p2;
 
-  let aarr = a as unknown as number[];
-  let barr = b as unknown as number[];
-  let carr = c as unknown as number[];
-  let e1arr = e1 as unknown as number[];
-  let e2arr = e2 as unknown as number[];
-  let e3arr = e3 as unknown as number[];
-  let p1arr = p1 as unknown as number[];
-  let p2arr = p2 as unknown as number[];
-  let v1arr = v1 as unknown as number[];
-  let v2arr = v2 as unknown as number[];
+  const aarr = a as unknown as number[];
+  const barr = b as unknown as number[];
+  const carr = c as unknown as number[];
+  const e1arr = e1 as unknown as number[];
+  const e2arr = e2 as unknown as number[];
+  const e3arr = e3 as unknown as number[];
+  const p1arr = p1 as unknown as number[];
+  const p2arr = p2 as unknown as number[];
+  const v1arr = v1 as unknown as number[];
+  const v2arr = v2 as unknown as number[];
 
   for (let i = 0; i < 3; i++) {
     e1arr[i] = barr[i] - aarr[i];
@@ -3011,15 +3077,15 @@ export function get_tri_circ(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike):
   let cent: Vec3;
   let type: number | undefined;
 
-  let p12arr = _gtc_p12 as unknown as number[];
-  let p22arr = _gtc_p22 as unknown as number[];
+  const p12arr = _gtc_p12 as unknown as number[];
+  const p22arr = _gtc_p22 as unknown as number[];
 
   for (let i = 0; i < 3; i++) {
     p12arr[i] = p1[i] + v1[i];
     p22arr[i] = p2[i] + v2[i];
   }
 
-  let isect = line_isect(p1, _gtc_p12 as unknown as MyVectorLike, p2, _gtc_p22 as unknown as MyVectorLike);
+  const isect = line_isect(p1, _gtc_p12 as unknown as MyVectorLike, p2, _gtc_p22 as unknown as MyVectorLike);
   cent = isect[0];
   type = isect[1];
 
@@ -3031,7 +3097,7 @@ export function get_tri_circ(a: MyVectorLike, b: MyVectorLike, c: MyVectorLike):
   if (r < feps) r = e2.sub(cent).vectorLength();
   if (r < feps) r = e3.sub(cent).vectorLength();
 
-  let ret = _get_tri_circ_ret.next();
+  const ret = _get_tri_circ_ret.next();
   ret[0] = cent;
   ret[1] = r;
 
@@ -3044,32 +3110,32 @@ export function gen_circle(
   r: number,
   stfeps: number
 ): unknown[] {
-  let pi = Math.PI;
+  const pi = Math.PI;
   let f = -pi / 2;
-  let df = (pi * 2) / stfeps;
-  let verts = new Array();
+  const df = (pi * 2) / stfeps;
+  const verts = [];
   for (let i = 0; i < stfeps; i++) {
-    let x = origin[0] + r * Math.sin(f);
-    let y = origin[1] + r * Math.cos(f);
-    let v = m.make_vert(new Vector3([x, y, origin[2]]));
+    const x = origin[0] + r * Math.sin(f);
+    const y = origin[1] + r * Math.cos(f);
+    const v = m.make_vert(new Vector3([x, y, origin[2]]));
     verts.push(v);
     f += df;
   }
   for (let i = 0; i < verts.length; i++) {
-    let v1 = verts[i];
-    let v2 = verts[(i + 1) % verts.length];
+    const v1 = verts[i];
+    const v2 = verts[(i + 1) % verts.length];
     m.make_edge(v1, v2);
   }
   return verts;
 }
 
-let cos = Math.cos;
-let sin = Math.sin;
+const cos = Math.cos;
+const sin = Math.sin;
 
 //axis is optional, 0
 export function rot2d(v1: { [k: number]: number }, A: number, axis?: number): void {
-  let x = v1[0];
-  let y = v1[1];
+  const x = v1[0];
+  const y = v1[1];
 
   if (axis === 1) {
     v1[0] = x * cos(A) + y * sin(A);
@@ -3081,18 +3147,18 @@ export function rot2d(v1: { [k: number]: number }, A: number, axis?: number): vo
 }
 
 export function makeCircleMesh(gl: unknown, radius: number, stfeps: number): unknown {
-  let Mesh = (globalThis as Record<string, unknown>).Mesh as { new (): Record<string, Function> };
-  let mesh = new Mesh();
-  let verts1 = gen_circle(mesh as unknown as Parameters<typeof gen_circle>[0], new Vector3(), radius, stfeps);
-  let verts2 = gen_circle(mesh as unknown as Parameters<typeof gen_circle>[0], new Vector3(), radius / 1.75, stfeps);
+  const Mesh = (globalThis as Record<string, unknown>).Mesh as { new (): Record<string, Function> };
+  const mesh = new Mesh();
+  const verts1 = gen_circle(mesh as unknown as Parameters<typeof gen_circle>[0], new Vector3(), radius, stfeps);
+  const verts2 = gen_circle(mesh as unknown as Parameters<typeof gen_circle>[0], new Vector3(), radius / 1.75, stfeps);
   mesh.make_face_complex([verts1, verts2]);
   return mesh;
 }
 
 export function minmax_verts(verts: Iterable<{ co: MyVectorLike }>): [Vec3, Vec3] {
-  let min = new Vector3([1000000000000.0, 1000000000000.0, 1000000000000.0]);
-  let max = new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
-  for (let v of verts) {
+  const min = new Vector3([1000000000000.0, 1000000000000.0, 1000000000000.0]);
+  const max = new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
+  for (const v of verts) {
     for (let i = 0; i < 3; i++) {
       min[i] = Math.min(min[i], v.co[i]);
       max[i] = Math.max(max[i], v.co[i]);
@@ -3102,38 +3168,38 @@ export function minmax_verts(verts: Iterable<{ co: MyVectorLike }>): [Vec3, Vec3
 }
 
 export function unproject(vec: MyVectorLike, ipers: Matrix4, iview: Matrix4): Vec3 {
-  let newvec = new Vector3(vec);
+  const newvec = new Vector3(vec);
   newvec.multVecMatrix(ipers);
   newvec.multVecMatrix(iview);
   return newvec;
 }
 
 export function project(vec: MyVectorLike, pers: Matrix4, view: Matrix4): Vec3 {
-  let newvec = new Vector3(vec);
+  const newvec = new Vector3(vec);
   newvec.multVecMatrix(pers);
   newvec.multVecMatrix(view);
   return newvec;
 }
 
-let _sh_minv = new Vector3();
-let _sh_maxv = new Vector3();
-let _sh_start = [];
-let _sh_end = [];
+const _sh_minv = new Vector3();
+const _sh_maxv = new Vector3();
+const _sh_start = [];
+const _sh_end = [];
 
-let static_cent_gbw = new Vector3();
+const static_cent_gbw = new Vector3();
 
 export function get_boundary_winding(points: MyVectorLike[]): boolean {
-  let cent = static_cent_gbw.zero();
+  const cent = static_cent_gbw.zero();
   if (points.length === 0) return false;
   for (let i = 0; i < points.length; i++) {
     cent.add(points[i]);
   }
   cent.divScalar(points.length);
-  let w = 0,
-    totw = 0;
+  let w = 0;
+  let totw = 0;
   for (let i = 0; i < points.length; i++) {
-    let v1 = points[i];
-    let v2 = points[(i + 1) % points.length];
+    const v1 = points[i];
+    const v2 = points[(i + 1) % points.length];
     if (!colinear(v1, v2, cent)) {
       w += winding(v1, v2, cent) ? 1 : 0;
       totw += 1;
@@ -3147,16 +3213,18 @@ export class PlaneOps {
   axis: [number, number, number];
 
   constructor(normal: MyVectorLike) {
-    let no = normal;
+    const no = normal;
     this.axis = [0, 0, 0];
     this.reset_axis(normal);
   }
 
   reset_axis(no: MyVectorLike): void {
-    let ax, ay, az;
-    let nx = Math.abs(no[0]),
-      ny = Math.abs(no[1]),
-      nz = Math.abs(no[2]);
+    let ax;
+    let ay;
+    let az;
+    const nx = Math.abs(no[0]);
+    const ny = Math.abs(no[1]);
+    const nz = Math.abs(no[2]);
     if (nz > nx && nz > ny) {
       ax = 0;
       ay = 1;
@@ -3174,7 +3242,7 @@ export class PlaneOps {
   }
 
   convex_quad(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): boolean {
-    let ax = this.axis;
+    const ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], v1[ax[2]]]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], v2[ax[2]]]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], v3[ax[2]]]);
@@ -3183,15 +3251,15 @@ export class PlaneOps {
   }
 
   line_isect(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike, v4: MyVectorLike): [Vec3, number, number?] {
-    let ax = this.axis;
-    let orig1 = v1,
-      orig2 = v2;
+    const ax = this.axis;
+    const orig1 = v1;
+    const orig2 = v2;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], v1[ax[2]]]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], v2[ax[2]]]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], v3[ax[2]]]);
     v4 = new Vector3([v4[ax[0]], v4[ax[1]], v4[ax[2]]]);
-    let ret = line_isect(v1, v2, v3, v4, true);
-    let vi = ret[0];
+    const ret = line_isect(v1, v2, v3, v4, true);
+    const vi = ret[0];
     if (ret[1] === LINECROSS) {
       ret[0].load(orig2).sub(orig1).mulScalar(ret[2]).add(orig1);
     }
@@ -3199,11 +3267,11 @@ export class PlaneOps {
   }
 
   line_line_cross(l1: [MyVectorLike, MyVectorLike], l2: [MyVectorLike, MyVectorLike]): boolean {
-    let ax = this.axis;
-    let v1 = l1[0],
-      v2 = l1[1],
-      v3 = l2[0],
-      v4 = l2[1];
+    const ax = this.axis;
+    let v1 = l1[0];
+    let v2 = l1[1];
+    let v3 = l2[0];
+    let v4 = l2[1];
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], 0.0]);
@@ -3212,7 +3280,7 @@ export class PlaneOps {
   }
 
   winding(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
-    let ax = this.axis;
+    const ax = this.axis;
     if (v1 === undefined) console.trace();
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
@@ -3221,7 +3289,7 @@ export class PlaneOps {
   }
 
   colinear(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): boolean {
-    let ax = this.axis;
+    const ax = this.axis;
     v1 = new Vector3([v1[ax[0]], v1[ax[1]], 0.0]);
     v2 = new Vector3([v2[ax[0]], v2[ax[1]], 0.0]);
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], 0.0]);
@@ -3229,18 +3297,18 @@ export class PlaneOps {
   }
 
   get_boundary_winding(points: MyVectorLike[]): boolean {
-    let ax = this.axis;
-    let cent = new Vector3();
+    const ax = this.axis;
+    const cent = new Vector3();
     if (points.length === 0) return false;
     for (let i = 0; i < points.length; i++) {
       cent.add(points[i]);
     }
     cent.divScalar(points.length);
-    let w = 0,
-      totw = 0;
+    let w = 0;
+    let totw = 0;
     for (let i = 0; i < points.length; i++) {
-      let v1 = points[i];
-      let v2 = points[(i + 1) % points.length];
+      const v1 = points[i];
+      const v2 = points[(i + 1) % points.length];
       if (!this.colinear(v1, v2, cent)) {
         w += this.winding(v1, v2, cent) ? 1 : 0;
         totw += 1;
@@ -3265,8 +3333,8 @@ part(ff, 1, 2);
 off fort;
 
 * */
-let _isrp_ret = new Vector3();
-let isect_ray_plane_rets = util.cachering.fromConstructor(Vector3, 256);
+const _isrp_ret = new Vector3();
+const isect_ray_plane_rets = util.cachering.fromConstructor(Vector3, 256);
 
 export function isect_ray_plane(
   planeorigin: MyVectorLike,
@@ -3274,31 +3342,31 @@ export function isect_ray_plane(
   rayorigin: MyVectorLike,
   raynormal: MyVectorLike
 ): Vec3 | undefined {
-  let po = planeorigin,
-    pn = planenormal,
-    ro = rayorigin,
-    rn = raynormal;
+  const po = planeorigin;
+  const pn = planenormal;
+  const ro = rayorigin;
+  const rn = raynormal;
 
-  let div = pn[1] * rn[1] + pn[2] * rn[2] + pn[0] * rn[0];
+  const div = pn[1] * rn[1] + pn[2] * rn[2] + pn[0] * rn[0];
 
   if (Math.abs(div) < 0.000001) {
     return undefined;
   }
 
-  let t = ((po[1] - ro[1]) * pn[1] + (po[2] - ro[2]) * pn[2] + (po[0] - ro[0]) * pn[0]) / div;
+  const t = ((po[1] - ro[1]) * pn[1] + (po[2] - ro[2]) * pn[2] + (po[0] - ro[0]) * pn[0]) / div;
   _isrp_ret.load(ro).addFac(rn, t);
 
   return isect_ray_plane_rets.next().load(_isrp_ret);
 }
 
 export function _old_isect_ray_plane(planeorigin: Vec3, planenormal: Vec3, rayorigin: Vec3, raynormal: Vec3): Vec3 {
-  let p = planeorigin,
-    n = planenormal;
-  let r = rayorigin,
-    v = raynormal;
+  const p = planeorigin;
+  const n = planenormal;
+  const r = rayorigin;
+  const v = raynormal;
 
-  let d = p.vectorLength();
-  let t = -(r.dot(n) - p.dot(n)) / v.dot(n);
+  const d = p.vectorLength();
+  const t = -(r.dot(n) - p.dot(n)) / v.dot(n);
   _isrp_ret.load(v);
   _isrp_ret.mulScalar(t);
   _isrp_ret.add(r);
@@ -3352,7 +3420,7 @@ export class Mat4Stack {
   }
 
   pop(): Matrix4 {
-    let mat = this.stack.pop(this.stack.length - 1);
+    const mat = this.stack.pop(this.stack.length - 1);
     this.matrix.load(mat);
     if (this.update_func !== undefined) this.update_func();
     return mat;
@@ -3412,34 +3480,34 @@ function lreport(..._args: unknown[]): void {
 }
 
 export function trilinear_v3(uvw: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
-  let [u, v, w] = uvw;
+  const [u, v, w] = uvw;
 
-  const a1x = boxverts[0][0],
-    a1y = boxverts[0][1],
-    a1z = boxverts[0][2];
+  const a1x = boxverts[0][0];
+  const a1y = boxverts[0][1];
+  const a1z = boxverts[0][2];
 
-  const b1x = boxverts[1][0] - a1x,
-    b1y = boxverts[1][1] - a1y,
-    b1z = boxverts[1][2] - a1z;
-  const c1x = boxverts[2][0] - a1x,
-    c1y = boxverts[2][1] - a1y,
-    c1z = boxverts[2][2] - a1z;
-  const d1x = boxverts[3][0] - a1x,
-    d1y = boxverts[3][1] - a1y,
-    d1z = boxverts[3][2] - a1z;
+  const b1x = boxverts[1][0] - a1x;
+  const b1y = boxverts[1][1] - a1y;
+  const b1z = boxverts[1][2] - a1z;
+  const c1x = boxverts[2][0] - a1x;
+  const c1y = boxverts[2][1] - a1y;
+  const c1z = boxverts[2][2] - a1z;
+  const d1x = boxverts[3][0] - a1x;
+  const d1y = boxverts[3][1] - a1y;
+  const d1z = boxverts[3][2] - a1z;
 
-  const a2x = boxverts[4][0] - a1x,
-    a2y = boxverts[4][1] - a1y,
-    a2z = boxverts[4][2] - a1z;
-  const b2x = boxverts[5][0] - a1x,
-    b2y = boxverts[5][1] - a1y,
-    b2z = boxverts[5][2] - a1z;
-  const c2x = boxverts[6][0] - a1x,
-    c2y = boxverts[6][1] - a1y,
-    c2z = boxverts[6][2] - a1z;
-  const d2x = boxverts[7][0] - a1x,
-    d2y = boxverts[7][1] - a1y,
-    d2z = boxverts[7][2] - a1z;
+  const a2x = boxverts[4][0] - a1x;
+  const a2y = boxverts[4][1] - a1y;
+  const a2z = boxverts[4][2] - a1z;
+  const b2x = boxverts[5][0] - a1x;
+  const b2y = boxverts[5][1] - a1y;
+  const b2z = boxverts[5][2] - a1z;
+  const c2x = boxverts[6][0] - a1x;
+  const c2y = boxverts[6][1] - a1y;
+  const c2z = boxverts[6][2] - a1z;
+  const d2x = boxverts[7][0] - a1x;
+  const d2y = boxverts[7][1] - a1y;
+  const d2z = boxverts[7][2] - a1z;
 
   const x =
     (((a2x - b2x) * v - a2x + (c2x - d2x) * v + d2x) * u -
@@ -3463,7 +3531,7 @@ export function trilinear_v3(uvw: MyVectorLike, boxverts: MyVectorLike[]): Vec3 
     ((c1z - d1z) * v + d1z - b1z * v) * u +
     b1z * v;
 
-  let p = tril_rets.next();
+  const p = tril_rets.next();
 
   p[0] = x + a1x;
   p[1] = y + a1y;
@@ -3472,12 +3540,12 @@ export function trilinear_v3(uvw: MyVectorLike, boxverts: MyVectorLike[]): Vec3 
   return p;
 }
 
-let tril_co_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 128));
-let tril_co_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 16));
-let tril_mat_1 = new Matrix4();
-let tril_mat_2 = new Matrix4();
+const tril_co_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 128));
+const tril_co_tmps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 16));
+const tril_mat_1 = new Matrix4();
+const tril_mat_2 = new Matrix4();
 
-let wtable = [
+const wtable = [
   [
     [0.5, 0.5, 0], //u triplet
     [0.5, 0.5, 0], //v triplet
@@ -3516,12 +3584,12 @@ const boxfaces_table = [
   [3, 7, 4, 0],
 ];
 
-let boxfaces_tmp = new Array(6);
+const boxfaces_tmp = new Array(6);
 for (let i = 0; i < 6; i++) {
   boxfaces_tmp[i] = new Vector3();
 }
 
-let boxfacenormals_tmp = new Array(6);
+const boxfacenormals_tmp = new Array(6);
 for (let i = 0; i < 6; i++) {
   boxfacenormals_tmp[i] = new Vector3();
 }
@@ -3529,8 +3597,8 @@ for (let i = 0; i < 6; i++) {
 export function point_in_hex(
   p: MyVectorLike,
   boxverts: MyVectorLike[],
-  boxfacecents: Vec3[] | undefined = undefined,
-  boxfacenormals: Vec3[] | undefined = undefined
+  boxfacecents?: Vec3[] | undefined,
+  boxfacenormals?: Vec3[] | undefined
 ): boolean {
   if (!boxfacecents) {
     boxfacecents = boxfaces_tmp;
@@ -3542,7 +3610,12 @@ export function point_in_hex(
       v3 = boxverts[v3];
       v4 = boxverts[v4];
 
-      boxfacecents[i].load(v1 as unknown as Vector3).add(v2 as unknown as Vector3).add(v3 as unknown as Vector3).add(v4 as unknown as Vector3).mulScalar(0.25);
+      boxfacecents[i]
+        .load(v1 as unknown as Vector3)
+        .add(v2 as unknown as Vector3)
+        .add(v3 as unknown as Vector3)
+        .add(v4 as unknown as Vector3)
+        .mulScalar(0.25);
     }
   }
 
@@ -3555,26 +3628,31 @@ export function point_in_hex(
       v3 = boxverts[v3];
       v4 = boxverts[v4];
 
-      let n = normal_quad(v1 as unknown as MyVectorLike, v2 as unknown as MyVectorLike, v3 as unknown as MyVectorLike, v4 as unknown as MyVectorLike);
+      const n = normal_quad(
+        v1 as unknown as MyVectorLike,
+        v2 as unknown as MyVectorLike,
+        v3 as unknown as MyVectorLike,
+        v4 as unknown as MyVectorLike
+      );
       boxfacenormals[i].load(n as unknown as Vector3).negate();
     }
   }
 
-  let t1 = pih_tmps.next();
-  let t2 = pih_tmps.next();
+  const t1 = pih_tmps.next();
+  const t2 = pih_tmps.next();
 
-  let cent = pih_tmps.next().zero();
+  const cent = pih_tmps.next().zero();
   for (let i = 0; i < 6; i++) {
     cent.add(boxfacecents[i]);
   }
   cent.mulScalar(1.0 / 6.0);
 
-  let ret = true;
+  const ret = true;
 
   for (let i = 0; i < 6; i++) {
     t1.load(p).sub(boxfacecents[i]);
     t2.load(cent).sub(boxfacecents[i]);
-    let n = boxfacenormals[i];
+    const n = boxfacenormals[i];
 
     if (1) {
       t1.normalize();
@@ -3595,19 +3673,19 @@ for (let i = 0; i < 8; i++) {
 }
 
 export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
-  let uvw = tril_co_rets.next();
+  const uvw = tril_co_rets.next();
 
   uvw.zero();
 
-  let u = tril_co_tmps.next();
-  let v = tril_co_tmps.next();
-  let w = tril_co_tmps.next();
+  const u = tril_co_tmps.next();
+  const v = tril_co_tmps.next();
+  const w = tril_co_tmps.next();
 
   u.loadXYZ(0.0, 0.5, 1.0);
   v.loadXYZ(0.0, 0.5, 1.0);
   w.loadXYZ(0.0, 0.5, 1.0);
 
-  let uvw2 = tril_co_tmps.next();
+  const uvw2 = tril_co_tmps.next();
 
   for (let step = 0; step < 4; step++) {
     uvw.loadXYZ(u[1], v[1], w[1]);
@@ -3616,18 +3694,18 @@ export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
     let mindis: number | undefined = trilinear_v3(uvw, boxverts).vectorDistanceSqr(p);
 
     for (let i = 0; i < 8; i++) {
-      let [t1, t2, t3] = wtable[i];
+      const [t1, t2, t3] = wtable[i];
 
-      let u2 = t1[0] * u[0] + t1[1] * u[1] + t1[2] * u[2];
-      let v2 = t2[0] * v[0] + t2[1] * v[1] + t2[2] * v[2];
-      let w2 = t3[0] * w[0] + t3[1] * w[1] + t3[2] * w[2];
+      const u2 = t1[0] * u[0] + t1[1] * u[1] + t1[2] * u[2];
+      const v2 = t2[0] * v[0] + t2[1] * v[1] + t2[2] * v[2];
+      const w2 = t3[0] * w[0] + t3[1] * w[1] + t3[2] * w[2];
 
-      let du = Math.abs(u2 - u[1]);
-      let dv = Math.abs(v2 - v[1]);
-      let dw = Math.abs(w2 - w[1]);
+      const du = Math.abs(u2 - u[1]);
+      const dv = Math.abs(v2 - v[1]);
+      const dw = Math.abs(w2 - w[1]);
 
       uvw.loadXYZ(u2, v2, w2);
-      let dis = trilinear_v3(uvw, boxverts).vectorDistanceSqr(p);
+      const dis = trilinear_v3(uvw, boxverts).vectorDistanceSqr(p);
 
       if (mindis === undefined || dis < mindis) {
         //mindis = dis;
@@ -3635,7 +3713,7 @@ export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
       }
 
       if (1) {
-        let bv = boxverts_tmp;
+        const bv = boxverts_tmp;
 
         /*
         let dd = 1.0 - 0.001;
@@ -3675,15 +3753,15 @@ export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
       break;
     }
 
-    let [t1, t2, t3] = wtable[mini];
+    const [t1, t2, t3] = wtable[mini];
 
-    let u2 = t1[0] * u[0] + t1[1] * u[1] + t1[2] * u[2];
-    let v2 = t2[0] * v[0] + t2[1] * v[1] + t2[2] * v[2];
-    let w2 = t3[0] * w[0] + t3[1] * w[1] + t3[2] * w[2];
+    const u2 = t1[0] * u[0] + t1[1] * u[1] + t1[2] * u[2];
+    const v2 = t2[0] * v[0] + t2[1] * v[1] + t2[2] * v[2];
+    const w2 = t3[0] * w[0] + t3[1] * w[1] + t3[2] * w[2];
 
-    let du = Math.abs(u2 - u[1]);
-    let dv = Math.abs(v2 - v[1]);
-    let dw = Math.abs(w2 - w[1]);
+    const du = Math.abs(u2 - u[1]);
+    const dv = Math.abs(v2 - v[1]);
+    const dw = Math.abs(w2 - w[1]);
 
     u[0] = u2 - du;
     v[0] = v2 - dv;
@@ -3712,22 +3790,22 @@ export function trilinear_co(p: MyVectorLike, boxverts: MyVectorLike[]): Vec3 {
 //newton-raphson
 export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Vector3): Vec3 {
   //let uvw = tril_co_rets.next();
-  let grad = tril_co_tmps.next();
+  const grad = tril_co_tmps.next();
 
-  let parr = p as unknown as number[];
-  let uvwarr = uvw as unknown as number[];
-  let gradarr = grad as unknown as number[];
+  const parr = p as unknown as number[];
+  const uvwarr = uvw as unknown as number[];
+  const gradarr = grad as unknown as number[];
 
   //uvw[0] = uvw[1] = uvw[2] = 0.5;
 
-  let df = 0.00001;
+  const df = 0.00001;
 
-  let mat = tril_mat_1;
-  let m = mat.$matrix;
-  let mat2 = tril_mat_2;
+  const mat = tril_mat_1;
+  const m = mat.$matrix;
+  const mat2 = tril_mat_2;
 
-  let r1 = tril_co_tmps.next();
-  let r1arr = r1 as unknown as number[];
+  const r1 = tril_co_tmps.next();
+  const r1arr = r1 as unknown as number[];
 
   for (let step = 0; step < 55; step++) {
     //let r1 = trilinear_v3(uvw, boxverts).vectorDistance(p);
@@ -3744,7 +3822,7 @@ export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Ve
       //r1[i] = trilinear_v3(uvw, boxverts)[i] - p[i];
       r1arr[i] = trilinear_v3(uvw, boxverts).vectorDistance(p as unknown as MyVectorLike) + 10.0 * axis_error;
 
-      let orig = uvwarr[i];
+      const orig = uvwarr[i];
 
       uvwarr[i] += df;
       //let r2 = trilinear_v3(uvw, boxverts)[i] - p[i];
@@ -3756,7 +3834,7 @@ export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Ve
       } else {
         axis_error = 0.0;
       }
-      let r2 = trilinear_v3(uvw, boxverts).vectorDistance(p as unknown as MyVectorLike) + 10.0 * axis_error;
+      const r2 = trilinear_v3(uvw, boxverts).vectorDistance(p as unknown as MyVectorLike) + 10.0 * axis_error;
       uvwarr[i] = orig;
 
       gradarr[i] = (r2 - r1arr[i]) / df;
@@ -3767,7 +3845,7 @@ export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Ve
       break;
     }
 
-    let err = trilinear_v3(uvw, boxverts).vectorDistance(p);
+    const err = trilinear_v3(uvw, boxverts).vectorDistance(p);
 
     if (1) {
       //grad.normalize();
@@ -3807,25 +3885,25 @@ export function trilinear_co2(p: MyVectorLike, boxverts: MyVectorLike[], uvw: Ve
   return uvw;
 }
 
-let angle_tri_v3_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
-let angle_tri_v3_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const angle_tri_v3_rets: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const angle_tri_v3_vs: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
 export function tri_angles(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike): Vec3 {
-  let t1 = angle_tri_v3_vs.next().load(v1).sub(v2);
-  let t2 = angle_tri_v3_vs.next().load(v3).sub(v2);
-  let t3 = angle_tri_v3_vs.next().load(v2).sub(v3);
+  const t1 = angle_tri_v3_vs.next().load(v1).sub(v2);
+  const t2 = angle_tri_v3_vs.next().load(v3).sub(v2);
+  const t3 = angle_tri_v3_vs.next().load(v2).sub(v3);
 
   t1.normalize();
   t2.normalize();
   t3.normalize();
 
-  let th1 = Math.acos(t1.dot(t2) * 0.99999);
+  const th1 = Math.acos(t1.dot(t2) * 0.99999);
   t2.negate();
 
-  let th2 = Math.acos(t2.dot(t3) * 0.99999);
-  let th3 = Math.PI - (th1 + th2);
+  const th2 = Math.acos(t2.dot(t3) * 0.99999);
+  const th3 = Math.PI - (th1 + th2);
 
-  let ret = angle_tri_v3_rets.next();
+  const ret = angle_tri_v3_rets.next();
 
   ret[0] = th1;
   ret[1] = th2;
@@ -3834,15 +3912,16 @@ export function tri_angles(v1: MyVectorLike, v2: MyVectorLike, v3: MyVectorLike)
   return ret;
 }
 
-let angle_v2_temps: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 32));
-let angle_v3_temps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
+const angle_v2_temps: CacheRing<Vec2> = cacheRing<Vec2>(util.cachering.fromConstructor(Vector2, 32));
+const angle_v3_temps: CacheRing<Vec3> = cacheRing<Vec3>(util.cachering.fromConstructor(Vector3, 32));
 
 export function angle_between_vecs(
   v1: MyVectorLike & { length: number },
   vcent: MyVectorLike,
   v2: MyVectorLike
 ): number {
-  let t1: Vec2 | Vec3, t2: Vec2 | Vec3;
+  let t1: Vec2 | Vec3;
+  let t2: Vec2 | Vec3;
 
   if (v1.length === 2) {
     t1 = angle_v2_temps.next();
@@ -3855,7 +3934,7 @@ export function angle_between_vecs(
   t1.load(v1).sub(vcent).normalize();
   t2.load(v2).sub(vcent).normalize();
 
-  let d = t1.dot(t2);
+  const d = t1.dot(t2);
 
   /* Handle numerical error. */
   if (d < -1.0) {

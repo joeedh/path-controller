@@ -1,4 +1,4 @@
-var indexRangeStack: IndexRangeStack;
+let indexRangeStack: IndexRangeStack;
 
 class _IndexRange {
   start = 0;
