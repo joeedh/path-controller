@@ -462,8 +462,7 @@ export class ToolOp<
   is_modal!: boolean;
   modal_ctx?: ModalContextCls;
   modalRunning!: boolean;
-  execCtx: unknown;
-  [key: string]: unknown;
+  execCtx?: ContextCls ;
 
   constructor() {
     super();
