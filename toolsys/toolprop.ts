@@ -53,23 +53,23 @@ type CallbackFn = (this: ToolProperty<unknown>, arg1?: unknown, arg2?: unknown) 
 /* String satisfies KeystrObject via global.d.ts augmentation of String,
    but TypeScript's structural check on primitives doesn't see it. We
    force the type here so every call-site stays clean. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type UtilStringSet = util.set<any>;
 
-let first = <T>(iter: Iterable<T> | Record<string, T> | undefined): T | string | undefined => {
+const first = <T>(iter: Iterable<T> | Record<string, T> | undefined): T | string | undefined => {
   if (iter === undefined) {
     return undefined;
   }
 
   if (!(Symbol.iterator in (iter as object))) {
-    for (let item in iter as Record<string, T>) {
+    for (const item in iter as Record<string, T>) {
       return item;
     }
 
     return undefined;
   }
 
-  for (let item of iter as Iterable<T>) {
+  for (const item of iter as Iterable<T>) {
     return item;
   }
 
@@ -78,17 +78,17 @@ let first = <T>(iter: Iterable<T> | Record<string, T> | undefined): T | string |
 
 //set PropTypes to custom type integers
 export function setPropTypes(types: Record<string, number>): void {
-  for (let k in types) {
-    PropTypes[k] = types[k];
+  for (const k in types) {
+    (PropTypes as any)[k] = types[k];
   }
 }
 
-export let customPropertyTypes: (typeof ToolProperty)[] = [];
-export let PropClasses: Record<number, typeof ToolProperty> = {};
+export const customPropertyTypes: (typeof ToolProperty)[] = [];
+export const PropClasses: Record<number, typeof ToolProperty> = {};
 
 let customPropTypeBase: number = 17;
 
-let wordmap: Record<string, string> = {
+const wordmap: Record<string, string> = {
   sel  : "select",
   unsel: "deselect",
   eid  : "id",
@@ -114,12 +114,11 @@ interface ToolPropertyConstructor {
 
 type ToolPropertySubclass = Function & { STRUCT?: string; PROP_TYPE_ID?: number };
 
-export class ToolProperty<T = unknown> extends ToolPropertyIF {
+export class ToolProperty<T = unknown, TYPE extends number = number> extends ToolPropertyIF<TYPE> {
   static STRUCT: string;
   static PROP_TYPE_ID: number;
 
   declare data: T | undefined;
-  declare type: number;
   declare subtype: number | undefined;
   wasSet: boolean;
   declare apiname: string | undefined;
@@ -148,7 +147,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
   api_update?: Function;
 
   constructor(
-    type?: number,
+    type?: TYPE,
     subtype?: number,
     apiname?: string,
     uiname: string = "",
@@ -156,13 +155,9 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
     flag: number = 0,
     icon: number = -1
   ) {
-    super();
+    super(type);
 
     this.data = undefined;
-
-    if (type === undefined) {
-      type = (this.constructor as typeof ToolProperty).PROP_TYPE_ID;
-    }
 
     this.type = type!;
     this.subtype = subtype;
@@ -208,11 +203,11 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
   }
 
   static makeUIName(name: string): string {
-    let parts: string[] = [""];
+    const parts: string[] = [""];
     let lastc: string | undefined = undefined;
 
-    let ischar = (c: string): boolean => {
-      let code = c.charCodeAt(0);
+    const ischar = (c: string): boolean => {
+      const code = c.charCodeAt(0);
 
       let upper = code >= "A".charCodeAt(0);
       upper = upper && code <= "Z".charCodeAt(0);
@@ -243,7 +238,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
       lastc = c;
     }
 
-    let subst = (word: string): string => {
+    const subst = (word: string): string => {
       if (word in wordmap) {
         return wordmap[word];
       } else {
@@ -251,7 +246,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
       }
     };
 
-    let result = parts
+    const result = parts
       .filter((f) => f.trim().length > 0)
       .map((f) => subst(f))
       .map((f) => f[0].toUpperCase() + f.slice(1, f.length).toLowerCase())
@@ -262,7 +257,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
 
   static register(cls: typeof ToolProperty & { name: string; PROP_TYPE_ID: number }): number {
     cls.PROP_TYPE_ID = 1 << customPropTypeBase;
-    PropTypes[cls.name] = cls.PROP_TYPE_ID;
+    (PropTypes as any)[cls.name] = cls.PROP_TYPE_ID;
 
     customPropTypeBase++;
     customPropertyTypes.push(cls);
@@ -302,7 +297,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
     tot += strlen(this.description);
 
     tot += 11 * 8; //assumed member pointers
-    for (let k in this.callbacks) {
+    for (const k in this.callbacks) {
       tot += 24;
     }
 
@@ -345,7 +340,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
     stack = stack.concat([]); //copy
 
     for (let i = 0; i < stack.length; i++) {
-      let cb = stack[i];
+      const cb = stack[i];
 
       if (cb instanceof OnceTag) {
         let j = i;
@@ -381,13 +376,13 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
     }
 
     //check if cb is already in callback list inside a OnceTag
-    for (let cb2 of this.callbacks[type]) {
+    for (const cb2 of this.callbacks[type]) {
       if (cb2 instanceof OnceTag && cb2.cb === cb) {
         return this;
       }
     }
 
-    let tag = new OnceTag(cb);
+    const tag = new OnceTag(cb);
 
     this.callbacks[type].push(tag);
 
@@ -425,7 +420,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
   }
 
   loadJSON(obj: Record<string, unknown>): this {
-    this.type = obj.type as number;
+    this.type = obj.type as TYPE;
     this.subtype = obj.subtype as number | undefined;
     this.apiname = obj.apiname as string | undefined;
     this.uiname = obj.uiname as string | undefined;
@@ -465,14 +460,14 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
 
     b.flag = this.flag;
 
-    for (let k in this.callbacks) {
+    for (const k in this.callbacks) {
       b.callbacks[k] = this.callbacks[k];
     }
   }
 
   copy(): ToolProperty<T> {
     //default copy method
-    let ret = new (this.constructor as ToolPropertyConstructor)();
+    const ret = new (this.constructor as ToolPropertyConstructor)();
 
     this.copyTo(ret);
 
@@ -555,7 +550,7 @@ export class ToolProperty<T = unknown> extends ToolPropertyIF {
   loadSTRUCT(reader: StructReader<ToolProperty<T>>): void {
     reader(this);
 
-    if (this.uiRange && this.uiRange[0] === -1e17 && this.uiRange[1] === 1e17) {
+    if (this.uiRange?.[0] === -1e17 && this.uiRange[1] === 1e17) {
       this.uiRange = undefined;
     }
 
@@ -593,9 +588,8 @@ ToolProperty {
 `;
 nstructjs.register(ToolProperty);
 
-(window as { ToolProperty: unknown }).ToolProperty = ToolProperty;
-
-export class FloatArrayProperty extends ToolProperty<number[]> {
+export class FloatArrayProperty extends ToolProperty<number[], PropTypes["FLOAT_ARRAY"]> {
+  static PROP_TYPE_ID = PropTypes.FLOAT_ARRAY;
   static override STRUCT: string;
 
   value: number[];
@@ -630,7 +624,7 @@ export class FloatArrayProperty extends ToolProperty<number[]> {
 
     this.value.length = 0;
 
-    for (let item of value) {
+    for (const item of value) {
       if (typeof item !== "number" && typeof item !== "boolean") {
         console.log(value);
         throw new Error("bad item for FloatArrayProperty " + item);
@@ -665,13 +659,29 @@ FloatArrayProperty.STRUCT =
 }`;
 nstructjs.register(FloatArrayProperty);
 
-export class StringProperty extends ToolProperty<string> {
-  static override STRUCT: string;
+export class StringPropertyBase<TYPE extends number> extends ToolProperty<string, TYPE> {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+    StringPropertyBase {
+      data           : string;
+      multiLine      : bool;
+    }
+  `
+  );
 
-  multiLine: boolean;
+  multiLine: boolean = false;
 
-  constructor(value?: string, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
-    super(PropTypes.STRING, undefined, apiname, uiname, description, flag, icon);
+  constructor(
+    type?: TYPE,
+    value?: string,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
+    super(type, undefined, apiname, uiname, description, flag, icon);
 
     this.multiLine = false;
 
@@ -689,14 +699,14 @@ export class StringProperty extends ToolProperty<string> {
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    return this.data === (b as StringProperty).data;
+    return this.data === (b as StringPropertyBase<TYPE>).data;
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
 
-    (b as StringProperty).data = this.data;
-    (b as StringProperty).multiLine = this.multiLine;
+    (b as StringPropertyBase<TYPE>).data = this.data;
+    (b as StringPropertyBase<TYPE>).multiLine = this.multiLine;
   }
 
   override getValue(): string {
@@ -710,13 +720,14 @@ export class StringProperty extends ToolProperty<string> {
   }
 }
 
-StringProperty.STRUCT =
-  nstructjs.inherit(StringProperty, ToolProperty) +
-  `
-  data : string;
+export class StringProperty extends StringPropertyBase<PropTypes["STRING"]> {
+  static PROP_TYPE_ID = PropTypes.STRING;
+  static STRUCT = nstructjs.inlineRegister(this, `StringProperty {}`);
+
+  constructor(value?: string, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
+    super(PropTypes.STRING, value, apiname, uiname, description, flag, icon);
+  }
 }
-`;
-nstructjs.register(StringProperty);
 ToolProperty.internalRegister(StringProperty);
 
 /*
@@ -759,13 +770,13 @@ export function isNumber(f) {
 
 //window.isNumber = isNumber;
 
-export class NumProperty extends ToolProperty<number> {
+export class NumProperty<TYPE extends number = number> extends ToolProperty<number, TYPE> {
   static override STRUCT: string;
 
   declare range: [number, number];
 
   constructor(
-    type?: number,
+    type?: TYPE,
     value?: number,
     apiname?: string,
     uiname?: string,
@@ -796,7 +807,7 @@ NumProperty.STRUCT =
 }
 `;
 
-export class _NumberPropertyBase<T = number> extends ToolProperty<T> {
+export class _NumberPropertyBase<T = number, TYPE extends number = number> extends ToolProperty<T, TYPE> {
   static override STRUCT: string;
 
   /** Display simple sliders with exponent divisions, don't
@@ -816,7 +827,7 @@ export class _NumberPropertyBase<T = number> extends ToolProperty<T> {
   declare uiRange: [number, number] | undefined;
 
   constructor(
-    type?: number,
+    type?: TYPE,
     value?: number | null,
     apiname?: string,
     uiname?: string,
@@ -868,7 +879,7 @@ export class _NumberPropertyBase<T = number> extends ToolProperty<T> {
   }
 
   override toJSON(): Record<string, unknown> {
-    let json = super.toJSON();
+    const json = super.toJSON();
 
     json.data = this.data;
     json.expRate = this.expRate;
@@ -879,7 +890,7 @@ export class _NumberPropertyBase<T = number> extends ToolProperty<T> {
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
 
-    let nb = b as _NumberPropertyBase<unknown>;
+    const nb = b as _NumberPropertyBase<unknown>;
     nb.displayUnit = this.displayUnit;
     nb.baseUnit = this.baseUnit;
     nb.expRate = this.expRate;
@@ -928,7 +939,7 @@ export class _NumberPropertyBase<T = number> extends ToolProperty<T> {
   override loadJSON(obj: Record<string, unknown>): this {
     super.loadJSON(obj);
 
-    let get = (key: string): void => {
+    const get = (key: string): void => {
       if (key in obj) {
         (this as Record<string, unknown>)[key] = obj[key];
       }
@@ -955,7 +966,8 @@ _NumberPropertyBase.STRUCT =
 `;
 nstructjs.register(_NumberPropertyBase);
 
-export class IntProperty extends _NumberPropertyBase {
+export class IntProperty extends _NumberPropertyBase<number, PropTypes["INT"]> {
+  static PROP_TYPE_ID = PropTypes.INT;
   static override STRUCT: string;
 
   declare radix: number;
@@ -984,7 +996,7 @@ export class IntProperty extends _NumberPropertyBase {
   }
 
   override toJSON(): Record<string, unknown> {
-    let json = super.toJSON();
+    const json = super.toJSON();
 
     json.data = this.data;
     json.radix = this.radix;
@@ -1016,25 +1028,19 @@ nstructjs.register(IntProperty);
 
 ToolProperty.internalRegister(IntProperty);
 
-export class ReportProperty extends StringProperty {
-  static override STRUCT: string;
+export class ReportProperty extends StringPropertyBase<PropTypes["REPORT"]> {
+  static PROP_TYPE_ID = PropTypes.REPORT;
+  static STRUCT = nstructjs.inlineRegister(this, "ReportProperty {}");
 
   constructor(value?: string, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
-    super(value, apiname, uiname, description, flag, icon);
-
+    super(PropTypes.REPORT, value, apiname, uiname, description, flag, icon);
     this.type = PropTypes.REPORT;
   }
 }
-
-ReportProperty.STRUCT =
-  nstructjs.inherit(ReportProperty, StringProperty) +
-  `
-}
-`;
-nstructjs.register(ReportProperty);
 ToolProperty.internalRegister(ReportProperty);
 
-export class BoolProperty extends ToolProperty<boolean> {
+export class BoolProperty extends ToolProperty<boolean, PropTypes["BOOL"]> {
+  static PROP_TYPE_ID = PropTypes.BOOL;
   static override STRUCT: string;
 
   constructor(
@@ -1069,7 +1075,7 @@ export class BoolProperty extends ToolProperty<boolean> {
   }
 
   override toJSON(): Record<string, unknown> {
-    let ret = super.toJSON();
+    const ret = super.toJSON();
 
     return ret;
   }
@@ -1090,10 +1096,18 @@ BoolProperty.STRUCT =
 `;
 nstructjs.register(BoolProperty);
 
-export class FloatProperty<T = number> extends _NumberPropertyBase<T> {
-  static override STRUCT: string;
+class FloatPropertyBase<T = number, TYPE extends number = number> extends _NumberPropertyBase<T, TYPE> {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+    FloatPropertyBase {
+      decimalPlaces : int;
+      data          : float;
+    }`
+  );
 
   constructor(
+    type?: TYPE,
     value?: number | null,
     apiname?: string,
     uiname?: string,
@@ -1101,7 +1115,7 @@ export class FloatProperty<T = number> extends _NumberPropertyBase<T> {
     flag?: number,
     icon?: number
   ) {
-    super(PropTypes.FLOAT, value, apiname, uiname, description, flag, icon);
+    super(type, value, apiname, uiname, description, flag, icon);
 
     //remember to update NumberConstraintsBase et al when adding new number
     //constraints
@@ -1116,7 +1130,7 @@ export class FloatProperty<T = number> extends _NumberPropertyBase<T> {
 
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
-    (b as FloatProperty<T>).data = this.data;
+    (b as FloatPropertyBase<T>).data = this.data;
   }
 
   override setValue(val?: T | number | null): void {
@@ -1130,7 +1144,7 @@ export class FloatProperty<T = number> extends _NumberPropertyBase<T> {
   }
 
   override toJSON(): Record<string, unknown> {
-    let json = super.toJSON();
+    const json = super.toJSON();
 
     json.data = this.data;
     json.decimalPlaces = this.decimalPlaces;
@@ -1148,20 +1162,27 @@ export class FloatProperty<T = number> extends _NumberPropertyBase<T> {
   }
 
   override loadSTRUCT(reader: StructReader<ToolProperty<T>>): void {
-    (reader as StructReader<FloatProperty<T>>)(this);
+    (reader as StructReader<FloatPropertyBase<T>>)(this);
     super.loadSTRUCT(reader);
   }
 }
 
-ToolProperty.internalRegister(FloatProperty);
-FloatProperty.STRUCT =
-  nstructjs.inherit(FloatProperty, _NumberPropertyBase) +
-  `
-  decimalPlaces : int;
-  data          : float;
+export class FloatProperty extends FloatPropertyBase<number, PropTypes["FLOAT"]> {
+  static PROP_TYPE_ID = PropTypes.FLOAT;
+  static STRUCT = nstructjs.inlineRegister(this, "FloatProperty {}");
+
+  constructor(
+    value?: number | null,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
+    super(PropTypes.FLOAT, value, apiname, uiname, description, flag, icon);
+  }
 }
-`;
-nstructjs.register(FloatProperty);
+ToolProperty.internalRegister(FloatProperty);
 
 export class EnumKeyPair {
   static STRUCT: string;
@@ -1201,8 +1222,22 @@ EnumKeyPair {
 `;
 nstructjs.register(EnumKeyPair);
 
-export class EnumProperty extends ToolProperty<number> {
-  static override STRUCT: string;
+export class EnumPropertyBase<TYPE extends number> extends ToolProperty<number, TYPE> {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+    EnumPropertyBase {
+      data            : string             | ""+this.data;
+      data_is_int     : bool               | this._is_data_int();
+      _keys           : array(EnumKeyPair) | this._saveMap(this.keys) ;
+      _values         : array(EnumKeyPair) | this._saveMap(this.values) ;
+      _ui_value_names : array(EnumKeyPair) | this._saveMap(this.ui_value_names) ;
+      _iconmap        : array(EnumKeyPair) | this._saveMap(this.iconmap) ;
+      _iconmap2       : array(EnumKeyPair) | this._saveMap(this.iconmap2) ;
+      _descriptions   : array(EnumKeyPair) | this._saveMap(this.descriptions) ;
+    }
+  `
+  );
 
   dynamicMetaCB: Function | undefined;
   values: { [k: string | number]: string | number };
@@ -1222,6 +1257,7 @@ export class EnumProperty extends ToolProperty<number> {
   data_is_int?: boolean;
 
   constructor(
+    type?: TYPE,
     string_or_int?: string | number,
     valid_values?: Record<string, number> | string[],
     apiname?: string,
@@ -1230,7 +1266,7 @@ export class EnumProperty extends ToolProperty<number> {
     flag?: number,
     icon?: number
   ) {
-    super(PropTypes.ENUM, undefined, apiname, uiname, description, flag, icon);
+    super(type, undefined, apiname, uiname, description, flag, icon);
 
     this.dynamicMetaCB = undefined;
     this.values = {};
@@ -1243,7 +1279,7 @@ export class EnumProperty extends ToolProperty<number> {
     if (valid_values === undefined) return;
 
     if (valid_values instanceof Array) {
-      for (var i = 0; i < valid_values.length; i++) {
+      for (let i = 0; i < valid_values.length; i++) {
         this.values[valid_values[i] as string] = valid_values[i] as string;
         this.keys[valid_values[i] as string] = valid_values[i] as string;
       }
@@ -1261,7 +1297,7 @@ export class EnumProperty extends ToolProperty<number> {
     }
 
     for (var k in this.values) {
-      let uiname = ToolProperty.makeUIName(k);
+      const uiname = ToolProperty.makeUIName(k);
 
       this.ui_value_names[k] = uiname;
       this.descriptions[k] = uiname;
@@ -1287,7 +1323,7 @@ export class EnumProperty extends ToolProperty<number> {
 
   calcHash(digest: util.HashDigest = new util.HashDigest()): number {
     this.checkMeta();
-    for (let key in this.keys) {
+    for (const key in this.keys) {
       digest.add(key);
       digest.add(this.keys[key] as string);
     }
@@ -1295,9 +1331,9 @@ export class EnumProperty extends ToolProperty<number> {
     return digest.get();
   }
 
-  updateDefinition(enumdef_or_prop: EnumProperty | Record<string, number | string>): this {
-    let descriptions = this.descriptions;
-    let ui_value_names = this.ui_value_names;
+  updateDefinition(enumdef_or_prop: EnumPropertyBase<TYPE> | Record<string, number | string>): this {
+    const descriptions = this.descriptions;
+    const ui_value_names = this.ui_value_names;
 
     this.values = {};
     this.keys = {};
@@ -1306,28 +1342,28 @@ export class EnumProperty extends ToolProperty<number> {
 
     let enumdef: Record<string, number | string>;
 
-    if (enumdef_or_prop instanceof EnumProperty) {
+    if (enumdef_or_prop instanceof EnumPropertyBase) {
       enumdef = enumdef_or_prop.values;
     } else {
       enumdef = enumdef_or_prop;
     }
 
-    for (let k in enumdef) {
-      let v = enumdef[k];
+    for (const k in enumdef) {
+      const v = enumdef[k];
 
       this.values[k] = v;
       this.keys[v] = k;
     }
 
-    if (enumdef_or_prop instanceof EnumProperty) {
-      let prop = enumdef_or_prop;
+    if (enumdef_or_prop instanceof EnumPropertyBase) {
+      const prop = enumdef_or_prop;
       this.iconmap = Object.assign({}, prop.iconmap);
       this.iconmap2 = Object.assign({}, prop.iconmap2);
 
       this.ui_value_names = Object.assign({}, prop.ui_value_names);
       this.descriptions = Object.assign({}, prop.descriptions);
     } else {
-      for (let k in this.values) {
+      for (const k in this.values) {
         if (k in ui_value_names) {
           this.ui_value_names[k] = ui_value_names[k];
         } else {
@@ -1351,12 +1387,12 @@ export class EnumProperty extends ToolProperty<number> {
     this.checkMeta();
     let tot = super.calcMemSize();
 
-    for (let k in this.values) {
+    for (const k in this.values) {
       tot += (k.length * 4 + 16) * 4;
     }
 
     if (this.descriptions) {
-      for (let k in this.descriptions) {
+      for (const k in this.descriptions) {
         tot += (k.length + this.descriptions[k].length) * 4;
       }
     }
@@ -1365,11 +1401,11 @@ export class EnumProperty extends ToolProperty<number> {
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    return this.getValue() === (b as EnumProperty).getValue();
+    return this.getValue() === (b as EnumPropertyBase<TYPE>).getValue();
   }
 
   addUINames(map: Record<string, string>): this {
-    for (let k in map) {
+    for (const k in map) {
       this.ui_value_names[k] = map[k];
     }
 
@@ -1377,7 +1413,7 @@ export class EnumProperty extends ToolProperty<number> {
   }
 
   addDescriptions(map: Record<string, string>): this {
-    for (let k in map) {
+    for (const k in map) {
       this.descriptions[k] = map[k];
     }
 
@@ -1389,7 +1425,7 @@ export class EnumProperty extends ToolProperty<number> {
       this.iconmap2 = {};
     }
 
-    for (let k in iconmap2) {
+    for (const k in iconmap2) {
       this.iconmap2[k] = iconmap2[k];
     }
 
@@ -1400,7 +1436,7 @@ export class EnumProperty extends ToolProperty<number> {
     if (this.iconmap === undefined) {
       this.iconmap = {};
     }
-    for (let k in iconmap) {
+    for (const k in iconmap) {
       this.iconmap[k] = iconmap[k];
     }
 
@@ -1410,7 +1446,7 @@ export class EnumProperty extends ToolProperty<number> {
   override copyTo(p: ToolProperty<unknown>): void {
     super.copyTo(p);
 
-    let ep = p as EnumProperty;
+    const ep = p as EnumPropertyBase<TYPE>;
     ep.data = this.data;
 
     // copy meta event handlers
@@ -1427,22 +1463,14 @@ export class EnumProperty extends ToolProperty<number> {
     ep.descriptions = this.descriptions;
   }
 
-  override copy(): EnumProperty {
-    var p = new (this.constructor as new (
-      s: string,
-      v: Record<string, number>,
-      a?: string,
-      u?: string,
-      d?: string,
-      f?: number
-    ) => EnumProperty)("dummy", { "dummy": 0 }, this.apiname, this.uiname, this.description, this.flag);
-
+  override copy(): this {
+    const p = new (this as any).constructor("") as unknown as this;
     this.copyTo(p);
     return p;
   }
 
   override getValue(): number {
-    let d = this.data as string | number;
+    const d = this.data as string | number;
     if (d in this.values) return this.values[d as string] as number;
     else return d as number;
   }
@@ -1468,8 +1496,8 @@ export class EnumProperty extends ToolProperty<number> {
       return {};
     }
 
-    let ret: Record<string, string | number> = {};
-    for (let k of obj) {
+    const ret: Record<string, string | number> = {};
+    for (const k of obj) {
       ret[k.key as string] = k.val;
     }
 
@@ -1478,16 +1506,16 @@ export class EnumProperty extends ToolProperty<number> {
 
   _saveMap(obj: Record<string, string | number> | undefined): EnumKeyPair[] {
     obj = obj === undefined ? {} : obj;
-    let ret: EnumKeyPair[] = [];
+    const ret: EnumKeyPair[] = [];
 
-    for (let k in obj) {
+    for (const k in obj) {
       ret.push(new EnumKeyPair(k, obj[k]));
     }
 
     return ret;
   }
 
-  override loadSTRUCT(reader: StructReader<EnumProperty>): void {
+  override loadSTRUCT(reader: StructReader<EnumPropertyBase<TYPE>>): void {
     reader(this);
     super.loadSTRUCT(reader as StructReader<ToolProperty<number>>);
 
@@ -1511,24 +1539,27 @@ export class EnumProperty extends ToolProperty<number> {
   }
 }
 
-ToolProperty.internalRegister(EnumProperty);
-EnumProperty.STRUCT =
-  nstructjs.inherit(EnumProperty, ToolProperty) +
-  `
-  data            : string             | ""+this.data;
-  data_is_int     : bool               | this._is_data_int();
-  _keys           : array(EnumKeyPair) | this._saveMap(this.keys) ;
-  _values         : array(EnumKeyPair) | this._saveMap(this.values) ;
-  _ui_value_names : array(EnumKeyPair) | this._saveMap(this.ui_value_names) ;
-  _iconmap        : array(EnumKeyPair) | this._saveMap(this.iconmap) ;
-  _iconmap2       : array(EnumKeyPair) | this._saveMap(this.iconmap2) ;
-  _descriptions   : array(EnumKeyPair) | this._saveMap(this.descriptions) ;
-}
-`;
-nstructjs.register(EnumProperty);
+export class EnumProperty extends EnumPropertyBase<PropTypes["ENUM"]> {
+  static PROP_TYPE_ID = PropTypes["ENUM"];
+  static STRUCT = nstructjs.inlineRegister(this, `EnumProperty {}`);
 
-export class FlagProperty extends EnumProperty {
-  static override STRUCT: string;
+  constructor(
+    string_or_int?: string | number,
+    valid_values?: Record<string, number> | string[],
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
+    super(PropTypes.ENUM, string_or_int, valid_values, apiname, uiname, description, flag, icon);
+  }
+}
+ToolProperty.internalRegister(EnumProperty);
+
+export class FlagProperty extends EnumPropertyBase<PropTypes["FLAG"]> {
+  static PROP_TYPE_ID = PropTypes["FLAG"];
+  static STRUCT = nstructjs.inlineRegister(this, `FlagProperty {}`);
 
   constructor(
     string_or_int?: string | number,
@@ -1539,7 +1570,7 @@ export class FlagProperty extends EnumProperty {
     flag?: number,
     icon?: number
   ) {
-    super(string_or_int, valid_values, apiname, uiname, description, flag, icon);
+    super(PropTypes.FLAG, string_or_int, valid_values, apiname, uiname, description, flag, icon);
 
     this.type = PropTypes.FLAG;
     this.wasSet = false;
@@ -1555,20 +1586,20 @@ export class FlagProperty extends EnumProperty {
 }
 
 ToolProperty.internalRegister(FlagProperty);
-FlagProperty.STRUCT =
-  nstructjs.inherit(FlagProperty, EnumProperty) +
-  `
-}
-`;
-nstructjs.register(FlagProperty);
 
-export class VecPropertyBase<T = number> extends FloatProperty<T> {
-  static override STRUCT: string;
+export class VecPropertyBase<T, TYPE extends number> extends FloatPropertyBase<T, TYPE> {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+    VecPropertyBase {
+      hasUniformSlider : bool | this.hasUniformSlider || false;
+    }`
+  );
 
   hasUniformSlider: boolean;
 
-  constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
-    super(undefined, apiname, uiname, description);
+  constructor(type?: TYPE, data?: unknown, apiname?: string, uiname?: string, description?: string) {
+    super(type, undefined, apiname, uiname, description);
 
     this.hasUniformSlider = false;
   }
@@ -1578,8 +1609,8 @@ export class VecPropertyBase<T = number> extends FloatProperty<T> {
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    let d1 = this.data as unknown as { vectorDistance(b: unknown): number };
-    return d1.vectorDistance((b as VecPropertyBase).data) < 0.00001;
+    const d1 = this.data as unknown as { vectorDistance(b: unknown): number };
+    return d1.vectorDistance((b as VecPropertyBase<T, TYPE>).data) < 0.00001;
   }
 
   uniformSlider(state: boolean = true): this {
@@ -1589,22 +1620,16 @@ export class VecPropertyBase<T = number> extends FloatProperty<T> {
 
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
-    (b as VecPropertyBase).hasUniformSlider = this.hasUniformSlider;
+    (b as VecPropertyBase<T, TYPE>).hasUniformSlider = this.hasUniformSlider;
   }
 }
 
-VecPropertyBase.STRUCT =
-  nstructjs.inherit(VecPropertyBase, FloatProperty) +
-  `
-  hasUniformSlider : bool | this.hasUniformSlider || false;
-}
-`;
-
-export class Vec2Property extends FloatProperty<Vector2> {
+export class Vec2Property extends FloatPropertyBase<Vector2, PropTypes["VEC2"]> {
+  static PROP_TYPE_ID = PropTypes.VEC2;
   static override STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
-    super(undefined, apiname, uiname, description);
+    super(PropTypes.VEC2, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC2;
     this.data = new Vector2(data as number[] | undefined);
@@ -1622,7 +1647,7 @@ export class Vec2Property extends FloatProperty<Vector2> {
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
-    let data = b.data;
+    const data = b.data;
     super.copyTo(b);
 
     b.data = data;
@@ -1637,14 +1662,14 @@ Vec2Property.STRUCT =
 }
 `;
 nstructjs.register(Vec2Property);
-
 ToolProperty.internalRegister(Vec2Property);
 
-export class Vec3Property extends VecPropertyBase<Vector3> {
+export class Vec3Property extends VecPropertyBase<Vector3, PropTypes["VEC3"]> {
+  static PROP_TYPE_ID = PropTypes.VEC3;
   static override STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
-    super(undefined, apiname, uiname, description);
+    super(PropTypes.VEC3, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC3;
     this.data = new Vector3(data as number[] | undefined);
@@ -1667,7 +1692,7 @@ export class Vec3Property extends VecPropertyBase<Vector3> {
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
-    let data = b.data;
+    const data = b.data;
     super.copyTo(b);
 
     b.data = data;
@@ -1684,19 +1709,20 @@ Vec3Property.STRUCT =
 nstructjs.register(Vec3Property);
 ToolProperty.internalRegister(Vec3Property);
 
-export class Vec4Property extends FloatProperty<Vector4> {
+export class Vec4Property extends FloatPropertyBase<Vector4, PropTypes["VEC4"]> {
+  static PROP_TYPE_ID = PropTypes.VEC4;
   static override STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
-    super(undefined, apiname, uiname, description);
+    super(PropTypes.VEC4, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC4;
     this.data = new Vector4(data as number[] | undefined);
   }
 
   override setValue(v?: unknown, w: number = 1.0): void {
-    let vec = v as unknown as number[];
-    let d = this.data as Vector4;
+    const vec = v as unknown as number[];
+    const d = this.data as Vector4;
     d.load(vec);
 
     //do not trigger parent classes's setValue
@@ -1720,7 +1746,7 @@ export class Vec4Property extends FloatProperty<Vector4> {
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
-    let data = b.data;
+    const data = b.data;
     super.copyTo(b);
 
     b.data = data;
@@ -1737,7 +1763,8 @@ Vec4Property.STRUCT =
 nstructjs.register(Vec4Property);
 ToolProperty.internalRegister(Vec4Property);
 
-export class QuatProperty extends ToolProperty<Quat> {
+export class QuatProperty extends ToolProperty<Quat, PropTypes["QUAT"]> {
+  static PROP_TYPE_ID = PropTypes.QUAT;
   static override STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
@@ -1746,7 +1773,7 @@ export class QuatProperty extends ToolProperty<Quat> {
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    let d = this.data as unknown as { vectorDistance(b: unknown): number };
+    const d = this.data as unknown as { vectorDistance(b: unknown): number };
     return d.vectorDistance(b.data) < 0.00001;
   }
 
@@ -1760,7 +1787,7 @@ export class QuatProperty extends ToolProperty<Quat> {
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
-    let data = b.data;
+    const data = b.data;
     super.copyTo(b);
 
     b.data = data;
@@ -1778,7 +1805,8 @@ nstructjs.register(QuatProperty);
 
 ToolProperty.internalRegister(QuatProperty);
 
-export class Mat4Property extends ToolProperty<Matrix4> {
+export class Mat4Property extends ToolProperty<Matrix4, PropTypes["MATRIX4"]> {
+  static PROP_TYPE_ID = PropTypes.MATRIX4;
   static override STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
@@ -1791,12 +1819,12 @@ export class Mat4Property extends ToolProperty<Matrix4> {
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    let m1 = (this.data as Matrix4).$matrix;
-    let m2 = (b.data as Matrix4).$matrix;
+    const m1 = (this.data as Matrix4).$matrix;
+    const m2 = (b.data as Matrix4).$matrix;
 
     for (let i = 1; i <= 4; i++) {
       for (let j = 1; j <= 4; j++) {
-        let key = `m${i}${j}` as keyof typeof m1;
+        const key = `m${i}${j}` as keyof typeof m1;
 
         if (Math.abs(m1[key] - m2[key]) > 0.00001) {
           return false;
@@ -1817,7 +1845,7 @@ export class Mat4Property extends ToolProperty<Matrix4> {
   }
 
   override copyTo(b: ToolProperty<unknown>): void {
-    let data = b.data;
+    const data = b.data;
     super.copyTo(b);
     b.data = data;
 
@@ -1831,7 +1859,7 @@ export class Mat4Property extends ToolProperty<Matrix4> {
 }
 
 Mat4Property.STRUCT =
-  nstructjs.inherit(Mat4Property, FloatProperty) +
+  nstructjs.inherit(Mat4Property, FloatPropertyBase) +
   `
   data           : mat4;
 }
@@ -1843,8 +1871,10 @@ ToolProperty.internalRegister(Mat4Property);
  * List of other tool props (all of one type)
  */
 export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolProperty<unknown>> extends ToolProperty<
-  ToolPropType[]
+  ToolPropType[],
+  PropTypes["PROPLIST"]
 > {
+  static PROP_TYPE_ID = PropTypes.PROPLIST;
   static override STRUCT: string;
 
   prop: ToolPropType;
@@ -1864,7 +1894,7 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
     this.flag &= ~PropFlags.SAVE_LAST_VALUE;
 
     if (typeof prop == "number") {
-      let cls = PropClasses[prop];
+      const cls = PropClasses[prop];
 
       if (cls !== undefined) {
         prop = new (cls as unknown as ToolPropertyConstructor)();
@@ -1881,7 +1911,7 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
     this.value = [];
 
     if (list) {
-      for (let val of list) {
+      for (const val of list) {
         this.push(val as ToolPropType | undefined);
       }
     }
@@ -1918,17 +1948,17 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
   }
 
   override equals(b: ToolProperty<unknown>): boolean {
-    let lb = b as ListProperty<ToolPropType>;
-    let l1 = this.value ? this.value.length : 0;
-    let l2 = lb.value ? lb.value.length : 0;
+    const lb = b as ListProperty<ToolPropType>;
+    const l1 = this.value ? this.value.length : 0;
+    const l2 = lb.value ? lb.value.length : 0;
 
     if (l1 !== l2) {
       return false;
     }
 
     for (let i = 0; i < l1; i++) {
-      let prop1 = this.value[i];
-      let prop2 = lb.value[i];
+      const prop1 = this.value[i];
+      const prop2 = lb.value[i];
 
       let bad = prop1.constructor !== prop2.constructor;
       bad = bad || !prop1.equals(prop2);
@@ -1944,17 +1974,17 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
 
-    let lb = b as ListProperty<ToolPropType>;
+    const lb = b as ListProperty<ToolPropType>;
     lb.prop = this.prop.copy() as ToolPropType;
     lb.value = [];
 
-    for (let prop of this.value) {
+    for (const prop of this.value) {
       lb.value.push(prop.copy() as ToolPropType);
     }
   }
 
   override copy(): ListProperty<ToolPropType> {
-    let ret = new ListProperty<ToolPropType>(this.prop.copy() as ToolPropType);
+    const ret = new ListProperty<ToolPropType>(this.prop.copy() as ToolPropType);
     this.copyTo(ret);
     return ret;
   }
@@ -1965,7 +1995,7 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
     }
 
     if (!(item instanceof ToolProperty)) {
-      let prop = this.prop.copy() as ToolPropType;
+      const prop = this.prop.copy() as ToolPropType;
       prop.setValue(item);
       item = prop;
     }
@@ -1996,8 +2026,8 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
   override setValue(value?: Iterable<unknown>): void {
     this.clear();
 
-    for (let item of value!) {
-      let prop = this.push();
+    for (const item of value!) {
+      const prop = this.push();
 
       if (typeof item !== "object") {
         prop.setValue(item);
@@ -2017,10 +2047,10 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
   }
 
   [Symbol.iterator](): IterableIterator<unknown> {
-    let list = this.value;
+    const list = this.value;
 
     return (function* () {
-      for (let item of list) {
+      for (const item of list) {
         yield item.getValue();
       }
     })();
@@ -2038,8 +2068,9 @@ nstructjs.register(ListProperty);
 ToolProperty.internalRegister(ListProperty);
 
 //like FlagsProperty but uses strings
-export class StringSetProperty extends ToolProperty<UtilStringSet> {
+export class StringSetProperty extends ToolProperty<UtilStringSet, PropTypes["STRSET"]> {
   static override STRUCT: string;
+  static PROP_TYPE_ID = PropTypes.STRSET;
 
   value: UtilStringSet;
   values: Record<string, string>;
@@ -2054,17 +2085,17 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   ) {
     super(PropTypes.STRSET);
 
-    let values: string[] = [];
+    const values: string[] = [];
 
     this.value = new util.set() as UtilStringSet;
 
-    let def = definition;
+    const def = definition;
     if (Array.isArray(def) || def instanceof util.set || def instanceof Set) {
-      for (let item of def) {
+      for (const item of def) {
         values.push(item as string);
       }
     } else if (typeof def === "object") {
-      for (let k in def) {
+      for (const k in def) {
         values.push(k);
       }
     } else if (typeof def === "string") {
@@ -2077,10 +2108,10 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
     this.iconmap = {};
     this.iconmap2 = {};
 
-    for (let v of values) {
+    for (const v of values) {
       this.values[v] = v;
 
-      let uiname = ToolProperty.makeUIName(v);
+      const uiname = ToolProperty.makeUIName(v);
       this.ui_value_names[v] = uiname;
     }
 
@@ -2094,12 +2125,12 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   override calcMemSize(): number {
     let tot = super.calcMemSize();
 
-    for (let k in this.values) {
+    for (const k in this.values) {
       tot += (k.length + 16) * 5;
     }
 
     if (this.descriptions) {
-      for (let k in this.descriptions) {
+      for (const k in this.descriptions) {
         tot += (k.length + this.descriptions[k].length + 8) * 4;
       }
     }
@@ -2150,20 +2181,20 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
 
       this.value.add(values);
     } else {
-      let data: string[] = [];
+      const data: string[] = [];
 
       if (Array.isArray(values) || values instanceof util.set || values instanceof Set) {
-        for (let item of values) {
+        for (const item of values) {
           data.push(item as string);
         }
       } else {
         //object literal?
-        for (let k in values) {
+        for (const k in values) {
           data.push(k);
         }
       }
 
-      for (let item of data) {
+      for (const item of data) {
         if (!(item in this.values)) {
           if (soft_fail) {
             this.report(`"${item}" is not in this StringSetProperty`);
@@ -2187,7 +2218,7 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   addIcons2(iconmap2: Record<string, number> | undefined): this {
     if (iconmap2 === undefined) return this;
 
-    for (let k in iconmap2) {
+    for (const k in iconmap2) {
       this.iconmap2[k] = iconmap2[k];
     }
 
@@ -2197,7 +2228,7 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   addIcons(iconmap: Record<string, number> | undefined): this {
     if (iconmap === undefined) return this;
 
-    for (let k in iconmap) {
+    for (const k in iconmap) {
       this.iconmap[k] = iconmap[k];
     }
 
@@ -2205,7 +2236,7 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   }
 
   addUINames(map: Record<string, string>): this {
-    for (let k in map) {
+    for (const k in map) {
       this.ui_value_names[k] = map[k];
     }
 
@@ -2213,7 +2244,7 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   }
 
   addDescriptions(map: Record<string, string>): this {
-    for (let k in map) {
+    for (const k in map) {
       this.descriptions[k] = map[k];
     }
 
@@ -2223,35 +2254,35 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   override copyTo(b: ToolProperty<unknown>): void {
     super.copyTo(b);
 
-    let sb = b as StringSetProperty;
+    const sb = b as StringSetProperty;
 
-    for (let val of this.value) {
+    for (const val of this.value) {
       sb.value.add(val);
     }
 
     sb.values = {};
-    for (let k in this.values) {
+    for (const k in this.values) {
       sb.values[k] = this.values[k];
     }
 
     sb.ui_value_names = {};
-    for (let k in this.ui_value_names) {
+    for (const k in this.ui_value_names) {
       sb.ui_value_names[k] = this.ui_value_names[k];
     }
 
     sb.iconmap = {};
     sb.iconmap2 = {};
 
-    for (let k in this.iconmap) {
+    for (const k in this.iconmap) {
       sb.iconmap[k] = this.iconmap[k];
     }
 
-    for (let k in this.iconmap2) {
+    for (const k in this.iconmap2) {
       sb.iconmap2[k] = this.iconmap2[k];
     }
 
     sb.descriptions = {};
-    for (let k in this.descriptions) {
+    for (const k in this.descriptions) {
       sb.descriptions[k] = this.descriptions[k];
     }
   }
@@ -2259,14 +2290,13 @@ export class StringSetProperty extends ToolProperty<UtilStringSet> {
   override loadSTRUCT(reader: StructReader<StringSetProperty>): void {
     reader(this);
 
-    let values = this.values as unknown as string[];
+    const values = this.values as unknown as string[];
     this.values = {};
 
-    for (let s of values) {
+    for (const s of values) {
       this.values[s] = s;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.value = new util.set(this.value as any) as UtilStringSet;
   }
 }
@@ -2280,3 +2310,18 @@ StringSetProperty.STRUCT =
 nstructjs.register(StringSetProperty);
 
 ToolProperty.internalRegister(StringSetProperty);
+
+export type ToolPropertyTypes =
+  | StringProperty
+  | IntProperty
+  | FloatProperty
+  | BoolProperty
+  | EnumProperty
+  | FlagProperty
+  | Vec2Property
+  | Vec3Property
+  | Vec4Property
+  | QuatProperty
+  | Mat4Property
+  | ListProperty
+  | StringSetProperty;

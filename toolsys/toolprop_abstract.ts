@@ -8,7 +8,7 @@ that any tool property library must implement to interface with path.ux.
 //maps prop type names to integers
 import * as util from "../util/util.js";
 
-export let PropTypes: Record<string, number> = {
+export const PropTypes = {
   INT        : 1,
   STRING     : 2,
   BOOL       : 4,
@@ -26,7 +26,8 @@ export let PropTypes: Record<string, number> = {
   FLOAT_ARRAY: 8192 << 2,
   REPORT     : 8192 << 3,
   //ITER : 8192<<1
-};
+} as const;
+export type PropTypes = typeof PropTypes;
 
 export const PropSubTypes: Record<string, number> = {
   COLOR: 1,
@@ -51,9 +52,9 @@ export const PropFlags: Record<string, number> = {
   NO_DEFAULT            : 1 << 17,
 };
 
-export class ToolPropertyIF {
+export class ToolPropertyIF<TYPE extends number = number> {
   data: unknown;
-  type: number | undefined;
+  declare type: TYPE;
   subtype: number | undefined;
   apiname: string | undefined;
   uiname: string | undefined;
@@ -62,7 +63,7 @@ export class ToolPropertyIF {
   icon: number | undefined;
 
   constructor(
-    type?: number,
+    type?: TYPE,
     subtype?: number,
     apiname?: string,
     uiname?: string,
@@ -70,9 +71,13 @@ export class ToolPropertyIF {
     flag?: number,
     icon?: number
   ) {
+    if (type === undefined) {
+      type = (this.constructor as any).PROP_TYPE_ID as TYPE;
+    }
+
     this.data = undefined;
 
-    this.type = type;
+    this.type = type!;
     this.subtype = subtype;
 
     this.apiname = apiname;
@@ -146,7 +151,7 @@ export class EnumPropertyIF extends ToolPropertyIF {
   ui_value_names: Record<string, string>;
   iconmap: Record<string, number>;
 
-  constructor(value?: unknown, valid_values?: Record<string, number> | string[] | String) {
+  constructor(value?: unknown, valid_values?: Record<string, number>) {
     super(PropTypes.ENUM);
 
     this.values = {};
@@ -157,19 +162,19 @@ export class EnumPropertyIF extends ToolPropertyIF {
     if (valid_values === undefined) return;
 
     if (valid_values instanceof Array || valid_values instanceof String) {
-      for (var i = 0; i < valid_values.length; i++) {
+      for (let i = 0; i < valid_values.length; i++) {
         this.values[valid_values[i] as string] = valid_values[i] as string;
         this.keys[valid_values[i] as string] = valid_values[i] as string;
       }
     } else {
-      for (var k in valid_values) {
+      for (const k in valid_values) {
         this.values[k] = valid_values[k];
         this.keys[valid_values[k]] = k;
       }
     }
 
-    for (var k in this.values) {
-      var uin = k[0].toUpperCase() + k.slice(1, k.length);
+    for (const k in this.values) {
+      let uin = k[0].toUpperCase() + k.slice(1, k.length);
 
       uin = uin.replace(/\_/g, " ");
       this.ui_value_names[k] = uin;
@@ -180,14 +185,14 @@ export class EnumPropertyIF extends ToolPropertyIF {
     if (this.iconmap === undefined) {
       this.iconmap = {};
     }
-    for (var k in iconmap) {
+    for (const k in iconmap) {
       this.iconmap[k] = iconmap[k];
     }
   }
 }
 
 export class FlagPropertyIF extends EnumPropertyIF {
-  constructor(valid_values?: Record<string, number> | string[] | String) {
+  constructor(valid_values?: Record<string, number> | string[] | string) {
     super(PropTypes.FLAG);
   }
 }
@@ -249,7 +254,7 @@ export class ListPropertyIF extends ToolPropertyIF {
 
 //like FlagsProperty but uses strings
 export class StringSetPropertyIF extends ToolPropertyIF {
-  constructor(value: unknown = undefined, definition: string[] = []) {
+  constructor(value?: unknown, definition: string[] = []) {
     super(PropTypes.STRSET);
   }
 
@@ -296,7 +301,7 @@ export class Curve1DPropertyIF extends ToolPropertyIF {
       return;
     }
 
-    let json: unknown = JSON.parse(JSON.stringify(curve));
+    const json: unknown = JSON.parse(JSON.stringify(curve));
     this.data!.load(json);
   }
 

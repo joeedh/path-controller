@@ -160,7 +160,7 @@ export type SlotType<slot extends ToolProperty<unknown>> = slot extends ToolProp
 /*  Module-level state                                                */
 /* ------------------------------------------------------------------ */
 
-export let ToolClasses: ToolOpConstructor[] = [];
+export const ToolClasses: ToolOpConstructor[] = [];
 
 export function setContextClass(_cls: unknown): void {
   console.warn("setContextClass is deprecated");
@@ -185,9 +185,9 @@ export class InheritFlag<Slots = Record<string, ToolProperty>> {
   }
 }
 
-let modalstack: ToolOp[] = [];
+const modalstack: ToolOp[] = [];
 
-let defaultUndoHandlers: { undoPre: (ctx: unknown) => void; undo: (ctx: unknown) => void } = {
+const defaultUndoHandlers: { undoPre: (ctx: unknown) => void; undo: (ctx: unknown) => void } = {
   undoPre(_ctx: unknown): void {
     throw new Error("implement me");
   },
@@ -239,7 +239,7 @@ export class ToolPropertyCache {
     dstruct: Record<string, unknown>,
     api: Record<string, unknown>
   ): void {
-    let tdef = (cls as ToolOpConstructor)._getFinalToolDef();
+    const tdef = (cls as ToolOpConstructor)._getFinalToolDef();
 
     this.api = api;
     this.dstruct = dstruct;
@@ -249,7 +249,7 @@ export class ToolPropertyCache {
       return;
     }
 
-    let path = tdef.toolpath
+    const path = tdef.toolpath
       .trim()
       .split(".")
       .filter((f: string) => f.trim().length > 0);
@@ -259,7 +259,7 @@ export class ToolPropertyCache {
     let partial = "";
 
     for (let i = 0; i < path.length; i++) {
-      let k = path[i];
+      const k = path[i];
       let pathk = k;
 
       if (i === 0) {
@@ -275,7 +275,7 @@ export class ToolPropertyCache {
         obj[k] = {};
       }
 
-      let st2 = (api as Record<string, Function>).mapStruct(obj[k], true, k);
+      const st2 = (api as Record<string, Function>).mapStruct(obj[k], true, k);
       if (
         !(
           (st as Record<string, Record<string, unknown>>).pathmap &&
@@ -291,10 +291,10 @@ export class ToolPropertyCache {
       obj = obj[k] as Record<string, unknown>;
     }
 
-    let name = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : key;
-    let prop2 = prop.copy();
+    const name = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : key;
+    const prop2 = prop.copy();
 
-    let dpath = new DataPath(name, name, prop2);
+    const dpath = new DataPath(name, name, prop2);
     let uiname = prop.uiname;
 
     if (!uiname || uiname.trim().length === 0) {
@@ -315,13 +315,13 @@ export class ToolPropertyCache {
   }
 
   _getAccessor(cls: ToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
-    let toolpath = cls.tooldef().toolpath;
+    const toolpath = cls.tooldef().toolpath;
     if (!toolpath) return undefined;
     return this.pathmap.get(toolpath.trim());
   }
 
   useDefault(cls: ToolOpConstructor | MacroClassType, key: string, _prop: ToolProperty): string {
-    let k = this.userSetMap.has(
+    const k = this.userSetMap.has(
       (cls.tooldef() as Record<string, unknown>).toString().trim() +
         "." +
         (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, _prop)
@@ -334,7 +334,7 @@ export class ToolPropertyCache {
       return false;
     }
 
-    let obj = this._getAccessor(cls);
+    const obj = this._getAccessor(cls);
 
     key = (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, prop);
     return !!obj && key in obj;
@@ -345,7 +345,7 @@ export class ToolPropertyCache {
       return undefined;
     }
 
-    let obj = this._getAccessor(cls);
+    const obj = this._getAccessor(cls);
     key = (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, prop);
 
     if (obj) {
@@ -391,7 +391,7 @@ export class ToolPropertyCache {
     //copy prop first in case we're a non-primitive-value type, e.g. vector properties
     obj[key] = prop.copy().getValue();
 
-    let path = toolpath + "." + key;
+    const path = toolpath + "." + key;
     this.userSetMap.add(path);
 
     return this;
@@ -410,7 +410,7 @@ import("./toolprop.js").then((mod) => {
 
 /* Synchronous fallback -- import is static so the module is already loaded */
 try {
-  /* eslint-disable @typescript-eslint/no-require-imports */
+   
   ToolProperty_cls = (await import("./toolprop.js")).ToolProperty;
 } catch {
   // handled by the dynamic import above
@@ -462,7 +462,7 @@ export class ToolOp<
   is_modal!: boolean;
   modal_ctx?: ModalContextCls;
   modalRunning!: boolean;
-  execCtx?: ContextCls ;
+  execCtx?: ContextCls;
 
   constructor() {
     super();
@@ -471,7 +471,7 @@ export class ToolOp<
     this._overdraw = undefined;
     this.__memsize = undefined;
 
-    var def = (this.constructor as unknown as ToolOpConstructor).tooldef();
+    const def = (this.constructor as unknown as ToolOpConstructor).tooldef();
 
     if (def.undoflag !== undefined) {
       this.undoflag = def.undoflag;
@@ -484,11 +484,11 @@ export class ToolOp<
     this._accept = this._reject = undefined;
     this._promise = undefined;
 
-    for (var k in def) {
+    for (const k in def) {
       (this as Record<string, unknown>)[k] = def[k];
     }
 
-    let getSlots = (
+    const getSlots = (
       slots: Record<string, ToolProperty> | InheritFlag | undefined,
       key: string
     ): Record<string, ToolProperty> => {
@@ -498,25 +498,25 @@ export class ToolOp<
         return slots as Record<string, ToolProperty>;
       }
 
-      let result: Record<string, ToolProperty> = {};
+      const result: Record<string, ToolProperty> = {};
       let p: ToolOpConstructor | undefined = this.constructor as unknown as ToolOpConstructor;
       let lastp: ToolOpConstructor | undefined = undefined;
 
       while (p !== undefined && (p as unknown) !== Object && (p as unknown) !== ToolOp && p !== lastp) {
         if (p.tooldef) {
-          let pdef = p.tooldef();
+          const pdef = p.tooldef();
 
           if (pdef[key] !== undefined) {
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
               | Record<string, ToolProperty>
               | InheritFlag;
-            let stop = !(slots2 instanceof InheritFlag);
+            const stop = !(slots2 instanceof InheritFlag);
 
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
             }
 
-            for (let sk in slots2) {
+            for (const sk in slots2) {
               if (!(sk in result)) {
                 result[sk] = (slots2 as Record<string, ToolProperty>)[sk];
               }
@@ -529,21 +529,21 @@ export class ToolOp<
         }
 
         lastp = p;
-        p = (p.prototype as Record<string, unknown>).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
+        p = (p as any).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
       }
 
       return result;
     };
 
-    let dinputs = getSlots(def.inputs, "inputs");
-    let doutputs = getSlots(def.outputs, "outputs");
+    const dinputs = getSlots(def.inputs, "inputs");
+    const doutputs = getSlots(def.outputs, "outputs");
 
     this.inputs = {} as InputSlots;
     this.outputs = {} as OutputSlots;
 
     if (dinputs) {
-      for (let ik in dinputs) {
-        let prop = dinputs[ik].copy();
+      for (const ik in dinputs) {
+        const prop = dinputs[ik].copy();
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : ik;
 
         if (!this.hasDefault(prop, ik)) {
@@ -564,8 +564,8 @@ export class ToolOp<
     }
 
     if (doutputs) {
-      for (let ok in doutputs) {
-        let prop = doutputs[ok].copy();
+      for (const ok in doutputs) {
+        const prop = doutputs[ok].copy();
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : ok;
 
         (this.outputs as Record<string, ToolProperty>)[ok] = prop;
@@ -631,10 +631,10 @@ export class ToolOp<
     if (a.constructor !== b.constructor) return false;
 
     let bad = false;
-    let ai = a.inputs as Record<string, ToolProperty>;
-    let bi = b.inputs as Record<string, ToolProperty>;
+    const ai = a.inputs as Record<string, ToolProperty>;
+    const bi = b.inputs as Record<string, ToolProperty>;
 
-    for (let k in ai) {
+    for (const k in ai) {
       bad = bad || !(k in bi);
       bad = bad || ai[k].constructor !== bi[k].constructor;
       bad = bad || !ai[k].equals(bi[k]);
@@ -659,16 +659,16 @@ export class ToolOp<
 
    */
   static invoke(ctx: unknown, args: Record<string, unknown>): ToolOp {
-    let tool = new (this as unknown as new () => ToolOp)();
-    let inputs = tool.inputs as Record<string, ToolProperty>;
+    const tool = new (this as unknown as new () => ToolOp)();
+    const inputs = tool.inputs as Record<string, ToolProperty>;
 
-    for (let k in args) {
+    for (const k in args) {
       if (!(k in inputs)) {
         console.warn("Unknown tool argument " + k);
         continue;
       }
 
-      let prop = inputs[k];
+      const prop = inputs[k];
       let val = args[k];
 
       if (typeof val === "string" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
@@ -687,7 +687,7 @@ export class ToolOp<
   }
 
   static register(cls: ToolOpConstructor): void {
-    if (ToolClasses.indexOf(cls) >= 0) {
+    if (ToolClasses.includes(cls)) {
       console.warn("Tried to register same ToolOp class twice:", cls.name, cls);
       return;
     }
@@ -700,8 +700,9 @@ export class ToolOp<
       return;
     }
 
-    let parent = (cls.prototype as Record<string, unknown>).__proto__?.constructor as unknown as ToolOpConstructor;
+    const parent = (cls.prototype as any).__proto__?.constructor as unknown as ToolOpConstructor;
 
+    // eslint-disable-next-line no-prototype-builtins
     if (!cls.hasOwnProperty("STRUCT")) {
       if ((parent as unknown) !== ToolOp && (parent as unknown) !== ToolMacro && (parent as unknown) !== Object) {
         this._regWithNstructjs(parent);
@@ -718,19 +719,19 @@ export class ToolOp<
   }
 
   static isRegistered(cls: ToolOpConstructor): boolean {
-    return ToolClasses.indexOf(cls) >= 0;
+    return ToolClasses.includes(cls);
   }
 
   static unregister(cls: any): void {
-    if (ToolClasses.indexOf(cls) >= 0) {
+    if (ToolClasses.includes(cls)) {
       (ToolClasses as unknown as unknown[]).remove(cls);
     }
   }
 
   static _getFinalToolDef(): ResolvedToolDef {
-    let def = this.tooldef() as ResolvedToolDef;
+    const def = this.tooldef() as ResolvedToolDef;
 
-    let getSlots = (
+    const getSlots = (
       slots: Record<string, ToolProperty> | InheritFlag | undefined,
       key: string
     ): Record<string, ToolProperty> => {
@@ -740,24 +741,24 @@ export class ToolOp<
         return slots as Record<string, ToolProperty>;
       }
 
-      let result: Record<string, ToolProperty> = {};
+      const result: Record<string, ToolProperty> = {};
       let p: ToolOpConstructor | undefined = this as unknown as ToolOpConstructor;
 
       while (p !== undefined && (p as unknown) !== Object && (p as unknown) !== ToolOp) {
         if (p.tooldef) {
-          let pdef = p.tooldef();
+          const pdef = p.tooldef();
 
           if (pdef[key] !== undefined) {
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
               | Record<string, ToolProperty>
               | InheritFlag;
-            let stop = !(slots2 instanceof InheritFlag);
+            const stop = !(slots2 instanceof InheritFlag);
 
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
             }
 
-            for (let sk in slots2) {
+            for (const sk in slots2) {
               if (!(sk in result)) {
                 result[sk] = (slots2 as Record<string, ToolProperty>)[sk];
               }
@@ -768,14 +769,14 @@ export class ToolOp<
             }
           }
         }
-        p = (p.prototype as Record<string, unknown>).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
+        p = (p.prototype as any).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
       }
 
       return result;
     };
 
-    let dinputs = getSlots(def.inputs as Record<string, ToolProperty> | InheritFlag | undefined, "inputs");
-    let doutputs = getSlots(def.outputs as Record<string, ToolProperty> | InheritFlag | undefined, "outputs");
+    const dinputs = getSlots(def.inputs as Record<string, ToolProperty> | InheritFlag | undefined, "inputs");
+    const doutputs = getSlots(def.outputs as Record<string, ToolProperty> | InheritFlag | undefined, "outputs");
 
     def.inputs = dinputs;
     def.outputs = doutputs;
@@ -784,13 +785,13 @@ export class ToolOp<
   }
 
   static onTick(): void {
-    for (let toolop of modalstack) {
+    for (const toolop of modalstack) {
       toolop.on_tick();
     }
   }
 
   static searchBoxOk(ctx: unknown): boolean {
-    let flag = this.tooldef().flag;
+    const flag = this.tooldef().flag;
     let ret = !(flag && flag & ToolFlags.PRIVATE);
     ret = ret && this.canRun(ctx);
 
@@ -798,7 +799,7 @@ export class ToolOp<
   }
 
   //toolop is an optional instance of this class, may be undefined
-  static canRun(_ctx: unknown, _toolop: ToolOp | undefined = undefined): boolean {
+  static canRun(_ctx: unknown, _toolop?: ToolOp | undefined): boolean {
     return true;
   }
 
@@ -815,12 +816,12 @@ export class ToolOp<
     let tot = 0;
 
     for (let step = 0; step < 2; step++) {
-      let props = (step ? this.outputs : this.inputs) as Record<string, ToolProperty>;
+      const props = (step ? this.outputs : this.inputs) as Record<string, ToolProperty>;
 
-      for (let k in props) {
-        let prop = props[k];
+      for (const k in props) {
+        const prop = props[k];
 
-        let size = prop.calcMemSize();
+        const size = prop.calcMemSize();
 
         if (isNaN(size) || !isFinite(size)) {
           console.warn("Got NaN when calculating mem size for property", prop);
@@ -831,7 +832,7 @@ export class ToolOp<
       }
     }
 
-    let size = this.calcUndoMem(ctx);
+    const size = this.calcUndoMem(ctx);
 
     if (isNaN(size) || !isFinite(size)) {
       console.warn("Got NaN in calcMemSize", this);
@@ -845,10 +846,10 @@ export class ToolOp<
   }
 
   loadDefaults(force: boolean = true): this {
-    let inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in inputs) {
-      let prop = inputs[k];
+    for (const k in inputs) {
+      const prop = inputs[k];
 
       if (!force && prop.wasSet) {
         continue;
@@ -868,7 +869,7 @@ export class ToolOp<
   }
 
   getDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): unknown {
-    let cls = this.constructor as unknown as ToolOpConstructor;
+    const cls = this.constructor as unknown as ToolOpConstructor;
 
     if (SavedToolDefaults.has(cls, key, toolprop)) {
       return SavedToolDefaults.get(cls, key, toolprop);
@@ -878,10 +879,10 @@ export class ToolOp<
   }
 
   saveDefaultInputs(): this {
-    let inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in inputs) {
-      let prop = inputs[k];
+    for (const k in inputs) {
+      const prop = inputs[k];
 
       if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
         SavedToolDefaults.set(this.constructor as unknown as ToolOpConstructor, k, prop);
@@ -892,12 +893,12 @@ export class ToolOp<
   }
 
   genToolString(): string {
-    let def = (this.constructor as unknown as ToolOpConstructor).tooldef();
+    const def = (this.constructor as unknown as ToolOpConstructor).tooldef();
     let path = (def.toolpath || "") + "(";
-    let inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in inputs) {
-      let prop = inputs[k];
+    for (const k in inputs) {
+      const prop = inputs[k];
 
       path += k + "=";
       if (prop.type === PropTypes.STRING) path += "'";
@@ -968,9 +969,9 @@ export class ToolOp<
 
   /**for use in modal mode only*/
   resetTempGeom(): void {
-    var ctx = this.modal_ctx;
+    const ctx = this.modal_ctx;
 
-    for (var dl of this.drawlines) {
+    for (const dl of this.drawlines) {
       (dl as { remove(): void }).remove();
     }
 
@@ -1000,7 +1001,7 @@ export class ToolOp<
 
   /**for use in modal mode only*/
   makeTempLine(v1: unknown, v2: unknown, style: unknown): unknown {
-    let line = this.getOverdraw().line(v1, v2, style);
+    const line = this.getOverdraw().line(v1, v2, style);
     this.drawlines.push(line);
     return line;
   }
@@ -1068,7 +1069,7 @@ export class ToolOp<
 
     this.resetTempGeom();
 
-    var ctx = this.modal_ctx;
+    const ctx = this.modal_ctx;
 
     this.modal_ctx = undefined;
     this.modalRunning = false;
@@ -1089,28 +1090,28 @@ export class ToolOp<
   loadSTRUCT(reader: (obj: Record<string, unknown>) => void): void {
     reader(this as unknown as Record<string, unknown>);
 
-    let outs = this.outputs as unknown as Array<{ key: string; val: ToolProperty }>;
-    let ins = this.inputs as unknown as Array<{ key: string; val: ToolProperty }>;
+    const outs = this.outputs as unknown as { key: string; val: ToolProperty }[];
+    const ins = this.inputs as unknown as { key: string; val: ToolProperty }[];
 
     this.inputs = {} as InputSlots;
     this.outputs = {} as OutputSlots;
 
-    let inputsRec = this.inputs as Record<string, ToolProperty>;
-    let outputsRec = this.outputs as Record<string, ToolProperty>;
+    const inputsRec = this.inputs as Record<string, ToolProperty>;
+    const outputsRec = this.outputs as Record<string, ToolProperty>;
 
-    for (let pair of ins) {
+    for (const pair of ins) {
       inputsRec[pair.key] = pair.val;
     }
 
-    for (let pair of outs) {
+    for (const pair of outs) {
       outputsRec[pair.key] = pair.val;
     }
   }
 
   _save_inputs(): PropKey[] {
-    let ret: PropKey[] = [];
-    let inputs = this.inputs as Record<string, ToolProperty>;
-    for (let k in inputs) {
+    const ret: PropKey[] = [];
+    const inputs = this.inputs as Record<string, ToolProperty>;
+    for (const k in inputs) {
       ret.push(new PropKey(k, inputs[k]));
     }
 
@@ -1118,9 +1119,9 @@ export class ToolOp<
   }
 
   _save_outputs(): PropKey[] {
-    let ret: PropKey[] = [];
-    let outputs = this.outputs as Record<string, ToolProperty>;
-    for (let k in outputs) {
+    const ret: PropKey[] = [];
+    const outputs = this.outputs as Record<string, ToolProperty>;
+    for (const k in outputs) {
       ret.push(new PropKey(k, outputs[k]));
     }
 
@@ -1243,12 +1244,12 @@ export class ToolMacro extends ToolOp {
   }
 
   //toolop is an optional instance of this class, may be undefined
-  static override canRun(_ctx: unknown, _toolop: ToolOp | undefined = undefined): boolean {
+  static override canRun(_ctx: unknown, _toolop?: ToolOp | undefined): boolean {
     return true;
   }
 
   _getTypeClass(): MacroClassType {
-    if (this._macro_class && this._macro_class.ready) {
+    if (this._macro_class?.ready) {
       return this._macro_class;
     }
 
@@ -1272,7 +1273,7 @@ export class ToolMacro extends ToolOp {
     }
 
     let key = "";
-    for (let tool of this.tools) {
+    for (const tool of this.tools) {
       key = tool.constructor.name + ":";
     }
 
@@ -1281,7 +1282,7 @@ export class ToolMacro extends ToolOp {
       key += ":" + (this.constructor as unknown as ToolOpConstructor).tooldef().toolpath;
     }
 
-    for (let k in this.inputs) {
+    for (const k in this.inputs) {
       key += k + ":";
     }
 
@@ -1294,8 +1295,8 @@ export class ToolMacro extends ToolOp {
     let i = 0;
     let is_modal: boolean | undefined;
 
-    for (let tool of this.tools) {
-      let def = (tool.constructor as unknown as ToolOpConstructor).tooldef();
+    for (const tool of this.tools) {
+      const def = (tool.constructor as unknown as ToolOpConstructor).tooldef();
 
       if (i > 0) {
         name += ", ";
@@ -1314,15 +1315,15 @@ export class ToolMacro extends ToolOp {
       i++;
     }
 
-    let inputs: Record<string, ToolProperty> = {};
-    let selfInputs = this.inputs as Record<string, ToolProperty>;
+    const inputs: Record<string, ToolProperty> = {};
+    const selfInputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in selfInputs) {
+    for (const k in selfInputs) {
       inputs[k] = selfInputs[k].copy().clearEventCallbacks();
       inputs[k].wasSet = false;
     }
 
-    let tdef: Record<string, unknown> = {
+    const tdef: Record<string, unknown> = {
       uiname  : name,
       toolpath: key,
       inputs,
@@ -1330,7 +1331,7 @@ export class ToolMacro extends ToolOp {
       is_modal,
     };
 
-    let cls = this._macro_class;
+    const cls = this._macro_class;
     cls.__tooldef = tdef;
     cls._macroTypeId = macroidgen++;
     cls.ready = true;
@@ -1352,10 +1353,10 @@ export class ToolMacro extends ToolOp {
   }
 
   override saveDefaultInputs(): this {
-    let inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in inputs) {
-      let prop = inputs[k];
+    for (const k in inputs) {
+      const prop = inputs[k];
 
       if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
         SavedToolDefaults.set(this._getTypeClass(), k, prop);
@@ -1370,7 +1371,7 @@ export class ToolMacro extends ToolOp {
   }
 
   override getDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): unknown {
-    let cls = this._getTypeClass();
+    const cls = this._getTypeClass();
 
     if (SavedToolDefaults.has(cls, key, toolprop)) {
       return SavedToolDefaults.get(cls, key, toolprop);
@@ -1396,30 +1397,30 @@ export class ToolMacro extends ToolOp {
       );
     }
 
-    let i1 = this.tools.indexOf(srctool);
-    let i2 = this.tools.indexOf(dsttool as ToolOp);
+    const i1 = this.tools.indexOf(srctool);
+    const i2 = this.tools.indexOf(dsttool as ToolOp);
 
     if (i1 < 0 || i2 < 0) {
       throw new Error("tool not in macro");
     }
 
     //remove linked properties from this.inputs
-    let selfInputs = this.inputs as Record<string, ToolProperty>;
+    const selfInputs = this.inputs as Record<string, ToolProperty>;
 
     if (srcprops === "inputs") {
-      let tool = this.tools[i1];
-      let toolInputs = tool.inputs as Record<string, ToolProperty>;
+      const tool = this.tools[i1];
+      const toolInputs = tool.inputs as Record<string, ToolProperty>;
 
-      let prop = toolInputs[srcoutput as string];
+      const prop = toolInputs[srcoutput as string];
       if (prop === selfInputs[srcoutput as string]) {
         delete selfInputs[srcoutput as string];
       }
     }
 
     if (dstprops === "inputs") {
-      let tool = this.tools[i2];
-      let toolInputs = tool.inputs as Record<string, ToolProperty>;
-      let prop = toolInputs[dstinput as string];
+      const tool = this.tools[i2];
+      const toolInputs = tool.inputs as Record<string, ToolProperty>;
+      const prop = toolInputs[dstinput as string];
 
       if (selfInputs[dstinput as string] === prop) {
         delete selfInputs[dstinput as string];
@@ -1446,11 +1447,11 @@ export class ToolMacro extends ToolOp {
       this.is_modal = true;
     }
 
-    let toolInputs = tool.inputs as Record<string, ToolProperty>;
-    let selfInputs = this.inputs as Record<string, ToolProperty>;
+    const toolInputs = tool.inputs as Record<string, ToolProperty>;
+    const selfInputs = this.inputs as Record<string, ToolProperty>;
 
-    for (let k in toolInputs) {
-      let prop = toolInputs[k];
+    for (const k in toolInputs) {
+      const prop = toolInputs[k];
 
       if (!(prop.flag & PropFlags.PRIVATE)) {
         selfInputs[k] = prop;
@@ -1463,11 +1464,11 @@ export class ToolMacro extends ToolOp {
   }
 
   _do_connections(tool: ToolOp): void {
-    let i = this.tools.indexOf(tool);
+    const i = this.tools.indexOf(tool);
 
-    for (let c of this.connectLinks) {
+    for (const c of this.connectLinks) {
       if (c.source === i) {
-        let tool2 = this.tools[c.dest];
+        const tool2 = this.tools[c.dest];
 
         (tool2 as unknown as Record<string, Record<string, ToolProperty>>)[c.destProps][c.destPropKey].setValue(
           (tool as unknown as Record<string, Record<string, ToolProperty>>)[c.sourceProps][c.sourcePropKey].getValue()
@@ -1475,7 +1476,7 @@ export class ToolMacro extends ToolOp {
       }
     }
 
-    for (var c2 of this.connects) {
+    for (const c2 of this.connects) {
       if (c2.srctool === tool) {
         c2.callback.call(c2.thisvar, c2.srctool, c2.dsttool);
       }
@@ -1515,7 +1516,7 @@ export class ToolMacro extends ToolOp {
       this._do_connections(this.tools[i]);
     }
 
-    let on_modal_end = () => {
+    const on_modal_end = () => {
       this._do_connections(this.tools[this.curtool]);
       this.curtool++;
 
@@ -1557,7 +1558,7 @@ export class ToolMacro extends ToolOp {
 
     this.loadDefaults(false);
 
-    for (var i = 0; i < this.tools.length; i++) {
+    for (let i = 0; i < this.tools.length; i++) {
       this.tools[i].undoPre(ctx);
       this.tools[i].execPre(ctx);
       this.tools[i].exec(ctx);
@@ -1569,7 +1570,7 @@ export class ToolMacro extends ToolOp {
   override calcUndoMem(_ctx: unknown): number {
     let tot = 0;
 
-    for (let tool of this.tools) {
+    for (const tool of this.tools) {
       tot += tool.calcUndoMem(_ctx);
     }
 
@@ -1579,7 +1580,7 @@ export class ToolMacro extends ToolOp {
   override calcMemSize(ctx: unknown): number {
     let tot = 0;
 
-    for (let tool of this.tools) {
+    for (const tool of this.tools) {
       tot += tool.calcMemSize(ctx);
     }
 
@@ -1591,7 +1592,7 @@ export class ToolMacro extends ToolOp {
   }
 
   override undo(ctx: unknown): void {
-    for (var i = this.tools.length - 1; i >= 0; i--) {
+    for (let i = this.tools.length - 1; i >= 0; i--) {
       this.tools[i].undo(ctx);
     }
   }
@@ -1619,7 +1620,10 @@ type TSContext = Omit<ContextLike, "toolstack">;
 
 // we can't ContextLike due to cyclic dependency
 // created with the TS default in ContextLike itself
-export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalContextCls = ContextCls> extends Array<ToolOp> {
+export class ToolStack<
+  ContextCls extends { [k: string]: any } = any,
+  ModalContextCls = ContextCls,
+> extends Array<ToolOp> {
   static STRUCT: string;
 
   memLimit!: number;
@@ -1685,7 +1689,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
   calcMemSize(ctx: ContextCls = this.ctx): number {
     let tot = 0;
 
-    for (let tool of this) {
+    for (const tool of this) {
       try {
         tot += tool.calcMemSize(ctx);
       } catch (error) {
@@ -1719,9 +1723,9 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
    * @param compareInputs : check if toolstack head has identical input values, defaults to false
    * */
   execOrRedo(ctx: ContextCls, tool: ToolOp, compareInputs: boolean = false): boolean {
-    let head = this.head;
+    const head = this.head;
 
-    let ok = compareInputs ? ToolOp.Equals(head, tool) : !!head && head.constructor === tool.constructor;
+    const ok = compareInputs ? ToolOp.Equals(head, tool) : !!head && head.constructor === tool.constructor;
 
     tool.__memsize = undefined; //reset cache memsize
 
@@ -1757,7 +1761,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
     if (!("toLocked" in ctx)) {
       console.warn("warning: context does not support locking, could lead to undo errors");
     }
-    let tctx = ctx.toLocked ? ctx.toLocked() : ctx;
+    const tctx = ctx.toLocked ? ctx.toLocked() : ctx;
 
     let undoflag = (toolop.constructor as unknown as ToolOpConstructor).tooldef().undoflag;
     if (toolop.undoflag !== undefined) {
@@ -1826,7 +1830,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
     this.length = this.cur + 1;
 
     if (this._undo_branch !== undefined) {
-      for (let item of this._undo_branch) {
+      for (const item of this._undo_branch) {
         this.push(item);
       }
     }
@@ -1838,7 +1842,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
     }
 
     if (this.cur >= 0 && !(this[this.cur].undoflag & UndoFlags.IS_UNDO_ROOT)) {
-      let tool = this[this.cur];
+      const tool = this[this.cur];
 
       tool.undo(tool.execCtx);
 
@@ -1881,7 +1885,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
       //console.log("redo!", this.cur, this.length);
 
       this.cur++;
-      let tool = this[this.cur];
+      const tool = this[this.cur];
 
       if (!tool.execCtx) {
         tool.execCtx = this.ctx;
@@ -1895,14 +1899,14 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
   }
 
   save(): number[] {
-    let data: number[] = [];
+    const data: number[] = [];
     nstructjs.writeObject(data, this as unknown as Record<string, unknown>);
     return data;
   }
 
   rewind(): this {
     while (this.cur >= 0) {
-      let last = this.cur;
+      const last = this.cur;
       this.undo();
 
       //prevent infinite loops
@@ -1921,16 +1925,16 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
    waited on, otherwise execution is queue with window.setTimeout().
    */
   replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown): Promise<unknown> {
-    let cur = this.cur;
+    const cur = this.cur;
 
     this.rewind();
 
     let last = this.cur;
 
-    let start = util.time_ms();
+    const start = util.time_ms();
 
     return new Promise((accept, reject) => {
-      let next = () => {
+      const next = () => {
         last = this.cur;
 
         if (cb && cb(this.ctx) === false) {
@@ -1948,7 +1952,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
           accept(this);
         } else {
           if (onStep) {
-            let ret = onStep();
+            const ret = onStep();
 
             if (ret && ret instanceof Promise) {
               ret.then(() => {
@@ -1970,7 +1974,7 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
   loadSTRUCT(reader: StructReader<this>) {
     reader(this);
 
-    for (let item of this._stack) {
+    for (const item of this._stack) {
       this.push(item);
     }
 
@@ -1980,8 +1984,8 @@ export class ToolStack<ContextCls extends { [k: string]: any } = any, ModalConte
   //note that this makes sure tool classes are registered with nstructjs
   //during save
   _save(): this {
-    for (let tool of this) {
-      let cls = tool.constructor as unknown as ToolOpConstructor;
+    for (const tool of this) {
+      const cls = tool.constructor as unknown as ToolOpConstructor;
 
       if (!nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
         cls._regWithNstructjs(cls);
@@ -2035,15 +2039,15 @@ nstructjs.register(ToolStack);
 /* ------------------------------------------------------------------ */
 
 export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstructor): unknown {
-  let st = api.mapStruct(cls, true) as Record<string, Function>;
-  let def = cls._getFinalToolDef();
+  const st = api.mapStruct(cls, true) as Record<string, Function>;
+  const def = cls._getFinalToolDef();
 
   if (window.DEBUG && typeof window.DEBUG === "object" && (window.DEBUG as Record<string, boolean>).datapaths) {
     console.log("Building api for ", def.toolpath);
   }
 
   function makeProp(k: string): void {
-    let prop = def.inputs[k];
+    const prop = def.inputs[k];
 
     if (prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
       return;
@@ -2051,7 +2055,7 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
 
     prop.uiname = prop.uiname || (ToolProperty_cls as unknown as Record<string, Function>).makeUIName(k);
 
-    let dpath = new DataPath(k, k, prop);
+    const dpath = new DataPath(k, k, prop);
     st.add(dpath);
 
     (dpath as unknown as Record<string, Function>).customGetSet(
@@ -2064,7 +2068,7 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
     );
   }
 
-  for (let k in def.inputs) {
+  for (const k in def.inputs) {
     makeProp(k);
   }
 
@@ -2081,19 +2085,19 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
 export function buildToolSysAPI(
   api: Record<string, Function>,
   registerWithNStructjs: boolean = true,
-  rootCtxStruct: Record<string, Function> | undefined = undefined,
-  rootCtxClass: (new (arg: Record<string, unknown>) => unknown) | undefined = undefined,
+  rootCtxStruct?: Record<string, Function> | undefined,
+  rootCtxClass?: (new (arg: Record<string, unknown>) => unknown) | undefined,
   insertToolDefaultsIntoContext: boolean = true
 ): void {
-  let datastruct = api.mapStruct(ToolPropertyCache, true) as Record<string, Function>;
+  const datastruct = api.mapStruct(ToolPropertyCache, true) as Record<string, Function>;
 
-  for (let cls of ToolClasses) {
-    let def = cls._getFinalToolDef();
+  for (const cls of ToolClasses) {
+    const def = cls._getFinalToolDef();
 
     buildToolOpAPI(api, cls);
 
-    for (let k in def.inputs) {
-      let prop = def.inputs[k];
+    for (const k in def.inputs) {
+      const prop = def.inputs[k];
 
       if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
         SavedToolDefaults._buildAccessors(
@@ -2113,12 +2117,12 @@ export function buildToolSysAPI(
   }
 
   if (rootCtxClass && insertToolDefaultsIntoContext) {
-    let inst = new rootCtxClass({}) as Record<string | symbol, unknown>;
+    const inst = new rootCtxClass({}) as Record<string | symbol, unknown>;
 
     function haveprop(k: string | symbol): boolean {
       return (
-        Reflect.ownKeys(inst).indexOf(k) >= 0 ||
-        Reflect.ownKeys(rootCtxClass!.prototype as Record<string, unknown>).indexOf(k) >= 0
+        Reflect.ownKeys(inst).includes(k) ||
+        Reflect.ownKeys(rootCtxClass!.prototype as Record<string, unknown>).includes(k)
       );
     }
 
@@ -2154,7 +2158,7 @@ export function buildToolSysAPI(
   }
 
   //register tools with nstructjs
-  for (let cls of ToolClasses) {
+  for (const cls of ToolClasses) {
     try {
       if (!nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
         ToolOp._regWithNstructjs(cls);
