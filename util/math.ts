@@ -17,6 +17,8 @@ import { VectorLikeOrHigher } from "./vectormath";
 
 import { Vector2, Vector3, Vector4, Matrix4, Quat } from "./vectormath.js";
 
+export type VecArg<V extends Vector2 | Vector3 | Vector4 | Quat> = VectorLikeOrHigher<V["LEN"], V> | number[];
+
 /*
  * Type aliases for vector instances used throughout this geometry module.
  */
@@ -1294,10 +1296,10 @@ export function tri_area(v1: Vec3, v2: Vec3, v3: Vec3): number {
 }
 
 export function aabb_overlap_area(
-  pos1: VectorLikeOrHigher<2, Vector2>,
-  size1: VectorLikeOrHigher<2, Vector2>,
-  pos2: VectorLikeOrHigher<2, Vector2>,
-  size2: VectorLikeOrHigher<2, Vector2>
+  pos1: VecArg<Vector2>,
+  size1: VecArg<Vector2>,
+  pos2: VecArg<Vector2>,
+  size2: VecArg<Vector2>
 ): number {
   let r1 = 0.0;
   let r2 = 0.0;

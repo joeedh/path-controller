@@ -1884,7 +1884,7 @@ class BSplineCurve extends CurveTypeData {
     }
 
     const transform_op = new BSplineTransformOp();
-    transform_op.inputs.dataPath.setValue(ui.datapath);
+    transform_op.inputs.dataPath.setValue(ui.datapath!);
     transform_op.inputs.dpi.setValue(dpi);
 
     ui.dom.ctx.api.execTool(ui.dom.ctx, transform_op);

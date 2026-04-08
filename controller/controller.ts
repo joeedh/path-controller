@@ -47,6 +47,10 @@ import { print_stack } from "../util/util.js";
 import { ToolOp } from "../toolsys/toolsys.js";
 import { PropTypes, PropFlags } from "../toolsys/toolprop.js";
 import * as util from "../util/util.js";
+import { DataPathSetOp } from "./controller_ops.js";
+import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
+import { KeyMap } from "../controller.js";
+import { isVecProperty, ToolPropertyTypes } from "../toolsys";
 
 import {
   DataPath,
@@ -111,9 +115,9 @@ for (let i = 0; i < parserStack.length; i++) {
 }
 let parserStackCur = 0;
 
-import { setImplementationClass, isVecProperty } from "./controller_base.js";
+import { setImplementationClass } from "./controller_base.js";
 import { initToolPaths, parseToolPath } from "../toolsys/toolpath.js";
-import { ContextLike, ModelInterface, ResolvedProp, ResolvePathResult } from "./controller_abstract.js";
+import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract.js";
 
 export { DataPathError, DataFlags } from "./controller_base.js";
 
@@ -825,7 +829,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     parserStackCur--;
 
     if (ret?.prop && ret.dpath && ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
-      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj) as unknown as ResolvedProp<CTX>;
+      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj);
     }
 
     if (ret?.prop && ret.dpath?.ui_name_get) {
@@ -843,27 +847,21 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return ret;
   }
 
-  getPropOverride(
+  getPropOverride<P extends ToolProperty>(
     ctx: CTX,
     path: string,
     dpath: DataPath,
     obj: any,
-    prop = dpath.data as unknown as ResolvedProp<CTX>
-  ) {
-    // add extra context members temporarily
-    prop.ctx = ctx;
-    prop.datapath = path;
-    prop.dataref = obj;
+    prop = dpath.data as ToolProperty
+  ): P {
+    using execCtx = prop.execWithContext();
+    execCtx.ctx = ctx;
+    execCtx.datapath = path;
+    execCtx.dataref = obj;
 
-    const newprop = getTempProp(prop.type);
+    const newprop = getTempProp<P>(prop.type);
     prop.copyTo(newprop);
-
     dpath.propGetter!.call(prop, newprop);
-
-    // clear extra context members
-    const anyProp = prop as any;
-    anyProp.ctx = anyProp.datapath = anyProp.dataref = undefined;
-
     return newprop;
   }
 
@@ -888,11 +886,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
     let obj = ctx as any;
     let lastobj = ctx as any;
-    let subkey;
-    let lastobj2 = undefined;
-    let lastkey = undefined;
-    let prop = undefined;
-    let lastdpath = undefined;
+    let subkey: string | number | undefined;
+    let lastobj2: any | undefined;
+    let lastkey: string | number | undefined;
+    let prop: ToolPropertyTypes | undefined;
+    let lastdpath: DataPath | undefined;
 
     function p_key() {
       const t = p.peeknext()!;
@@ -981,9 +979,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
             fakeprop.ctx = ctx;
             fakeprop.dataref = obj;
             fakeprop.datapath = inpath;
-
             obj2 = (fakeprop as any).get();
-
             fakeprop.ctx = fakeprop.datapath = fakeprop.dataref = undefined;
           } else {
             obj2 = (obj as any)[dpath.path];
@@ -1012,7 +1008,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           throw new DataPathError("dynamic struct error for path: " + inpath);
         }
       } else {
-        prop = dpath.data;
+        prop = dpath.data as ToolPropertyTypes;
       }
 
       if (prop && dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
@@ -1045,9 +1041,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           if (!fakeprop && dpath.type === DataTypes.PROP) {
             const prop = dpath.data as any;
 
-            prop.ctx = ctx;
-            prop.dataref = obj;
-            prop.datapath = inpath;
+            using execCtx = prop.execWithContext(ctx);
+            execCtx.ctx = ctx;
+            execCtx.dataref = obj;
+            execCtx.datapath = inpath;
 
             try {
               obj = prop.getValue();
@@ -1059,8 +1056,6 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
             if (typeof obj === "string" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
               obj = prop.values[obj];
             }
-
-            prop.ctx = prop.dataref = prop.datapath = undefined;
           } else {
             fakeprop.ctx = ctx;
             fakeprop.dataref = obj;
@@ -1177,10 +1172,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           bitfield = lastobj ? lastobj[key] : 0;
         } else {
           // XXX
-          const anyProp = enumProp as any;
-          anyProp.dataref = lastobj;
-          anyProp.datapath = inpath;
-          anyProp.ctx = ctx;
+          using execCtx = enumProp.execWithContext();
+          execCtx.dataref = lastobj;
+          execCtx.datapath = inpath;
+          execCtx.ctx = ctx;
 
           try {
             bitfield = enumProp.getValue();
@@ -1258,10 +1253,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       parent : lastobj2,
       obj    : lastobj,
       value  : obj,
-      key    : lastkey!,
+      key    : lastkey! as string,
       dstruct: dstruct!,
-      prop   : prop as ResolvedProp,
-      subkey : subkey,
+      prop,
+      subkey,
     };
   }
 
@@ -1474,10 +1469,6 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 export function initSimpleController() {
   initToolPaths();
 }
-
-import { DataPathSetOp } from "./controller_ops.js";
-import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
-import { KeyMap } from "../controller.js";
 
 let dpt = DataPathSetOp;
 

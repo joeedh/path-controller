@@ -11,7 +11,7 @@ import {
 } from "../toolsys/toolprop.js";
 
 import * as util from "../util/util.js";
-import { ContextLike, ResolvedProp } from "./controller_abstract.js";
+import { ContextLike } from "./controller_abstract.js";
 
 type DataPathSetInputs = {
   dataPath: StringProperty;
@@ -40,11 +40,11 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
   }
 
   setValue(ctx: CTX, val: unknown, object: unknown): void {
-    let prop = this.inputs.prop as unknown as ResolvedProp;
-    let path = this.inputs.dataPath.getValue() as string;
+    const prop = this.inputs.prop;
+    const path = this.inputs.dataPath.getValue() as string;
 
     if (prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
-      let rdef = ctx.api.resolvePath(ctx, path);
+      const rdef = ctx.api.resolvePath(ctx, path);
       if (rdef?.subkey !== undefined) {
         let subkey: unknown = rdef.subkey;
         if (typeof subkey === "string") {
@@ -56,12 +56,13 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
       }
     }
 
-    prop.dataref = object;
-    prop.ctx = ctx;
-    prop.datapath = path;
+    using execCtx = prop.execWithContext();
+    execCtx.dataref = object;
+    execCtx.ctx = ctx;
+    execCtx.datapath = path;
 
     try {
-      (prop as { setValue(v: unknown): void }).setValue(val);
+      prop.setValue(val);
       this.hadError = false;
     } catch (_error) {
       console.error("Error setting datapath", path);
@@ -76,20 +77,20 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     id: unknown,
     massSetPath?: string
   ): DataPathSetOp<CTX> | undefined {
-    let rdef = ctx.api.resolvePath(ctx, datapath);
+    const rdef = ctx.api.resolvePath(ctx, datapath);
 
-    if (rdef === undefined || rdef.prop === undefined) {
+    if (rdef?.prop === undefined) {
       console.warn("DataPathSetOp failed", rdef, rdef?.prop);
       return;
     }
 
-    let prop = rdef.prop;
-    let tool = new DataPathSetOp<CTX>();
+    const prop = rdef.prop;
+    const tool = new DataPathSetOp<CTX>();
 
     tool.propType = prop.type;
     tool.inputs.destType.setValue(prop.type);
 
-    if (prop && (prop.flag as number) & PropFlags.USE_BASE_UNDO) {
+    if (prop && prop.flag & PropFlags.USE_BASE_UNDO) {
       tool.inputs.fullSaveUndo.setValue(true);
     }
 
@@ -114,9 +115,9 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
           datapath = datapath.slice(0, i).trim();
         }
 
-        (tool.inputs as Record<string, unknown>).prop = new IntProperty();
+        tool.inputs.prop = new IntProperty();
       } else {
-        (tool.inputs as Record<string, unknown>).prop = new FloatProperty();
+        tool.inputs.prop = new FloatProperty();
       }
 
       let subkey: unknown = rdef.subkey;
@@ -169,7 +170,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     massSetPath = massSetPath === undefined ? "" : massSetPath;
     massSetPath = massSetPath === null ? "" : massSetPath;
 
-    let ret = "" + massSetPath + ":" + dataPath + ":" + prop + ":" + id;
+    const ret = "" + massSetPath + ":" + dataPath + ":" + prop + ":" + id;
 
     return ret;
   }
@@ -195,14 +196,14 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     let paths = new Set<string>();
 
     if ((this.inputs.massSetPath.getValue() as string).trim()) {
-      let massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
+      const massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
 
       paths = new Set(ctx.api.resolveMassSetPaths(ctx, massSetPath) as string[]);
     }
 
     paths.add(this.inputs.dataPath.getValue() as string);
 
-    for (let path of paths) {
+    for (const path of paths) {
       let val = ctx.api.getValue(ctx, path) as unknown;
 
       if (typeof val === "object" && val !== null) {
@@ -220,11 +221,11 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
       return super.undo(ctx);
     }
 
-    for (let path in this._undo) {
-      let rdef = ctx.api.resolvePath(ctx, path);
+    for (const path in this._undo) {
+      const rdef = ctx.api.resolvePath(ctx, path);
 
       if (rdef !== undefined && (rdef.prop?.type ?? 0) & (PropTypes.ENUM | PropTypes.FLAG)) {
-        let old = (rdef.obj as Record<string, unknown>)[rdef.key as string];
+        const old = (rdef.obj as Record<string, unknown>)[rdef.key as string];
 
         if (rdef.subkey) {
           let key: unknown = rdef.subkey;
@@ -247,10 +248,12 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
           rdef.obj[rdef.key as string] = this._undo![path];
         }
 
-        let rprop = rdef.prop as ResolvedProp<CTX>;
-        rprop.dataref = rdef.obj;
-        rprop.datapath = path;
-        rprop.ctx = ctx;
+        const rprop = rdef.prop as ToolProperty;
+
+        using execCtx = rprop.execWithContext();
+        execCtx.dataref = rdef.obj;
+        execCtx.datapath = path;
+        execCtx.ctx = ctx;
 
         rprop._fire("change", (rdef.obj as Record<string, unknown>)[rdef.key as string], old);
       } else {
@@ -270,8 +273,8 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
       ctx = this.__ctx;
     }
 
-    let path = this.inputs.dataPath.getValue() as string;
-    let massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
+    const path = this.inputs.dataPath.getValue() as string;
+    const massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
 
     try {
       ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
@@ -286,10 +289,10 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 
     if (massSetPath) {
       let value = this.inputs.prop.getValue() as number;
-      let useFlagBit = this.inputs.useFlagBit.getValue() as boolean;
+      const useFlagBit = this.inputs.useFlagBit.getValue() as boolean;
 
       if (useFlagBit && (this.inputs.destType.getValue() as number) === PropTypes.FLAG) {
-        let bit = this.inputs.flagBit.getValue() as number;
+        const bit = this.inputs.flagBit.getValue() as number;
 
         value = !!(value & bit) as unknown as number;
       }

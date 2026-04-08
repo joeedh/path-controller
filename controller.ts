@@ -1,57 +1,58 @@
-export * from "./controller/context.js";
-export * from "./controller/controller.js";
-export * from "./controller/controller_abstract.js";
-export * from "./controller/controller_ops.js";
-export * from "./controller/controller_abstract.js";
-export * from "./controller/controller_base.js";
-export * from "./toolsys/toolsys.js";
-export * from "./toolsys/toolprop.js";
-export * from "./toolsys/toolpath.js";
+export * from "./controller/context";
+export * from "./controller/controller";
+export * from "./controller/controller_abstract";
+export * from "./controller/controller_ops";
+export * from "./controller/controller_abstract";
+export * from "./controller/controller_base";
+export * from "./toolsys/toolsys";
+export * from "./toolsys/toolprop";
+export * from "./toolsys/toolpath";
+export * from "./util/jsonUtils";
 
-export * from "./curve/curve1d_all.js";
-// curve1d.js exports are included via curve1d_all.js (avoids mySafeJSONParse/Stringify conflict)
-export { Curve1D } from "./curve/curve1d.js";
-export * from "./curve/curve1d_base.js";
-export * from "./curve/curve1d_toolprop.js";
+export * from "./curve/curve1d_all";
+// curve1d exports are included via curve1d_all (avoids mySafeJSONParse/Stringify conflict)
+export { Curve1D } from "./curve/curve1d";
+export * from "./curve/curve1d_base";
+export * from "./curve/curve1d_toolprop";
 
-import * as eventgraph from "./dag/eventdag.js";
+import * as eventgraph from "./dag/eventdag";
 export { eventgraph };
 
-import * as solver from "./util/solver.js";
+import * as solver from "./util/solver";
 export { solver };
 
-import * as util from "./util/util.js";
+import * as util from "./util/util";
 export { util };
 
-import * as vectormath from "./util/vectormath.js";
+import * as vectormath from "./util/vectormath";
 export { vectormath };
 
-import * as math from "./util/math.js";
+import * as math from "./util/math";
 export { math };
 
-import * as toolprop_abstract from "./toolsys/toolprop_abstract.js";
+import * as toolprop_abstract from "./toolsys/toolprop_abstract";
 export { toolprop_abstract };
 
-import * as html5_fileapi from "./util/html5_fileapi.js";
+import * as html5_fileapi from "./util/html5_fileapi";
 export { html5_fileapi };
 
-import * as parseutil from "./util/parseutil.js";
+import * as parseutil from "./util/parseutil";
 export { parseutil };
 
-import * as config from "./config/config.js";
+import * as config from "./config/config";
 export { config };
 
-import nstructjs from "./util/struct.js";
+import nstructjs from "./util/struct";
 export { nstructjs };
 
-import lzstring from "./extern/lz-string/lz-string.js";
+import lzstring from "./extern/lz-string/lz-string";
 export { lzstring };
 
-export * from "./util/vectormath.js";
-export * from "./util/math.js";
-export * from "./util/colorutils.js";
-export * from "./util/graphpack.js";
-export * from "./util/solver.js";
-export * from "./util/simple_events.js";
+export * from "./util/vectormath";
+export * from "./util/math";
+export * from "./util/colorutils";
+export * from "./util/graphpack";
+export * from "./util/solver";
+export * from "./util/simple_events";
 
-export { binomial } from "./curve/curve1d_bspline.js";
+export { binomial } from "./curve/curve1d_bspline";

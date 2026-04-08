@@ -4,7 +4,16 @@ import * as nstructjs from "../util/nstructjs_es6.js";
 
 import "./curve1d_all.js";
 
-export class Curve1DProperty extends ToolProperty {
+export class Curve1DProperty extends ToolProperty<Curve1D, PropTypes["CURVE"]> {
+  static PROP_TYPE_ID = PropTypes.CURVE;
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+      Curve1DProperty {
+        data:   Curve1D;
+      }
+    `
+  );
   data: Curve1D;
 
   constructor(curve?: Curve1D, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
@@ -45,21 +54,9 @@ export class Curve1DProperty extends ToolProperty {
     super.setValue(curve);
   }
 
-  override copyTo(b: ToolProperty): void {
+  override copyTo(b: this): void {
     super.copyTo(b);
-
-    (b as Curve1DProperty).setValue(this.data);
+    b.setValue(this.data);
   }
-
-  static STRUCT: string;
 }
-
-Curve1DProperty.STRUCT =
-  nstructjs.inherit(Curve1DProperty, ToolProperty) +
-  `
-  data : Curve1D;
-}
-`;
-
-nstructjs.register(Curve1DProperty);
 ToolProperty.internalRegister(Curve1DProperty);

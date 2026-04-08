@@ -3,16 +3,16 @@ import "./struct.js";
 import MobileDetect from "./mobile-detect.js";
 import nstructjs from "./struct.js";
 
-let f64tmp = new Float64Array(1);
-let u16tmp = new Uint16Array(f64tmp.buffer);
+const f64tmp = new Float64Array(1);
+const u16tmp = new Uint16Array(f64tmp.buffer);
 
 export function isDenormal(f: number): boolean {
   f64tmp[0] = f;
 
-  let a = u16tmp[0],
-    b = u16tmp[1],
-    c = u16tmp[2],
-    d = u16tmp[3];
+  const a = u16tmp[0];
+  const b = u16tmp[1];
+  const c = u16tmp[2];
+  const d = u16tmp[3];
 
   //zero? check both positive and negative zero
   if (a === 0 && b === 0 && c === 0 && (d === 0 || d === 32768)) {
@@ -27,9 +27,7 @@ export function isDenormal(f: number): boolean {
   return test === 0;
 }
 
-globalThis._isDenormal = isDenormal;
-
-let colormap: Record<string, number> = {
+const colormap: Record<string, number> = {
   "black"   : 30,
   "red"     : 31,
   "green"   : 32,
@@ -49,8 +47,8 @@ let colormap: Record<string, number> = {
   "peach"   : 210,
 };
 
-export let termColorMap: Record<string | number, string | number> = {};
-for (let k in colormap) {
+export const termColorMap: Record<string | number, string | number> = {};
+for (const k in colormap) {
   termColorMap[k] = colormap[k];
   termColorMap[colormap[k]] = k;
 }
@@ -71,7 +69,7 @@ export function termColor(s: string | symbol, c: string | number, d: number = 0)
   }
 
   if (code > 107) {
-    let s2 = "\u001b[38;5;" + code + "m";
+    const s2 = "\u001b[38;5;" + code + "m";
     return s2 + str + "\u001b[39m";
   }
 
@@ -89,11 +87,11 @@ export function termPrint(...args: unknown[]): string {
     s += args[i];
   }
 
-  let re1a = /\u001b\[[1-9][0-9]?m/;
-  let re1b = /\u001b\[[1-9][0-9];[0-9][0-9]?;[0-9]+m/;
-  let re2 = /\u001b\[39m/;
+  const re1a = /\u001b\[[1-9][0-9]?m/;
+  const re1b = /\u001b\[[1-9][0-9];[0-9][0-9]?;[0-9]+m/;
+  const re2 = /\u001b\[39m/;
 
-  let endtag = "\u001b[39m";
+  const endtag = "\u001b[39m";
 
   interface Token {
     type: string;
@@ -107,7 +105,7 @@ export function termPrint(...args: unknown[]): string {
     };
   }
 
-  let tokdef: [RegExp, string][] = [
+  const tokdef: [RegExp, string][] = [
     [re1a, "start"],
     [re1b, "start"],
     [re2, "end"],
@@ -115,19 +113,19 @@ export function termPrint(...args: unknown[]): string {
 
   let s2 = s;
 
-  let i = 0;
-  let tokens: Token[] = [];
+  const i = 0;
+  const tokens: Token[] = [];
 
   while (s2.length > 0) {
     let ok = false;
 
-    let mintk: [RegExp, string] | undefined = undefined,
-      mini: number | undefined = undefined;
-    let minslice: string | undefined = undefined,
-      mintype: string | undefined = undefined;
+    let mintk: [RegExp, string] | undefined = undefined;
+    let mini: number | undefined = undefined;
+    let minslice: string | undefined = undefined;
+    let mintype: string | undefined = undefined;
 
-    for (let tk of tokdef) {
-      let idx = s2.search(tk[0]);
+    for (const tk of tokdef) {
+      const idx = s2.search(tk[0]);
 
       if (idx >= 0 && (mini === undefined || idx < mini)) {
         minslice = s2.slice(idx, s2.length).match(tk[0])![0];
@@ -143,12 +141,12 @@ export function termPrint(...args: unknown[]): string {
     }
 
     if (mini! > 0) {
-      let chunk = s2.slice(0, mini);
+      const chunk = s2.slice(0, mini);
       tokens.push(tok(chunk, "chunk"));
     }
 
     s2 = s2.slice(mini! + minslice!.length, s2.length);
-    let t = tok(minslice!, mintype!);
+    const t = tok(minslice!, mintype!);
 
     tokens.push(t);
   }
@@ -157,12 +155,12 @@ export function termPrint(...args: unknown[]): string {
     tokens.push(tok(s2, "chunk"));
   }
 
-  let stack: (string | undefined)[] = [];
+  const stack: (string | undefined)[] = [];
   let cur: string | undefined;
 
   let out = "";
 
-  for (let t of tokens) {
+  for (const t of tokens) {
     if (t.type === "chunk") {
       out += t.value;
     } else if (t.type === "start") {
@@ -225,7 +223,7 @@ export class MovingAvg extends Array<number> {
   }
 }
 
-export let timers: Record<string, number> = {};
+export const timers: Record<string, number> = {};
 
 export function pollTimer(id: string, interval: number): boolean {
   if (!(id in timers)) {
@@ -297,13 +295,13 @@ export class SmartConsoleContext {
   constructor(name: string, console: SmartConsole) {
     this.name = name;
 
-    let c = [random(), random(), random()];
+    const c = [random(), random(), random()];
     let sum = Math.sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
     sum = 255 / sum;
 
-    let r = ~~(c[0] * sum);
-    let g = ~~(c[1] * sum);
-    let b = ~~(c[2] * sum);
+    const r = ~~(c[0] * sum);
+    const g = ~~(c[1] * sum);
+    const b = ~~(c[2] * sum);
 
     this.color = `rgb(${r},${g},${b})`;
     this.__console = console;
@@ -324,8 +322,8 @@ export class SmartConsoleContext {
 
   hash(args: IArguments | unknown[]): number {
     let sum = 0;
-    let mul = (1 << 19) - 1,
-      off = (1 << 27) - 1;
+    const mul = (1 << 19) - 1;
+    const off = (1 << 27) - 1;
     let i = 0;
 
     function dohash(h: number): void {
@@ -335,9 +333,9 @@ export class SmartConsoleContext {
       sum = sum ^ h;
     }
 
-    let visit = new WeakSet();
+    const visit = new WeakSet();
 
-    let recurse = (n: unknown): void => {
+    const recurse = (n: unknown): void => {
       if (typeof n === "string") {
         dohash(strhash(n));
       } else if (typeof n === "undefined" || n === null) {
@@ -349,9 +347,9 @@ export class SmartConsoleContext {
 
         visit.add(n as object);
 
-        let keys = getAllKeys(n as object);
+        const keys = getAllKeys(n as object);
 
-        for (let k of keys) {
+        for (const k of keys) {
           let v: unknown;
 
           if (typeof k !== "string") {
@@ -389,7 +387,7 @@ export class SmartConsoleContext {
   }
 
   _getData(args: IArguments | unknown[]): SmartConsoleDataEntry {
-    let key = this.hash(args);
+    const key = this.hash(args);
 
     if (!(key in this._data)) {
       if (this._data_length > this.maxCache) {
@@ -478,22 +476,22 @@ export class SmartConsole {
   }
 
   log(...args: unknown[]): void {
-    let c = this.context("default");
+    const c = this.context("default");
     return c.log(...args);
   }
 
   warn(...args: unknown[]): void {
-    let c = this.context("default");
+    const c = this.context("default");
     return c.warn(...args);
   }
 
   trace(...args: unknown[]): void {
-    let c = this.context("default");
+    const c = this.context("default");
     return c.trace(...args);
   }
 
   error(...args: unknown[]): void {
-    let c = this.context("default");
+    const c = this.context("default");
     return c.error(...args);
   }
 }
@@ -502,7 +500,7 @@ export const console = new SmartConsole();
 
 (globalThis as Record<string, unknown>).tm = 0.0;
 
-let EmptySlot: object = {};
+const EmptySlot: object = {};
 
 export function getClassParent(cls: Function): Function | undefined {
   let p = cls.prototype as { __proto__?: { constructor?: Function } } | undefined;
@@ -517,9 +515,9 @@ export function getClassParent(cls: Function): Function | undefined {
 //window._getClassParent = getClassParent;
 
 export function list<T>(iterable: Iterable<T>): T[] {
-  let ret: T[] = [];
+  const ret: T[] = [];
 
-  for (let item of iterable) {
+  for (const item of iterable) {
     ret.push(item);
   }
 
@@ -532,13 +530,13 @@ export function count<T>(iterable: Iterable<T>, searchItem?: T): number {
   let count = 0;
 
   if (searchItem !== undefined) {
-    for (let item of iterable) {
+    for (const item of iterable) {
       if (item === searchItem) {
         count++;
       }
     }
   } else {
-    for (let _item of iterable) {
+    for (const _item of iterable) {
       count++;
     }
   }
@@ -551,7 +549,7 @@ export function count<T>(iterable: Iterable<T>, searchItem?: T): number {
  * inherited ones
  * */
 export function getAllKeys(obj: object): Set<string | symbol> {
-  let keys = new Set<string | symbol>();
+  const keys = new Set<string | symbol>();
 
   if (typeof obj !== "object" && typeof obj !== "function") {
     throw new Error("must pass an object ot getAllKeys; object was: " + obj);
@@ -560,13 +558,13 @@ export function getAllKeys(obj: object): Set<string | symbol> {
   let p: object | null = obj;
 
   while (p && p !== Object) {
-    for (let k in Object.getOwnPropertyDescriptors(p)) {
+    for (const k in Object.getOwnPropertyDescriptors(p)) {
       if (k === "__proto__") continue;
 
       keys.add(k);
     }
 
-    for (let k of Object.getOwnPropertySymbols(p)) {
+    for (const k of Object.getOwnPropertySymbols(p)) {
       keys.add(k);
     }
 
@@ -577,17 +575,17 @@ export function getAllKeys(obj: object): Set<string | symbol> {
   if (!cls) return keys;
 
   while (cls) {
-    let proto = cls.prototype as object | undefined;
+    const proto = cls.prototype as object | undefined;
     if (!proto) {
       cls = getClassParent(cls);
       continue;
     }
 
-    for (let k in proto) {
+    for (const k in proto) {
       keys.add(k);
     }
 
-    for (let k in Object.getOwnPropertyDescriptors(proto)) {
+    for (const k in Object.getOwnPropertyDescriptors(proto)) {
       keys.add(k);
     }
 
@@ -599,7 +597,7 @@ export function getAllKeys(obj: object): Set<string | symbol> {
 
 //globalThis._getAllKeys = getAllKeys;
 
-export function btoa(buf: ArrayBuffer | Uint8Array | string | String): string {
+export function btoa(buf: ArrayBuffer | Uint8Array | string | string): string {
   if (buf instanceof ArrayBuffer) {
     buf = new Uint8Array(buf);
   }
@@ -635,8 +633,8 @@ export function formatNumberUI(val: number | undefined | null, isInt: boolean = 
 //window.formatNumberUI = formatNumberUI;
 
 export function atob(buf: string): Uint8Array {
-  let data = window.atob(buf);
-  let ret: number[] = [];
+  const data = window.atob(buf);
+  const ret: number[] = [];
 
   for (let i = 0; i < data.length; i++) {
     ret.push(data.charCodeAt(i));
@@ -679,9 +677,9 @@ if (debug_cacherings) {
       if (typeof obj === "object" && obj !== null && typeof (obj as { copy?: Function }).copy === "function") {
         return (obj as { copy: () => unknown }).copy();
       } else if (typeof obj === "object" && obj !== null && (obj as object).constructor === Object) {
-        let ret: Record<string | symbol, unknown> = {};
+        const ret: Record<string | symbol, unknown> = {};
 
-        for (let k of Reflect.ownKeys(obj as object)) {
+        for (const k of Reflect.ownKeys(obj as object)) {
           let v: unknown;
 
           try {
@@ -705,9 +703,9 @@ if (debug_cacherings) {
       return obj;
     }
 
-    for (let ch of window._cacherings as cachering<unknown>[]) {
-      let obj = ch[0];
-      let len = ch.length;
+    for (const ch of window._cacherings as cachering<unknown>[]) {
+      const obj = ch[0];
+      const len = ch.length;
 
       ch.length = 0;
       ch.cur = 0;
@@ -723,12 +721,12 @@ if (debug_cacherings) {
   };
 
   window._nonvector_cacherings = function (): unknown {
-    for (let ch of window._cacherings as cachering<unknown>[]) {
+    for (const ch of window._cacherings as cachering<unknown>[]) {
       if (ch.length === 0) {
         continue;
       }
 
-      let name = (ch[0] as object).constructor.name;
+      const name = (ch[0] as object).constructor.name;
       let ok = !name.startsWith("Vector") && !name.startsWith("Quat");
       ok = ok && !name.startsWith("TriEditor");
       ok = ok && !name.startsWith("QuadEditor");
@@ -744,7 +742,7 @@ if (debug_cacherings) {
   };
 
   window._stale_cacherings = function (): unknown {
-    let ret = (window._cacherings as cachering<unknown>[]).concat([]);
+    const ret = (window._cacherings as cachering<unknown>[]).concat([]);
 
     ret.sort((a, b) => a.gen - b.gen);
     return ret;
@@ -774,7 +772,7 @@ export class cachering<T> extends Array<T> {
   }
 
   static fromConstructor<U>(cls: new () => U, size: number, isprivate: boolean = false): cachering<U> {
-    let func = function (): U {
+    const func = function (): U {
       return new cls();
     };
 
@@ -786,7 +784,7 @@ export class cachering<T> extends Array<T> {
       this.gen++;
     }
 
-    let ret = this[this.cur];
+    const ret = this[this.cur];
     this.cur = (this.cur + 1) % this.length;
 
     return ret;
@@ -813,7 +811,7 @@ export class SetIter<T extends KeystrObject> {
   }
 
   next(): IteratorResult<T, undefined> {
-    let ret = this.ret;
+    const ret = this.ret;
 
     while (this.i < this.set.items.length && this.set.items[this.i] === EmptySlot) {
       this.i++;
@@ -859,7 +857,7 @@ export class set<T extends KeystrObject> {
 
     if (input !== undefined) {
       if (Symbol.iterator in (input as object)) {
-        for (let item of input as Iterable<T>) {
+        for (const item of input as Iterable<T>) {
           this.add(item);
         }
       } else if ("forEach" in (input as object)) {
@@ -883,13 +881,13 @@ export class set<T extends KeystrObject> {
   }
 
   equals(setb: set<T>): boolean {
-    for (let item of this) {
+    for (const item of this) {
       if (!setb.has(item)) {
         return false;
       }
     }
 
-    for (let item of setb) {
+    for (const item of setb) {
       if (!this.has(item)) {
         return false;
       }
@@ -909,9 +907,9 @@ export class set<T extends KeystrObject> {
 
   filter(f: (item: T, index: number, set: set<T>) => boolean, thisvar?: unknown): set<T> {
     let i = 0;
-    let ret = new set<T>();
+    const ret = new set<T>();
 
-    for (let item of this) {
+    for (const item of this) {
       if (f.call(thisvar, item, i++, this)) {
         ret.add(item);
       }
@@ -921,11 +919,11 @@ export class set<T extends KeystrObject> {
   }
 
   map(f: (item: T, index: number, set: set<T>) => T, thisvar?: unknown): set<T> {
-    let ret = new set<T>();
+    const ret = new set<T>();
 
     let i = 0;
 
-    for (let item of this) {
+    for (const item of this) {
       ret.add(f.call(thisvar, item, i++, this));
     }
 
@@ -935,14 +933,14 @@ export class set<T extends KeystrObject> {
   reduce<U>(f: (acc: U | T, item: T, index: number, set: set<T>) => U, initial?: U): U | T {
     let accumulator: U | T | undefined = initial;
     if (accumulator === undefined) {
-      for (let item of this) {
+      for (const item of this) {
         accumulator = item;
         break;
       }
     }
 
     let i = 0;
-    for (let item of this) {
+    for (const item of this) {
       accumulator = f(accumulator!, item, i++, this);
     }
 
@@ -950,8 +948,8 @@ export class set<T extends KeystrObject> {
   }
 
   copy(): set<T> {
-    let ret = new set<T>();
-    for (let item of this) {
+    const ret = new set<T>();
+    for (const item of this) {
       ret.add(item);
     }
 
@@ -959,17 +957,17 @@ export class set<T extends KeystrObject> {
   }
 
   add(item: T): void {
-    let key = item[Symbol.keystr]();
+    const key = item[Symbol.keystr]();
 
     if (key in this.keys) return;
 
     if (this.freelist.length > 0) {
-      let i = this.freelist.pop()!;
+      const i = this.freelist.pop()!;
 
       this.keys[key] = i;
       this.items[i] = item;
     } else {
-      let i = this.items.length;
+      const i = this.items.length;
 
       this.keys[key] = i;
       this.items.push(item);
@@ -983,7 +981,7 @@ export class set<T extends KeystrObject> {
   }
 
   remove(item: T, ignore_existence?: boolean): void {
-    let key = item[Symbol.keystr]();
+    const key = item[Symbol.keystr]();
 
     if (!(key in this.keys)) {
       if (!ignore_existence) {
@@ -992,7 +990,7 @@ export class set<T extends KeystrObject> {
       return;
     }
 
-    let i = this.keys[key];
+    const i = this.keys[key];
     this.freelist.push(i);
     this.items[i] = EmptySlot;
 
@@ -1007,7 +1005,7 @@ export class set<T extends KeystrObject> {
 
   forEach(func: (item: T) => void, thisvar?: unknown): void {
     for (let i = 0; i < this.items.length; i++) {
-      let item = this.items[i];
+      const item = this.items[i];
 
       if (item === EmptySlot) continue;
 
@@ -1028,7 +1026,7 @@ export class HashIter {
   }
 
   next(): { done: boolean; value: unknown } {
-    let items = this.hash._items;
+    const items = this.hash._items;
 
     if (this.i >= items.length) {
       this.ret.done = true;
@@ -1045,7 +1043,7 @@ export class HashIter {
   }
 }
 
-let _hash_null: object = {};
+const _hash_null: object = {};
 
 export class hashtable {
   _items: unknown[];
@@ -1063,7 +1061,7 @@ export class hashtable {
   }
 
   set(key: KeystrObject, val: unknown): void {
-    let key2 = key[Symbol.keystr]();
+    const key2 = key[Symbol.keystr]();
 
     let i: number;
     if (!(key2 in this._keys)) {
@@ -1088,14 +1086,14 @@ export class hashtable {
   }
 
   remove(key: KeystrObject): void {
-    let key2 = key[Symbol.keystr]();
+    const key2 = key[Symbol.keystr]();
 
     if (!(key2 in this._keys)) {
       console.warn("Warning, key not in hashtable:", key, key2);
       return;
     }
 
-    let i = this._keys[key2];
+    const i = this._keys[key2];
 
     this._items[i] = _hash_null;
     this._items[i + 1] = _hash_null;
@@ -1105,13 +1103,13 @@ export class hashtable {
   }
 
   has(key: KeystrObject): boolean {
-    let key2 = key[Symbol.keystr]();
+    const key2 = key[Symbol.keystr]();
 
     return key2 in this._keys;
   }
 
   get(key: KeystrObject): unknown {
-    let key2 = key[Symbol.keystr]();
+    const key2 = key[Symbol.keystr]();
 
     if (!(key2 in this._keys)) {
       console.warn("Warning, item not in hash", key, key2);
@@ -1126,10 +1124,10 @@ export class hashtable {
   }
 
   keys(): unknown[] {
-    let ret: unknown[] = [];
+    const ret: unknown[] = [];
 
     for (let i = 0; i < this._items.length; i += 2) {
-      let key = this._items[i];
+      const key = this._items[i];
 
       if (key !== _hash_null) {
         ret.push(key);
@@ -1140,10 +1138,10 @@ export class hashtable {
   }
 
   values(): unknown[] {
-    let ret: unknown[] = [];
+    const ret: unknown[] = [];
 
     for (let i = 0; i < this._items.length; i += 2) {
-      let item = this._items[i + 1];
+      const item = this._items[i + 1];
 
       if (item !== _hash_null) {
         ret.push(item);
@@ -1156,8 +1154,8 @@ export class hashtable {
   forEach(cb: (key: string, val: unknown) => void, thisvar?: unknown): void {
     if (thisvar === undefined) thisvar = self;
 
-    for (let k in this._keys) {
-      let i = this._keys[k];
+    for (const k in this._keys) {
+      const i = this._keys[k];
 
       cb.call(thisvar, k, this._items[i]);
     }
@@ -1216,7 +1214,7 @@ export class IDGen {
   }
 
   static fromJSON(obj: { cur?: number; _cur?: number }): IDGen {
-    let ret = new IDGen();
+    const ret = new IDGen();
 
     ret.cur = obj.cur === undefined ? obj._cur! : obj.cur;
 
@@ -1228,7 +1226,7 @@ export class IDGen {
   }
 
   copy(): IDGen {
-    let ret = new IDGen();
+    const ret = new IDGen();
     ret.cur = this.cur;
 
     return ret;
@@ -1272,9 +1270,9 @@ export function print_stack(err?: Error): void {
 (globalThis as Record<string, unknown>).print_stack = print_stack;
 
 export function fetch_file(path: string): Promise<string> {
-  let url = location.origin + "/" + path;
+  const url = location.origin + "/" + path;
 
-  let req = new XMLHttpRequest();
+  const req = new XMLHttpRequest();
 
   return new Promise(function (accept, reject) {
     req.open("GET", url);
@@ -1359,7 +1357,7 @@ export class MersenneRandom {
     for (let i = 0; i < 624; i++) {
       // Get the most significant bit and add it to the less significant
       // bits of the next number
-      let y = _int32((this.mt[i] & 0x80000000) + (this.mt[(i + 1) % 624] & 0x7fffffff));
+      const y = _int32((this.mt[i] & 0x80000000) + (this.mt[(i + 1) % 624] & 0x7fffffff));
       this.mt[i] = this.mt[(i + 397) % 624] ^ (y >> 1);
 
       if (y % 2 !== 0) this.mt[i] = this.mt[i] ^ 0x9908b0df;
@@ -1369,7 +1367,7 @@ export class MersenneRandom {
   }
 }
 
-let _mt = new MersenneRandom(0);
+const _mt = new MersenneRandom(0);
 
 export function random(): number {
   return _mt.extract_number() / (1 << 30);
@@ -1380,13 +1378,13 @@ export function seed(n: number): void {
   _mt.seed(n);
 }
 
-let smallstr_hashes: Record<string, number> = {};
+const smallstr_hashes: Record<string, number> = {};
 
 const MAXINT = Math.pow(2, 31) - 1;
 
 export function strhash(str: string): number {
   if (str.length <= 64) {
-    let hash = smallstr_hashes[str];
+    const hash = smallstr_hashes[str];
 
     if (hash !== undefined) {
       return hash;
@@ -1396,7 +1394,7 @@ export function strhash(str: string): number {
   let hash = 0;
 
   for (let i = 0; i < str.length; i++) {
-    let ch = str.charCodeAt(i);
+    const ch = str.charCodeAt(i);
 
     hash = hash < 0 ? -hash : hash;
 
@@ -1410,16 +1408,16 @@ export function strhash(str: string): number {
   return hash;
 }
 
-let hashsizes = [
+const hashsizes = [
   /*2, 5, 11, 19, 37, 67, 127, */ 223, 383, 653, 1117, 1901, 3251, 5527, 9397, 15991, 27191, 46229, 78593, 133631,
   227177, 38619, 656587, 1116209, 1897561, 3225883, 5484019, 9322861, 15848867, 26943089, 45803279, 77865577, 132371489,
   225031553,
 ];
 
-let FTAKEN = 0,
-  FKEY = 1,
-  FVAL = 2,
-  FTOT = 3;
+const FTAKEN = 0;
+const FKEY = 1;
+const FVAL = 2;
+const FTOT = 3;
 
 export class FastHash extends Array<unknown> {
   cursize: number;
@@ -1438,7 +1436,7 @@ export class FastHash extends Array<unknown> {
   }
 
   resize(size: number): this {
-    let table = this.slice(0, this.length);
+    const table = this.slice(0, this.length);
 
     this.length = size * FTOT;
     this.size = size;
@@ -1447,8 +1445,8 @@ export class FastHash extends Array<unknown> {
     for (let i = 0; i < table.length; i += FTOT) {
       if (!table[i + FTAKEN]) continue;
 
-      let key = table[i + FKEY] as string | number | { valueOf(): number },
-        val = table[i + FVAL];
+      const key = table[i + FKEY] as string | number | { valueOf(): number };
+      const val = table[i + FVAL];
       this.set(key, val);
     }
 
@@ -1456,7 +1454,7 @@ export class FastHash extends Array<unknown> {
   }
 
   get(key: string | number | { valueOf(): number }): unknown {
-    let hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     let probe = 0;
 
@@ -1476,7 +1474,7 @@ export class FastHash extends Array<unknown> {
   }
 
   has(key: string | number | { valueOf(): number }): boolean {
-    let hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     let probe = 0;
 
@@ -1497,7 +1495,7 @@ export class FastHash extends Array<unknown> {
 
   // @ts-ignore - intentionally shadows Array.prototype.set from polyfill
   set(key: string | number | { valueOf(): number }, val: unknown): void {
-    let hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     if (this.used > this.size / 3) {
       this.resize(hashsizes[this.cursize++]);
@@ -1527,7 +1525,7 @@ export class FastHash extends Array<unknown> {
 }
 
 export function test_fasthash(): FastHash {
-  let h = new FastHash();
+  const h = new FastHash();
   console.log("bleh hash:", strhash("bleh"));
 
   h.set("bleh", 1);
@@ -1541,39 +1539,39 @@ export function test_fasthash(): FastHash {
 
 export class ImageReader {
   load_image(): Promise<ImageData> {
-    let input = document.createElement("input");
+    const input = document.createElement("input");
     input.type = "file";
 
     let doaccept!: (value: ImageData) => void;
 
-    let promise = new Promise<ImageData>((accept, _reject) => {
+    const promise = new Promise<ImageData>((accept, _reject) => {
       doaccept = accept;
     });
 
     input.addEventListener("change", function (this: HTMLInputElement, _e: Event) {
-      let files = this.files;
+      const files = this.files;
       console.log("got file", _e, files);
 
       if (!files || files.length === 0) return;
 
-      let reader = new FileReader();
+      const reader = new FileReader();
 
       reader.onload = (e: ProgressEvent<FileReader>) => {
-        let data = (e.target as FileReader).result as string;
-        let image = new Image();
+        const data = (e.target as FileReader).result as string;
+        const image = new Image();
 
         image.src = data;
         image.onload = (_e2: Event) => {
           console.log("got image", image.width, image.height);
 
-          let canvas = document.createElement("canvas");
-          let g = canvas.getContext("2d")!;
+          const canvas = document.createElement("canvas");
+          const g = canvas.getContext("2d")!;
 
           canvas.width = image.width;
           canvas.height = image.height;
 
           g.drawImage(image, 0, 0);
-          let idata = g.getImageData(0, 0, image.width, image.height);
+          const idata = g.getImageData(0, 0, image.width, image.height);
 
           doaccept(idata);
         };
@@ -1623,7 +1621,7 @@ export class HashDigest {
   add(v: number | string | number[] | boolean): this {
     if (typeof v === "boolean") {
       this.add(v ? 1 : 0);
-      return this
+      return this;
     }
     if (typeof v === "string") {
       v = strhash(v);
@@ -1652,7 +1650,7 @@ export class HashDigest {
     //according to wikipedia only the top 16 bits are random
     //this.i = this.i>>16;
 
-    let v2 = (v * 1024 * 1024) & ((1 << 29) - 1);
+    const v2 = (v * 1024 * 1024) & ((1 << 29) - 1);
     v = v | v2;
 
     v = ~~v;
@@ -1664,9 +1662,9 @@ export class HashDigest {
 }
 
 window._test_hash2 = () => {
-  let h = new HashDigest();
+  const h = new HashDigest();
 
-  let tests = [
+  const tests = [
     [0, 0, 0, 0],
     [0, 0, 0],
     [0, 0],
@@ -1679,9 +1677,9 @@ window._test_hash2 = () => {
     [strhash("yay"), strhash("yay"), strhash("yay")],
   ];
 
-  for (let test of tests) {
-    let h2 = new HashDigest();
-    for (let f of test) {
+  for (const test of tests) {
+    const h2 = new HashDigest();
+    for (const f of test) {
       h2.add(f);
     }
 
@@ -1698,16 +1696,16 @@ digestcache = cachering.fromConstructor(HashDigest, 512);
 //globalThis._HashDigest = HashDigest;
 
 export function hashjoin(_hash: number, _val: number): void {
-  let sum = 0;
-  let mul = (1 << 19) - 1,
-    off = (1 << 27) - 1;
-  let i = 0;
+  const sum = 0;
+  const mul = (1 << 19) - 1;
+  const off = (1 << 27) - 1;
+  const i = 0;
 
   let h = _hash;
   h = (h * mul + off + i * mul * 0.25) & mul;
 }
 
-let NullItem: object = {};
+const NullItem: object = {};
 
 export class MapIter<K extends KeystrObject, V> implements Iterator<[K, V]> {
   ret: IteratorResult<[K, V]>;
@@ -1732,10 +1730,10 @@ export class MapIter<K extends KeystrObject, V> implements Iterator<[K, V]> {
   }
 
   next(): IteratorResult<[K, V]> {
-    let ret = this.ret;
+    const ret = this.ret;
     let i = this.i;
-    let m = this.map,
-      list = m._list;
+    const m = this.map;
+    const list = m._list;
     //window.console.log(this)
 
     while (i < list.length && list[i] === NullItem) {
@@ -1806,7 +1804,7 @@ export class map<K extends KeystrObject, V> {
   }
 
   set(key: K, v: V): void {
-    let k = key[Symbol.keystr]();
+    const k = key[Symbol.keystr]();
 
     let i = this._items[k];
 
@@ -1828,27 +1826,27 @@ export class map<K extends KeystrObject, V> {
   }
 
   keys(): Generator<K> {
-    let this2 = this;
+    const this2 = this;
     return (function* () {
-      for (let [key, _val] of this2) {
+      for (const [key, _val] of this2) {
         yield key;
       }
     })();
   }
 
   values(): Generator<V> {
-    let this2 = this;
+    const this2 = this;
     return (function* () {
-      for (let [_key, val] of this2) {
+      for (const [_key, val] of this2) {
         yield val;
       }
     })();
   }
 
   get(k: K): V | undefined {
-    let ks = k[Symbol.keystr]();
+    const ks = k[Symbol.keystr]();
 
-    let i = this._items[ks];
+    const i = this._items[ks];
     if (i !== undefined) {
       return this._list[i + 1] as V;
     }
@@ -1857,13 +1855,13 @@ export class map<K extends KeystrObject, V> {
   }
 
   delete(k: K): boolean {
-    let ks = k[Symbol.keystr]();
+    const ks = k[Symbol.keystr]();
 
     if (!(ks in this._items)) {
       return false;
     }
 
-    let i = this._items[ks];
+    const i = this._items[ks];
 
     this.freelist.push(i);
 
@@ -1877,7 +1875,7 @@ export class map<K extends KeystrObject, V> {
   }
 
   [Symbol.iterator](): MapIter<K, V> {
-    let ret = this.iterstack[this.itercur].reset();
+    const ret = this.iterstack[this.itercur].reset();
     this.itercur++;
 
     if (this.itercur === this.iterstack.length) {
@@ -1889,7 +1887,7 @@ export class map<K extends KeystrObject, V> {
 }
 
 (globalThis as Record<string, unknown>)._test_map = function (): map<string & KeystrObject, number> {
-  let m = new map<string & KeystrObject, number>();
+  const m = new map<string & KeystrObject, number>();
 
   m.set("1" as string & KeystrObject, 2);
   m.set(11 as unknown as string & KeystrObject, 3);
@@ -1898,8 +1896,8 @@ export class map<K extends KeystrObject, V> {
   m.set("3" as string & KeystrObject, 6);
   m.delete("3" as string & KeystrObject);
 
-  for (let [key, item] of m) {
-    for (let [key2, item2] of m) {
+  for (const [key, item] of m) {
+    for (const [key2, item2] of m) {
       window.console.log(key, item, key2, item2);
     }
     break;
@@ -1922,7 +1920,7 @@ function validateId(id: number): boolean {
   return bad;
 }
 
-let UndefinedTag: object = {};
+const UndefinedTag: object = {};
 
 export class IDMap<T> extends Array<T | object | undefined> {
   _keys: Set<number>;
@@ -1958,7 +1956,7 @@ export class IDMap<T> extends Array<T | object | undefined> {
       this.length = id + 1;
     }
 
-    let storedVal: T | object = val === undefined ? UndefinedTag : val;
+    const storedVal: T | object = val === undefined ? UndefinedTag : val;
 
     let ret = false;
 
@@ -2002,31 +2000,31 @@ export class IDMap<T> extends Array<T | object | undefined> {
   }
 
   keys(): Generator<number> {
-    let this2 = this;
+    const this2 = this;
     return (function* () {
-      for (let id of this2._keys) {
+      for (const id of this2._keys) {
         yield id;
       }
     })();
   }
 
   values(): Generator<T | undefined> {
-    let this2 = this;
+    const this2 = this;
     return (function* () {
-      for (let id of this2._keys) {
+      for (const id of this2._keys) {
         yield this2[id] as T | undefined;
       }
     })();
   }
 
   [Symbol.iterator](): Generator<[number, T | undefined]> {
-    let this2 = this;
-    let iteritem: [number, T | undefined] = [0, undefined];
+    const this2 = this;
+    const iteritem: [number, T | undefined] = [0, undefined];
 
     return (function* () {
-      for (let id of this2._keys) {
+      for (const id of this2._keys) {
         iteritem[0] = id;
-        let val = this2[id];
+        const val = this2[id];
 
         if (val === UndefinedTag) {
           iteritem[1] = undefined;
@@ -2041,24 +2039,24 @@ export class IDMap<T> extends Array<T | object | undefined> {
 }
 
 (globalThis as Record<string, unknown>)._test_idmap = function (): IDMap<string> {
-  let idmap = new IDMap<string>();
+  const idmap = new IDMap<string>();
 
   for (let i = 0; i < 5; i++) {
-    let id = ~~(Math.random() * 55);
+    const id = ~~(Math.random() * 55);
 
     idmap.set(id, "yay" + i);
   }
 
-  for (let [key, val] of idmap) {
+  for (const [key, val] of idmap) {
     window.console.log(key, val, idmap.has(key), idmap.get(key));
   }
 
   return idmap;
 };
 
-let HW = 0,
-  HELEM = 1,
-  HTOT = 2;
+const HW = 0;
+const HELEM = 1;
+const HTOT = 2;
 
 function heaplog(..._args: unknown[]): void {
   //window.console.log(..._args);
@@ -2077,10 +2075,10 @@ export class MinHeapQueue<T> {
     this.end = 0;
 
     if (iter) {
-      let witer = iterw[Symbol.iterator]();
+      const witer = iterw[Symbol.iterator]();
 
-      for (let item of iter) {
-        let w = witer.next().value;
+      for (const item of iter) {
+        const w = witer.next().value;
         this.push(item, w as number);
       }
     }
@@ -2096,20 +2094,20 @@ export class MinHeapQueue<T> {
     }
 
     this.length++;
-    let depth = Math.ceil(Math.log(this.length) / Math.log(2.0));
-    let tot = Math.pow(2, depth) + 1;
+    const depth = Math.ceil(Math.log(this.length) / Math.log(2.0));
+    const tot = Math.pow(2, depth) + 1;
 
     heaplog(depth, tot);
 
     if (this.heap.length < tot * HTOT) {
-      let start = this.heap.length / HTOT;
+      const start = this.heap.length / HTOT;
 
       for (let i = start; i < tot; i++) {
         this.freelist.push(i * HTOT);
       }
     }
 
-    let heap = this.heap;
+    const heap = this.heap;
     heap.length = tot * HTOT;
 
     let n = this.freelist.pop()!;
@@ -2151,10 +2149,10 @@ export class MinHeapQueue<T> {
       //throw new Error("heap is empty");
     }
 
-    let heap = this.heap;
+    const heap = this.heap;
 
     if (this.end === 0) {
-      let ret = heap[1] as T | undefined;
+      const ret = heap[1] as T | undefined;
       this.freelist.push(0);
       heap[0] = undefined;
 
@@ -2163,9 +2161,9 @@ export class MinHeapQueue<T> {
       return ret;
     }
 
-    let ret = heap[1] as T | undefined;
+    const ret = heap[1] as T | undefined;
 
-    let end = this.end;
+    const end = this.end;
 
     function swap(n1: number, n2: number): void {
       let t = heap[n1];
@@ -2200,7 +2198,7 @@ export class MinHeapQueue<T> {
 
       if (heap[n1] !== undefined && heap[n2] !== undefined) {
         if ((heap[n1] as number) > (heap[n2] as number)) {
-          let t = n1;
+          const t = n1;
           n1 = n2;
           n2 = t;
         }
@@ -2249,12 +2247,12 @@ export class MinHeapQueue<T> {
 }
 
 (globalThis as Record<string, unknown>).testHeapQueue = function (list1: number[] = [1, 8, -3, 11, 33]): number[] {
-  let h = new MinHeapQueue<number>(list1);
+  const h = new MinHeapQueue<number>(list1);
 
   window.console.log((h.heap as unknown[]).concat([]));
 
-  let results: number[] = [];
-  let len = h.length;
+  const results: number[] = [];
+  const len = h.length;
 
   for (let i = 0; i < len; i++) {
     results.push(h.pop()!);
@@ -2284,19 +2282,19 @@ export class Queue<T> {
   }
 
   enqueue(item: T): void {
-    let qlen = this.queue.length;
+    const qlen = this.queue.length;
 
-    let b = this.b;
+    const b = this.b;
 
     this.queue[b] = item;
     this.b = (this.b + 1) % qlen;
 
     if (this.length >= qlen || this.a === this.b) {
-      let newsize = qlen << 1;
-      let queue: (T | undefined)[] = new Array(newsize);
+      const newsize = qlen << 1;
+      const queue: (T | undefined)[] = new Array(newsize);
 
       for (let i = 0; i < qlen; i++) {
-        let i2 = (i + this.a) % qlen;
+        const i2 = (i + this.a) % qlen;
 
         queue[i] = this.queue[i2];
       }
@@ -2330,7 +2328,7 @@ export class Queue<T> {
     }
     this.length--;
 
-    let ret = this.queue[this.a];
+    const ret = this.queue[this.a];
 
     this.queue[this.a] = undefined;
 
@@ -2340,13 +2338,13 @@ export class Queue<T> {
 }
 
 (globalThis as Record<string, unknown>)._testQueue = function (steps: number = 15, samples: number = 15): void {
-  let queue = new Queue<{ f: number }>(3);
+  const queue = new Queue<{ f: number }>(3);
 
   for (let i = 0; i < steps; i++) {
-    let list: { f: number }[] = [];
+    const list: { f: number }[] = [];
 
     for (let j = 0; j < samples; j++) {
-      let item = { f: Math.random() };
+      const item = { f: Math.random() };
       list.push(item);
 
       queue.enqueue(item);
@@ -2355,7 +2353,7 @@ export class Queue<T> {
     let j = 0;
 
     while (queue.length > 0) {
-      let item = queue.dequeue();
+      const item = queue.dequeue();
 
       if (item !== list[j]) {
         console.log(item, list);
@@ -2414,7 +2412,7 @@ export class ArrayPool {
       return this.get(n, clear);
     }
 
-    let ret = pool.next();
+    const ret = pool.next();
     if (ret.length !== n) {
       console.warn("Array length was set", n, ret);
       ret.length = n;
@@ -2440,7 +2438,7 @@ export class DivLogger {
   constructor(elemId: string, maxLines: number = 16) {
     this.elemId = elemId;
     this.elem = undefined;
-    this.lines = new Array();
+    this.lines = [];
     this.maxLines = maxLines;
   }
 
@@ -2484,7 +2482,7 @@ export class DivLogger {
     const CHAR_LIMIT = 100;
 
     if (typeof obj === "object" && Array.isArray(obj)) {
-      let arr = obj as unknown[];
+      const arr = obj as unknown[];
       s = "[$NL";
       for (let i = 0; i < arr.length; i++) {
         let v: string;
@@ -2499,12 +2497,12 @@ export class DivLogger {
         s += v + (i !== arr.length - 1 ? "," : "") + "$NL";
       }
 
-      let keys = Reflect.ownKeys(arr);
+      const keys = Reflect.ownKeys(arr);
       for (let i = 0; i < keys.length; i++) {
-        let k = keys[i];
+        const k = keys[i];
         let n: number;
 
-        let k2 = this.toString(k);
+        const k2 = this.toString(k);
 
         if (typeof k !== "symbol" && !isNaN((n = parseInt(k as string)))) {
           if (n >= 0 && n < arr.length) {
@@ -2541,10 +2539,10 @@ export class DivLogger {
     } else if (typeof obj === "object") {
       s = "{$NL";
 
-      let keys = Reflect.ownKeys(obj as object);
+      const keys = Reflect.ownKeys(obj as object);
       for (let i = 0; i < keys.length; i++) {
-        let k = keys[i];
-        let k2 = this.toString(k);
+        const k = keys[i];
+        const k2 = this.toString(k);
 
         let v: unknown;
         try {
@@ -2618,8 +2616,8 @@ export class TimeoutPromise<T = unknown> {
       return;
     }
 
-    let accept2 = this._accept2.bind(this);
-    let reject2 = this._reject2.bind(this);
+    const accept2 = this._accept2.bind(this);
+    const reject2 = this._reject2.bind(this);
 
     this._promise = new Promise<T>((accept, reject) => {
       this._accept = accept;
@@ -2642,7 +2640,7 @@ export class TimeoutPromise<T = unknown> {
   }
 
   static wrapPromise<U>(promise: Promise<U>, timeout: number = 3000, callback: AcceptFn<U>): TimeoutPromise<U> {
-    let p = new TimeoutPromise<U>();
+    const p = new TimeoutPromise<U>();
 
     p._promise = promise;
 
@@ -2665,7 +2663,7 @@ export class TimeoutPromise<T = unknown> {
   }
 
   then(callback: (val: T) => unknown): this {
-    let cb = (val: T): unknown => {
+    const cb = (val: T): unknown => {
       let ret = callback(val);
 
       if (ret instanceof Promise) {
@@ -2695,19 +2693,19 @@ export class TimeoutPromise<T = unknown> {
 }
 
 window.setInterval(() => {
-  let bad: TimeoutPromise[] = [];
+  const bad: TimeoutPromise[] = [];
 
-  for (let promise of PendingTimeoutPromises) {
+  for (const promise of PendingTimeoutPromises) {
     if (promise.bad) {
       bad.push(promise);
     }
   }
 
-  for (let promise of bad) {
+  for (const promise of bad) {
     PendingTimeoutPromises.delete(promise);
   }
 
-  for (let promise of bad) {
+  for (const promise of bad) {
     try {
       promise._reject(new Error("Timeout"));
     } catch (error) {

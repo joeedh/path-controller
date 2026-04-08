@@ -59,7 +59,7 @@ export interface DataPathToolProperty extends ToolProperty {
 
 let propCacheRings: Record<number, cachering<ToolProperty>> = {};
 
-export function getTempProp(type: number): ToolProperty {
+export function getTempProp<P extends ToolProperty>(type: number): P {
   if (!(type in propCacheRings)) {
     const cls = ToolProperty.getClass(type);
     if (!cls) {
@@ -68,7 +68,7 @@ export function getTempProp(type: number): ToolProperty {
     propCacheRings[type] = cachering.fromConstructor(cls as unknown as new () => ToolProperty, 32);
   }
 
-  return propCacheRings[type].next();
+  return propCacheRings[type].next() as P;
 }
 
 export class DataPathError extends Error {}
@@ -86,26 +86,6 @@ export function getVecClass(proptype: number): typeof Vector2 | typeof Vector3 |
     default:
       throw new Error("bad prop type " + proptype);
   }
-}
-
-export function isVecProperty(prop: unknown): boolean {
-  if (!prop || typeof prop !== "object" || prop === null) return false;
-
-  let ok = false;
-
-  ok = ok || prop instanceof toolprop_abstract.Vec2PropertyIF;
-  ok = ok || prop instanceof toolprop_abstract.Vec3PropertyIF;
-  ok = ok || prop instanceof toolprop_abstract.Vec4PropertyIF;
-  ok = ok || prop instanceof toolprop.Vec2Property;
-  ok = ok || prop instanceof toolprop.Vec3Property;
-  ok = ok || prop instanceof toolprop.Vec4Property;
-
-  ok = ok || (prop as ToolProperty).type === PropTypes.VEC2;
-  ok = ok || (prop as ToolProperty).type === PropTypes.VEC3;
-  ok = ok || (prop as ToolProperty).type === PropTypes.VEC4;
-  ok = ok || (prop as ToolProperty).type === PropTypes.QUAT;
-
-  return ok;
 }
 
 interface DataPathGetSet {

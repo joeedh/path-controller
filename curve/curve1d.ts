@@ -49,7 +49,7 @@ interface ActiveGenerators extends Array<CurveTypeData> {
   active: CurveTypeData;
 }
 
-let _udigest = new util.HashDigest();
+const _udigest = new util.HashDigest();
 
 export class Curve1D {
   _eventCBs: EventCB[];
@@ -76,8 +76,8 @@ export class Curve1D {
     this.generators = [] as unknown as ActiveGenerators;
     this.VERSION = CURVE_VERSION;
 
-    for (let gen of CurveConstructors) {
-      let g = new gen() as CurveTypeData;
+    for (const gen of CurveConstructors) {
+      const g = new gen() as CurveTypeData;
 
       g.parent = this;
       this.generators.push(g);
@@ -98,7 +98,7 @@ export class Curve1D {
   set fastmode(val: boolean) {
     this._fastmode = val;
 
-    for (let gen of this.generators) {
+    for (const gen of this.generators) {
       gen.fastmode = val;
     }
   }
@@ -123,7 +123,7 @@ export class Curve1D {
   }
 
   subscribed(type: string | undefined, owner: unknown): boolean {
-    for (let cb of this._eventCBs) {
+    for (const cb of this._eventCBs) {
       if ((!type || cb.type === type) && cb.owner === owner) {
         return true;
       }
@@ -140,7 +140,7 @@ export class Curve1D {
     this._pruneEventCallbacks();
 
     for (let i = 0; i < this._eventCBs.length; i++) {
-      let cb = this._eventCBs[i];
+      const cb = this._eventCBs[i];
 
       if (cb.type !== evt) {
         continue;
@@ -161,9 +161,9 @@ export class Curve1D {
   }
 
   calcHashKey(digest: util.HashDigest = _udigest.reset()): number {
-    let d = digest;
+    const d = digest;
 
-    for (let g of this.generators) {
+    for (const g of this.generators) {
       g.calcHashKey(d);
     }
 
@@ -171,10 +171,10 @@ export class Curve1D {
   }
 
   equals(b: Curve1D): boolean {
-    let gen1 = this.generators.active;
-    let gen2 = b.generators.active;
+    const gen1 = this.generators.active;
+    const gen2 = b.generators.active;
 
-    if (!gen1 || !gen2 || gen1.constructor !== gen2.constructor) {
+    if (gen1?.constructor !== gen2?.constructor) {
       return false;
     }
 
@@ -186,17 +186,17 @@ export class Curve1D {
       return this;
     }
 
-    let json = nstructjs.writeJSON(b as unknown as Record<string, unknown>);
-    let cpy = nstructjs.readJSON(json, Curve1D as unknown as { new (): Curve1D }) as unknown as Curve1D;
+    const json = nstructjs.writeJSON(b as unknown as Record<string, unknown>);
+    const cpy = nstructjs.readJSON(json, Curve1D as unknown as { new (): Curve1D }) as unknown as Curve1D;
 
-    let activeCls = cpy.generators.active.constructor;
-    let oldGens = this.generators;
+    const activeCls = cpy.generators.active.constructor;
+    const oldGens = this.generators;
 
     this.generators = cpy.generators;
 
     for (let gen of cpy.generators) {
       /* See if generator provides a .load() method. */
-      for (let gen2 of oldGens) {
+      for (const gen2 of oldGens) {
         if (gen2.constructor === gen.constructor && (gen2 as unknown as Record<string, unknown>).load !== undefined) {
           cpy.generators[cpy.generators.indexOf(gen)] = gen2;
 
@@ -217,7 +217,7 @@ export class Curve1D {
       gen.parent = this;
     }
 
-    for (let k in json ) {
+    for (const k in json) {
       if (k === "generators") {
         continue;
       }
@@ -225,7 +225,7 @@ export class Curve1D {
         continue;
       }
 
-      let v = (cpy as unknown as Record<string, unknown>)[k];
+      const v = (cpy as unknown as Record<string, unknown>)[k];
       if (typeof v === "number" || typeof v === "boolean" || typeof v === "string") {
         (this as unknown as Record<string, unknown>)[k] = v;
       } else if (v instanceof Vector2 || v instanceof Vector3 || v instanceof Vector4 || v instanceof Matrix4) {
@@ -240,7 +240,7 @@ export class Curve1D {
   }
 
   copy(): this {
-    let json = nstructjs.writeJSON(this as unknown as Record<string, unknown>);
+    const json = nstructjs.writeJSON(this as unknown as Record<string, unknown>);
     return nstructjs.readJSON(json, Curve1D as unknown as { new (): Curve1D }) as unknown as this;
   }
 
@@ -251,7 +251,7 @@ export class Curve1D {
   }
 
   setGenerator(type: string | Function): void {
-    for (let gen of this.generators) {
+    for (const gen of this.generators) {
       if (
         (gen.constructor as typeof CurveTypeData).define().name === type ||
         gen.type === type ||
@@ -273,7 +273,7 @@ export class Curve1D {
   }
 
   toJSON(): Record<string, unknown> {
-    let ret: Record<string, unknown> = {
+    const ret: Record<string, unknown> = {
       generators      : [],
       uiZoom          : this.uiZoom,
       VERSION         : this.VERSION,
@@ -283,7 +283,7 @@ export class Curve1D {
       clipToRange     : this.clipToRange,
     };
 
-    for (let gen of this.generators) {
+    for (const gen of this.generators) {
       (ret.generators as Record<string, unknown>[]).push(gen.toJSON());
     }
 
@@ -293,16 +293,16 @@ export class Curve1D {
   }
 
   getGenerator(type: string, throw_on_error: boolean = true): CurveTypeData | undefined {
-    for (let gen of this.generators) {
+    for (const gen of this.generators) {
       if (gen.type === type) {
         return gen;
       }
     }
 
     //was a new generator registered?
-    for (let cls of CurveConstructors) {
+    for (const cls of CurveConstructors) {
       if (cls.define().typeName === type) {
-        let gen = new cls() as CurveTypeData;
+        const gen = new cls() as CurveTypeData;
         gen.type = type;
         gen.parent = this;
         this.generators.push(gen);
@@ -318,10 +318,10 @@ export class Curve1D {
   }
 
   switchGenerator(type: string): CurveTypeData {
-    let gen = this.getGenerator(type)!;
+    const gen = this.getGenerator(type)!;
 
     if (gen !== this.generators.active) {
-      let old = this.generators.active;
+      const old = this.generators.active;
 
       this.generators.active = gen;
 
@@ -349,8 +349,8 @@ export class Curve1D {
     this.clipToRange = Boolean(obj.clipToRange);
 
     //this.generators = [];
-    for (let gen of obj.generators as Record<string, unknown>[]) {
-      let gen2 = this.getGenerator(gen.type as string, false);
+    for (const gen of obj.generators as Record<string, unknown>[]) {
+      const gen2 = this.getGenerator(gen.type as string, false);
 
       if (!gen2 || !(gen2 instanceof CurveTypeData)) {
         //old curve class?
@@ -427,13 +427,13 @@ export class Curve1D {
   }
 
   draw(canvas: HTMLCanvasElement, g: CanvasRenderingContext2D, draw_transform: [number, [number, number]]): this {
-    let w = canvas.width,
-      h = canvas.height;
+    let w = canvas.width;
+    const h = canvas.height;
 
     g.save();
 
-    let sz = draw_transform[0],
-      pan = draw_transform[1];
+    const sz = draw_transform[0];
+    const pan = draw_transform[1];
 
     g.beginPath();
     g.moveTo(-1, 0);
@@ -447,16 +447,16 @@ export class Curve1D {
     g.strokeStyle = "green";
     g.stroke();
 
-    let f = this.xRange[0],
-      steps = 64;
-    let df = (this.xRange[1] - this.xRange[0]) / (steps - 1);
+    let f = this.xRange[0];
+    const steps = 64;
+    const df = (this.xRange[1] - this.xRange[0]) / (steps - 1);
     w = 6.0 / sz;
 
-    let curve = this.generators.active;
+    const curve = this.generators.active;
 
     g.beginPath();
     for (let i = 0; i < steps; i++, f += df) {
-      let val = this.evaluate(f);
+      const val = this.evaluate(f);
 
       (i === 0 ? g.moveTo : g.lineTo).call(g, f, val);
     }
@@ -469,7 +469,7 @@ export class Curve1D {
       f = this.xRange[0];
 
       for (let i = 0; i < steps; i++, f += df) {
-        let val = this.overlay_curvefunc(f);
+        const val = this.overlay_curvefunc(f);
 
         (i === 0 ? g.moveTo : g.lineTo).call(g, f, val);
       }
@@ -491,14 +491,14 @@ export class Curve1D {
     if (this.VERSION <= 0.75) {
       this.generators = [] as unknown as ActiveGenerators;
 
-      for (let cls of CurveConstructors) {
+      for (const cls of CurveConstructors) {
         this.generators.push(new cls() as CurveTypeData);
       }
 
       this.generators.active = this.getGenerator("BSplineCurve")!;
     }
 
-    for (let gen of this.generators.concat([])) {
+    for (const gen of this.generators.concat([])) {
       if (!(gen instanceof CurveTypeData)) {
         console.warn("Bad generator data found:", gen);
         this.generators.remove(gen);
@@ -510,7 +510,7 @@ export class Curve1D {
       }
     }
 
-    for (let gen of this.generators) {
+    for (const gen of this.generators) {
       gen.parent = this;
     }
 
@@ -523,8 +523,8 @@ export class Curve1D {
   }
 
   #patchRange(): void {
-    let gen = this.getGenerator("BSplineCurve") as Record<string, unknown> | undefined;
-    let range = gen?.range as [Vec2, Vec2] | undefined;
+    const gen = this.getGenerator("BSplineCurve") as Record<string, unknown> | undefined;
+    const range = gen?.range as [Vec2, Vec2] | undefined;
     if (range) {
       this.xRange.load(range[0]);
       this.yRange.load(range[1]);

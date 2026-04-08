@@ -8,6 +8,7 @@ that any tool property library must implement to interface with path.ux.
 //maps prop type names to integers
 import * as util from "../util/util.js";
 
+/** These can be combined into a bitmask. */
 export const PropTypes = {
   INT        : 1,
   STRING     : 2,
@@ -22,9 +23,9 @@ export const PropTypes = {
   QUAT       : 1024,
   PROPLIST   : 4096,
   STRSET     : 8192,
-  CURVE      : 8192 << 1,
-  FLOAT_ARRAY: 8192 << 2,
-  REPORT     : 8192 << 3,
+  CURVE      : 16384,
+  FLOAT_ARRAY: 32768,
+  REPORT     : 65536,
   //ITER : 8192<<1
 } as const;
 export type PropTypes = typeof PropTypes;

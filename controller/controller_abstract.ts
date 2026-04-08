@@ -1,53 +1,36 @@
-import { ToolDef, ToolOp, type ToolStack } from "../toolsys/toolsys.js";
 import { print_stack } from "../util/util.js";
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
-import { EnumProperty, ToolProperty } from "../toolsys/toolprop.js";
-import { DataList, DataPath, DataPathError, isVecProperty } from "./controller_base.js";
+import { ToolPropertyTypes, VecPropertyTypes, isVecProperty, ToolDef, ToolOp, ToolProperty } from "../toolsys";
+import { DataList, DataPath, DataPathError } from "./controller_base.js";
 import type { DataAPI, DataStruct } from "./controller.js";
 
-/**
- * Resolved property from a data path, covering fields available
- * on ToolProperty subclasses (EnumProperty, FlagProperty, VecProperty, etc.)
- */
-export interface ResolvedProp<CTX extends ContextLike = ContextLike> extends ToolProperty {
-  flag: number;
-  type: number;
-  dataref: unknown;
-  ctx: CTX;
-  datapath: string;
-  values: Record<string, number>;
-  keys: Record<string | number, string | number>;
-  descriptions: Record<string | number, string>;
-  range: [number, number] | undefined;
-}
-
-type ToolOpAny = ToolOp<any, any, any, any> | ToolOp
+type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
 export interface IToolStack {
-  head: ToolOpAny
-  [k: number]: ToolOpAny
-  length: number
-  cur: number
-  limitMemory(maxmem?: number, ctx?: unknown): number
-  calcMemSize(ctx?: unknown): number
-  setRestrictedToolContext(ctx: unknown):void
-  reset(ctx?: unknown):void
-  execOrRedo(ctx: unknown, tool : ToolOpAny, compareInputs?: boolean): boolean
-  execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): void
-  toolCancel(ctx: unknown, toolop: ToolOpAny): void
-  undo(ctx: unknown): void
-  redo(ctx: unknown): void
-  rerun(tool?: ToolOpAny): void
-  save(): number[]
-  rewind(): this
-  replay(cb?: (ctx: unknown) => unknown, onStep?: () => unknown): Promise<unknown>
+  head: ToolOpAny;
+  [k: number]: ToolOpAny;
+  length: number;
+  cur: number;
+  limitMemory(maxmem?: number, ctx?: unknown): number;
+  calcMemSize(ctx?: unknown): number;
+  setRestrictedToolContext(ctx: unknown): void;
+  reset(ctx?: unknown): void;
+  execOrRedo(ctx: unknown, tool: ToolOpAny, compareInputs?: boolean): boolean;
+  execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): void;
+  toolCancel(ctx: unknown, toolop: ToolOpAny): void;
+  undo(ctx: unknown): void;
+  redo(ctx: unknown): void;
+  rerun(tool?: ToolOpAny): void;
+  save(): number[];
+  rewind(): this;
+  replay(cb?: (ctx: unknown) => unknown, onStep?: () => unknown): Promise<unknown>;
 }
 
 export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack> {
-  state: AppState
-  api: DataAPI<this>
-  toolstack: TS
-  toLocked?(): this
+  state: AppState;
+  api: DataAPI<this>;
+  toolstack: TS;
+  toLocked?(): this;
 }
 
 /**
@@ -60,9 +43,9 @@ export interface ResolvePathResult<CTX extends ContextLike = ContextLike> {
   value: any;
   key: string;
   dstruct: DataStruct;
-  prop?: ResolvedProp<CTX>;
+  prop?: ToolPropertyTypes;
   subkey?: string | number;
-  mass_set?: string
+  mass_set?: string;
 }
 
 export class ModelInterface<CTX extends ContextLike = ContextLike> {
@@ -79,7 +62,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
   getToolPathHotkey(ctx: CTX, path: string): string | undefined {
     return undefined;
   }
-  
+
   createTool(
     ctxOrPath: ContextLike | string,
     pathOrInputs?: string | Record<string, unknown>,
@@ -109,8 +92,8 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     ctx: CTX,
     path: string | ToolOp,
     inputs: Record<string, unknown> = {},
-    unused: unknown = undefined,
-    event: PointerEvent | undefined = undefined
+    unused?: unknown,
+    event?: PointerEvent | undefined
   ): Promise<ToolOp> {
     return new Promise((accept, reject) => {
       let tool: string | ToolOp = path;
@@ -187,17 +170,18 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
   }
 
   setValue<T = unknown>(ctx: CTX, path: string, val: T, rootStruct?: unknown): void {
-    let res = this.resolvePath(ctx, path, undefined, rootStruct)!;
-    let prop = res.prop;
+    const res = this.resolvePath(ctx, path, undefined, rootStruct)!;
+    const prop = res.prop;
 
     if (prop !== undefined && prop.flag & PropFlags.READ_ONLY) {
       throw new DataPathError("Tried to set read only property");
     }
 
     if (prop !== undefined && prop.flag & PropFlags.USE_CUSTOM_GETSET) {
-      prop.dataref = res.obj;
-      prop.ctx = ctx;
-      prop.datapath = path;
+      using execCtx = prop.execWithContext();
+      execCtx.dataref = res.obj;
+      execCtx.ctx = ctx;
+      execCtx.datapath = path;
 
       if (res.subkey !== undefined) {
         let val2: any = prop.getValue();
@@ -214,13 +198,15 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
 
           val = val2;
         } else if (prop.type === PropTypes.ENUM) {
-          val = (prop as unknown as EnumProperty).values[res.subkey!] as T;
+          val = prop.values[res.subkey!] as T;
         } else {
-          (val2 as Record<string, unknown>)[res.subkey] = val;
+          val2[res.subkey] = val;
           val = val2;
         }
       }
 
+      // @ts-expect-error TS is resolving the type union'd
+      // ToolPropertyTypes.setValue's argument to `never`
       prop.setValue(val);
       return;
     }
@@ -242,17 +228,17 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
       }
     }
 
-    let old = res.obj[res.key];
+    const old = res.obj[res.key];
 
-    if (res.subkey !== undefined && res.prop !== undefined && res.prop.type === PropTypes.ENUM) {
-      let ival = res.prop.values[res.subkey];
+    if (res.subkey !== undefined && res.prop?.type === PropTypes.ENUM) {
+      const ival = res.prop.values[res.subkey];
 
       if (val) {
         res.obj[res.key] = ival;
       }
-    } else if (res.prop !== undefined && res.prop.type === PropTypes.FLAG) {
+    } else if (res.prop?.type === PropTypes.FLAG) {
       if (res.subkey !== undefined) {
-        let ival = res.prop.values[res.subkey];
+        const ival = res.prop.values[res.subkey];
 
         if (val) {
           res.obj[res.key] = (res.obj[res.key] as number) | ival;
@@ -283,16 +269,17 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     if (prop !== undefined && prop instanceof DataList) {
       prop.set(this, res.obj, res.key, val);
     } else if (prop !== undefined) {
-      prop.dataref = res.obj;
-      prop.datapath = path;
-      prop.ctx = ctx;
+      using execCtx = prop.execWithContext();
+      execCtx.dataref = res.obj;
+      execCtx.datapath = path;
+      execCtx.ctx = ctx;
 
       prop._fire("change", res.obj[res.key], old);
     }
   }
 
   getDescription(ctx: CTX, path: string): string {
-    let rdef = this.resolvePath(ctx, path);
+    const rdef = this.resolvePath(ctx, path);
     if (rdef === undefined) {
       throw new DataPathError("invalid path " + path);
     }
@@ -301,33 +288,36 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
       return "";
     }
 
-    let type = rdef.prop.type;
-    let prop = rdef.prop as ResolvedProp;
+    const prop = rdef.prop as ToolPropertyTypes;
 
     if (rdef.subkey !== undefined) {
       let subkey: string | number = rdef.subkey;
 
-      if (type !== undefined && type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4)) {
-        if (prop.descriptions && subkey in prop.descriptions) {
-          return prop.descriptions[subkey];
-        }
-      } else if (type !== undefined && type & (PropTypes.ENUM | PropTypes.FLAG)) {
-        if (!(subkey in prop.values) && subkey in prop.keys) {
-          subkey = prop.keys[subkey];
+      if (prop.type !== undefined && prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4)) {
+        if (typeof subkey === "string") {
+          subkey = parseInt(subkey);
         }
 
+        const vecProp = prop as VecPropertyTypes;
+        if (vecProp.descriptions && subkey in vecProp.descriptions) {
+          return vecProp.descriptions[subkey];
+        }
+      } else if (prop.type === PropTypes.ENUM || prop.type === PropTypes.FLAG) {
+        if (!(subkey in prop.values) && subkey in prop.keys) {
+          subkey = prop.keys[subkey as keyof typeof prop.keys];
+        }
         if (prop.descriptions && subkey in prop.descriptions) {
           return prop.descriptions[subkey];
         }
-      } else if (type === PropTypes.PROPLIST) {
-        let val = rdef.value;
+      } else if (prop.type === PropTypes.PROPLIST) {
+        const val = rdef.value;
         if (typeof val === "object" && val instanceof ToolProperty) {
           return val.description ?? "";
         }
       }
     }
 
-    return rdef.prop.description ? rdef.prop.description : rdef.prop.uiname ?? "";
+    return prop.description ? prop.description : prop.uiname ?? "";
   }
 
   validPath(ctx: CTX, path: string, rootStruct?: unknown): boolean {
@@ -365,12 +355,12 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return path;
   }
 
-  getValue(ctx: CTX, path: string, rootStruct: unknown = undefined): unknown {
+  getValue(ctx: CTX, path: string, rootStruct?: unknown): unknown {
     if (typeof ctx == "string") {
       throw new Error("You forgot to pass context to getValue");
     }
 
-    let ret = this.resolvePath(ctx, path, undefined, rootStruct);
+    const ret = this.resolvePath(ctx, path, undefined, rootStruct);
 
     if (ret === undefined) {
       throw new DataPathError("invalid path " + path);
@@ -383,21 +373,27 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     exec =
       exec &&
       !(
-        ret.prop !== undefined &&
-        ret.prop.type !== undefined &&
+        ret.prop?.type !== undefined &&
         ret.prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT)
       );
 
     if (exec) {
-      let prop = ret.prop!;
-      prop.dataref = ret.obj;
-      prop.datapath = path;
-      prop.ctx = ctx;
+      const prop = ret.prop!;
 
-      let val: unknown = prop.getValue();
+      // set up `this` context for any getter callbacks
+      let val: unknown;
+      {
+        using execCtx = prop.execWithContext();
+        execCtx.dataref = ret.obj;
+        execCtx.datapath = path;
+        execCtx.ctx = ctx;
+        val = prop.getValue();
+      }
 
-      if (typeof val === "string" && prop.type !== undefined && prop.type & (PropTypes.FLAG | PropTypes.ENUM)) {
-        val = prop.values[val];
+      if (prop.type === PropTypes.ENUM || prop.type === PropTypes.FLAG) {
+        if (typeof val === "string" && val in prop.values) {
+          val = prop.values[val as keyof typeof prop.values];
+        }
       }
 
       if (ret.subkey && prop.type === PropTypes.ENUM) {
