@@ -72,11 +72,11 @@ import nstructjs from "../util/struct.js";
 
 import * as events from "../util/events.js";
 import { keymap } from "../util/simple_events.js";
-import { PropFlags, PropTypes } from "./toolprop.js";
+import { PropFlags, PropTypes, ToolProperty } from "./toolprop.js";
 import { DataPath } from "../controller/controller_base.js";
 import * as util from "../util/util.js";
 import { Context } from "../controller/context.js";
-import { ContextLike, ToolOpAny } from "../controller.js";
+import { ContextLike, DataAPI, DataStruct, ToolOpAny } from "../controller.js";
 import { StructReader } from "../util/nstructjs.js";
 
 // Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
@@ -148,9 +148,6 @@ type MacroClassType = (new () => ToolOp) & {
   name: string;
   STRUCT?: string;
 };
-
-/** ToolProperty (imported type -- re-declared locally for convenience) */
-type ToolProperty<T = unknown> = import("./toolprop.js").ToolProperty<T>;
 
 /* ------------------------------------------------------------------ */
 /*  Exported generic-type aliases                                     */
@@ -239,8 +236,8 @@ export class ToolPropertyCache {
     cls: ToolOpConstructor | MacroClassType,
     key: string,
     prop: ToolProperty,
-    dstruct: Record<string, unknown>,
-    api: Record<string, unknown>
+    dstruct: DataStruct,
+    api: DataAPI
   ): void {
     const tdef = (cls as ToolOpConstructor)._getFinalToolDef();
 
@@ -256,9 +253,9 @@ export class ToolPropertyCache {
       .trim()
       .split(".")
       .filter((f: string) => f.trim().length > 0);
-    let obj: Record<string, unknown> = this.accessors;
+    let obj = this.accessors;
 
-    let st = dstruct as Record<string, unknown>;
+    let st = dstruct;
     let partial = "";
 
     for (let i = 0; i < path.length; i++) {
@@ -278,20 +275,14 @@ export class ToolPropertyCache {
         obj[k] = {};
       }
 
-      const st2 = (api as Record<string, Function>).mapStruct(obj[k], true, k);
-      if (
-        !(
-          (st as Record<string, Record<string, unknown>>).pathmap &&
-          k in (st as Record<string, Record<string, unknown>>).pathmap
-        )
-      ) {
-        (st as Record<string, Function>).struct(pathk, k, k, st2);
+      const st2 = api.mapStruct(obj[k], true, k);
+      if (!(st.pathmap && k in st.pathmap)) {
+        st.struct(pathk, k, k, st2);
       }
-      st = st2 as Record<string, unknown>;
+      st = st2;
 
-      this.pathmap.set(partial, obj[k] as Record<string, unknown>);
-
-      obj = obj[k] as Record<string, unknown>;
+      this.pathmap.set(partial, obj[k] as any);
+      obj = obj[k] as any;
     }
 
     const name = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : key;
@@ -307,14 +298,13 @@ export class ToolPropertyCache {
       uiname = key;
     }
 
-    uiname = (ToolProperty_cls as unknown as Record<string, Function>).makeUIName(uiname);
+    uiname = ToolProperty.makeUIName(uiname);
 
     prop2.uiname = uiname;
     prop2.description = prop2.description || prop2.uiname;
 
-    (st as Record<string, Function>).add(dpath);
-
-    (obj as Record<string, unknown>)[name] = prop2.getValue();
+    st.add(dpath);
+    obj[name] = prop2.getValue();
   }
 
   _getAccessor(cls: ToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
@@ -325,9 +315,7 @@ export class ToolPropertyCache {
 
   useDefault(cls: ToolOpConstructor | MacroClassType, key: string, _prop: ToolProperty): string {
     const k = this.userSetMap.has(
-      (cls.tooldef() as Record<string, unknown>).toString().trim() +
-        "." +
-        (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, _prop)
+      cls.tooldef().toString().trim() + "." + (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, _prop)
     ) as unknown as string;
     return k as unknown as string;
   }
@@ -402,25 +390,6 @@ export class ToolPropertyCache {
 }
 
 export const SavedToolDefaults: ToolPropertyCache = new ToolPropertyCache();
-
-/* ------------------------------------------------------------------ */
-/*  We need a lazy reference to ToolProperty class for makeUIName     */
-/* ------------------------------------------------------------------ */
-let ToolProperty_cls: unknown;
-import("./toolprop.js").then((mod) => {
-  ToolProperty_cls = mod.ToolProperty;
-});
-
-/* Synchronous fallback -- import is static so the module is already loaded */
-try {
-  ToolProperty_cls = (await import("./toolprop.js")).ToolProperty;
-} catch {
-  // handled by the dynamic import above
-}
-
-/* ------------------------------------------------------------------ */
-/*  ToolOp                                                            */
-/* ------------------------------------------------------------------ */
 
 export class ToolOp<
   InputSlots extends PropertySlots = {},
@@ -974,8 +943,6 @@ export class ToolOp<
 
   /**for use in modal mode only*/
   resetTempGeom(): void {
-    const ctx = this.modal_ctx;
-
     for (const dl of this.drawlines) {
       (dl as { remove(): void }).remove();
     }
@@ -2049,8 +2016,8 @@ nstructjs.register(ToolStack);
 /*  API builders                                                      */
 /* ------------------------------------------------------------------ */
 
-export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstructor): unknown {
-  const st = api.mapStruct(cls, true) as Record<string, Function>;
+export function buildToolOpAPI(api: DataAPI, cls: ToolOpConstructor): unknown {
+  const st = api.mapStruct(cls, true);
   const def = cls._getFinalToolDef();
 
   function makeProp(k: string): void {
@@ -2060,7 +2027,7 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
       return;
     }
 
-    prop.uiname = prop.uiname || (ToolProperty_cls as unknown as Record<string, Function>).makeUIName(k);
+    prop.uiname = prop.uiname || ToolProperty.makeUIName(k);
 
     const dpath = new DataPath(k, k, prop);
     st.add(dpath);
@@ -2090,13 +2057,13 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
  * if necessary.
  */
 export function buildToolSysAPI(
-  api: Record<string, Function>,
+  api: DataAPI,
   registerWithNStructjs: boolean = true,
-  rootCtxStruct?: Record<string, Function> | undefined,
+  rootCtxStruct?: DataStruct,
   rootCtxClass?: (new (arg: Record<string, unknown>) => unknown) | undefined,
   insertToolDefaultsIntoContext: boolean = true
 ): void {
-  const datastruct = api.mapStruct(ToolPropertyCache, true) as Record<string, Function>;
+  const datastruct = api.mapStruct(ToolPropertyCache, true);
 
   for (const cls of ToolClasses) {
     const def = cls._getFinalToolDef();

@@ -3,7 +3,7 @@ import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath.js"
 import { ToolPropertyIF, PropTypes, PropFlags } from "./toolprop_abstract.js";
 import nstructjs from "../util/struct.js";
 import type { StructReader } from "../util/nstructjs_es6.js";
-import { JSONAny } from "../controller.js";
+import type { JSONAny } from "../controller.js";
 
 export { PropTypes, PropFlags } from "./toolprop_abstract.js";
 

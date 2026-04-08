@@ -5,10 +5,10 @@ this file is a skeleton that defines the contract
 that any tool property library must implement to interface with path.ux.
 */
 
-//maps prop type names to integers
-import * as util from "../util/util.js";
-
-/** These can be combined into a bitmask. */
+/**
+ * Maps prop type names to integers.
+ * These can be combined into a bitmask.
+ **/
 export const PropTypes = {
   INT        : 1,
   STRING     : 2,
