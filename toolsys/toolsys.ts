@@ -210,12 +210,14 @@ export function setDefaultUndoHandlers(undoPre: (ctx: unknown) => void, undo: (c
 /* ------------------------------------------------------------------ */
 
 export class ToolPropertyCache {
+  /** @deprecated */
   map: Map<unknown, unknown>;
-  pathmap: Map<string, Record<string, unknown>>;
-  accessors: Record<string, unknown>;
+
+  pathmap: Map<string, any>;
+  accessors: Record<string, any>;
   userSetMap: Set<string>;
-  api: unknown;
-  dstruct: unknown;
+  declare api: DataAPI;
+  declare dstruct: DataStruct;
 
   constructor() {
     this.map = new Map();
@@ -223,9 +225,6 @@ export class ToolPropertyCache {
     this.accessors = {};
 
     this.userSetMap = new Set();
-
-    this.api = undefined;
-    this.dstruct = undefined;
   }
 
   static getPropKey(_cls: unknown, key: string, prop: ToolProperty): string {
@@ -313,11 +312,14 @@ export class ToolPropertyCache {
     return this.pathmap.get(toolpath.trim());
   }
 
-  useDefault(cls: ToolOpConstructor | MacroClassType, key: string, _prop: ToolProperty): string {
-    const k = this.userSetMap.has(
-      cls.tooldef().toString().trim() + "." + (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, _prop)
-    ) as unknown as string;
-    return k as unknown as string;
+  static getFullPath(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): string {
+    const toolpath = cls.tooldef()!.toolpath!.trim();
+    const propKey = ToolPropertyCache.getPropKey(cls, key, prop);
+    return `${toolpath}.${propKey}`;
+  }
+
+  useDefault(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
+    return this.userSetMap.has(ToolPropertyCache.getFullPath(cls, key, prop));
   }
 
   has(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
@@ -327,7 +329,7 @@ export class ToolPropertyCache {
 
     const obj = this._getAccessor(cls);
 
-    key = (this.constructor as typeof ToolPropertyCache).getPropKey(cls, key, prop);
+    key = ToolPropertyCache.getPropKey(cls, key, prop);
     return !!obj && key in obj;
   }
 
@@ -361,13 +363,7 @@ export class ToolPropertyCache {
 
     if (!obj) {
       console.warn("Warning, toolop " + cls.name + " was not in the default map; unregistered?");
-      this._buildAccessors(
-        cls as ToolOpConstructor,
-        key,
-        prop,
-        this.dstruct as Record<string, unknown>,
-        this.api as Record<string, unknown>
-      );
+      this._buildAccessors(cls as ToolOpConstructor, key, prop, this.dstruct, this.api);
 
       obj = this.pathmap.get(toolpath);
     }
@@ -2074,13 +2070,7 @@ export function buildToolSysAPI(
       const prop = def.inputs[k];
 
       if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
-        SavedToolDefaults._buildAccessors(
-          cls,
-          k,
-          prop,
-          datastruct as unknown as Record<string, unknown>,
-          api as unknown as Record<string, unknown>
-        );
+        SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
       }
     }
   }
