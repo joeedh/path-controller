@@ -204,9 +204,9 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
    * Referencing object lives in 'this.dataref'; calling context in 'this.ctx';
    * and the datapath is 'this.datapath'
    **/
-  customGetSet(
-    get: ((this: ToolProperty) => unknown) | undefined,
-    set: ((this: ToolProperty, val: unknown) => void) | undefined
+  customGetSet<DATAREF = unknown>(
+    get: ((this: ToolProperty & { dataref: DATAREF }) => unknown) | undefined,
+    set: ((this: ToolProperty & { dataref: DATAREF }, val: unknown) => void) | undefined
   ): this {
     this.flag |= DataFlags.USE_CUSTOM_GETSET;
 

@@ -76,7 +76,7 @@ import { PropFlags, PropTypes } from "./toolprop.js";
 import { DataPath } from "../controller/controller_base.js";
 import * as util from "../util/util.js";
 import { Context } from "../controller/context.js";
-import { ContextLike } from "../controller.js";
+import { ContextLike, ToolOpAny } from "../controller.js";
 import { StructReader } from "../util/nstructjs.js";
 
 // Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
@@ -123,7 +123,7 @@ interface ToolOpConstructor {
   tooldef(): ToolDef;
   _getFinalToolDef(): ResolvedToolDef;
   _regWithNstructjs(cls: ToolOpConstructor, structName?: string): void;
-  canRun<CTX extends ContextLike, ModalCTX extends ContextLike = CTX>(
+  canRun<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     ctx: CTX,
     toolop?: ToolOp<any, any, CTX, ModalCTX>
   ): boolean;
@@ -425,8 +425,8 @@ try {
 export class ToolOp<
   InputSlots extends PropertySlots = {},
   OutputSlots extends PropertySlots = {},
-  ContextCls = ContextLike,
-  ModalContextCls = ContextCls,
+  CTX extends ContextLike = ContextLike,
+  ModalCTX extends CTX = CTX,
 > extends events.EventHandler {
   /**
    Main ToolOp constructor.  It reads the inputs/outputs properties from
@@ -456,15 +456,15 @@ export class ToolOp<
   _accept: ((ctx: unknown, wasCancelled: boolean) => void) | undefined;
   _reject: ((reason?: unknown) => void) | undefined;
   _promise: Promise<unknown> | undefined;
-  _on_cancel: ((tool: ToolOp<any, any, ContextCls, ModalContextCls>) => void) | undefined;
+  _on_cancel: ((tool: ToolOp<any, any, CTX, ModalCTX>) => void) | undefined;
   _was_redo!: boolean;
   inputs!: InputSlots;
   outputs!: OutputSlots;
   drawlines!: unknown[];
   is_modal!: boolean;
-  modal_ctx?: ModalContextCls;
+  modal_ctx?: ModalCTX;
   modalRunning!: boolean;
-  execCtx?: ContextCls;
+  execCtx?: CTX;
 
   constructor() {
     super();
@@ -628,7 +628,7 @@ export class ToolOp<
     return result;
   }
 
-  static Equals<CTX extends ContextLike, ModalCTX = CTX>(
+  static Equals<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     a: ToolOp<any, any, CTX, ModalCTX> | undefined | null,
     b: ToolOp<any, any, CTX, ModalCTX> | undefined | null
   ): boolean {
@@ -663,7 +663,7 @@ export class ToolOp<
    stored somewhere in the context.
 
    */
-  static invoke(ctx: unknown, args: Record<string, unknown>): ToolOp {
+  static invoke<CTX extends ContextLike>(ctx: CTX, args: Record<string, unknown>): ToolOp {
     const tool = new (this as unknown as new () => ToolOp)();
     const inputs = tool.inputs as Record<string, ToolProperty>;
 
@@ -795,7 +795,7 @@ export class ToolOp<
     }
   }
 
-  static searchBoxOk(ctx: unknown): boolean {
+  static searchBoxOk<CTX extends ContextLike>(ctx: CTX): boolean {
     const flag = this.tooldef().flag;
     let ret = !(flag && flag & ToolFlags.PRIVATE);
     ret = ret && this.canRun(ctx);
@@ -804,7 +804,7 @@ export class ToolOp<
   }
 
   //toolop is an optional instance of this class, may be undefined
-  static canRun(_ctx: unknown, _toolop?: ToolOp | undefined): boolean {
+  static canRun<CTX extends ContextLike>(_ctx: CTX, _toolop?: ToolOp | undefined): boolean {
     return true;
   }
 
@@ -813,7 +813,7 @@ export class ToolOp<
   onUndoDestroy(): void {}
 
   /** Used by undo system to limit memory */
-  calcMemSize(ctx: ContextCls): number {
+  calcMemSize(ctx: CTX): number {
     if (this.__memsize !== undefined) {
       return this.__memsize;
     }
@@ -938,21 +938,21 @@ export class ToolOp<
   }
 
   //called after undoPre
-  calcUndoMem(_ctx: ContextCls): number {
+  calcUndoMem(_ctx: CTX): number {
     console.warn("ToolOp.prototype.calcUndoMem: implement me!");
     return 0;
   }
 
-  undoPre(_ctx: ContextCls): void {
+  undoPre(_ctx: CTX): void {
     throw new Error("implement me!");
   }
 
-  undo(_ctx: ContextCls): void {
+  undo(_ctx: CTX): void {
     throw new Error("implement me!");
     //_appstate.loadUndoFile(this._undo);
   }
 
-  redo(ctx: ContextCls): void {
+  redo(ctx: CTX): void {
     this._was_redo = true; //also set by toolstack.redo
 
     this.undoPre(ctx);
@@ -962,15 +962,15 @@ export class ToolOp<
   }
 
   //for compatibility with fairmotion
-  exec_pre(ctx: ContextCls): void {
+  exec_pre(ctx: CTX): void {
     this.execPre(ctx);
   }
 
-  execPre(_ctx: ContextCls): void {}
+  execPre(_ctx: CTX): void {}
 
-  exec(_ctx: ContextCls): void {}
+  exec(_ctx: CTX): void {}
 
-  execPost(_ctx: ContextCls): void {}
+  execPost(_ctx: CTX): void {}
 
   /**for use in modal mode only*/
   resetTempGeom(): void {
@@ -1020,13 +1020,13 @@ export class ToolOp<
   }
 
   /**returns promise to be executed on modalEnd*/
-  modalStart(ctx: ModalContextCls): Promise<unknown> {
+  modalStart(ctx: ModalCTX): Promise<unknown> {
     if (this.modalRunning) {
       console.warn("Warning, tool is already in modal mode consuming events");
       return this._promise!;
     }
 
-    this.modal_ctx = ctx as ModalContextCls;
+    this.modal_ctx = ctx as ModalCTX;
     this.modalRunning = true;
 
     this._promise = new Promise((accept, reject) => {
@@ -1036,9 +1036,9 @@ export class ToolOp<
       modalstack.push(this as unknown as ToolOp);
 
       if (this._pointerId !== undefined) {
-        super.pushPointerModal((ctx as Record<string, unknown>).screen as EventTarget, this._pointerId);
+        super.pushPointerModal(ctx.screen!, this._pointerId);
       } else {
-        super.pushModal((ctx as Record<string, unknown>).screen as EventTarget);
+        super.pushModal(ctx.screen!);
       }
     });
 
@@ -1220,12 +1220,7 @@ interface ConnectCB {
   thisvar: unknown;
 }
 
-export class ToolMacro<CTX extends ContextLike, ModalCTX extends ContextLike = CTX> extends ToolOp<
-  any,
-  any,
-  CTX,
-  ModalCTX
-> {
+export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> extends ToolOp<any, any, CTX, ModalCTX> {
   static override STRUCT: string;
 
   tools: ToolOp[];
@@ -1625,9 +1620,6 @@ nstructjs.register(ToolMacro as unknown as import("../util/nstructjs_es6.js").St
 /*  ToolStack                                                         */
 /* ------------------------------------------------------------------ */
 
-// avoid loop in type systme
-type TSContext = Omit<ContextLike, "toolstack">;
-
 // we can't ContextLike due to cyclic dependency
 // created with the TS default in ContextLike itself
 export class ToolStack<
@@ -1764,7 +1756,7 @@ export class ToolStack<
     }
   }
 
-  execTool(ctx: ContextCls | ModalContextCls, toolop: this[0] | ToolOp<any, any, unknown, unknown>, event?: PointerEvent): void {
+  execTool(ctx: ContextCls | ModalContextCls, toolop: this[0] | ToolOpAny, event?: PointerEvent): void {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx as ContextCls);
     }
@@ -1946,8 +1938,6 @@ export class ToolStack<
    waited on, otherwise execution is queue with window.setTimeout().
    */
   replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown): Promise<unknown> {
-    const cur = this.cur;
-
     this.rewind();
 
     let last = this.cur;
@@ -2008,7 +1998,7 @@ export class ToolStack<
     for (const tool of this) {
       const cls = tool.constructor as unknown as ToolOpConstructor;
 
-      if (!nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
+      if (!nstructjs.isRegistered(cls)) {
         cls._regWithNstructjs(cls);
       }
     }
@@ -2075,7 +2065,7 @@ export function buildToolOpAPI(api: Record<string, Function>, cls: ToolOpConstru
     const dpath = new DataPath(k, k, prop);
     st.add(dpath);
 
-    (dpath as unknown as Record<string, Function>).customGetSet(
+    dpath.customGetSet(
       function (this: { dataref: ToolOp }) {
         return (this.dataref.inputs as Record<string, ToolProperty>)[k].getValue();
       },

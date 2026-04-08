@@ -1,10 +1,11 @@
-import { print_stack } from "../util/util.js";
-import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
+import { print_stack } from "../util/util";
+import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract";
 import { ToolPropertyTypes, VecPropertyTypes, isVecProperty, ToolDef, ToolOp, ToolProperty } from "../toolsys";
-import { DataList, DataPath, DataPathError } from "./controller_base.js";
-import type { DataAPI, DataStruct } from "./controller.js";
+import { DataList, DataPath, DataPathError } from "./controller_base";
+import type { DataAPI, DataStruct } from "./controller";
+import type { Screen } from "../../screen/FrameManager";
 
-type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
+export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
 export interface IToolStack {
   head: ToolOpAny;
@@ -28,9 +29,15 @@ export interface IToolStack {
 
 export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack> {
   state: AppState;
+  // @ts-expect-error bleh
   api: DataAPI<this>;
   toolstack: TS;
   toLocked?(): this;
+  
+  // TODO: split screen dependent stuff out of base ToolOp
+  // into it's own subclass in main path.ux repo
+  //@ts-expect-error bleh
+  screen: Screen<this>;
 }
 
 /**
