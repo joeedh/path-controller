@@ -575,9 +575,10 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     }
   }
 
-  setRelativeStep(step: number): void {
+  setRelativeStep(step: number): this {
     this.step = step;
     this.stepIsRelative = true;
+    return this;
   }
 
   setRange(min: number, max: number): this {
@@ -991,7 +992,6 @@ export class _NumberPropertyBase<T = number, TYPE extends number = number> exten
 
   setSlideSpeed(f: number): this {
     this.slideSpeed = f;
-
     return this;
   }
 
@@ -999,8 +999,9 @@ export class _NumberPropertyBase<T = number, TYPE extends number = number> exten
    * non-linear exponent for number sliders
    * in roll mode
    * */
-  setExpRate(exp: number): void {
+  setExpRate(exp: number): this {
     this.expRate = exp;
+    return this;
   }
 
   setValue(val?: T | number | null): void {
@@ -1702,6 +1703,11 @@ export class VecPropertyBase<
     super(type, undefined, apiname, uiname, description);
 
     this.hasUniformSlider = false;
+  }
+
+  setIsColor(): this {
+    this.subtype = (this.subtype ?? 0) | PropSubTypes.COLOR;
+    return this;
   }
 
   calcMemSize(): number {
