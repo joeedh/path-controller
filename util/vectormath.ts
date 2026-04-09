@@ -3,7 +3,7 @@ import nstructjs from "./struct";
 import type { StructReader } from "./nstructjs";
 import * as util from "./util";
 
-let vec_temp_mats: util.cachering<Matrix4>
+let vec_temp_mats: util.cachering<Matrix4>;
 
 const DOT_NORM_SNAP_LIMIT = 0.00000000001;
 const FLT_EPSILON = 2.22e-16;
@@ -49,12 +49,12 @@ export type Number5 = 0 | 1 | 2 | 3 | 4;
 type numlits = { 1: 1; 2: 2 | 3 | 4; 3: 3 | 4; 4: 4 };
 export type NumLitHigher<L extends 1 | 2 | 3 | 4> = numlits[L];
 
-type helper1 = [never, never, 0 | 1, 0 | 1 | 2, 0 | 1 | 2 | 3]
+type helper1 = [never, never, 0 | 1, 0 | 1 | 2, 0 | 1 | 2 | 3];
 type IBaseBase<LEN extends 2 | 3 | 4> = {
-  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? k : never]: number
+  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? k : never]: number;
 } & {
-  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? never : k]?: number
-}
+  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? never : k]?: number;
+};
 
 /**
  * By design vectors do not have a simple index signature.
@@ -81,62 +81,61 @@ type IBaseBase<LEN extends 2 | 3 | 4> = {
  * ```
  */
 type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = Array<number>> = IBaseBase<LEN> & {
-  length: number
+  length: number;
 
   // for indices above LEN, type to number | undefined
-  [k: number]: number | undefined
+  [k: number]: number | undefined;
 
-  [Symbol.iterator](): Iterator<number>
-  slice(start?: number, end?: number): number[]
+  [Symbol.iterator](): Iterator<number>;
+  slice(start?: number, end?: number): number[];
 
-  sinterp(b: IBaseVector<LEN>, t: number): IBaseVector<LEN>
+  sinterp(b: IBaseVector<LEN>, t: number): IBaseVector<LEN>;
 
-  perpSwap(axis1?: number, axis2?: number, sign?: number): IBaseVector<LEN>
+  perpSwap(axis1?: number, axis2?: number, sign?: number): IBaseVector<LEN>;
 
   //all math operates in-place, no new objects
-  load(b: IBaseVector<LEN> | INumVector): IBaseVector<LEN>
+  load(b: IBaseVector<LEN> | INumVector): IBaseVector<LEN>;
 
-  loadXY(x: number, y: number): IBaseVector<LEN>
+  loadXY(x: number, y: number): IBaseVector<LEN>;
 
-  copy(): IBaseVector<LEN>
+  copy(): IBaseVector<LEN>;
 
-  add(b: IBaseVector<LEN>): IBaseVector<LEN>
-  sub(b: IBaseVector<LEN>): IBaseVector<LEN>
-  mul(b: IBaseVector<LEN>): IBaseVector<LEN>
-  div(b: IBaseVector<LEN>): IBaseVector<LEN>
-  addScalar(b: number): IBaseVector<LEN>
-  subScalar(b: number): IBaseVector<LEN>
-  mulScalar(b: number): IBaseVector<LEN>
-  divScalar(b: number): IBaseVector<LEN>
-  minScalar(b: number): IBaseVector<LEN>
-  maxScalar(b: number): IBaseVector<LEN>
-  min(b: IBaseVector<LEN>): IBaseVector<LEN>
-  max(b: IBaseVector<LEN>): IBaseVector<LEN>
-  floor(): IBaseVector<LEN>
-  fract(): IBaseVector<LEN>
-  ceil(): IBaseVector<LEN>
-  abs(): IBaseVector<LEN>
-  dot(b: IBaseVector<LEN>): number
-  normalizedDot(b: IBaseVector<3>): number
-  normalize(): IBaseVector<LEN>
-  vectorLength(): number
-  vectorLengthSqr(): number
-  vectorDistance(b: IBaseVector<LEN>): number
-  vectorDistanceSqr(b: IBaseVector<LEN>): number
-  multVecMatrix(mat: Matrix4): void
-  interp(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>
-  addFac(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>
-  rot2d(th: number, axis?: number | undefined): IBaseVector<LEN>
-  zero(): IBaseVector<LEN>
-  negate(): IBaseVector<LEN>
-  swapAxes(axis1: number, axis2: number): IBaseVector<LEN>
-}
-
+  add(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  sub(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  mul(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  div(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  addScalar(b: number): IBaseVector<LEN>;
+  subScalar(b: number): IBaseVector<LEN>;
+  mulScalar(b: number): IBaseVector<LEN>;
+  divScalar(b: number): IBaseVector<LEN>;
+  minScalar(b: number): IBaseVector<LEN>;
+  maxScalar(b: number): IBaseVector<LEN>;
+  min(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  max(b: IBaseVector<LEN>): IBaseVector<LEN>;
+  floor(): IBaseVector<LEN>;
+  fract(): IBaseVector<LEN>;
+  ceil(): IBaseVector<LEN>;
+  abs(): IBaseVector<LEN>;
+  dot(b: IBaseVector<LEN>): number;
+  normalizedDot(b: IBaseVector<3>): number;
+  normalize(): IBaseVector<LEN>;
+  vectorLength(): number;
+  vectorLengthSqr(): number;
+  vectorDistance(b: IBaseVector<LEN>): number;
+  vectorDistanceSqr(b: IBaseVector<LEN>): number;
+  multVecMatrix(mat: Matrix4): void;
+  interp(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>;
+  addFac(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>;
+  rot2d(th: number, axis?: number | undefined): IBaseVector<LEN>;
+  zero(): IBaseVector<LEN>;
+  negate(): IBaseVector<LEN>;
+  swapAxes(axis1: number, axis2: number): IBaseVector<LEN>;
+};
 
 /** @deprecated use IBaseVector directly */
-export type VectorLikeOrHigher<LEN extends 2 | 3 | 4, Type = never> = IBaseVector<LEN>
+export type VectorLikeOrHigher<LEN extends 2 | 3 | 4, Type = never> = IBaseVector<LEN>;
 /** @deprecated use IBaseVector directly */
-export type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = VectorLikeOrHigher<LEN, Type>
+export type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = VectorLikeOrHigher<LEN, Type>;
 
 export type IQuat = IBaseVector<4> & {
   axisAngleToQuat(axis: IBaseVector<3>, angle: number): IQuat;
@@ -166,72 +165,68 @@ export interface IVector4 extends IBaseVector<4> {
   cross(b: IBaseVector<4>): this;
 }
 
-
 export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
   new (value?: number[] | Type | IBaseVector<LEN>): Type;
 
   /** |(a - center)| dot |(b - center)| */
-  normalizedDot3(
-    a: IBaseVector<LEN>,
-    center: IBaseVector<LEN>,
-    b: IBaseVector<LEN>
-  ): number;
+  normalizedDot3(a: IBaseVector<LEN>, center: IBaseVector<LEN>, b: IBaseVector<LEN>): number;
 
   /** |(b - a)| dot |(d - c)| */
-  normalizedDot4(
-    a: IBaseVector<LEN>,
-    b: IBaseVector<LEN>,
-    c: IBaseVector<LEN>,
-    d: IBaseVector<LEN>
-  ): number;
+  normalizedDot4(a: IBaseVector<LEN>, b: IBaseVector<LEN>, c: IBaseVector<LEN>, d: IBaseVector<LEN>): number;
 
   structName?: string;
   STRUCT?: string;
 }
 
-const M_SQRT2 = Math.SQRT2
-const PI = Math.PI
+const M_SQRT2 = Math.SQRT2;
+const PI = Math.PI;
 
 function createVector2(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector2 extends parent {
-    [k: number]: number | undefined
+    [k: number]: number | undefined;
 
     0: number;
     1: number;
     // this is set by the parent class
-    declare length: number
-    
+    declare length: number;
+
     //phantom type helper
-    declare LEN: 2
-    
+    declare LEN: 2;
+
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
-    static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
+    static STRUCT =
+      structName !== undefined
+        ? nstructjs.inlineRegister(
+            this,
+            `
     ${structName} {
       0: double;
       1: double;
-    }`) : undefined;
-    
+    }`
+          )
+        : undefined;
+
     static normalizedDot4(v1: IBaseVector<2>, v2: IBaseVector<2>, v3: IBaseVector<2>, v4: IBaseVector<2>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dx2 = v4[0] - v3[0];
       let dy2 = v4[1] - v3[1];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dx1 *= l1;
       dy1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2;
+
+      return dx1 * dx2 + dy1 * dy2;
     }
 
     static normalizedDot3(v1: IBaseVector<2>, center: IBaseVector<2>, v2: IBaseVector<2>) {
@@ -240,18 +235,18 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       let dx2 = v2[0] - center[0];
       let dy2 = v2[1] - center[1];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dx1 *= l1;
       dy1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2;
+
+      return dx1 * dx2 + dy1 * dy2;
     }
 
     constructor(existing?: number[] | IBaseVector<2>) {
@@ -271,21 +266,20 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-// load2/3/4 methods
+    // load2/3/4 methods
 
     load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
-      return this
+      return this;
     }
-  
 
     normalizedDot(b: IBaseVector<2>): number {
       const l = this.vectorLength() * b.vectorLength();
       return l > 0.00000001 ? this.dot(b) / l : 0.0;
     }
     equals(b: IBaseVector<2>) {
-      return (this[0] === b[0]) && (this[1] === b[1]);
+      return this[0] === b[0] && this[1] === b[1];
     }
 
     zero() {
@@ -301,14 +295,14 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     combine(b: IBaseVector<2>, u: number, v: number) {
-      this[0] = this[0]*u + b[0]*v;
-      this[1] = this[1]*u + b[1]*v;
+      this[0] = this[0] * u + b[0] * v;
+      this[1] = this[1] * u + b[1] * v;
       return this;
     }
 
     interp(b: IBaseVector<2>, t: number) {
-      this[0] = this[0] + (b[0] - this[0])*t;
-      this[1] = this[1] + (b[1] - this[1])*t;
+      this[0] = this[0] + (b[0] - this[0]) * t;
+      this[1] = this[1] + (b[1] - this[1]) * t;
       return this;
     }
 
@@ -319,8 +313,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     addFac(b: IBaseVector<2>, f: number) {
-      this[0] = this[0] + b[0]*f;
-      this[1] = this[1] + b[1]*f;
+      this[0] = this[0] + b[0] * f;
+      this[1] = this[1] + b[1] * f;
       return this;
     }
 
@@ -423,25 +417,25 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     vectorDotDistance(b: IBaseVector<2>): number {
       const d0 = this[0] - b[0];
       const d1 = this[1] - b[1];
-      return d0*d0 + d1*d1;
+      return d0 * d0 + d1 * d1;
     }
 
     vectorDistance(b: IBaseVector<2>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
-      return Math.sqrt(d0*d0 + d1*d1);
+      return Math.sqrt(d0 * d0 + d1 * d1);
     }
 
     vectorDistanceSqr(b: IBaseVector<2>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
-      return (d0*d0 + d1*d1);
+      return d0 * d0 + d1 * d1;
     }
     copy() {
       return new Vector2(this);
     }
     vectorLengthSqr(): number {
-      return this.dot(this)
+      return this.dot(this);
     }
     vectorLength(): number {
       return Math.sqrt(this.dot(this));
@@ -460,24 +454,24 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
     dot(b: IBaseVector<2>): number {
-      const ret = this[0]*b[0] + this[1]*b[1];
+      const ret = this[0] * b[0] + this[1] * b[1];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
       if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
       return ret;
     }
-    
+
     loadX(x: number) {
-      this[0] = x
-      return this
+      this[0] = x;
+      return this;
     }
     loadXY(x: number, y: number) {
-      this[0] = x
-      this[1] = y
-      return this
+      this[0] = x;
+      this[1] = y;
+      return this;
     }
 
-    swapAxes(axis1: 0|1, axis2: 0|1) {
+    swapAxes(axis1: 0 | 1, axis2: 0 | 1) {
       const t = this[axis1];
       this[axis1] = this[axis2];
       this[axis2] = t;
@@ -496,7 +490,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** perpendicular swap */
-    perpSwap(axis1: 0|1 = 0, axis2: 0|1 = 1, sign = 1) {
+    perpSwap(axis1: 0 | 1 = 0, axis2: 0 | 1 = 1, sign = 1) {
       let tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
@@ -510,7 +504,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-/** Returns w value. */
+    /** Returns w value. */
     multVecMatrix(matrix: Matrix4, ignore_w = false) {
       const x = this[0];
       const y = this[1];
@@ -530,7 +524,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
 
       return this;
     }
-  
+
     mulVecQuat(q: IQuat) {
       let t0 = -q[1] * this[0] - q[2] * this[1];
       let t1 = q[0] * this[0] - q[3] * this[1];
@@ -557,33 +551,39 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     loadSTRUCT(reader: StructReader<this>) {
       reader(this);
     }
-  }
+  };
 }
-  
+
 function createVector3(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector3 extends parent {
-    [k: number]: number | undefined
+    [k: number]: number | undefined;
 
     0: number;
     1: number;
     2: number;
     // this is set by the parent class
-    declare length: number
-    
+    declare length: number;
+
     //phantom type helper
-    declare LEN: 3
-    
+    declare LEN: 3;
+
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
-    static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
+    static STRUCT =
+      structName !== undefined
+        ? nstructjs.inlineRegister(
+            this,
+            `
     ${structName} {
       0: double;
       1: double;
       2: double;
-    }`) : undefined;
-    
+    }`
+          )
+        : undefined;
+
     static normalizedDot4(v1: IBaseVector<3>, v2: IBaseVector<3>, v3: IBaseVector<3>, v4: IBaseVector<3>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
@@ -592,20 +592,20 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dy2 = v4[1] - v3[1];
       let dz2 = v4[2] - v3[2];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2 + dz1*dz2;
+
+      return dx1 * dx2 + dy1 * dy2 + dz1 * dz2;
     }
 
     static normalizedDot3(v1: IBaseVector<3>, center: IBaseVector<3>, v2: IBaseVector<3>) {
@@ -616,20 +616,20 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dy2 = v2[1] - center[1];
       let dz2 = v2[2] - center[2];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2 + dz1*dz2;
+
+      return dx1 * dx2 + dy1 * dy2 + dz1 * dz2;
     }
 
     constructor(existing?: number[] | IBaseVector<3>) {
@@ -652,29 +652,27 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-// load2/3/4 methods
+    // load2/3/4 methods
 
     load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
-      return this
+      return this;
     }
-  
 
     load3(existing: number[] | IBaseVector<3>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
-      return this
+      return this;
     }
-  
 
     normalizedDot(b: IBaseVector<3>): number {
       const l = this.vectorLength() * b.vectorLength();
       return l > 0.00000001 ? this.dot(b) / l : 0.0;
     }
     equals(b: IBaseVector<3>) {
-      return (this[0] === b[0]) && (this[1] === b[1]) && (this[2] === b[2]);
+      return this[0] === b[0] && this[1] === b[1] && this[2] === b[2];
     }
 
     zero() {
@@ -692,16 +690,16 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     combine(b: IBaseVector<3>, u: number, v: number) {
-      this[0] = this[0]*u + b[0]*v;
-      this[1] = this[1]*u + b[1]*v;
-      this[2] = this[2]*u + b[2]*v;
+      this[0] = this[0] * u + b[0] * v;
+      this[1] = this[1] * u + b[1] * v;
+      this[2] = this[2] * u + b[2] * v;
       return this;
     }
 
     interp(b: IBaseVector<3>, t: number) {
-      this[0] = this[0] + (b[0] - this[0])*t;
-      this[1] = this[1] + (b[1] - this[1])*t;
-      this[2] = this[2] + (b[2] - this[2])*t;
+      this[0] = this[0] + (b[0] - this[0]) * t;
+      this[1] = this[1] + (b[1] - this[1]) * t;
+      this[2] = this[2] + (b[2] - this[2]) * t;
       return this;
     }
 
@@ -713,9 +711,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     addFac(b: IBaseVector<3>, f: number) {
-      this[0] = this[0] + b[0]*f;
-      this[1] = this[1] + b[1]*f;
-      this[2] = this[2] + b[2]*f;
+      this[0] = this[0] + b[0] * f;
+      this[1] = this[1] + b[1] * f;
+      this[2] = this[2] + b[2] * f;
       return this;
     }
 
@@ -835,27 +833,27 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       const d0 = this[0] - b[0];
       const d1 = this[1] - b[1];
       const d2 = this[2] - b[2];
-      return d0*d0 + d1*d1 + d2*d2;
+      return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
     vectorDistance(b: IBaseVector<3>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
-      return Math.sqrt(d0*d0 + d1*d1 + d2*d2);
+      return Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
     }
 
     vectorDistanceSqr(b: IBaseVector<3>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
-      return (d0*d0 + d1*d1 + d2*d2);
+      return d0 * d0 + d1 * d1 + d2 * d2;
     }
     copy() {
       return new Vector3(this);
     }
     vectorLengthSqr(): number {
-      return this.dot(this)
+      return this.dot(this);
     }
     vectorLength(): number {
       return Math.sqrt(this.dot(this));
@@ -874,30 +872,30 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
     dot(b: IBaseVector<3>): number {
-      const ret = this[0]*b[0] + this[1]*b[1] + this[2]*b[2];
+      const ret = this[0] * b[0] + this[1] * b[1] + this[2] * b[2];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
       if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
       return ret;
     }
-    
+
     loadX(x: number) {
-      this[0] = x
-      return this
+      this[0] = x;
+      return this;
     }
     loadXY(x: number, y: number) {
-      this[0] = x
-      this[1] = y
-      return this
+      this[0] = x;
+      this[1] = y;
+      return this;
     }
     loadXYZ(x: number, y: number, z: number) {
-      this[0] = x
-      this[1] = y
-      this[2] = z
-      return this
+      this[0] = x;
+      this[1] = y;
+      this[2] = z;
+      return this;
     }
 
-    swapAxes(axis1: 0|1|2, axis2: 0|1|2) {
+    swapAxes(axis1: 0 | 1 | 2, axis2: 0 | 1 | 2) {
       const t = this[axis1];
       this[axis1] = this[axis2];
       this[axis2] = t;
@@ -916,7 +914,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** perpendicular swap */
-    perpSwap(axis1: 0|1|2 = 0, axis2: 0|1|2 = 1, sign = 1) {
+    perpSwap(axis1: 0 | 1 | 2 = 0, axis2: 0 | 1 | 2 = 1, sign = 1) {
       let tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
@@ -930,18 +928,18 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-/** Returns w value. */
-      multVecMatrix(matrix: Matrix4, ignore_w = false) {
+    /** Returns w value. */
+    multVecMatrix(matrix: Matrix4, ignore_w = false) {
       if (ignore_w === undefined) {
         ignore_w = false;
       }
       let x = this[0];
       let y = this[1];
       let z = this[2];
-      this[0] = matrix.$matrix.m41 + x*matrix.$matrix.m11 + y*matrix.$matrix.m21 + z*matrix.$matrix.m31;
-      this[1] = matrix.$matrix.m42 + x*matrix.$matrix.m12 + y*matrix.$matrix.m22 + z*matrix.$matrix.m32;
-      this[2] = matrix.$matrix.m43 + x*matrix.$matrix.m13 + y*matrix.$matrix.m23 + z*matrix.$matrix.m33;
-      let w = matrix.$matrix.m44 + x*matrix.$matrix.m14 + y*matrix.$matrix.m24 + z*matrix.$matrix.m34;
+      this[0] = matrix.$matrix.m41 + x * matrix.$matrix.m11 + y * matrix.$matrix.m21 + z * matrix.$matrix.m31;
+      this[1] = matrix.$matrix.m42 + x * matrix.$matrix.m12 + y * matrix.$matrix.m22 + z * matrix.$matrix.m32;
+      this[2] = matrix.$matrix.m43 + x * matrix.$matrix.m13 + y * matrix.$matrix.m23 + z * matrix.$matrix.m33;
+      let w = matrix.$matrix.m44 + x * matrix.$matrix.m14 + y * matrix.$matrix.m24 + z * matrix.$matrix.m34;
 
       if (!ignore_w && w !== 1 && w !== 0 && matrix.isPersp) {
         this[0] /= w;
@@ -969,7 +967,6 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-
     cross(v: IBaseVector<3>) {
       const x = this[1] * v[2] - this[2] * v[1];
       const y = this[2] * v[0] - this[0] * v[2];
@@ -988,44 +985,50 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     toCSS() {
-      let r = ~~(this[0]*255);
-      let g = ~~(this[1]*255);
-      let b = ~~(this[2]*255);
-      return `rgb(${r},${g},${b})`
+      let r = ~~(this[0] * 255);
+      let g = ~~(this[1] * 255);
+      let b = ~~(this[2] * 255);
+      return `rgb(${r},${g},${b})`;
     }
 
     loadSTRUCT(reader: StructReader<this>) {
       reader(this);
     }
-  }
+  };
 }
-  
+
 function createVector4(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector4 extends parent {
-    [k: number]: number | undefined
+    [k: number]: number | undefined;
 
     0: number;
     1: number;
     2: number;
     3: number;
     // this is set by the parent class
-    declare length: number
-    
+    declare length: number;
+
     //phantom type helper
-    declare LEN: 4
-    
+    declare LEN: 4;
+
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
     static structName = structName;
-    static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, `
+    static STRUCT =
+      structName !== undefined
+        ? nstructjs.inlineRegister(
+            this,
+            `
     ${structName} {
       0: double;
       1: double;
       2: double;
       3: double;
-    }`) : undefined;
-    
+    }`
+          )
+        : undefined;
+
     static normalizedDot4(v1: IBaseVector<4>, v2: IBaseVector<4>, v3: IBaseVector<4>, v4: IBaseVector<4>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
@@ -1036,12 +1039,12 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dz2 = v4[2] - v3[2];
       let dw2 = v4[3] - v3[3];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1 + dw1*dw1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2 + dw2*dw2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
@@ -1050,8 +1053,8 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       dy1 *= l1;
       dz1 *= l1;
       dw1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2 + dz1*dz2 + dw1*dw2;
+
+      return dx1 * dx2 + dy1 * dy2 + dz1 * dz2 + dw1 * dw2;
     }
 
     static normalizedDot3(v1: IBaseVector<4>, center: IBaseVector<4>, v2: IBaseVector<4>) {
@@ -1064,12 +1067,12 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dz2 = v2[2] - center[2];
       let dw2 = v2[3] - center[3];
       // normalize
-      let l1 = Math.sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1 + dw1*dw1)
-      let l2 = Math.sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2 + dw2*dw2)
+      let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
+      let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
 
       // normalize
-      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
-      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
+      l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0;
+      l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
@@ -1078,8 +1081,8 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       dy1 *= l1;
       dz1 *= l1;
       dw1 *= l1;
-  
-      return dx1*dx2 + dy1*dy2 + dz1*dz2 + dw1*dw2;
+
+      return dx1 * dx2 + dy1 * dy2 + dz1 * dz2 + dw1 * dw2;
     }
 
     constructor(existing?: number[] | IBaseVector<4>) {
@@ -1105,38 +1108,35 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-// load2/3/4 methods
+    // load2/3/4 methods
 
     load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
-      return this
+      return this;
     }
-  
 
     load3(existing: number[] | IBaseVector<3>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
-      return this
+      return this;
     }
-  
 
     load4(existing: number[] | IBaseVector<4>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
       this[3] = existing[3];
-      return this
+      return this;
     }
-  
 
     normalizedDot(b: IBaseVector<4>): number {
       const l = this.vectorLength() * b.vectorLength();
       return l > 0.00000001 ? this.dot(b) / l : 0.0;
     }
     equals(b: IBaseVector<4>) {
-      return (this[0] === b[0]) && (this[1] === b[1]) && (this[2] === b[2]) && (this[3] === b[3]);
+      return this[0] === b[0] && this[1] === b[1] && this[2] === b[2] && this[3] === b[3];
     }
 
     zero() {
@@ -1156,18 +1156,18 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     combine(b: IBaseVector<4>, u: number, v: number) {
-      this[0] = this[0]*u + b[0]*v;
-      this[1] = this[1]*u + b[1]*v;
-      this[2] = this[2]*u + b[2]*v;
-      this[3] = this[3]*u + b[3]*v;
+      this[0] = this[0] * u + b[0] * v;
+      this[1] = this[1] * u + b[1] * v;
+      this[2] = this[2] * u + b[2] * v;
+      this[3] = this[3] * u + b[3] * v;
       return this;
     }
 
     interp(b: IBaseVector<4>, t: number) {
-      this[0] = this[0] + (b[0] - this[0])*t;
-      this[1] = this[1] + (b[1] - this[1])*t;
-      this[2] = this[2] + (b[2] - this[2])*t;
-      this[3] = this[3] + (b[3] - this[3])*t;
+      this[0] = this[0] + (b[0] - this[0]) * t;
+      this[1] = this[1] + (b[1] - this[1]) * t;
+      this[2] = this[2] + (b[2] - this[2]) * t;
+      this[3] = this[3] + (b[3] - this[3]) * t;
       return this;
     }
 
@@ -1180,10 +1180,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     addFac(b: IBaseVector<4>, f: number) {
-      this[0] = this[0] + b[0]*f;
-      this[1] = this[1] + b[1]*f;
-      this[2] = this[2] + b[2]*f;
-      this[3] = this[3] + b[3]*f;
+      this[0] = this[0] + b[0] * f;
+      this[1] = this[1] + b[1] * f;
+      this[2] = this[2] + b[2] * f;
+      this[3] = this[3] + b[3] * f;
       return this;
     }
 
@@ -1320,7 +1320,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       const d1 = this[1] - b[1];
       const d2 = this[2] - b[2];
       const d3 = this[3] - b[3];
-      return d0*d0 + d1*d1 + d2*d2 + d3*d3;
+      return d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3;
     }
 
     vectorDistance(b: IBaseVector<4>): number {
@@ -1328,7 +1328,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
       const d3 = this[3] - (b[3] ?? 0);
-      return Math.sqrt(d0*d0 + d1*d1 + d2*d2 + d3*d3);
+      return Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3);
     }
 
     vectorDistanceSqr(b: IBaseVector<4>): number {
@@ -1336,13 +1336,13 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
       const d3 = this[3] - (b[3] ?? 0);
-      return (d0*d0 + d1*d1 + d2*d2 + d3*d3);
+      return d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3;
     }
     copy() {
       return new Vector4(this);
     }
     vectorLengthSqr(): number {
-      return this.dot(this)
+      return this.dot(this);
     }
     vectorLength(): number {
       return Math.sqrt(this.dot(this));
@@ -1361,37 +1361,37 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
     dot(b: IBaseVector<4>): number {
-      const ret = this[0]*b[0] + this[1]*b[1] + this[2]*b[2] + this[3]*b[3];
+      const ret = this[0] * b[0] + this[1] * b[1] + this[2] * b[2] + this[3] * b[3];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
       if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
       return ret;
     }
-    
+
     loadX(x: number) {
-      this[0] = x
-      return this
+      this[0] = x;
+      return this;
     }
     loadXY(x: number, y: number) {
-      this[0] = x
-      this[1] = y
-      return this
+      this[0] = x;
+      this[1] = y;
+      return this;
     }
     loadXYZ(x: number, y: number, z: number) {
-      this[0] = x
-      this[1] = y
-      this[2] = z
-      return this
+      this[0] = x;
+      this[1] = y;
+      this[2] = z;
+      return this;
     }
     loadXYZW(x: number, y: number, z: number, w: number) {
-      this[0] = x
-      this[1] = y
-      this[2] = z
-      this[3] = w
-      return this
+      this[0] = x;
+      this[1] = y;
+      this[2] = z;
+      this[3] = w;
+      return this;
     }
 
-    swapAxes(axis1: 0|1|2|3, axis2: 0|1|2|3) {
+    swapAxes(axis1: 0 | 1 | 2 | 3, axis2: 0 | 1 | 2 | 3) {
       const t = this[axis1];
       this[axis1] = this[axis2];
       this[axis2] = t;
@@ -1410,7 +1410,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** perpendicular swap */
-    perpSwap(axis1: 0|1|2|3 = 0, axis2: 0|1|2|3 = 1, sign = 1) {
+    perpSwap(axis1: 0 | 1 | 2 | 3 = 0, axis2: 0 | 1 | 2 | 3 = 1, sign = 1) {
       let tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
@@ -1424,7 +1424,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-/** Returns w value. */
+    /** Returns w value. */
     multVecMatrix(matrix: Matrix4): number {
       let x = this[0];
       let y = this[1];
@@ -1458,7 +1458,6 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-
     cross(v: IBaseVector<4>) {
       const x = this[1] * v[2] - this[2] * v[1];
       const y = this[2] * v[0] - this[0] * v[2];
@@ -1477,21 +1476,21 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     toCSS() {
-      let r = ~~(this[0]*255);
-      let g = ~~(this[1]*255);
-      let b = ~~(this[2]*255);
-      return `rgb(${r},${g},${b},${this[3]})`
+      let r = ~~(this[0] * 255);
+      let g = ~~(this[1] * 255);
+      let b = ~~(this[2] * 255);
+      return `rgb(${r},${g},${b},${this[3]})`;
     }
 
     loadSTRUCT(reader: StructReader<this>) {
       reader(this);
     }
-  }
+  };
 }
-  
-export const Vector2 = createVector2(Array, 'vec2');
-export const Vector3 = createVector3(Array, 'vec3');
-export const Vector4 = createVector4(Array, 'vec4');
+
+export const Vector2 = createVector2(Array, "vec2");
+export const Vector3 = createVector3(Array, "vec3");
+export const Vector4 = createVector4(Array, "vec4");
 export type Vector2 = InstanceType<typeof Vector2>;
 export type Vector3 = InstanceType<typeof Vector3>;
 export type Vector4 = InstanceType<typeof Vector4>;
@@ -1532,7 +1531,7 @@ export class Quat extends Vector4 {
   }
 
   canInvert(): boolean {
-    return this.dot(this) !== 0.0
+    return this.dot(this) !== 0.0;
   }
 
   invert(): this {
@@ -1552,7 +1551,7 @@ export class Quat extends Vector4 {
     nq2[3] = q2[3];
 
     this.mul(nq2 as this);
-    return this
+    return this;
   }
 
   /** if m is not undefined, will be used as output */
@@ -1762,7 +1761,7 @@ let makenormalcache: util.cachering<Vector3>;
 let temp_mats: util.cachering<Matrix4>;
 let preMultTemp: Matrix4;
 
-function myclamp(f:number, a:number, b:number) {
+function myclamp(f: number, a: number, b: number) {
   return Math.min(Math.max(f, a), b);
 }
 
@@ -1805,12 +1804,15 @@ class internal_matrix {
 }
 
 export class Matrix4 {
-static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
     mat4 {
       mat      : array(float) | this.getAsArray();
       isPersp  : int          | this.isPersp;
     }
-  `)
+  `
+  );
   static setUniformArray?: number[];
   static setUniformWebGLArray?: Float32Array;
 
@@ -2968,7 +2970,7 @@ static STRUCT = nstructjs.inlineRegister(this, `
     m.m42 = vecs[3][1];
     m.m43 = vecs[3][2];
     m.m44 = vecs[3][3];
-    return this
+    return this;
   }
 
   alignAxis(axis: number, vec_: number[] | IVector3) {
@@ -3149,11 +3151,21 @@ static STRUCT = nstructjs.inlineRegister(this, `
     }
   }
 
-  _determinant2x2(a:number, b:number, c:number, d:number) {
+  _determinant2x2(a: number, b: number, c: number, d: number) {
     return a * d - b * c;
   }
 
-  _determinant3x3(a1:number, a2:number, a3:number, b1:number, b2:number, b3:number, c1:number, c2:number, c3:number) {
+  _determinant3x3(
+    a1: number,
+    a2: number,
+    a3: number,
+    b1: number,
+    b2: number,
+    b3: number,
+    c1: number,
+    c2: number,
+    c3: number
+  ) {
     return (
       a1 * this._determinant2x2(b2, b3, c2, c3) -
       b1 * this._determinant2x2(a2, a3, c2, c3) +
@@ -3225,7 +3237,7 @@ static STRUCT = nstructjs.inlineRegister(this, `
   loadSTRUCT(reader: StructReader<this>) {
     reader(this);
 
-    const saved = this as any
+    const saved = this as any;
     this.load(saved.mat);
     saved.__mat = saved.mat;
     //delete saved.mat;
@@ -3241,19 +3253,16 @@ temp_mats = util.cachering.fromConstructor(Matrix4, 512);
 preMultTemp = new Matrix4();
 vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);
 
+export type VectorArg<V extends Vector2 | Vector3 | Vector4 | Quat, N extends 2 | 3 | 4> = VectorLikeOrHigher<N, V>;
 
-
-export type VectorArg<V extends Vector2 | Vector3 | Vector4 | Quat, N extends 2 | 3 | 4> = VectorLikeOrHigher<N, V>
-
-export type Vector2Like = VectorArg<Vector2, 2>
-export type Vector3Like = VectorArg<Vector3, 3>
-export type Vector4Like = VectorArg<Vector4, 4>
+export type Vector2Like = VectorArg<Vector2, 2>;
+export type Vector3Like = VectorArg<Vector3, 3>;
+export type Vector4Like = VectorArg<Vector4, 4>;
 
 // static assert that Vectors convert to IBaseVectors
 // since we can't use 'implements' keyword in mixins
-type AssertVectorIBaseVector<N extends 2 | 3 | 4, V extends IBaseVector<N>> = V
-type A = AssertVectorIBaseVector<2, Vector2>
-type B = AssertVectorIBaseVector<3, Vector3>
-type C = AssertVectorIBaseVector<4, Vector4>
-type D = AssertVectorIBaseVector<4, Quat>
-
+type AssertVectorIBaseVector<N extends 2 | 3 | 4, V extends IBaseVector<N>> = V;
+type A = AssertVectorIBaseVector<2, Vector2>;
+type B = AssertVectorIBaseVector<3, Vector3>;
+type C = AssertVectorIBaseVector<4, Vector4>;
+type D = AssertVectorIBaseVector<4, Quat>;

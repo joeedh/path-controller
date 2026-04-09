@@ -1,4 +1,4 @@
-// it is unfortunately impossible to have the matrix and vector classes 
+// it is unfortunately impossible to have the matrix and vector classes
 // exist in separate files, which means it has to be pasted into the final
 // generated vectormath.js file
 
@@ -1499,4 +1499,4 @@ euler_rotate_mats = util.cachering.fromConstructor(Matrix4, 512);
 makenormalcache = util.cachering.fromConstructor(Vector3, 512);
 temp_mats = util.cachering.fromConstructor(Matrix4, 512);
 preMultTemp = new Matrix4();
-`
+`;

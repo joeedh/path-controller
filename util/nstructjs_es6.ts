@@ -1,6 +1,6 @@
 /* ---- color / terminal utilities ---- */
 
-type StructJSONValue = any
+type StructJSONValue = any;
 
 interface ColorMap {
   [key: string]: number;
@@ -3970,10 +3970,7 @@ if (typeof globalThis !== "undefined") {
   nGlobal = globalThis as unknown as any;
 } else if (typeof window !== "undefined") {
   nGlobal = window as unknown as any;
-} else if (
-  typeof globalThis !== "undefined" &&
-  typeof (globalThis as any)["global"] !== "undefined"
-) {
+} else if (typeof globalThis !== "undefined" && typeof (globalThis as any)["global"] !== "undefined") {
   nGlobal = (globalThis as any)["global"] as any;
 } else if (typeof self !== "undefined") {
   nGlobal = self as unknown as any;
@@ -4203,24 +4200,16 @@ class STRUCT {
     function reader2(_obj: any): void {}
 
     let cls = (obj as { constructor?: StructableClass }).constructor;
-    let bad =
-      cls === undefined ||
-      cls.prototype === undefined ||
-      (cls.prototype as any).__proto__ === undefined;
+    let bad = cls === undefined || cls.prototype === undefined || (cls.prototype as any).__proto__ === undefined;
 
     if (bad) {
       return;
     }
 
-    let parent = ((cls!.prototype as any).__proto__ as any)
-      .constructor as StructableClass;
+    let parent = ((cls!.prototype as any).__proto__ as any).constructor as StructableClass;
     bad = bad || parent === undefined;
 
-    if (
-      !bad &&
-      parent.prototype.loadSTRUCT &&
-      parent.prototype.loadSTRUCT !== (obj as any).loadSTRUCT
-    ) {
+    if (!bad && parent.prototype.loadSTRUCT && parent.prototype.loadSTRUCT !== (obj as any).loadSTRUCT) {
       (parent.prototype.loadSTRUCT as Function).call(obj, reader2);
     }
   }
@@ -4232,8 +4221,7 @@ class STRUCT {
     }
 
     let proto = cls.prototype;
-    let parent = ((proto as any).prototype as any)
-      .constructor as StructableClass;
+    let parent = ((proto as any).prototype as any).constructor as StructableClass;
 
     let obj = parent.fromSTRUCT!(reader);
     let obj2 = new (cls as unknown as new () => Record<string | symbol, unknown>)();
@@ -4821,7 +4809,7 @@ class STRUCT {
    */
   readObject<T, ARGS extends unknown[]>(
     data: DataView | Uint8Array | Uint8ClampedArray | number[],
-    cls_or_struct_id: (new(...args: ARGS) => T) | number,
+    cls_or_struct_id: (new (...args: ARGS) => T) | number,
     uctx?: unpack_context
   ): T {
     if (data instanceof Uint8Array || data instanceof Uint8ClampedArray) {
@@ -4998,7 +4986,7 @@ class STRUCT {
       }
 
       if (!obj?.loadSTRUCT) {
-        debugger
+        debugger;
       }
       (obj!.loadSTRUCT as Function)(load);
 
@@ -5020,7 +5008,7 @@ class STRUCT {
       return cls.fromSTRUCT(load);
     } else {
       //default case, make new instance and then call load() on it
-      let obj = objInstance as any| undefined;
+      let obj = objInstance as any | undefined;
 
       if (!obj && cls.newSTRUCT !== undefined) {
         obj = cls.newSTRUCT(load) as any;
@@ -5876,13 +5864,7 @@ function writeJSON(obj: any): StructJSONValue {
   return manager.writeJSON(obj);
 }
 
-
-function formatJSON(
-  json: any,
-  cls: StructableClass,
-  addComments: boolean = true,
-  validate: boolean = true
-): string {
+function formatJSON(json: any, cls: StructableClass, addComments: boolean = true, validate: boolean = true): string {
   return manager.formatJSON(json, cls, addComments, validate);
 }
 

@@ -26,8 +26,8 @@ function getBaseValue(alphabet, character) {
 
 function getInput(input) {
   if (input === null) {
-    return '';
-  } else if (input === '') {
+    return "";
+  } else if (input === "") {
     return null;
   }
 
@@ -39,7 +39,7 @@ function getInput(input) {
     input = new Uint8Array(input);
   }
 
-  let s = '';
+  let s = "";
   for (let i = 0; i < input.length; i++) {
     s += String.fromCharCode(input[i]);
   }
@@ -56,15 +56,17 @@ export default {
     let res = this._compress(input, 6, function (a) {
       return keyStrBase64.charAt(a);
     });
-    switch (res.length%4) { // To produce valid Base64
+    switch (
+      res.length % 4 // To produce valid Base64
+    ) {
       default: // When could this happen ?
-      case 0 :
+      case 0:
         return res;
-      case 1 :
+      case 1:
         return res + "===";
-      case 2 :
+      case 2:
         return res + "==";
-      case 3 :
+      case 3:
         return res + "=";
     }
   },
@@ -83,9 +85,11 @@ export default {
     if (input === null) return "";
 
     input = getInput(input);
-    return this._compress(input, 15, function (a) {
-      return f(a + 32);
-    }) + " ";
+    return (
+      this._compress(input, 15, function (a) {
+        return f(a + 32);
+      }) + " "
+    );
   },
 
   decompressFromUTF16: function (compressed) {
@@ -103,12 +107,12 @@ export default {
     uncompressed = getInput(uncompressed);
 
     let compressed = this.compress(uncompressed);
-    let buf = new Uint8Array(compressed.length*2); // 2 bytes per character
+    let buf = new Uint8Array(compressed.length * 2); // 2 bytes per character
 
     for (let i = 0, TotalLen = compressed.length; i < TotalLen; i++) {
       let current_value = compressed.charCodeAt(i);
-      buf[i*2] = current_value>>>8;
-      buf[i*2 + 1] = current_value%256;
+      buf[i * 2] = current_value >>> 8;
+      buf[i * 2 + 1] = current_value % 256;
     }
     return buf;
   },
@@ -120,21 +124,18 @@ export default {
     } else {
       compressed = getInput(compressed);
 
-      let buf = new Array(compressed.length/2); // 2 bytes per character
+      let buf = new Array(compressed.length / 2); // 2 bytes per character
       for (let i = 0, TotalLen = buf.length; i < TotalLen; i++) {
-        buf[i] = compressed[i*2]*256 + compressed[i*2 + 1];
+        buf[i] = compressed[i * 2] * 256 + compressed[i * 2 + 1];
       }
 
       let result = [];
       buf.forEach(function (c) {
         result.push(f(c));
       });
-      return this.decompress(result.join(''));
-
+      return this.decompress(result.join(""));
     }
-
   },
-
 
   //compress into a string that is already URI encoded
   compressToEncodedURIComponent: function (input) {
@@ -154,7 +155,7 @@ export default {
     });
   },
 
-  compress : function (uncompressed) {
+  compress: function (uncompressed) {
     return this._compress(uncompressed, 16, function (a) {
       return f(a);
     });
@@ -164,10 +165,20 @@ export default {
     uncompressed = getInput(uncompressed);
 
     if (uncompressed === null) return "";
-    let i, value, context_dictionary = {}, context_dictionaryToCreate = {}, context_c = "", context_wc = "",
-        context_w                                                                                      = "", context_enlargeIn = 2, // Compensate for the first entry which should not count
-        context_dictSize                                                                               = 3, context_numBits = 2, context_data                                        = [], context_data_val = 0,
-        context_data_position                                                                          = 0, ii;
+    let i,
+      value,
+      context_dictionary = {},
+      context_dictionaryToCreate = {},
+      context_c = "",
+      context_wc = "",
+      context_w = "",
+      context_enlargeIn = 2, // Compensate for the first entry which should not count
+      context_dictSize = 3,
+      context_numBits = 2,
+      context_data = [],
+      context_data_val = 0,
+      context_data_position = 0,
+      ii;
 
     for (ii = 0; ii < uncompressed.length; ii += 1) {
       context_c = uncompressed.charAt(ii);
@@ -183,7 +194,7 @@ export default {
         if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
           if (context_w.charCodeAt(0) < 256) {
             for (i = 0; i < context_numBits; i++) {
-              context_data_val = (context_data_val<<1);
+              context_data_val = context_data_val << 1;
               if (context_data_position === bitsPerChar - 1) {
                 context_data_position = 0;
                 context_data.push(getCharFromInt(context_data_val));
@@ -194,7 +205,7 @@ export default {
             }
             value = context_w.charCodeAt(0);
             for (i = 0; i < 8; i++) {
-              context_data_val = (context_data_val<<1) | (value & 1);
+              context_data_val = (context_data_val << 1) | (value & 1);
               if (context_data_position === bitsPerChar - 1) {
                 context_data_position = 0;
                 context_data.push(getCharFromInt(context_data_val));
@@ -202,12 +213,12 @@ export default {
               } else {
                 context_data_position++;
               }
-              value = value>>1;
+              value = value >> 1;
             }
           } else {
             value = 1;
             for (i = 0; i < context_numBits; i++) {
-              context_data_val = (context_data_val<<1) | value;
+              context_data_val = (context_data_val << 1) | value;
               if (context_data_position == bitsPerChar - 1) {
                 context_data_position = 0;
                 context_data.push(getCharFromInt(context_data_val));
@@ -219,7 +230,7 @@ export default {
             }
             value = context_w.charCodeAt(0);
             for (i = 0; i < 16; i++) {
-              context_data_val = (context_data_val<<1) | (value & 1);
+              context_data_val = (context_data_val << 1) | (value & 1);
               if (context_data_position === bitsPerChar - 1) {
                 context_data_position = 0;
                 context_data.push(getCharFromInt(context_data_val));
@@ -227,7 +238,7 @@ export default {
               } else {
                 context_data_position++;
               }
-              value = value>>1;
+              value = value >> 1;
             }
           }
           context_enlargeIn--;
@@ -239,7 +250,7 @@ export default {
         } else {
           value = context_dictionary[context_w];
           for (i = 0; i < context_numBits; i++) {
-            context_data_val = (context_data_val<<1) | (value & 1);
+            context_data_val = (context_data_val << 1) | (value & 1);
             if (context_data_position === bitsPerChar - 1) {
               context_data_position = 0;
               context_data.push(getCharFromInt(context_data_val));
@@ -247,10 +258,8 @@ export default {
             } else {
               context_data_position++;
             }
-            value = value>>1;
+            value = value >> 1;
           }
-
-
         }
         context_enlargeIn--;
         if (context_enlargeIn === 0) {
@@ -268,7 +277,7 @@ export default {
       if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
         if (context_w.charCodeAt(0) < 256) {
           for (i = 0; i < context_numBits; i++) {
-            context_data_val = (context_data_val<<1);
+            context_data_val = context_data_val << 1;
             if (context_data_position === bitsPerChar - 1) {
               context_data_position = 0;
               context_data.push(getCharFromInt(context_data_val));
@@ -279,7 +288,7 @@ export default {
           }
           value = context_w.charCodeAt(0);
           for (i = 0; i < 8; i++) {
-            context_data_val = (context_data_val<<1) | (value & 1);
+            context_data_val = (context_data_val << 1) | (value & 1);
             if (context_data_position === bitsPerChar - 1) {
               context_data_position = 0;
               context_data.push(getCharFromInt(context_data_val));
@@ -287,12 +296,12 @@ export default {
             } else {
               context_data_position++;
             }
-            value = value>>1;
+            value = value >> 1;
           }
         } else {
           value = 1;
           for (i = 0; i < context_numBits; i++) {
-            context_data_val = (context_data_val<<1) | value;
+            context_data_val = (context_data_val << 1) | value;
             if (context_data_position === bitsPerChar - 1) {
               context_data_position = 0;
               context_data.push(getCharFromInt(context_data_val));
@@ -304,7 +313,7 @@ export default {
           }
           value = context_w.charCodeAt(0);
           for (i = 0; i < 16; i++) {
-            context_data_val = (context_data_val<<1) | (value & 1);
+            context_data_val = (context_data_val << 1) | (value & 1);
             if (context_data_position === bitsPerChar - 1) {
               context_data_position = 0;
               context_data.push(getCharFromInt(context_data_val));
@@ -312,7 +321,7 @@ export default {
             } else {
               context_data_position++;
             }
-            value = value>>1;
+            value = value >> 1;
           }
         }
         context_enlargeIn--;
@@ -324,7 +333,7 @@ export default {
       } else {
         value = context_dictionary[context_w];
         for (i = 0; i < context_numBits; i++) {
-          context_data_val = (context_data_val<<1) | (value & 1);
+          context_data_val = (context_data_val << 1) | (value & 1);
           if (context_data_position === bitsPerChar - 1) {
             context_data_position = 0;
             context_data.push(getCharFromInt(context_data_val));
@@ -332,10 +341,8 @@ export default {
           } else {
             context_data_position++;
           }
-          value = value>>1;
+          value = value >> 1;
         }
-
-
       }
       context_enlargeIn--;
       if (context_enlargeIn === 0) {
@@ -347,7 +354,7 @@ export default {
     // Mark the end of the stream
     value = 2;
     for (i = 0; i < context_numBits; i++) {
-      context_data_val = (context_data_val<<1) | (value & 1);
+      context_data_val = (context_data_val << 1) | (value & 1);
       if (context_data_position === bitsPerChar - 1) {
         context_data_position = 0;
         context_data.push(getCharFromInt(context_data_val));
@@ -355,18 +362,18 @@ export default {
       } else {
         context_data_position++;
       }
-      value = value>>1;
+      value = value >> 1;
     }
 
     // Flush the last char
     while (true) {
-      context_data_val = (context_data_val<<1);
+      context_data_val = context_data_val << 1;
       if (context_data_position === bitsPerChar - 1) {
         context_data.push(getCharFromInt(context_data_val));
         break;
       } else context_data_position++;
     }
-    return context_data.join('');
+    return context_data.join("");
   },
 
   decompress: function (compressed) {
@@ -381,9 +388,21 @@ export default {
   },
 
   _decompress: function (length, resetValue, getNextValue) {
-    let dictionary = [], next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], i, w,
-        bits, resb,
-        maxpower, power, c, data                                                            = {val: getNextValue(0), position: resetValue, index: 1};
+    let dictionary = [],
+      next,
+      enlargeIn = 4,
+      dictSize = 4,
+      numBits = 3,
+      entry = "",
+      result = [],
+      i,
+      w,
+      bits,
+      resb,
+      maxpower,
+      power,
+      c,
+      data = { val: getNextValue(0), position: resetValue, index: 1 };
 
     for (i = 0; i < 3; i += 1) {
       dictionary[i] = i;
@@ -399,11 +418,11 @@ export default {
         data.position = resetValue;
         data.val = getNextValue(data.index++);
       }
-      bits |= (resb > 0 ? 1 : 0)*power;
+      bits |= (resb > 0 ? 1 : 0) * power;
       power <<= 1;
     }
 
-    switch (next = bits) {
+    switch ((next = bits)) {
       case 0:
         bits = 0;
         maxpower = Math.pow(2, 8);
@@ -415,7 +434,7 @@ export default {
             data.position = resetValue;
             data.val = getNextValue(data.index++);
           }
-          bits |= (resb > 0 ? 1 : 0)*power;
+          bits |= (resb > 0 ? 1 : 0) * power;
           power <<= 1;
         }
         c = f(bits);
@@ -431,7 +450,7 @@ export default {
             data.position = resetValue;
             data.val = getNextValue(data.index++);
           }
-          bits |= (resb > 0 ? 1 : 0)*power;
+          bits |= (resb > 0 ? 1 : 0) * power;
           power <<= 1;
         }
         c = f(bits);
@@ -457,11 +476,11 @@ export default {
           data.position = resetValue;
           data.val = getNextValue(data.index++);
         }
-        bits |= (resb > 0 ? 1 : 0)*power;
+        bits |= (resb > 0 ? 1 : 0) * power;
         power <<= 1;
       }
 
-      switch (c = bits) {
+      switch ((c = bits)) {
         case 0:
           bits = 0;
           maxpower = Math.pow(2, 8);
@@ -473,7 +492,7 @@ export default {
               data.position = resetValue;
               data.val = getNextValue(data.index++);
             }
-            bits |= (resb > 0 ? 1 : 0)*power;
+            bits |= (resb > 0 ? 1 : 0) * power;
             power <<= 1;
           }
 
@@ -492,7 +511,7 @@ export default {
               data.position = resetValue;
               data.val = getNextValue(data.index++);
             }
-            bits |= (resb > 0 ? 1 : 0)*power;
+            bits |= (resb > 0 ? 1 : 0) * power;
             power <<= 1;
           }
           dictionary[dictSize++] = f(bits);
@@ -500,7 +519,7 @@ export default {
           enlargeIn--;
           break;
         case 2:
-          return result.join('');
+          return result.join("");
       }
 
       if (enlargeIn === 0) {
@@ -529,7 +548,6 @@ export default {
         enlargeIn = Math.pow(2, numBits);
         numBits++;
       }
-
     }
-  }
+  },
 };

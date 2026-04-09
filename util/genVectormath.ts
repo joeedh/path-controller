@@ -1,6 +1,6 @@
 //@ts-nocheck for now
-import * as util from './util'
-import nstructjs from './struct'
+import * as util from "./util";
+import nstructjs from "./struct";
 
 const vecQuatMults = {
   2: `    mulVecQuat(q: IQuat) {
@@ -20,7 +20,7 @@ const vecQuatMults = {
 
       return this;
     }`,
-  3: '', // is set below
+  3: "", // is set below
   4: `    mulVecQuat(q: IQuat) {
       let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
       let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
@@ -40,8 +40,8 @@ const vecQuatMults = {
       return this;
     }
 `,
-}
-vecQuatMults[3] = vecQuatMults[4]
+};
+vecQuatMults[3] = vecQuatMults[4];
 
 const matrixVecMults = {
   2: `/** Returns w value. */\n    multVecMatrix(matrix: Matrix4, ignore_w = false) {
@@ -97,67 +97,67 @@ const matrixVecMults = {
       return this[3];
     }
 `,
-}
+};
 
-let DOT_NORM_SNAP_LIMIT = 0.00000000001
-let M_SQRT2 = Math.sqrt(2.0)
-let FLT_EPSILON = 2.22e-16
+let DOT_NORM_SNAP_LIMIT = 0.00000000001;
+let M_SQRT2 = Math.sqrt(2.0);
+let FLT_EPSILON = 2.22e-16;
 
 let basic_funcs = {
-  equals   : [['vb'], 'this[X] === b[X]', '&&'],
+  equals   : [["vb"], "this[X] === b[X]", "&&"],
   /*dot is made manually so it's safe for acos
   dot     : [["b"], "this[X]*b[X]", "+"],
    */
-  zero     : [[], '0.0'],
-  negate   : [[], '-this[X]'],
-  combine  : [['vb', 'u', 'v'], 'this[X]*u + b[X]*v'],
-  interp   : [['vb', 't'], 'this[X] + (b[X] - this[X])*t'],
-  add      : [['vb'], 'this[X] + b[X]'],
-  addFac   : [['vb', 'F'], 'this[X] + b[X]*F'],
-  fract    : [[], 'Math.fract(this[X])'],
-  sub      : [['vb'], 'this[X] - b[X]'],
-  mul      : [['vb'], 'this[X] * b[X]'],
-  div      : [['vb'], 'this[X] / b[X]'],
-  mulScalar: [['b'], 'this[X] * b'],
-  divScalar: [['b'], 'this[X] / b'],
-  addScalar: [['b'], 'this[X] + b'],
-  subScalar: [['b'], 'this[X] - b'],
-  minScalar: [['b'], 'Math.min(this[X], b)'],
-  maxScalar: [['b'], 'Math.max(this[X], b)'],
-  ceil     : [[], 'Math.ceil(this[X])'],
-  floor    : [[], 'Math.floor(this[X])'],
-  abs      : [[], 'Math.abs(this[X])'],
-  min      : [['vb'], 'Math.min(this[X], b[X])'],
-  max      : [['vb'], 'Math.max(this[X], b[X])'],
-  clamp    : [['MIN', 'MAX'], 'Math.min(Math.max(this[X], MAX), MIN)'],
-}
+  zero     : [[], "0.0"],
+  negate   : [[], "-this[X]"],
+  combine  : [["vb", "u", "v"], "this[X]*u + b[X]*v"],
+  interp   : [["vb", "t"], "this[X] + (b[X] - this[X])*t"],
+  add      : [["vb"], "this[X] + b[X]"],
+  addFac   : [["vb", "F"], "this[X] + b[X]*F"],
+  fract    : [[], "Math.fract(this[X])"],
+  sub      : [["vb"], "this[X] - b[X]"],
+  mul      : [["vb"], "this[X] * b[X]"],
+  div      : [["vb"], "this[X] / b[X]"],
+  mulScalar: [["b"], "this[X] * b"],
+  divScalar: [["b"], "this[X] / b"],
+  addScalar: [["b"], "this[X] + b"],
+  subScalar: [["b"], "this[X] - b"],
+  minScalar: [["b"], "Math.min(this[X], b)"],
+  maxScalar: [["b"], "Math.max(this[X], b)"],
+  ceil     : [[], "Math.ceil(this[X])"],
+  floor    : [[], "Math.floor(this[X])"],
+  abs      : [[], "Math.abs(this[X])"],
+  min      : [["vb"], "Math.min(this[X], b[X])"],
+  max      : [["vb"], "Math.max(this[X], b[X])"],
+  clamp    : [["MIN", "MAX"], "Math.min(Math.max(this[X], MAX), MIN)"],
+};
 
 function bounded_acos(fac) {
-  if (fac <= -1.0) return Math.PI
-  else if (fac >= 1.0) return 0.0
-  else return Math.acos(fac)
+  if (fac <= -1.0) return Math.PI;
+  else if (fac >= 1.0) return 0.0;
+  else return Math.acos(fac);
 }
 
 function make_norm_safe_dot(cls) {
-  let _dot = cls.prototype.dot
+  let _dot = cls.prototype.dot;
 
-  cls.prototype._dot = _dot
+  cls.prototype._dot = _dot;
   cls.prototype.dot = function (b) {
-    let ret = _dot.call(this, b)
+    let ret = _dot.call(this, b);
 
-    if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0
-    if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0
+    if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
+    if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
 
-    return ret
-  }
+    return ret;
+  };
 }
 
 function getBaseVector(parent) {
   return class BaseVector extends parent {
     constructor() {
-      super(...arguments)
+      super(...arguments);
 
-      this.vec = undefined //for compatibility with old nstructjs-saved files
+      this.vec = undefined; //for compatibility with old nstructjs-saved files
 
       //this.xyzw = this.init_swizzle(4);
       //this.xyz = this.init_swizzle(3);
@@ -165,148 +165,148 @@ function getBaseVector(parent) {
     }
 
     static inherit(cls, vectorsize) {
-      make_norm_safe_dot(cls)
+      make_norm_safe_dot(cls);
 
-      var f
+      var f;
 
-      let vectorDotDistance = 'f = function vectorDotDistance(b) {\n'
+      let vectorDotDistance = "f = function vectorDotDistance(b) {\n";
       for (let i = 0; i < vectorsize; i++) {
-        vectorDotDistance += '  let d' + i + ' = this[' + i + ']-b[' + i + '];\n\n  '
+        vectorDotDistance += "  let d" + i + " = this[" + i + "]-b[" + i + "];\n\n  ";
       }
 
-      vectorDotDistance += '  return '
+      vectorDotDistance += "  return ";
       for (let i = 0; i < vectorsize; i++) {
-        if (i > 0) vectorDotDistance += ' + '
-        vectorDotDistance += 'd' + i + '*d' + i
+        if (i > 0) vectorDotDistance += " + ";
+        vectorDotDistance += "d" + i + "*d" + i;
       }
-      vectorDotDistance += ';\n'
-      vectorDotDistance += '};'
-      cls.prototype.vectorDotDistance = eval(vectorDotDistance)
+      vectorDotDistance += ";\n";
+      vectorDotDistance += "};";
+      cls.prototype.vectorDotDistance = eval(vectorDotDistance);
 
-      let vectorDistance = 'f = function vectorDistance(b) {\n'
+      let vectorDistance = "f = function vectorDistance(b) {\n";
       for (let i = 0; i < vectorsize; i++) {
-        vectorDistance += `  let d${i} = this[${i}] - (b[${i}]||0);\n\n  `
+        vectorDistance += `  let d${i} = this[${i}] - (b[${i}]||0);\n\n  `;
         //vectorDistance += "  let d"+i+" = this["+i+"]-(b["+i+"]||0);\n\n  ";
       }
 
-      vectorDistance += '  return Math.sqrt('
+      vectorDistance += "  return Math.sqrt(";
       for (let i = 0; i < vectorsize; i++) {
-        if (i > 0) vectorDistance += ' + '
-        vectorDistance += 'd' + i + '*d' + i
+        if (i > 0) vectorDistance += " + ";
+        vectorDistance += "d" + i + "*d" + i;
       }
-      vectorDistance += ');\n'
-      vectorDistance += '};'
-      cls.prototype.vectorDistance = eval(vectorDistance)
+      vectorDistance += ");\n";
+      vectorDistance += "};";
+      cls.prototype.vectorDistance = eval(vectorDistance);
 
-      let vectorDistanceSqr = 'f = function vectorDistanceSqr(b) {\n'
+      let vectorDistanceSqr = "f = function vectorDistanceSqr(b) {\n";
       for (let i = 0; i < vectorsize; i++) {
-        vectorDistanceSqr += `  let d${i} = this[${i}] - (b[${i}]||0);\n\n  `
+        vectorDistanceSqr += `  let d${i} = this[${i}] - (b[${i}]||0);\n\n  `;
         //vectorDistanceSqr += "  let d"+i+" = this["+i+"]-(b["+i+"]||0);\n\n  ";
       }
 
-      vectorDistanceSqr += '  return ('
+      vectorDistanceSqr += "  return (";
       for (let i = 0; i < vectorsize; i++) {
-        if (i > 0) vectorDistanceSqr += ' + '
-        vectorDistanceSqr += 'd' + i + '*d' + i
+        if (i > 0) vectorDistanceSqr += " + ";
+        vectorDistanceSqr += "d" + i + "*d" + i;
       }
-      vectorDistanceSqr += ');\n'
-      vectorDistanceSqr += '};'
-      cls.prototype.vectorDistanceSqr = eval(vectorDistanceSqr)
+      vectorDistanceSqr += ");\n";
+      vectorDistanceSqr += "};";
+      cls.prototype.vectorDistanceSqr = eval(vectorDistanceSqr);
 
       for (let k in basic_funcs) {
-        let func = basic_funcs[k]
-        let args = func[0]
-        let line = func[1]
-        var f
+        let func = basic_funcs[k];
+        let args = func[0];
+        let line = func[1];
+        var f;
 
-        let code = 'f = function ' + k + '('
+        let code = "f = function " + k + "(";
         for (let i = 0; i < args.length; i++) {
-          if (i > 0) code += ', '
+          if (i > 0) code += ", ";
 
-          line = line.replace(args[i], args[i].toLowerCase())
-          code += args[i].toLowerCase()
+          line = line.replace(args[i], args[i].toLowerCase());
+          code += args[i].toLowerCase();
         }
-        code += ') {\n'
+        code += ") {\n";
 
         if (func.length > 2) {
           //make summation
-          code += '  return '
+          code += "  return ";
 
           for (let i = 0; i < vectorsize; i++) {
-            if (i > 0) code += func[2]
+            if (i > 0) code += func[2];
 
-            code += '(' + line.replace(/X/g, '' + i) + ')'
+            code += "(" + line.replace(/X/g, "" + i) + ")";
           }
-          code += ';\n'
+          code += ";\n";
         } else {
           for (let i = 0; i < vectorsize; i++) {
-            let line2 = line.replace(/X/g, '' + i)
-            code += '  this[' + i + '] = ' + line2 + ';\n'
+            let line2 = line.replace(/X/g, "" + i);
+            code += "  this[" + i + "] = " + line2 + ";\n";
           }
-          code += '  return this;\n'
+          code += "  return this;\n";
         }
 
-        code += '}\n'
+        code += "}\n";
 
         //console.log(code);
-        f = eval(code)
+        f = eval(code);
 
-        cls.prototype[k] = f
+        cls.prototype[k] = f;
         //console.log(k, f);
       }
     }
 
     copy() {
-      return new this.constructor(this)
+      return new this.constructor(this);
     }
 
     load(data) {
-      throw new Error('Implement me!')
+      throw new Error("Implement me!");
     }
 
     init_swizzle(size) {
-      let ret = {}
-      let cls = size === 4 ? Vector4 : size === 3 ? Vector3 : Vector2
+      let ret = {};
+      let cls = size === 4 ? Vector4 : size === 3 ? Vector3 : Vector2;
 
       for (let k in cls.prototype) {
-        let v = cls.prototype[k]
-        if (typeof v !== 'function' && !(v instanceof Function)) continue
+        let v = cls.prototype[k];
+        if (typeof v !== "function" && !(v instanceof Function)) continue;
 
-        ret[k] = v.bind(this)
+        ret[k] = v.bind(this);
       }
 
-      return ret
+      return ret;
     }
 
     vectorLength() {
-      return sqrt(this.dot(this))
+      return sqrt(this.dot(this));
     }
 
     swapAxes(axis1, axis2) {
-      let t = this[axis1]
-      this[axis1] = this[axis2]
-      this[axis2] = t
+      let t = this[axis1];
+      this[axis1] = this[axis2];
+      this[axis2] = t;
 
-      return this
+      return this;
     }
 
     sinterp(v2, t) {
-      let l1 = this.vectorLength()
-      let l2 = v2.vectorLength()
+      let l1 = this.vectorLength();
+      let l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
       return this.interp(v2, t)
         .normalize()
-        .mulScalar(l1 + (l2 - l1) * t)
+        .mulScalar(l1 + (l2 - l1) * t);
     }
 
     perpSwap(axis1 = 0, axis2 = 1, sign = 1) {
-      let tmp = this[axis1]
+      let tmp = this[axis1];
 
-      this[axis1] = this[axis2] * sign
-      this[axis2] = -tmp * sign
+      this[axis1] = this[axis2] * sign;
+      this[axis2] = -tmp * sign;
 
-      return this
+      return this;
     }
 
     normalize() {
@@ -319,7 +319,7 @@ function getBaseVector(parent) {
       }
       //*/
 
-      let l = this.vectorLength()
+      let l = this.vectorLength();
 
       /*
       if (util.isDenormal(l)) {
@@ -328,20 +328,20 @@ function getBaseVector(parent) {
       //*/
 
       if (l > 0.00000001) {
-        this.mulScalar(1.0 / l)
+        this.mulScalar(1.0 / l);
       }
 
-      return this
+      return this;
     }
-  }
+  };
 }
 
-let _v3nd_n1_normalizedDot, _v3nd_n2_normalizedDot
-let _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4
+let _v3nd_n1_normalizedDot, _v3nd_n2_normalizedDot;
+let _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4;
 
-export function makeVector3(BaseVector, structName = 'vec3', structType = 'float', customConstructorCode = undefined) {
-  var Vector3
-  var bundlehelper = [nstructjs]
+export function makeVector3(BaseVector, structName = "vec3", structType = "float", customConstructorCode = undefined) {
+  var Vector3;
+  var bundlehelper = [nstructjs];
 
   const constructorCode =
     customConstructorCode ??
@@ -363,7 +363,7 @@ export function makeVector3(BaseVector, structName = 'vec3', structType = 'float
         Object.preventExtensions(this);
       }
     }
-  `
+  `;
 
   const code = `
   let temp1, temp2, temp3, temp4;
@@ -551,148 +551,148 @@ export function makeVector3(BaseVector, structName = 'vec3', structType = 'float
   temp2 = new Vector3();
   temp3 = new Vector3();
   temp4 = new Vector3();
-  `
+  `;
 
-  eval(code)
-  return Vector3
+  eval(code);
+  return Vector3;
 }
 
-import fs from 'fs'
-import {Matrix4} from './matrix4.js'
-import {IndexRange} from './indexRange.js'
-import {Matrix4Code} from './matrix4Code.js'
+import fs from "fs";
+import { Matrix4 } from "./matrix4.js";
+import { IndexRange } from "./indexRange.js";
+import { Matrix4Code } from "./matrix4Code.js";
 
 function basicDotFuncs(vecsize: number, VArg: string) {
-  let s = ''
-  let vectorDotDistance = `    vectorDotDistance(b: ${VArg}): number {\n`
+  let s = "";
+  let vectorDotDistance = `    vectorDotDistance(b: ${VArg}): number {\n`;
   for (let i = 0; i < vecsize; i++) {
-    vectorDotDistance += `      const d${i} = this[${i}] - b[${i}];\n`
+    vectorDotDistance += `      const d${i} = this[${i}] - b[${i}];\n`;
   }
 
-  vectorDotDistance += '      return '
+  vectorDotDistance += "      return ";
   for (let i = 0; i < vecsize; i++) {
-    if (i > 0) vectorDotDistance += ' + '
-    vectorDotDistance += 'd' + i + '*d' + i
+    if (i > 0) vectorDotDistance += " + ";
+    vectorDotDistance += "d" + i + "*d" + i;
   }
-  vectorDotDistance += ';\n'
-  vectorDotDistance += '    }\n\n'
+  vectorDotDistance += ";\n";
+  vectorDotDistance += "    }\n\n";
 
-  s += vectorDotDistance
+  s += vectorDotDistance;
 
-  let vectorDistance = `    vectorDistance(b: ${VArg}): number {\n`
+  let vectorDistance = `    vectorDistance(b: ${VArg}): number {\n`;
   for (let i = 0; i < vecsize; i++) {
-    vectorDistance += `      const d${i} = this[${i}] - (b[${i}] ?? 0);\n`
+    vectorDistance += `      const d${i} = this[${i}] - (b[${i}] ?? 0);\n`;
   }
 
-  vectorDistance += '      return Math.sqrt('
+  vectorDistance += "      return Math.sqrt(";
   for (let i = 0; i < vecsize; i++) {
-    if (i > 0) vectorDistance += ' + '
-    vectorDistance += 'd' + i + '*d' + i
+    if (i > 0) vectorDistance += " + ";
+    vectorDistance += "d" + i + "*d" + i;
   }
-  vectorDistance += ');\n'
-  vectorDistance += '    }\n\n'
-  s += vectorDistance
+  vectorDistance += ");\n";
+  vectorDistance += "    }\n\n";
+  s += vectorDistance;
 
-  let vectorDistanceSqr = `    vectorDistanceSqr(b: ${VArg}): number {\n`
+  let vectorDistanceSqr = `    vectorDistanceSqr(b: ${VArg}): number {\n`;
   for (let i = 0; i < vecsize; i++) {
-    vectorDistanceSqr += `      const d${i} = this[${i}] - (b[${i}] ?? 0);\n`
+    vectorDistanceSqr += `      const d${i} = this[${i}] - (b[${i}] ?? 0);\n`;
     //vectorDistanceSqr += "  let d"+i+" = this["+i+"]-(b["+i+"]||0);\n\n  ";
   }
 
-  vectorDistanceSqr += '      return ('
+  vectorDistanceSqr += "      return (";
   for (let i = 0; i < vecsize; i++) {
-    if (i > 0) vectorDistanceSqr += ' + '
-    vectorDistanceSqr += 'd' + i + '*d' + i
+    if (i > 0) vectorDistanceSqr += " + ";
+    vectorDistanceSqr += "d" + i + "*d" + i;
   }
-  vectorDistanceSqr += ');\n'
-  vectorDistanceSqr += '    }'
-  s += vectorDistanceSqr
+  vectorDistanceSqr += ");\n";
+  vectorDistanceSqr += "    }";
+  s += vectorDistanceSqr;
 
-  return s
+  return s;
 }
 function genBase(name: string, vecsize: number) {
-  const VArg = `IBaseVector<${vecsize}>`
+  const VArg = `IBaseVector<${vecsize}>`;
 
-  function unroll(s: string, char = '\n', offset = 0, count = vecsize) {
-    let s1 = ''
-    let axes = 'xyzw'
+  function unroll(s: string, char = "\n", offset = 0, count = vecsize) {
+    let s1 = "";
+    let axes = "xyzw";
     for (let i = 0; i < count; i++) {
       s1 +=
         s
-          .replace(/\$\$/g, '' + (i + offset))
-          .replace(/\$\!/g, '' + (i + 1 + offset))
-          .replace(/\$X/g, axes[i]) + char
+          .replace(/\$\$/g, "" + (i + offset))
+          .replace(/\$\!/g, "" + (i + 1 + offset))
+          .replace(/\$X/g, axes[i]) + char;
     }
     // chop off trailing char
-    return s1.slice(0, -1)
+    return s1.slice(0, -1);
   }
 
-  function unrollJoin(s: string, char = '\n', count = vecsize) {
-    let arr = [] as string[]
-    let axes = 'xyzw'
+  function unrollJoin(s: string, char = "\n", count = vecsize) {
+    let arr = [] as string[];
+    let axes = "xyzw";
     for (let i = 0; i < count; i++) {
-      arr.push(s.replace(/\$\$/g, '' + i).replace(/\$X/g, axes[i]))
+      arr.push(s.replace(/\$\$/g, "" + i).replace(/\$X/g, axes[i]));
     }
-    return arr.join(char)
+    return arr.join(char);
   }
 
   // method level indent
-  let mTab = '      '
+  let mTab = "      ";
   // class level indent
-  let cTab = '    '
+  let cTab = "    ";
 
-  let basicFuncs = ''
+  let basicFuncs = "";
   for (let k in basic_funcs) {
-    let func = basic_funcs[k]
-    let args = func[0]
-    let line = func[1]
-    var f
+    let func = basic_funcs[k];
+    let args = func[0];
+    let line = func[1];
+    var f;
 
-    let code = `    ${k}(`
+    let code = `    ${k}(`;
     for (let i = 0; i < args.length; i++) {
-      let arg = args[i]
-      let type = arg === 'vb' ? `${VArg}` : 'number'
-      arg = (arg === 'vb' ? 'b' : arg).toLowerCase()
+      let arg = args[i];
+      let type = arg === "vb" ? `${VArg}` : "number";
+      arg = (arg === "vb" ? "b" : arg).toLowerCase();
 
-      if (i > 0) code += ', '
+      if (i > 0) code += ", ";
 
-      line = line.replace(args[i], arg)
-      code += `${arg.toLowerCase()}: ${type}`
+      line = line.replace(args[i], arg);
+      code += `${arg.toLowerCase()}: ${type}`;
     }
-    code += ') {\n'
+    code += ") {\n";
 
     if (func.length > 2) {
       //make summation
-      code += mTab + 'return '
+      code += mTab + "return ";
 
       for (let i = 0; i < vecsize; i++) {
-        if (i > 0) code += ` ${func[2]} `
+        if (i > 0) code += ` ${func[2]} `;
 
-        code += '(' + line.replace(/X/g, '' + i) + ')'
+        code += "(" + line.replace(/X/g, "" + i) + ")";
       }
-      code += ';\n'
+      code += ";\n";
     } else {
       for (let i = 0; i < vecsize; i++) {
-        let line2 = line.replace(/X/g, '' + i)
-        code += mTab + 'this[' + i + '] = ' + line2 + ';\n'
+        let line2 = line.replace(/X/g, "" + i);
+        code += mTab + "this[" + i + "] = " + line2 + ";\n";
       }
-      code += `${mTab}return this;\n`
+      code += `${mTab}return this;\n`;
     }
 
-    code += `${cTab}}\n\n`
-    basicFuncs += code
+    code += `${cTab}}\n\n`;
+    basicFuncs += code;
   }
 
-  const indexType = unroll('$$').split('\n').join('|')
+  const indexType = unroll("$$").split("\n").join("|");
   //let VArgS = `VectorLikeOrHigher<${vecsize}, Vector${vecsize}>`
 
-  let s = ''
+  let s = "";
   s += `
 function create${name}${vecsize}(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class ${name}${vecsize} extends parent {
     [k: number]: number | undefined
 
-${unroll('    $$: number;')}
+${unroll("    $$: number;")}
     // this is set by the parent class
     declare length: number
     
@@ -705,15 +705,15 @@ ${unroll('    $$: number;')}
     static structName = structName;
     static STRUCT = structName !== undefined ? nstructjs.inlineRegister(this, \`
     \${structName} {
-${unroll('      $$: double;')}
+${unroll("      $$: double;")}
     }\`) : undefined;
     
     static normalizedDot4(v1: ${VArg}, v2: ${VArg}, v3: ${VArg}, v4: ${VArg}) {
 ${unroll(`      let d$X1 = v2[$$] - v1[$$];`)}
 ${unroll(`      let d$X2 = v4[$$] - v3[$$];`)}
       // normalize
-      let l1 = Math.sqrt(${unrollJoin('d$X1*d$X1', ' + ')})
-      let l2 = Math.sqrt(${unrollJoin('d$X2*d$X2', ' + ')})
+      let l1 = Math.sqrt(${unrollJoin("d$X1*d$X1", " + ")})
+      let l2 = Math.sqrt(${unrollJoin("d$X2*d$X2", " + ")})
 
       // normalize
       l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
@@ -721,15 +721,15 @@ ${unroll(`      let d$X2 = v4[$$] - v3[$$];`)}
 ${unroll(`      d$X1 *= l1;`)}
 ${unroll(`      d$X1 *= l1;`)}
   
-      return ${unrollJoin(`d$X1*d$X2`, ' + ')};
+      return ${unrollJoin(`d$X1*d$X2`, " + ")};
     }
 
     static normalizedDot3(v1: ${VArg}, center: ${VArg}, v2: ${VArg}) {
 ${unroll(`      let d$X1 = v1[$$] - center[$$];`)}
 ${unroll(`      let d$X2 = v2[$$] - center[$$];`)}
       // normalize
-      let l1 = Math.sqrt(${unrollJoin('d$X1*d$X1', ' + ')})
-      let l2 = Math.sqrt(${unrollJoin('d$X2*d$X2', ' + ')})
+      let l1 = Math.sqrt(${unrollJoin("d$X1*d$X1", " + ")})
+      let l2 = Math.sqrt(${unrollJoin("d$X2*d$X2", " + ")})
 
       // normalize
       l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
@@ -737,7 +737,7 @@ ${unroll(`      let d$X2 = v2[$$] - center[$$];`)}
 ${unroll(`      d$X1 *= l1;`)}
 ${unroll(`      d$X1 *= l1;`)}
   
-      return ${unrollJoin(`d$X1*d$X2`, ' + ')};
+      return ${unrollJoin(`d$X1*d$X2`, " + ")};
     }
 
     constructor(existing?: number[] | ${VArg}) {
@@ -762,9 +762,9 @@ ${Array.from(IndexRange(vecsize - 1))
 ${unroll(`${mTab}this[$$] = existing[$$];`, undefined, undefined, i + 2)}
       return this
     }
-  `
+  `;
   })
-  .join('\n')}
+  .join("\n")}
 
     normalizedDot(b: ${VArg}): number {
       const l = this.vectorLength() * b.vectorLength();
@@ -794,7 +794,7 @@ ${basicFuncs}${basicDotFuncs(vecsize, VArg)}
       return this;
     }
     dot(b: ${VArg}): number {
-      const ret = ${unrollJoin('this[$$]*b[$$]', ' + ')};
+      const ret = ${unrollJoin("this[$$]*b[$$]", " + ")};
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
       if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
@@ -803,25 +803,25 @@ ${basicFuncs}${basicDotFuncs(vecsize, VArg)}
     
 ${Array.from(IndexRange(vecsize) as Iterable<number>)
   .map((i) => {
-    let s2 = ''
-    let axes = 'XYZW'
-    s2 += `    load${axes.slice(0, i + 1)}`
-    s2 += '('
+    let s2 = "";
+    let axes = "XYZW";
+    s2 += `    load${axes.slice(0, i + 1)}`;
+    s2 += "(";
     s2 += Array.from(axes)
       .slice(0, i + 1)
-      .map((a) => a.toLowerCase() + ': number')
-      .join(', ')
-    s2 += ') {\n'
+      .map((a) => a.toLowerCase() + ": number")
+      .join(", ");
+    s2 += ") {\n";
     s2 +=
       Array.from(axes)
         .slice(0, i + 1)
         .map((a, j) => `      this[${j}] = ${a.toLowerCase()}`)
-        .join('\n') + '\n'
-    s2 += '      return this\n'
-    s2 += '    }'
-    return '    ' + s2.trim()
+        .join("\n") + "\n";
+    s2 += "      return this\n";
+    s2 += "    }";
+    return "    " + s2.trim();
   })
-  .join('\n')}
+  .join("\n")}
 
     swapAxes(axis1: ${indexType}, axis2: ${indexType}) {
       const t = this[axis1];
@@ -873,7 +873,7 @@ ${
       return this;
     }
 `
-    : ''
+    : ""
 }
     preNormalizedAngle(v2: ${VArg}) {
       let th = this.dot(v2) * 0.99999;
@@ -907,12 +907,12 @@ ${
     }
   }
 }
-  `
-  return s
+  `;
+  return s;
 }
 
 function genCode() {
-  let s = ''
+  let s = "";
 
   s +=
     `
@@ -1110,10 +1110,10 @@ export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
 const M_SQRT2 = Math.SQRT2
 const PI = Math.PI
 
-  `.trim() + '\n'
+  `.trim() + "\n";
 
   for (let i = 2; i <= 4; i++) {
-    s += genBase('Vector', i)
+    s += genBase("Vector", i);
   }
 
   s += `
@@ -1370,9 +1370,9 @@ Quat.STRUCT =
   nstructjs.inherit(Quat, Vector4, "quat") +
   \`
 }\`;
-nstructjs.register(Quat);`
-  s += Matrix4Code
-  s += `vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);\n`
+nstructjs.register(Quat);`;
+  s += Matrix4Code;
+  s += `vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);\n`;
   s += `
 
 
@@ -1390,9 +1390,9 @@ type B = AssertVectorIBaseVector<3, Vector3>
 type C = AssertVectorIBaseVector<4, Vector4>
 type D = AssertVectorIBaseVector<4, Quat>
 
-`
+`;
 
-  console.log(s)
-  fs.writeFileSync('vectormath.ts', s)
+  console.log(s);
+  fs.writeFileSync("vectormath.ts", s);
 }
-genCode()
+genCode();

@@ -1,30 +1,27 @@
 var _jobs = undefined;
 
-define([
-  "scripts/util/util"
-], function(util) {
-  'use strict';
+define(["scripts/util/util"], function (util) {
+  "use strict";
 
   /*
-  * job system design:
+   * job system design:
    *
    * all jobs have tags.
    * only one job with a given tag can run at a time.
    *
-  * */
+   * */
 
-  var exports = _jobs = {};
+  var exports = (_jobs = {});
 
-  var JobFlags = {
-  };
+  var JobFlags = {};
 
-  var JobStatus = exports.JobStatus = class JobStatus {
+  var JobStatus = (exports.JobStatus = class JobStatus {
     constructor() {
       this.percent = 0.0;
     }
-  }
+  });
 
-  var Job = exports.Job = class Job {
+  var Job = (exports.Job = class Job {
     constructor(iter, tag, owner) {
       this.iter = iter;
       this.tag = tag;
@@ -55,14 +52,14 @@ define([
 
       var ret = this.iter.next();
       if (ret.done) {
-        this.dead = {done: true, value : undefined};
+        this.dead = { done: true, value: undefined };
       }
 
       return ret;
     }
-  };
+  });
 
-  var JobManager = exports.JobManager = class JobManager {
+  var JobManager = (exports.JobManager = class JobManager {
     constructor() {
       this.jobs = [];
       this.job_tagmap = {};
@@ -80,7 +77,6 @@ define([
         this.jobs.remove(this.job_tagmap[tag]);
       }
 
-
       this.job_tagmap[tag] = job;
       this.jobs.push(job);
 
@@ -88,7 +84,7 @@ define([
     }
 
     next() {
-      for (var i=0; i<this.jobs.length; i++) {
+      for (var i = 0; i < this.jobs.length; i++) {
         var job = this.jobs[i];
         var ret = job.next();
 
@@ -100,7 +96,7 @@ define([
         }
       }
 
-      for (var i=0; i<this.thenqueue.length; i++) {
+      for (var i = 0; i < this.thenqueue.length; i++) {
         for (var then of this.thenqueue[i].thens) {
           try {
             then();
@@ -113,7 +109,7 @@ define([
 
       this.thenqueue.length = 0;
     }
-  };
+  });
 
   return exports;
 });

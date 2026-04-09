@@ -673,8 +673,8 @@ declare global {
     /** debug cacherings */
     _cacherings?: cachering<any>[];
     _clear_all_cacherings?(kill_all?: boolean): void;
-    _nonvector_cacherings?(): void
-    _stale_cacherings?(): cachering<unknown>[]
+    _nonvector_cacherings?(): void;
+    _stale_cacherings?(): cachering<unknown>[];
   }
 }
 

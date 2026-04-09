@@ -102,7 +102,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     unused?: unknown,
     event?: PointerEvent | undefined
   ): Promise<T extends ToolOp ? T : ToolOp> {
-    type Tool = T extends ToolOp ? T : ToolOp
+    type Tool = T extends ToolOp ? T : ToolOp;
 
     return new Promise((accept, reject) => {
       let tool: string | Tool = path;
