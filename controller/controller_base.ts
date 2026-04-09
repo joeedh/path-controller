@@ -6,6 +6,7 @@ import { cachering } from "../util/util.js";
 import { ToolProperty } from "../toolsys/toolprop.js";
 import type { DataAPI, DataStruct } from "./controller.js";
 import type { ContextLike, ModelInterface } from "./controller_abstract.js";
+import { ToolPropertyTypes } from "../toolsys/allprops.js";
 
 declare global {
   interface PathUXDebug {
@@ -59,7 +60,7 @@ export interface DataPathToolProperty extends ToolProperty {
 
 let propCacheRings: Record<number, cachering<ToolProperty>> = {};
 
-export function getTempProp<P extends ToolProperty>(type: number): P {
+export function getTempProp<P extends ToolProperty | ToolPropertyTypes>(type: number): P {
   if (!(type in propCacheRings)) {
     const cls = ToolProperty.getClass(type);
     if (!cls) {

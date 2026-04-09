@@ -829,7 +829,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     parserStackCur--;
 
     if (ret?.prop && ret.dpath && ret.dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
-      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj);
+      ret.prop = this.getPropOverride(ctx, inpath, ret.dpath, ret.obj) as ToolPropertyTypes;
     }
 
     if (ret?.prop && ret.dpath?.ui_name_get) {
@@ -847,7 +847,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return ret;
   }
 
-  getPropOverride<P extends ToolProperty>(
+  getPropOverride<P extends ToolProperty | ToolPropertyTypes>(
     ctx: CTX,
     path: string,
     dpath: DataPath,
@@ -1012,7 +1012,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       }
 
       if (prop && dpath.flag & DataFlags.USE_CUSTOM_PROP_GETTER) {
-        prop = this.getPropOverride(ctx, inpath, dpath, obj);
+        prop = this.getPropOverride(ctx, inpath, dpath, obj) as ToolPropertyTypes;
       }
 
       if (dpath.path.search(/\./) >= 0) {
@@ -1412,7 +1412,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return parseToolPath(path).args;
   }
 
-  createTool(ctx: CTX, path: string, inputs: any = {}) {
+  createTool<T extends ToolOp = ToolOp>(ctx: CTX, path: string, inputs: any = {}): T {
     let cls;
     let args;
 
@@ -1462,7 +1462,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       }
     }
 
-    return tool;
+    return tool as T;
   }
 }
 

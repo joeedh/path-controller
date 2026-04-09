@@ -97,7 +97,7 @@ const RecalcFlags = {
 
 export function mySafeJSONStringify(obj: { toJSON(): Record<string, unknown> }): string {
   return JSON.stringify(obj.toJSON(), function (key) {
-    let v = (this as Record<string, unknown>)[key];
+    let v = this[key];
 
     if (typeof v === "number") {
       if (v !== Math.floor(v)) {
@@ -162,10 +162,13 @@ import {
   BoolProperty,
   EnumProperty,
   FloatProperty,
+  IconMap,
   IntProperty,
   StringProperty,
   Vec2Property,
 } from "../toolsys/toolprop";
+import { JSONAny } from "../controller";
+import { Container } from "../../pathux";
 
 /** Interface for BSplineCurve's parent (Curve1D) with the methods it actually uses */
 interface BSplineCurveParent {
@@ -225,7 +228,7 @@ export class Curve1dBSplineOpBase<
   Outputs extends PropertySlots = {},
   CTX extends ContextLike = ContextLike,
 > extends ToolOp<Inputs & { dataPath: StringProperty }, Outputs, CTX> {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+  static override tooldef() {
     return {
       inputs: {
         dataPath: new StringProperty(),
@@ -236,8 +239,8 @@ export class Curve1dBSplineOpBase<
 
   _undo: Curve1DObject | undefined = undefined;
 
-  undoPre(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  undoPre(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
     if (curve1d) {
       this._undo = curve1d.copy();
     } else {
@@ -245,15 +248,15 @@ export class Curve1dBSplineOpBase<
     }
   }
 
-  undo(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  undo(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
     if (curve1d && this._undo) {
       curve1d.load(this._undo);
       curve1d._fireEvent("update", curve1d);
     }
   }
 
-  getCurve1d(ctx: Record<string, unknown>): Curve1DObject | undefined {
+  getCurve1d(ctx: CTX): Curve1DObject | undefined {
     const { dataPath } = this.getInputs();
 
     let curve1d: Curve1DObject | undefined;
@@ -272,48 +275,53 @@ export class Curve1dBSplineOpBase<
     return curve1d;
   }
 
-  execPost(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  execPost(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
     if (curve1d) {
       curve1d._fireEvent("update", curve1d);
     }
   }
 }
 
-export class Curve1dBSplineResetOp extends Curve1dBSplineOpBase {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+export class Curve1dBSplineResetOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<{}, {}, CTX> {
+  static override tooldef() {
     return {
+      ...super.tooldef(),
       toolpath: "curve1d.reset_bspline",
-      inputs  : ToolOp.inherit({}),
-      outputs : {},
     };
   }
 
-  exec(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  exec(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
     if (curve1d) {
       curve1d.generators.active.reset();
     }
   }
 }
 
-ToolOp.register(Curve1dBSplineResetOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(Curve1dBSplineResetOp);
 
-export class Curve1dBSplineLoadTemplOp extends Curve1dBSplineOpBase<{
-  template: EnumProperty;
-}> {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+export class Curve1dBSplineLoadTemplOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+  {
+    template: EnumProperty;
+  },
+  {},
+  CTX
+> {
+  static override tooldef() {
+    const def = super.tooldef();
     return {
+      ...def,
       toolpath: "curve1d.bspline_load_template",
-      inputs: ToolOp.inherit({
+      inputs: {
+        ...def.inputs,
         template: new EnumProperty(SplineTemplates.SMOOTH, SplineTemplates),
-      }),
-      outputs : {},
+      },
     };
   }
 
-  exec(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  exec(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
     const { template } = this.getInputs();
 
     if (curve1d) {
@@ -322,19 +330,18 @@ export class Curve1dBSplineLoadTemplOp extends Curve1dBSplineOpBase<{
   }
 }
 
-ToolOp.register(Curve1dBSplineLoadTemplOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(Curve1dBSplineLoadTemplOp);
 
-export class Curve1dBSplineDeleteOp extends Curve1dBSplineOpBase {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+export class Curve1dBSplineDeleteOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<{}, {}, CTX> {
+  static override tooldef() {
     return {
+      ...super.tooldef(),
       toolpath: "curve1d.bspline_delete_point",
-      inputs  : ToolOp.inherit({}),
-      outputs : {},
     };
   }
 
-  exec(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  exec(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
 
     if (curve1d) {
       curve1d.generators.active.deletePoint();
@@ -342,27 +349,33 @@ export class Curve1dBSplineDeleteOp extends Curve1dBSplineOpBase {
   }
 }
 
-ToolOp.register(Curve1dBSplineDeleteOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(Curve1dBSplineDeleteOp);
 
-export class Curve1dBSplineSelectOp extends Curve1dBSplineOpBase<{
-  point: IntProperty;
-  state: BoolProperty;
-  unique: BoolProperty;
-}> {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+export class Curve1dBSplineSelectOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+  {
+    point: IntProperty;
+    state: BoolProperty;
+    unique: BoolProperty;
+  },
+  {},
+  CTX
+> {
+  static override tooldef() {
+    const def = super.tooldef();
     return {
+      ...def,
       toolpath: "curve1d.bspline_select_point",
-      inputs: ToolOp.inherit({
+      inputs: {
+        ...def.inputs,
         point : new IntProperty(-1),
         state : new BoolProperty(true),
         unique: new BoolProperty(true),
-      }),
-      outputs : {},
+      },
     };
   }
 
-  exec(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  exec(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
 
     if (curve1d) {
       const bspline = curve1d.generators.active;
@@ -385,25 +398,31 @@ export class Curve1dBSplineSelectOp extends Curve1dBSplineOpBase<{
   }
 }
 
-ToolOp.register(Curve1dBSplineSelectOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(Curve1dBSplineSelectOp);
 
-export class Curve1dBSplineAddOp extends Curve1dBSplineOpBase<{
-  x: FloatProperty;
-  y: FloatProperty;
-}> {
-  static override tooldef(): import("../toolsys/toolsys").ToolDef {
+export class Curve1dBSplineAddOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+  {
+    x: FloatProperty;
+    y: FloatProperty;
+  },
+  {},
+  CTX
+> {
+  static override tooldef() {
+    const def = super.tooldef();
     return {
+      ...def,
       toolpath: "curve1d.bspline_add_point",
-      inputs: ToolOp.inherit({
+      inputs: {
+        ...def.inputs,
         x: new FloatProperty(),
         y: new FloatProperty(),
-      }),
-      outputs : {},
+      },
     };
   }
 
-  exec(ctx: unknown) {
-    const curve1d = this.getCurve1d(ctx as Record<string, unknown>);
+  exec(ctx: CTX) {
+    const curve1d = this.getCurve1d(ctx);
 
     if (curve1d) {
       const { x, y } = this.getInputs();
@@ -412,7 +431,7 @@ export class Curve1dBSplineAddOp extends Curve1dBSplineOpBase<{
   }
 }
 
-ToolOp.register(Curve1dBSplineAddOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(Curve1dBSplineAddOp);
 
 export class BSplineTransformOp<CTX extends ContextLike> extends ToolOp<
   {
@@ -467,7 +486,7 @@ export class BSplineTransformOp<CTX extends ContextLike> extends ToolOp<
         }
       }
 
-      (bspline.parent as BSplineCurveParent)._fireEvent("transform", bspline);
+      bspline.parent!._fireEvent("transform", bspline);
 
       bspline.recalc = RecalcFlags.ALL;
       bspline.updateKnots();
@@ -492,7 +511,7 @@ export class BSplineTransformOp<CTX extends ContextLike> extends ToolOp<
       curve1d = (ctx as { api: { getValue(ctx: unknown, path: unknown): Record<string, unknown> } }).api.getValue(
         ctx,
         dataPath
-      ) as Record<string, unknown>;
+      );
     } catch (error: unknown) {
       console.error((error as Error).stack);
       console.error((error as Error).message);
@@ -600,7 +619,7 @@ export class BSplineTransformOp<CTX extends ContextLike> extends ToolOp<
   }
 }
 
-ToolOp.register(BSplineTransformOp as unknown as Parameters<typeof ToolOp.register>[0]);
+ToolOp.register(BSplineTransformOp);
 
 export class Curve1DPoint {
   static STRUCT: string;
@@ -1082,9 +1101,9 @@ class BSplineCurve extends CurveTypeData {
     this._ps = [];
 
     if (obj.range) {
-      /* Will be version patched later. */
+      /* Will be version patched later in `curve1d.ts:#patchRange()`. */
       const range = obj.range as number[][];
-      (this as Record<string, unknown>).range = [new Vector2(range[0]), new Vector2(range[1])];
+      (this as any).range = [new Vector2(range[0]), new Vector2(range[1])];
     }
 
     this.points.highlight = undefined;
@@ -1092,7 +1111,7 @@ class BSplineCurve extends CurveTypeData {
     this.recalc = RecalcFlags.ALL;
     this.mpos = new Vector2();
 
-    const points = obj.points as Record<string, unknown>[];
+    const points = obj.points as JSONAny;
     for (let i = 0; i < points.length; i++) {
       this.points.push(Curve1DPoint.fromJSON(points[i]));
     }
@@ -1696,12 +1715,18 @@ class BSplineCurve extends CurveTypeData {
     this.redraw();
   }
 
-  makeGUI(container: unknown, canvas: unknown, drawTransform: unknown, datapath?: unknown, onSourceUpdate?: unknown) {
-    const cont = container as Record<string, Function>;
-    const cvs = canvas as HTMLCanvasElement & { g: CanvasRenderingContext2D };
-    const drawTrans = drawTransform as [number, [number, number]];
-    const dpath = datapath as string | undefined;
-    const srcUpdate = onSourceUpdate as (() => void) | undefined;
+  makeGUI(
+    container: Container,
+    canvas: HTMLCanvasElement & { g: CanvasRenderingContext2D },
+    drawTransform: [number, [number, number]],
+    datapath?: string,
+    onSourceUpdate?: () => void
+  ) {
+    const cont = container;
+    const cvs = canvas;
+    const drawTrans = drawTransform;
+    const dpath = datapath;
+    const srcUpdate = onSourceUpdate;
 
     console.warn(this._bid, "makeGUI", this.uidata, this.uidata ? this.uidata.start_mpos : undefined);
 
@@ -1720,7 +1745,7 @@ class BSplineCurve extends CurveTypeData {
       transforming: false,
       draw_trans  : drawTrans,
       datapath    : dpath,
-    } as unknown as Record<string, unknown>;
+    };
 
     console.warn("Building gui");
 
@@ -1734,28 +1759,26 @@ class BSplineCurve extends CurveTypeData {
     cvs.addEventListener("mouseup", this.on_mouseup);
     cvs.addEventListener("keydown", this.on_keydown);
 
-    const bstrip = (cont.row() as Record<string, Function>).strip() as Record<string, Function>;
+    const bstrip = cont.row().strip();
 
-    let row: Record<string, unknown>;
+    let row: Container;
 
-    const makebutton = (strip: Record<string, Function>, k: string) => {
+    const makebutton = (strip: Container, k: string) => {
       let uiname = k[0] + k.slice(1, k.length).toLowerCase();
       uiname = uiname.replace(/_/g, " ");
 
       const icon = strip.iconbutton(-1, uiname, () => {
         if (dpath) {
-          const r = row as {
-            ctx: { api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void } };
-          };
-          r.ctx.api.execTool(r.ctx, "curve1d.bspline_load_template", {
+          const r = row;
+          r.ctx.api.execTool<Curve1dBSplineLoadTemplOp>(r.ctx, "curve1d.bspline_load_template", {
             dataPath: dpath,
-            template: (SplineTemplates as Record<string, number>)[k],
+            template: SplineTemplates[k as keyof typeof SplineTemplates],
           });
           if (srcUpdate) srcUpdate();
         } else {
-          this.loadTemplate((SplineTemplates as Record<string, number>)[k]);
+          this.loadTemplate(SplineTemplates[k as keyof typeof SplineTemplates]);
         }
-      }) as Record<string, unknown>;
+      });
 
       icon.iconsheet = 0;
       icon.customIcon = SplineTemplateIcons[k];
@@ -1765,7 +1788,7 @@ class BSplineCurve extends CurveTypeData {
       makebutton(bstrip, k);
     }
 
-    row = cont.row() as Record<string, unknown>;
+    row = cont.row();
 
     const fullUpdate = () => {
       this.updateKnots();
@@ -1775,10 +1798,7 @@ class BSplineCurve extends CurveTypeData {
       this.redraw();
     };
 
-    const Icons = (row.constructor as unknown as Record<string, Function>).getIconEnum() as Record<
-      string,
-      number | undefined
-    >;
+    const Icons = (row.constructor as any).getIconEnum() as IconMap;
 
     const icon = Icons.LARGE_X !== undefined ? Icons.LARGE_X : Icons.TINY_X;
     if (Icons.LARGE_X === undefined) {
@@ -1786,7 +1806,7 @@ class BSplineCurve extends CurveTypeData {
       console.error("Curve widget expects Icons.LARGE_X icon for delete button.");
     }
 
-    (row as Record<string, Function>).iconbutton(icon, "Delete Point", () => {
+    row.iconbutton(icon, "Delete Point", () => {
       if (dpath) {
         const r = row as {
           ctx: { api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void } };
@@ -1802,7 +1822,7 @@ class BSplineCurve extends CurveTypeData {
       fullUpdate();
     });
 
-    (row as Record<string, Function>).button("Reset", () => {
+    row.button("Reset", () => {
       if (dpath) {
         const r = row as {
           ctx: { api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void } };
@@ -1816,7 +1836,7 @@ class BSplineCurve extends CurveTypeData {
       }
     });
 
-    const slider = (row as Record<string, Function>).simpleslider(undefined, {
+    const slider = row.simpleslider(undefined, {
       name    : "Degree",
       min     : 1,
       max     : 7,
@@ -1825,27 +1845,27 @@ class BSplineCurve extends CurveTypeData {
         this.deg = Math.floor(s.value);
         fullUpdate();
       },
-    }) as Record<string, unknown>;
-    (slider as Record<string, Function>).setValue(this.deg);
+    });
+    slider.setValue(this.deg);
 
     let last_deg = this.deg;
-    (slider as Record<string, Function>).updateAfter(() => {
+    slider.updateAfter(() => {
       if (last_deg !== this.deg) {
         console.log("degree update", this.deg);
         last_deg = this.deg;
-        (slider as Record<string, Function>).setValue(this.deg);
+        slider.setValue(this.deg);
       }
     });
 
     slider.baseUnit = "none";
     slider.displayUnit = "none";
 
-    row = cont.row() as Record<string, unknown>;
-    const check = (row as Record<string, Function>).check(undefined, "Interpolating") as Record<string, unknown>;
+    row = cont.row();
+    const check = row.check(undefined, "Interpolating");
     check.checked = this.interpolating;
 
-    (check as Record<string, unknown>).onchange = () => {
-      this.interpolating = check.value as boolean;
+    check.onchange = () => {
+      this.interpolating = check.value;
       fullUpdate();
     };
 
@@ -2245,7 +2265,7 @@ BSplineCurve.STRUCT =
 }
 `;
 nstructjs.register(BSplineCurve);
-CurveTypeData.register(BSplineCurve as unknown as CurveTypeDataConstructor);
+CurveTypeData.register(BSplineCurve);
 
 function makeSplineTemplateIcons(size: number = 64) {
   if (typeof document === "undefined") {
@@ -2257,7 +2277,7 @@ function makeSplineTemplateIcons(size: number = 64) {
 
   for (const k in SplineTemplates) {
     const curve = new BSplineCurve();
-    curve.loadTemplate((SplineTemplates as Record<string, number>)[k]);
+    curve.loadTemplate(SplineTemplates[k as keyof typeof SplineTemplates]);
 
     curve.fastmode = true;
 
@@ -2313,7 +2333,7 @@ function makeSplineTemplateIcons(size: number = 64) {
     img.src = url;
 
     SplineTemplateIcons[k] = img;
-    SplineTemplateIcons[(SplineTemplates as Record<string, number>)[k]] = img;
+    SplineTemplateIcons[SplineTemplates[k as keyof typeof SplineTemplates]] = img;
   }
 }
 
@@ -2328,7 +2348,7 @@ export function initSplineTemplates() {
 
   for (const k in SplineTemplates) {
     const curve = new BSplineCurve();
-    curve.loadTemplate((SplineTemplates as Record<string, number>)[k]);
+    curve.loadTemplate(SplineTemplates[k as keyof typeof SplineTemplates]);
     splineCache.get(curve);
   }
 

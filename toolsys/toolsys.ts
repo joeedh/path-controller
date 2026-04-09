@@ -177,6 +177,7 @@ export const UndoFlags: Record<string, number> = {
   HAS_UNDO_DATA: 16,
 };
 
+/** @deprecated inheritance is now forced (at least for inputs/outputs) */
 export class InheritFlag<Slots = Record<string, ToolProperty>> {
   slots: Slots;
 
@@ -461,10 +462,6 @@ export class ToolOp<
     ): Record<string, ToolProperty> => {
       if (slots === undefined) return {};
 
-      if (!(slots instanceof InheritFlag)) {
-        return slots;
-      }
-
       const result: Record<string, ToolProperty> = {};
       let p: ToolOpConstructor | undefined = this.constructor as unknown as ToolOpConstructor;
       let lastp: ToolOpConstructor | undefined = undefined;
@@ -477,7 +474,6 @@ export class ToolOp<
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
               | Record<string, ToolProperty>
               | InheritFlag;
-            const stop = !(slots2 instanceof InheritFlag);
 
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
@@ -488,15 +484,12 @@ export class ToolOp<
                 result[sk] = slots2[sk];
               }
             }
-
-            if (stop) {
-              break;
-            }
           }
         }
 
         lastp = p;
-        p = (p as any).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
+        //p = (p as any).prototype?.constructor as unknown as ToolOpConstructor | undefined;
+        p = (p as any).__proto__ as unknown as ToolOpConstructor | undefined;
       }
 
       return result;
@@ -617,6 +610,7 @@ export class ToolOp<
     return !bad;
   }
 
+  /** @deprecated inheritance is now forced */
   static inherit<Slots>(slots: Slots): InheritFlag<Slots> {
     return new InheritFlag<Slots>(slots);
   }
@@ -656,7 +650,8 @@ export class ToolOp<
     return tool;
   }
 
-  static register(cls: ToolOpConstructor): void {
+  // use `any` to avoid extremely nasty constructor typing errors
+  static register(cls: any): void {
     if (ToolClasses.includes(cls)) {
       console.warn("Tried to register same ToolOp class twice:", cls.name, cls);
       return;
@@ -709,10 +704,6 @@ export class ToolOp<
     ): Record<string, ToolProperty> => {
       if (slots === undefined) return {};
 
-      if (!(slots instanceof InheritFlag)) {
-        return slots;
-      }
-
       const result: Record<string, ToolProperty> = {};
       let p: ToolOpConstructor | undefined = this as unknown as ToolOpConstructor;
 
@@ -724,8 +715,6 @@ export class ToolOp<
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
               | Record<string, ToolProperty>
               | InheritFlag;
-            const stop = !(slots2 instanceof InheritFlag);
-
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
             }
@@ -735,13 +724,9 @@ export class ToolOp<
                 result[sk] = slots2[sk];
               }
             }
-
-            if (stop) {
-              break;
-            }
           }
         }
-        p = p.prototype.__proto__?.constructor as unknown as ToolOpConstructor | undefined;
+        p = (p as any).__proto__ as unknown as ToolOpConstructor | undefined;
       }
 
       return result;

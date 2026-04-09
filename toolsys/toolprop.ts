@@ -11,8 +11,8 @@ declare global {
   }
 }
 
-export type EnumDef = Record<string, number|string>
-export type FlagsDef = Record<string, number>
+export type EnumDef = Record<string, number | string>;
+export type FlagsDef = Record<string, number>;
 export type IconMap = Record<string, number>;
 export type DescriptionMap = Record<string, string>;
 export type UINameMap = Record<string, string>;
@@ -101,7 +101,7 @@ export const PropClasses: Record<number, typeof ToolProperty> = {};
 
 let customPropTypeBase: number = 17;
 
-const wordmap: Record<string, string> = {
+export const MakeUINameWordMap: Record<string, string> = {
   sel  : "select",
   unsel: "deselect",
   eid  : "id",
@@ -340,8 +340,8 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     }
 
     const subst = (word: string): string => {
-      if (word in wordmap) {
-        return wordmap[word];
+      if (word in MakeUINameWordMap) {
+        return MakeUINameWordMap[word];
       } else {
         return word;
       }
@@ -1532,7 +1532,7 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
     return this.getValue() === b.getValue();
   }
 
-  addUINames(map: Record<string, string>): this {
+  addUINames(map: UINameMap): this {
     for (const k in map) {
       this.ui_value_names[k] = map[k];
     }
@@ -1540,7 +1540,7 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
     return this;
   }
 
-  addDescriptions(map: Record<string, string>): this {
+  addDescriptions(map: DescriptionMap): this {
     for (const k in map) {
       this.descriptions[k] = map[k];
     }
@@ -1548,7 +1548,7 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
     return this;
   }
 
-  addIcons2(iconmap2: Record<string, number>): this {
+  addIcons2(iconmap2: IconMap): this {
     if (this.iconmap2 === undefined) {
       this.iconmap2 = {};
     }
@@ -1560,7 +1560,7 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
     return this;
   }
 
-  addIcons(iconmap: Record<string, number>): this {
+  addIcons(iconmap: IconMap): this {
     if (this.iconmap === undefined) {
       this.iconmap = {};
     }
@@ -2214,10 +2214,10 @@ export class StringSetProperty extends ToolProperty<UtilStringSet, PropTypes["ST
 
   value: UtilStringSet;
   values: Record<string, string>;
-  ui_value_names: Record<string, string>;
-  descriptions: Record<string, string>;
-  iconmap: Record<string, number>;
-  iconmap2: Record<string, number>;
+  ui_value_names: UINameMap;
+  descriptions: DescriptionMap;
+  iconmap: IconMap;
+  iconmap2: IconMap;
 
   constructor(
     value?: string | Iterable<string> | Record<string, string> | null,

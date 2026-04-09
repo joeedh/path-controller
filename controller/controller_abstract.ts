@@ -33,7 +33,7 @@ export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack>
   api: DataAPI<this>;
   toolstack: TS;
   toLocked?(): this;
-  
+
   // TODO: split screen dependent stuff out of base ToolOp
   // into it's own subclass in main path.ux repo
   //@ts-expect-error bleh
@@ -70,12 +70,12 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return undefined;
   }
 
-  createTool(
+  createTool<T extends ToolOp = ToolOp>(
     ctxOrPath: ContextLike | string,
     pathOrInputs?: string | Record<string, unknown>,
     inputsOrUnused?: Record<string, unknown> | unknown,
     unused?: unknown
-  ): ToolOp {
+  ): T {
     throw new Error("implement me");
   }
 
@@ -95,19 +95,21 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
-  execTool(
+  execTool<T extends ToolOp | unknown = unknown>(
     ctx: CTX,
-    path: string | ToolOp,
-    inputs: Record<string, unknown> = {},
+    path: string | (T extends ToolOp ? T : ToolOp),
+    inputs?: T extends ToolOp ? ReturnType<T["getInputs"]> : Record<string, any>,
     unused?: unknown,
     event?: PointerEvent | undefined
-  ): Promise<ToolOp> {
+  ): Promise<T extends ToolOp ? T : ToolOp> {
+    type Tool = T extends ToolOp ? T : ToolOp
+
     return new Promise((accept, reject) => {
-      let tool: string | ToolOp = path;
+      let tool: string | Tool = path;
 
       try {
         if (typeof tool == "string" || !(tool instanceof ToolOp)) {
-          tool = this.createTool(ctx, tool as string, inputs, unused) as unknown as ToolOp;
+          tool = this.createTool<Tool>(ctx, tool as string, inputs, unused);
         }
       } catch (error) {
         print_stack(error as Error);
