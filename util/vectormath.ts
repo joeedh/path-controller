@@ -49,15 +49,22 @@ export type Number5 = 0 | 1 | 2 | 3 | 4;
 type numlits = { 1: 1; 2: 2 | 3 | 4; 3: 3 | 4; 4: 4 };
 export type NumLitHigher<L extends 1 | 2 | 3 | 4> = numlits[L];
 
+type helper1 = [never, never, 0 | 1, 0 | 1 | 2, 0 | 1 | 2 | 3]
+type IBaseBase<LEN extends 2 | 3 | 4> = {
+  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? k : never]: number
+} & {
+  [k in 0 | 1 | 2 | 3 as k extends helper1[LEN] ? never : k]?: number
+}
+
 /**
  * By design vectors do not have a simple index signature.
  * Instead, indices up to LEN type to number, while indices above
  * LEN type to number | undefined.
- * 
+ *
  * This is to prevent mixing of incompatible vectors.
  *
  * This can create problems with iteration, for example:
- * 
+ *
  * ```ts
  * let v = new Vector3()
  * for (let i=0; i<3; i++) {
@@ -66,119 +73,116 @@ export type NumLitHigher<L extends 1 | 2 | 3 | 4> = numlits[L];
  *   // will work
  *   v[i] = i as Number3
  * }
- * 
+ *
  * //alternative with IndexRange:
  * for (const i of IndexRange(3)) {
  *   v[i] = i
  * }
  * ```
  */
-declare interface IBaseVector<LEN extends 1 | 2 | 3 | 4, ArrayType = Array<number>> {
-  //[P: P extends indexUnions[LEN] ? number : never]: P extends IndexUnion<LEN> ? number : never;
-
-  // type helper phantom property
-  LEN?: LEN;
-  
-  length: LEN | number;
+type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = Array<number>> = IBaseBase<LEN> & {
+  length: number
 
   // for indices above LEN, type to number | undefined
-  [k: number]: number | undefined;
-  
-  // for indices up to LEN, type to number
-  0: LEN extends 1 | 2 | 3 | 4 ? number : never;
-  1: LEN extends 2 | 3 | 4 ? number : never;
-  2: LEN extends 3 | 4 ? number : never;
-  3: LEN extends 4 ? number : never;
+  [k: number]: number | undefined
 
-  [Symbol.iterator](): Iterator<number>;
-  slice(start?: number, end?: number): this;
+  [Symbol.iterator](): Iterator<number>
+  slice(start?: number, end?: number): number[]
 
-  sinterp(b: IBaseVector<NumLitHigher<LEN>>, t: number): this;
+  sinterp(b: IBaseVector<LEN>, t: number): IBaseVector<LEN>
 
-  perpSwap(axis1?: number, axis2?: number, sign?: number): this;
+  perpSwap(axis1?: number, axis2?: number, sign?: number): IBaseVector<LEN>
 
   //all math operates in-place, no new objects
-  load(b: IBaseVector<NumLitHigher<LEN>> | INumVector): this;
+  load(b: IBaseVector<LEN> | INumVector): IBaseVector<LEN>
 
-  loadXY(x: number, y: number): this;
+  loadXY(x: number, y: number): IBaseVector<LEN>
 
-  copy(): this;
+  copy(): IBaseVector<LEN>
 
-  add(b: IBaseVector<NumLitHigher<LEN>>): this;
-  sub(b: IBaseVector<NumLitHigher<LEN>>): this;
-  mul(b: IBaseVector<NumLitHigher<LEN>>): this;
-  div(b: IBaseVector<NumLitHigher<LEN>>): this;
-  addScalar(b: number): this;
-  subScalar(b: number): this;
-  mulScalar(b: number): this;
-  divScalar(b: number): this;
-  minScalar(b: number): this;
-  maxScalar(b: number): this;
-  min(b: IBaseVector<NumLitHigher<LEN>>): this;
-  max(b: IBaseVector<NumLitHigher<LEN>>): this;
-  floor(): this;
-  fract(): this;
-  ceil(): this;
-  abs(): this;
-  dot(b: IBaseVector<NumLitHigher<LEN>>): number;
-  normalize(): this;
-  vectorLength(): number;
-  vectorLengthSqr(): number;
-  vectorDistance(b: IBaseVector<NumLitHigher<LEN>>): number;
-  vectorDistanceSqr(b: IBaseVector<NumLitHigher<LEN>>): number;
-  multVecMatrix(mat: Matrix4): void;
-  interp(b: IBaseVector<NumLitHigher<LEN>>, fac: number): this;
-  addFac(b: IBaseVector<NumLitHigher<LEN>>, fac: number): this;
-  rot2d(th: number, axis?: number | undefined): this;
-  zero(): this;
-  negate(): this;
-  swapAxes(axis1: number, axis2: number): this;
+  add(b: IBaseVector<LEN>): IBaseVector<LEN>
+  sub(b: IBaseVector<LEN>): IBaseVector<LEN>
+  mul(b: IBaseVector<LEN>): IBaseVector<LEN>
+  div(b: IBaseVector<LEN>): IBaseVector<LEN>
+  addScalar(b: number): IBaseVector<LEN>
+  subScalar(b: number): IBaseVector<LEN>
+  mulScalar(b: number): IBaseVector<LEN>
+  divScalar(b: number): IBaseVector<LEN>
+  minScalar(b: number): IBaseVector<LEN>
+  maxScalar(b: number): IBaseVector<LEN>
+  min(b: IBaseVector<LEN>): IBaseVector<LEN>
+  max(b: IBaseVector<LEN>): IBaseVector<LEN>
+  floor(): IBaseVector<LEN>
+  fract(): IBaseVector<LEN>
+  ceil(): IBaseVector<LEN>
+  abs(): IBaseVector<LEN>
+  dot(b: IBaseVector<LEN>): number
+  normalizedDot(b: IBaseVector<3>): number
+  normalize(): IBaseVector<LEN>
+  vectorLength(): number
+  vectorLengthSqr(): number
+  vectorDistance(b: IBaseVector<LEN>): number
+  vectorDistanceSqr(b: IBaseVector<LEN>): number
+  multVecMatrix(mat: Matrix4): void
+  interp(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>
+  addFac(b: IBaseVector<LEN>, fac: number): IBaseVector<LEN>
+  rot2d(th: number, axis?: number | undefined): IBaseVector<LEN>
+  zero(): IBaseVector<LEN>
+  negate(): IBaseVector<LEN>
+  swapAxes(axis1: number, axis2: number): IBaseVector<LEN>
 }
 
-export type VectorLikeOrHigher<LEN extends 2 | 3 | 4, Type = never> = Type | IBaseVector<NumLitHigher<LEN>>;
+
+/** @deprecated use IBaseVector directly */
+export type VectorLikeOrHigher<LEN extends 2 | 3 | 4, Type = never> = IBaseVector<LEN>
+/** @deprecated use IBaseVector directly */
 export type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = VectorLikeOrHigher<LEN, Type>
 
 export type IQuat = IBaseVector<4> & {
-  axisAngleToQuat(axis: VectorLikeOrHigher<3>, angle: number): IQuat;
+  axisAngleToQuat(axis: IBaseVector<3>, angle: number): IQuat;
   toMatrix(output?: Matrix4): Matrix4;
 };
 
-export interface IVector2 extends IBaseVector<2> {}
+export interface IVector2 extends IBaseVector<2> {
+  load2(b: IBaseVector<2> | number[]): this;
+}
 
 export interface IVector3 extends IBaseVector<3> {
   loadXYZ(x: number, y: number, z: number): this;
 
-  cross(b: VectorLikeOrHigher<3>): this;
-  load2(b: Vector2): this;
+  cross(b: IBaseVector<3>): this;
+  load2(b: IBaseVector<2> | number[]): this;
+  load3(b: IBaseVector<3> | number[]): this;
 }
 
 export interface IVector4 extends IBaseVector<4> {
   loadXYZ(x: number, y: number, z: number): this;
   loadXYZW(x: number, y: number, z: number, w: number): this;
 
-  load2(b: Vector2): this;
-  load3(b: Vector3): this;
+  load2(b: IBaseVector<2> | number[]): this;
+  load3(b: IBaseVector<3> | number[]): this;
+  load4(b: IBaseVector<4> | number[]): this;
 
-  cross(b: VectorLikeOrHigher<4>): this;
+  cross(b: IBaseVector<4>): this;
 }
 
 
 export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
-  new (value?: number[] | Type | VectorLikeOrHigher<LEN>): Type;
+  new (value?: number[] | Type | IBaseVector<LEN>): Type;
 
   /** |(a - center)| dot |(b - center)| */
   normalizedDot3(
-    a: VectorLikeOrHigher<LEN, Type>,
-    center: VectorLikeOrHigher<LEN, Type>,
-    b: VectorLikeOrHigher<LEN, Type>
+    a: IBaseVector<LEN>,
+    center: IBaseVector<LEN>,
+    b: IBaseVector<LEN>
   ): number;
 
   /** |(b - a)| dot |(d - c)| */
   normalizedDot4(
-    a: VectorLikeOrHigher<LEN, Type>,
-    b: VectorLikeOrHigher<LEN, Type>,
-    c: VectorLikeOrHigher<LEN, Type>,
-    d: VectorLikeOrHigher<LEN, Type>
+    a: IBaseVector<LEN>,
+    b: IBaseVector<LEN>,
+    c: IBaseVector<LEN>,
+    d: IBaseVector<LEN>
   ): number;
 
   structName?: string;
@@ -190,10 +194,16 @@ const PI = Math.PI
 
 function createVector2(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector2 extends parent {
+    [k: number]: number | undefined
+
     0: number;
     1: number;
     // this is set by the parent class
     declare length: number
+    
+    //phantom type helper
+    declare LEN: 2
+    
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
@@ -204,7 +214,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       1: double;
     }`) : undefined;
     
-    static normalizedDot4(v1: VectorLikeOrHigher<2, Vector2>, v2: VectorLikeOrHigher<2, Vector2>, v3: VectorLikeOrHigher<2, Vector2>, v4: VectorLikeOrHigher<2, Vector2>) {
+    static normalizedDot4(v1: IBaseVector<2>, v2: IBaseVector<2>, v3: IBaseVector<2>, v4: IBaseVector<2>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dx2 = v4[0] - v3[0];
@@ -224,7 +234,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2;
     }
 
-    static normalizedDot3(v1: VectorLikeOrHigher<2, Vector2>, center: VectorLikeOrHigher<2, Vector2>, v2: VectorLikeOrHigher<2, Vector2>) {
+    static normalizedDot3(v1: IBaseVector<2>, center: IBaseVector<2>, v2: IBaseVector<2>) {
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
       let dx2 = v2[0] - center[0];
@@ -244,7 +254,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2;
     }
 
-    constructor(existing?: number[] | VectorLikeOrHigher<2, Vector2>) {
+    constructor(existing?: number[] | IBaseVector<2>) {
       super(2);
       if (existing !== undefined) {
         this[0] = existing[0] ?? 0.0;
@@ -255,7 +265,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       }
     }
 
-    load(existing: number[] | VectorLikeOrHigher<2, Vector2>): this {
+    load(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       return this;
@@ -263,14 +273,18 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
 
 // load2/3/4 methods
 
-    load2(existing: number[] | VectorLikeOrHigher<2, Vector2>): this {
+    load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       return this
     }
   
 
-    equals(b: VectorLikeOrHigher<2, this>) {
+    normalizedDot(b: IBaseVector<2>): number {
+      const l = this.vectorLength() * b.vectorLength();
+      return l > 0.00000001 ? this.dot(b) / l : 0.0;
+    }
+    equals(b: IBaseVector<2>) {
       return (this[0] === b[0]) && (this[1] === b[1]);
     }
 
@@ -286,25 +300,25 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    combine(b: VectorLikeOrHigher<2, this>, u: number, v: number) {
+    combine(b: IBaseVector<2>, u: number, v: number) {
       this[0] = this[0]*u + b[0]*v;
       this[1] = this[1]*u + b[1]*v;
       return this;
     }
 
-    interp(b: VectorLikeOrHigher<2, this>, t: number) {
+    interp(b: IBaseVector<2>, t: number) {
       this[0] = this[0] + (b[0] - this[0])*t;
       this[1] = this[1] + (b[1] - this[1])*t;
       return this;
     }
 
-    add(b: VectorLikeOrHigher<2, this>) {
+    add(b: IBaseVector<2>) {
       this[0] = this[0] + b[0];
       this[1] = this[1] + b[1];
       return this;
     }
 
-    addFac(b: VectorLikeOrHigher<2, this>, f: number) {
+    addFac(b: IBaseVector<2>, f: number) {
       this[0] = this[0] + b[0]*f;
       this[1] = this[1] + b[1]*f;
       return this;
@@ -316,19 +330,19 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    sub(b: VectorLikeOrHigher<2, this>) {
+    sub(b: IBaseVector<2>) {
       this[0] = this[0] - b[0];
       this[1] = this[1] - b[1];
       return this;
     }
 
-    mul(b: VectorLikeOrHigher<2, this>) {
+    mul(b: IBaseVector<2>) {
       this[0] = this[0] * b[0];
       this[1] = this[1] * b[1];
       return this;
     }
 
-    div(b: VectorLikeOrHigher<2, this>) {
+    div(b: IBaseVector<2>) {
       this[0] = this[0] / b[0];
       this[1] = this[1] / b[1];
       return this;
@@ -388,13 +402,13 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    min(b: VectorLikeOrHigher<2, this>) {
+    min(b: IBaseVector<2>) {
       this[0] = Math.min(this[0], b[0]);
       this[1] = Math.min(this[1], b[1]);
       return this;
     }
 
-    max(b: VectorLikeOrHigher<2, this>) {
+    max(b: IBaseVector<2>) {
       this[0] = Math.max(this[0], b[0]);
       this[1] = Math.max(this[1], b[1]);
       return this;
@@ -406,19 +420,19 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    vectorDotDistance(b: VectorLikeOrHigher<2, this>): number {
+    vectorDotDistance(b: IBaseVector<2>): number {
       const d0 = this[0] - b[0];
       const d1 = this[1] - b[1];
       return d0*d0 + d1*d1;
     }
 
-    vectorDistance(b: VectorLikeOrHigher<2, this>): number {
+    vectorDistance(b: IBaseVector<2>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       return Math.sqrt(d0*d0 + d1*d1);
     }
 
-    vectorDistanceSqr(b: VectorLikeOrHigher<2, this>): number {
+    vectorDistanceSqr(b: IBaseVector<2>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       return (d0*d0 + d1*d1);
@@ -445,7 +459,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-    dot(b: VectorLikeOrHigher<2, this>): number {
+    dot(b: IBaseVector<2>): number {
       const ret = this[0]*b[0] + this[1]*b[1];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
@@ -471,7 +485,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** somewhat crappy spherical interpolation */
-    sinterp(v2: this, t: number) {
+    sinterp(v2: IBaseVector<2>, t: number) {
       let l1 = this.vectorLength();
       let l2 = v2.vectorLength();
 
@@ -535,7 +549,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    preNormalizedAngle(v2: VectorLikeOrHigher<2, this>) {
+    preNormalizedAngle(v2: IBaseVector<2>) {
       let th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
@@ -548,11 +562,17 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
   
 function createVector3(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector3 extends parent {
+    [k: number]: number | undefined
+
     0: number;
     1: number;
     2: number;
     // this is set by the parent class
     declare length: number
+    
+    //phantom type helper
+    declare LEN: 3
+    
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
@@ -564,7 +584,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       2: double;
     }`) : undefined;
     
-    static normalizedDot4(v1: VectorLikeOrHigher<3, Vector3>, v2: VectorLikeOrHigher<3, Vector3>, v3: VectorLikeOrHigher<3, Vector3>, v4: VectorLikeOrHigher<3, Vector3>) {
+    static normalizedDot4(v1: IBaseVector<3>, v2: IBaseVector<3>, v3: IBaseVector<3>, v4: IBaseVector<3>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
@@ -588,7 +608,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2 + dz1*dz2;
     }
 
-    static normalizedDot3(v1: VectorLikeOrHigher<3, Vector3>, center: VectorLikeOrHigher<3, Vector3>, v2: VectorLikeOrHigher<3, Vector3>) {
+    static normalizedDot3(v1: IBaseVector<3>, center: IBaseVector<3>, v2: IBaseVector<3>) {
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
@@ -612,7 +632,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2 + dz1*dz2;
     }
 
-    constructor(existing?: number[] | VectorLikeOrHigher<3, Vector3>) {
+    constructor(existing?: number[] | IBaseVector<3>) {
       super(3);
       if (existing !== undefined) {
         this[0] = existing[0] ?? 0.0;
@@ -625,7 +645,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       }
     }
 
-    load(existing: number[] | VectorLikeOrHigher<3, Vector3>): this {
+    load(existing: number[] | IBaseVector<3>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
@@ -634,14 +654,14 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
 
 // load2/3/4 methods
 
-    load2(existing: number[] | VectorLikeOrHigher<2, Vector2>): this {
+    load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       return this
     }
   
 
-    load3(existing: number[] | VectorLikeOrHigher<3, Vector3>): this {
+    load3(existing: number[] | IBaseVector<3>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
@@ -649,7 +669,11 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
   
 
-    equals(b: VectorLikeOrHigher<3, this>) {
+    normalizedDot(b: IBaseVector<3>): number {
+      const l = this.vectorLength() * b.vectorLength();
+      return l > 0.00000001 ? this.dot(b) / l : 0.0;
+    }
+    equals(b: IBaseVector<3>) {
       return (this[0] === b[0]) && (this[1] === b[1]) && (this[2] === b[2]);
     }
 
@@ -667,28 +691,28 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    combine(b: VectorLikeOrHigher<3, this>, u: number, v: number) {
+    combine(b: IBaseVector<3>, u: number, v: number) {
       this[0] = this[0]*u + b[0]*v;
       this[1] = this[1]*u + b[1]*v;
       this[2] = this[2]*u + b[2]*v;
       return this;
     }
 
-    interp(b: VectorLikeOrHigher<3, this>, t: number) {
+    interp(b: IBaseVector<3>, t: number) {
       this[0] = this[0] + (b[0] - this[0])*t;
       this[1] = this[1] + (b[1] - this[1])*t;
       this[2] = this[2] + (b[2] - this[2])*t;
       return this;
     }
 
-    add(b: VectorLikeOrHigher<3, this>) {
+    add(b: IBaseVector<3>) {
       this[0] = this[0] + b[0];
       this[1] = this[1] + b[1];
       this[2] = this[2] + b[2];
       return this;
     }
 
-    addFac(b: VectorLikeOrHigher<3, this>, f: number) {
+    addFac(b: IBaseVector<3>, f: number) {
       this[0] = this[0] + b[0]*f;
       this[1] = this[1] + b[1]*f;
       this[2] = this[2] + b[2]*f;
@@ -702,21 +726,21 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    sub(b: VectorLikeOrHigher<3, this>) {
+    sub(b: IBaseVector<3>) {
       this[0] = this[0] - b[0];
       this[1] = this[1] - b[1];
       this[2] = this[2] - b[2];
       return this;
     }
 
-    mul(b: VectorLikeOrHigher<3, this>) {
+    mul(b: IBaseVector<3>) {
       this[0] = this[0] * b[0];
       this[1] = this[1] * b[1];
       this[2] = this[2] * b[2];
       return this;
     }
 
-    div(b: VectorLikeOrHigher<3, this>) {
+    div(b: IBaseVector<3>) {
       this[0] = this[0] / b[0];
       this[1] = this[1] / b[1];
       this[2] = this[2] / b[2];
@@ -786,14 +810,14 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    min(b: VectorLikeOrHigher<3, this>) {
+    min(b: IBaseVector<3>) {
       this[0] = Math.min(this[0], b[0]);
       this[1] = Math.min(this[1], b[1]);
       this[2] = Math.min(this[2], b[2]);
       return this;
     }
 
-    max(b: VectorLikeOrHigher<3, this>) {
+    max(b: IBaseVector<3>) {
       this[0] = Math.max(this[0], b[0]);
       this[1] = Math.max(this[1], b[1]);
       this[2] = Math.max(this[2], b[2]);
@@ -807,21 +831,21 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    vectorDotDistance(b: VectorLikeOrHigher<3, this>): number {
+    vectorDotDistance(b: IBaseVector<3>): number {
       const d0 = this[0] - b[0];
       const d1 = this[1] - b[1];
       const d2 = this[2] - b[2];
       return d0*d0 + d1*d1 + d2*d2;
     }
 
-    vectorDistance(b: VectorLikeOrHigher<3, this>): number {
+    vectorDistance(b: IBaseVector<3>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
       return Math.sqrt(d0*d0 + d1*d1 + d2*d2);
     }
 
-    vectorDistanceSqr(b: VectorLikeOrHigher<3, this>): number {
+    vectorDistanceSqr(b: IBaseVector<3>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
@@ -849,7 +873,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-    dot(b: VectorLikeOrHigher<3, this>): number {
+    dot(b: IBaseVector<3>): number {
       const ret = this[0]*b[0] + this[1]*b[1] + this[2]*b[2];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
@@ -881,7 +905,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** somewhat crappy spherical interpolation */
-    sinterp(v2: this, t: number) {
+    sinterp(v2: IBaseVector<3>, t: number) {
       let l1 = this.vectorLength();
       let l2 = v2.vectorLength();
 
@@ -946,7 +970,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
 
-    cross(v: VectorLikeOrHigher<3, this>) {
+    cross(v: IBaseVector<3>) {
       const x = this[1] * v[2] - this[2] * v[1];
       const y = this[2] * v[0] - this[0] * v[2];
       const z = this[0] * v[1] - this[1] * v[0];
@@ -958,7 +982,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    preNormalizedAngle(v2: VectorLikeOrHigher<3, this>) {
+    preNormalizedAngle(v2: IBaseVector<3>) {
       let th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
@@ -978,12 +1002,18 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
   
 function createVector4(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector4 extends parent {
+    [k: number]: number | undefined
+
     0: number;
     1: number;
     2: number;
     3: number;
     // this is set by the parent class
     declare length: number
+    
+    //phantom type helper
+    declare LEN: 4
+    
     [Symbol.iterator] = parent.prototype[Symbol.iterator];
     slice = parent.prototype.slice as (start?: number, end?: number) => number[];
 
@@ -996,7 +1026,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       3: double;
     }`) : undefined;
     
-    static normalizedDot4(v1: VectorLikeOrHigher<4, Vector4>, v2: VectorLikeOrHigher<4, Vector4>, v3: VectorLikeOrHigher<4, Vector4>, v4: VectorLikeOrHigher<4, Vector4>) {
+    static normalizedDot4(v1: IBaseVector<4>, v2: IBaseVector<4>, v3: IBaseVector<4>, v4: IBaseVector<4>) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
@@ -1024,7 +1054,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2 + dz1*dz2 + dw1*dw2;
     }
 
-    static normalizedDot3(v1: VectorLikeOrHigher<4, Vector4>, center: VectorLikeOrHigher<4, Vector4>, v2: VectorLikeOrHigher<4, Vector4>) {
+    static normalizedDot3(v1: IBaseVector<4>, center: IBaseVector<4>, v2: IBaseVector<4>) {
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
@@ -1052,7 +1082,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return dx1*dx2 + dy1*dy2 + dz1*dz2 + dw1*dw2;
     }
 
-    constructor(existing?: number[] | VectorLikeOrHigher<4, Vector4>) {
+    constructor(existing?: number[] | IBaseVector<4>) {
       super(4);
       if (existing !== undefined) {
         this[0] = existing[0] ?? 0.0;
@@ -1067,7 +1097,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       }
     }
 
-    load(existing: number[] | VectorLikeOrHigher<4, Vector4>): this {
+    load(existing: number[] | IBaseVector<4>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
@@ -1077,14 +1107,14 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
 
 // load2/3/4 methods
 
-    load2(existing: number[] | VectorLikeOrHigher<2, Vector2>): this {
+    load2(existing: number[] | IBaseVector<2>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       return this
     }
   
 
-    load3(existing: number[] | VectorLikeOrHigher<3, Vector3>): this {
+    load3(existing: number[] | IBaseVector<3>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
@@ -1092,7 +1122,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
   
 
-    load4(existing: number[] | VectorLikeOrHigher<4, Vector4>): this {
+    load4(existing: number[] | IBaseVector<4>): this {
       this[0] = existing[0];
       this[1] = existing[1];
       this[2] = existing[2];
@@ -1101,7 +1131,11 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
   
 
-    equals(b: VectorLikeOrHigher<4, this>) {
+    normalizedDot(b: IBaseVector<4>): number {
+      const l = this.vectorLength() * b.vectorLength();
+      return l > 0.00000001 ? this.dot(b) / l : 0.0;
+    }
+    equals(b: IBaseVector<4>) {
       return (this[0] === b[0]) && (this[1] === b[1]) && (this[2] === b[2]) && (this[3] === b[3]);
     }
 
@@ -1121,7 +1155,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    combine(b: VectorLikeOrHigher<4, this>, u: number, v: number) {
+    combine(b: IBaseVector<4>, u: number, v: number) {
       this[0] = this[0]*u + b[0]*v;
       this[1] = this[1]*u + b[1]*v;
       this[2] = this[2]*u + b[2]*v;
@@ -1129,7 +1163,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    interp(b: VectorLikeOrHigher<4, this>, t: number) {
+    interp(b: IBaseVector<4>, t: number) {
       this[0] = this[0] + (b[0] - this[0])*t;
       this[1] = this[1] + (b[1] - this[1])*t;
       this[2] = this[2] + (b[2] - this[2])*t;
@@ -1137,7 +1171,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    add(b: VectorLikeOrHigher<4, this>) {
+    add(b: IBaseVector<4>) {
       this[0] = this[0] + b[0];
       this[1] = this[1] + b[1];
       this[2] = this[2] + b[2];
@@ -1145,7 +1179,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    addFac(b: VectorLikeOrHigher<4, this>, f: number) {
+    addFac(b: IBaseVector<4>, f: number) {
       this[0] = this[0] + b[0]*f;
       this[1] = this[1] + b[1]*f;
       this[2] = this[2] + b[2]*f;
@@ -1161,7 +1195,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    sub(b: VectorLikeOrHigher<4, this>) {
+    sub(b: IBaseVector<4>) {
       this[0] = this[0] - b[0];
       this[1] = this[1] - b[1];
       this[2] = this[2] - b[2];
@@ -1169,7 +1203,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    mul(b: VectorLikeOrHigher<4, this>) {
+    mul(b: IBaseVector<4>) {
       this[0] = this[0] * b[0];
       this[1] = this[1] * b[1];
       this[2] = this[2] * b[2];
@@ -1177,7 +1211,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    div(b: VectorLikeOrHigher<4, this>) {
+    div(b: IBaseVector<4>) {
       this[0] = this[0] / b[0];
       this[1] = this[1] / b[1];
       this[2] = this[2] / b[2];
@@ -1257,7 +1291,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    min(b: VectorLikeOrHigher<4, this>) {
+    min(b: IBaseVector<4>) {
       this[0] = Math.min(this[0], b[0]);
       this[1] = Math.min(this[1], b[1]);
       this[2] = Math.min(this[2], b[2]);
@@ -1265,7 +1299,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    max(b: VectorLikeOrHigher<4, this>) {
+    max(b: IBaseVector<4>) {
       this[0] = Math.max(this[0], b[0]);
       this[1] = Math.max(this[1], b[1]);
       this[2] = Math.max(this[2], b[2]);
@@ -1281,7 +1315,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    vectorDotDistance(b: VectorLikeOrHigher<4, this>): number {
+    vectorDotDistance(b: IBaseVector<4>): number {
       const d0 = this[0] - b[0];
       const d1 = this[1] - b[1];
       const d2 = this[2] - b[2];
@@ -1289,7 +1323,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return d0*d0 + d1*d1 + d2*d2 + d3*d3;
     }
 
-    vectorDistance(b: VectorLikeOrHigher<4, this>): number {
+    vectorDistance(b: IBaseVector<4>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
@@ -1297,7 +1331,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return Math.sqrt(d0*d0 + d1*d1 + d2*d2 + d3*d3);
     }
 
-    vectorDistanceSqr(b: VectorLikeOrHigher<4, this>): number {
+    vectorDistanceSqr(b: IBaseVector<4>): number {
       const d0 = this[0] - (b[0] ?? 0);
       const d1 = this[1] - (b[1] ?? 0);
       const d2 = this[2] - (b[2] ?? 0);
@@ -1326,7 +1360,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       }
       return this;
     }
-    dot(b: VectorLikeOrHigher<4, this>): number {
+    dot(b: IBaseVector<4>): number {
       const ret = this[0]*b[0] + this[1]*b[1] + this[2]*b[2] + this[3]*b[3];
       // acos safe adjustment to prevent math domain errors
       if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
@@ -1365,7 +1399,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     /** somewhat crappy spherical interpolation */
-    sinterp(v2: this, t: number) {
+    sinterp(v2: IBaseVector<4>, t: number) {
       let l1 = this.vectorLength();
       let l2 = v2.vectorLength();
 
@@ -1425,7 +1459,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
 
-    cross(v: VectorLikeOrHigher<4, this>) {
+    cross(v: IBaseVector<4>) {
       const x = this[1] * v[2] - this[2] * v[1];
       const y = this[2] * v[0] - this[0] * v[2];
       const z = this[0] * v[1] - this[1] * v[0];
@@ -1437,7 +1471,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return this;
     }
 
-    preNormalizedAngle(v2: VectorLikeOrHigher<4, this>) {
+    preNormalizedAngle(v2: IBaseVector<4>) {
       let th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
@@ -1631,7 +1665,7 @@ export class Quat extends Vector4 {
     return this;
   }
 
-  axisAngleToQuat(axis: VectorLikeOrHigher<3, Vector3>, angle: number) {
+  axisAngleToQuat(axis: IBaseVector<3>, angle: number) {
     let nor = _quat_vs3_temps.next().load(axis);
     nor.normalize();
 
@@ -1649,7 +1683,7 @@ export class Quat extends Vector4 {
     return this;
   }
 
-  rotationBetweenVecs(v1_: VectorLikeOrHigher<3, Vector3>, v2_: VectorLikeOrHigher<3, Vector3>, fac = 1.0) {
+  rotationBetweenVecs(v1_: IBaseVector<3>, v2_: IBaseVector<3>, fac = 1.0) {
     const v1 = new Vector3(v1_);
     const v2 = new Vector3(v2_);
     v1.normalize();
@@ -3206,3 +3240,20 @@ makenormalcache = util.cachering.fromConstructor(Vector3, 512);
 temp_mats = util.cachering.fromConstructor(Matrix4, 512);
 preMultTemp = new Matrix4();
 vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);
+
+
+
+export type VectorArg<V extends Vector2 | Vector3 | Vector4 | Quat, N extends 2 | 3 | 4> = VectorLikeOrHigher<N, V>
+
+export type Vector2Like = VectorArg<Vector2, 2>
+export type Vector3Like = VectorArg<Vector3, 3>
+export type Vector4Like = VectorArg<Vector4, 4>
+
+// static assert that Vectors convert to IBaseVectors
+// since we can't use 'implements' keyword in mixins
+type AssertVectorIBaseVector<N extends 2 | 3 | 4, V extends IBaseVector<N>> = V
+type A = AssertVectorIBaseVector<2, Vector2>
+type B = AssertVectorIBaseVector<3, Vector3>
+type C = AssertVectorIBaseVector<4, Vector4>
+type D = AssertVectorIBaseVector<4, Quat>
+
