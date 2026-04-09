@@ -5,6 +5,18 @@ import nstructjs from "../util/struct.js";
 import type { StructReader } from "../util/nstructjs_es6.js";
 import type { JSONAny } from "../controller.js";
 
+declare global {
+  interface SymbolConstructor {
+    readonly dispose: symbol;
+  }
+}
+
+export type EnumDef = Record<string, number|string>
+export type FlagsDef = Record<string, number>
+export type IconMap = Record<string, number>;
+export type DescriptionMap = Record<string, string>;
+export type UINameMap = Record<string, string>;
+
 export { PropTypes, PropFlags } from "./toolprop_abstract.js";
 
 export type NumberConstraintBase =
@@ -1308,7 +1320,7 @@ export class EnumKeyPair {
     this.val_is_int = typeof val === "number" || typeof val === "boolean";
   }
 
-  loadSTRUCT(reader: StructReader<EnumKeyPair>): void {
+  loadSTRUCT(reader: StructReader<this>): void {
     reader(this);
 
     if (this.val_is_int) {
@@ -1375,7 +1387,7 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
   constructor(
     type?: TYPE,
     string_or_int?: string | number,
-    valid_values?: Record<string, number> | string[],
+    valid_values?: Record<string, VALUE> | string[] | EnumPropertyBase<TYPE, VALUE>,
     apiname?: string,
     uiname?: string,
     description?: string,
@@ -1401,8 +1413,8 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
       }
     } else {
       for (const k in valid_values) {
-        this.values[k] = valid_values[k] as VALUE;
-        this.keys[valid_values[k] as VALUE] = k as string;
+        this.values[k] = valid_values[k as keyof typeof valid_values] as VALUE;
+        this.keys[valid_values[k as keyof typeof valid_values] as VALUE] = k as string;
       }
     }
 
@@ -1639,7 +1651,7 @@ export class EnumProperty extends EnumPropertyBase<PropTypes["ENUM"], string | n
 
   constructor(
     string_or_int?: string | number,
-    valid_values?: Record<string, number> | string[],
+    valid_values?: Record<string, string | number> | string[] | EnumPropertyBase<PropTypes["ENUM"], string | number>,
     apiname?: string,
     uiname?: string,
     description?: string,
@@ -1657,7 +1669,7 @@ export class FlagProperty extends EnumPropertyBase<PropTypes["FLAG"], number> {
 
   constructor(
     string_or_int?: string | number,
-    valid_values?: Record<string, number>,
+    valid_values?: Record<string, number> | string[] | EnumPropertyBase<PropTypes["FLAG"], number>,
     apiname?: string,
     uiname?: string,
     description?: string,

@@ -2,16 +2,17 @@
  see doc_src/context.md
  */
 
-import * as util from "../util/util.js";
+import * as util from "../util/util";
 
-import cconst from "../config/config.js";
+import cconst from "../config/config";
 import type { DataAPI } from "./controller";
-import { ToolStack } from "../controller.js";
+import type { ContextLike, IToolStack, ToolStack } from "../controller";
+import type { Screen } from "../../screen/FrameManager.js";
 
 declare global {
   interface SymbolConstructor {
     CachedDef: symbol;
-    ContextID: symbol
+    ContextID: symbol;
   }
 }
 
@@ -292,7 +293,7 @@ export class LockedContext {
     };
 
     for (let k in this.props) {
-      if (k !== 'ctx') {
+      if (k !== "ctx") {
         defineProp(k);
       }
     }
@@ -312,7 +313,7 @@ export class LockedContext {
 let next_key = {};
 let idgen = 1;
 
-export class Context {
+export class Context<Overlays extends ContextLike = ContextLike> {
   state: unknown;
   _props: Set<string>;
   _stack: OverlayInstance[];

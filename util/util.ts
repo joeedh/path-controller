@@ -272,7 +272,6 @@ export function isMobile(): boolean {
 
   return mobileDetectValue;
 }
-window.isMobile = isMobile as unknown as boolean;
 
 interface SmartConsoleDataEntry {
   time: number;
@@ -669,6 +668,16 @@ export function merge<A extends object, B extends object>(obja: A, objb: B): A &
 
 const debug_cacherings = false;
 
+declare global {
+  interface Window {
+    /** debug cacherings */
+    _cacherings?: cachering<any>[];
+    _clear_all_cacherings?(kill_all?: boolean): void;
+    _nonvector_cacherings?(): void
+    _stale_cacherings?(): cachering<unknown>[]
+  }
+}
+
 if (debug_cacherings) {
   window._cacherings = [];
 
@@ -720,8 +729,8 @@ if (debug_cacherings) {
     }
   };
 
-  window._nonvector_cacherings = function (): unknown {
-    for (const ch of window._cacherings as cachering<unknown>[]) {
+  window._nonvector_cacherings = function () {
+    for (const ch of window._cacherings as cachering<any>[]) {
       if (ch.length === 0) {
         continue;
       }
@@ -741,7 +750,7 @@ if (debug_cacherings) {
     return undefined;
   };
 
-  window._stale_cacherings = function (): unknown {
+  window._stale_cacherings = function () {
     const ret = (window._cacherings as cachering<unknown>[]).concat([]);
 
     ret.sort((a, b) => a.gen - b.gen);
@@ -763,7 +772,7 @@ export class cachering<T> extends Array<T> {
 
     if (!isprivate && debug_cacherings) {
       this.gen = 0;
-      window._cacherings.push(this);
+      window._cacherings!.push(this);
     }
 
     for (let i = 0; i < size; i++) {
@@ -1242,7 +1251,7 @@ export class IDGen {
     };
   }
 
-  loadSTRUCT(reader: (obj: IDGen) => void): void {
+  loadSTRUCT(reader: StructReader<this>): void {
     reader(this);
   }
 }
@@ -1661,49 +1670,7 @@ export class HashDigest {
   }
 }
 
-window._test_hash2 = () => {
-  const h = new HashDigest();
-
-  const tests = [
-    [0, 0, 0, 0],
-    [0, 0, 0],
-    [0, 0],
-    [0],
-    [1],
-    [2],
-    [3],
-    [strhash("yay")],
-    [strhash("yay"), strhash("yay")],
-    [strhash("yay"), strhash("yay"), strhash("yay")],
-  ];
-
-  for (const test of tests) {
-    const h2 = new HashDigest();
-    for (const f of test) {
-      h2.add(f);
-    }
-
-    window.console.log(h2.get());
-  }
-  for (let i = 0; i < 50; i++) {
-    h.add(0);
-    //window.console.log(h.i/((1<<30)-1), h.hash);
-  }
-};
-
 digestcache = cachering.fromConstructor(HashDigest, 512);
-
-//globalThis._HashDigest = HashDigest;
-
-export function hashjoin(_hash: number, _val: number): void {
-  const sum = 0;
-  const mul = (1 << 19) - 1;
-  const off = (1 << 27) - 1;
-  const i = 0;
-
-  let h = _hash;
-  h = (h * mul + off + i * mul * 0.25) & mul;
-}
 
 const NullItem: object = {};
 
@@ -2715,6 +2682,7 @@ window.setInterval(() => {
 }, 250);
 
 import lzstring from "../extern/lz-string/lz-string.js";
+import { StructReader } from "./nstructjs_es6.js";
 
 export function compress(data: string): Uint8Array {
   return lzstring.compressToUint8Array(data);

@@ -491,7 +491,7 @@ export function makeVector4(BaseVector, structName = "vec4", structType = "float
       return Math.acos(th);
     }
 
-    loadSTRUCT(reader) {
+    loadSTRUCT(reader: StructReader<this>) {
       reader(this);
 
       if (typeof this.vec !== "undefined") {
@@ -712,7 +712,7 @@ export function makeVector3(BaseVector, structName = "vec3", structType = "float
       return Math.acos(th);
     }
 
-    loadSTRUCT(reader) {
+    loadSTRUCT(reader: StructReader<this>) {
       reader(this);
 
       if (typeof this.vec !== "undefined") {
@@ -875,7 +875,7 @@ export function makeVector2(BaseVector, structName = "vec2", structType = "float
       return this.dot(this);
     }
 
-    loadSTRUCT(reader) {
+    loadSTRUCT(reader: StructReader<this>) {
       reader(this);
 
       if (typeof this.vec !== undefined) {

@@ -280,8 +280,8 @@ export class ToolPropertyCache {
       }
       st = st2;
 
-      this.pathmap.set(partial, obj[k] as any);
-      obj = obj[k] as any;
+      this.pathmap.set(partial, obj[k]);
+      obj = obj[k];
     }
 
     const name = prop.apiname !== undefined && prop.apiname.length > 0 ? prop.apiname : key;
@@ -452,7 +452,7 @@ export class ToolOp<
     this._promise = undefined;
 
     for (const k in def) {
-      (this as Record<string, unknown>)[k] = def[k];
+      (this as any)[k] = def[k];
     }
 
     const getSlots = (
@@ -462,7 +462,7 @@ export class ToolOp<
       if (slots === undefined) return {};
 
       if (!(slots instanceof InheritFlag)) {
-        return slots as Record<string, ToolProperty>;
+        return slots;
       }
 
       const result: Record<string, ToolProperty> = {};
@@ -485,7 +485,7 @@ export class ToolOp<
 
             for (const sk in slots2) {
               if (!(sk in result)) {
-                result[sk] = (slots2 as Record<string, ToolProperty>)[sk];
+                result[sk] = slots2[sk];
               }
             }
 
@@ -514,7 +514,7 @@ export class ToolOp<
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : ik;
 
         if (!this.hasDefault(prop, ik)) {
-          (this.inputs as Record<string, ToolProperty>)[ik] = prop;
+          (this.inputs as any)[ik] = prop;
           continue;
         }
 
@@ -526,7 +526,7 @@ export class ToolOp<
         }
 
         prop.wasSet = false;
-        (this.inputs as Record<string, ToolProperty>)[ik] = prop;
+        (this.inputs as any)[ik] = prop;
       }
     }
 
@@ -535,7 +535,7 @@ export class ToolOp<
         const prop = doutputs[ok].copy();
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : ok;
 
-        (this.outputs as Record<string, ToolProperty>)[ok] = prop;
+        (this.outputs as any)[ok] = prop;
       }
     }
 
@@ -579,7 +579,7 @@ export class ToolOp<
   getInputs(): { [k in keyof InputSlots]: SlotType<InputSlots[k]> } {
     const result = {} as { [k in keyof InputSlots]: SlotType<InputSlots[k]> };
     for (const k in this.inputs) {
-      (result as Record<string, unknown>)[k] = (this.inputs as Record<string, ToolProperty>)[k].getValue();
+      (result as any)[k] = this.inputs[k].getValue();
     }
     return result;
   }
@@ -588,7 +588,7 @@ export class ToolOp<
   getOutputs(): { [k in keyof OutputSlots]: SlotType<OutputSlots[k]> } {
     const result = {} as { [k in keyof OutputSlots]: SlotType<OutputSlots[k]> };
     for (const k in this.outputs) {
-      (result as Record<string, unknown>)[k] = (this.outputs as Record<string, ToolProperty>)[k].getValue();
+      (result as any)[k] = this.outputs[k].getValue();
     }
     return result;
   }
@@ -601,8 +601,8 @@ export class ToolOp<
     if (a.constructor !== b.constructor) return false;
 
     let bad = false;
-    const ai = a.inputs as Record<string, ToolProperty>;
-    const bi = b.inputs as Record<string, ToolProperty>;
+    const ai = a.inputs;
+    const bi = b.inputs;
 
     for (const k in ai) {
       bad = bad || !(k in bi);
@@ -630,7 +630,7 @@ export class ToolOp<
    */
   static invoke<CTX extends ContextLike>(ctx: CTX, args: Record<string, unknown>): ToolOp {
     const tool = new (this as unknown as new () => ToolOp)();
-    const inputs = tool.inputs as Record<string, ToolProperty>;
+    const inputs = tool.inputs as any;
 
     for (const k in args) {
       if (!(k in inputs)) {
@@ -642,8 +642,8 @@ export class ToolOp<
       let val = args[k];
 
       if (typeof val === "string" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
-        if (val in (prop as unknown as Record<string, Record<string, unknown>>).values) {
-          val = (prop as unknown as Record<string, Record<string, unknown>>).values[val];
+        if (val in prop.values) {
+          val = prop.values[val];
         } else {
           console.warn("Possible invalid enum/flag:", val);
           continue;
@@ -670,7 +670,7 @@ export class ToolOp<
       return;
     }
 
-    const parent = (cls.prototype as any).__proto__?.constructor as unknown as ToolOpConstructor;
+    const parent = cls.prototype.__proto__?.constructor as unknown as ToolOpConstructor;
 
     // eslint-disable-next-line no-prototype-builtins
     if (!cls.hasOwnProperty("STRUCT")) {
@@ -678,7 +678,7 @@ export class ToolOp<
         this._regWithNstructjs(parent);
       }
 
-      (cls as unknown as Record<string, string>).STRUCT =
+      cls.STRUCT =
         nstructjs.inherit(
           cls as unknown as import("../util/nstructjs_es6.js").StructableClass,
           parent as unknown as import("../util/nstructjs_es6.js").StructableClass
@@ -699,6 +699,8 @@ export class ToolOp<
   }
 
   static _getFinalToolDef(): ResolvedToolDef {
+    // this method is allowed to use Record types
+
     const def = this.tooldef() as ResolvedToolDef;
 
     const getSlots = (
@@ -708,7 +710,7 @@ export class ToolOp<
       if (slots === undefined) return {};
 
       if (!(slots instanceof InheritFlag)) {
-        return slots as Record<string, ToolProperty>;
+        return slots;
       }
 
       const result: Record<string, ToolProperty> = {};
@@ -730,7 +732,7 @@ export class ToolOp<
 
             for (const sk in slots2) {
               if (!(sk in result)) {
-                result[sk] = (slots2 as Record<string, ToolProperty>)[sk];
+                result[sk] = slots2[sk];
               }
             }
 
@@ -739,14 +741,14 @@ export class ToolOp<
             }
           }
         }
-        p = (p.prototype as any).__proto__?.constructor as unknown as ToolOpConstructor | undefined;
+        p = p.prototype.__proto__?.constructor as unknown as ToolOpConstructor | undefined;
       }
 
       return result;
     };
 
-    const dinputs = getSlots(def.inputs as Record<string, ToolProperty> | InheritFlag | undefined, "inputs");
-    const doutputs = getSlots(def.outputs as Record<string, ToolProperty> | InheritFlag | undefined, "outputs");
+    const dinputs = getSlots(def.inputs, "inputs");
+    const doutputs = getSlots(def.outputs, "outputs");
 
     def.inputs = dinputs;
     def.outputs = doutputs;
@@ -786,7 +788,7 @@ export class ToolOp<
     let tot = 0;
 
     for (let step = 0; step < 2; step++) {
-      const props = (step ? this.outputs : this.inputs) as Record<string, ToolProperty>;
+      const props = step ? this.outputs : this.inputs;
 
       for (const k in props) {
         const prop = props[k];
@@ -816,7 +818,7 @@ export class ToolOp<
   }
 
   loadDefaults(force: boolean = true): this {
-    const inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs;
 
     for (const k in inputs) {
       const prop = inputs[k];
@@ -849,7 +851,7 @@ export class ToolOp<
   }
 
   saveDefaultInputs(): this {
-    const inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs;
 
     for (const k in inputs) {
       const prop = inputs[k];
@@ -865,7 +867,7 @@ export class ToolOp<
   genToolString(): string {
     const def = (this.constructor as unknown as ToolOpConstructor).tooldef();
     let path = (def.toolpath || "") + "(";
-    const inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs;
 
     for (const k in inputs) {
       const prop = inputs[k];
@@ -961,7 +963,7 @@ export class ToolOp<
         end(): void;
         line(v1: unknown, v2: unknown, style: unknown): unknown;
       };
-      this._overdraw.start((this.modal_ctx as Record<string, unknown>).screen);
+      this._overdraw.start(this.modal_ctx!.screen);
     }
 
     return this._overdraw;
@@ -1055,8 +1057,8 @@ export class ToolOp<
     this.saveDefaultInputs();
   }
 
-  loadSTRUCT(reader: (obj: Record<string, unknown>) => void): void {
-    reader(this as unknown as Record<string, unknown>);
+  loadSTRUCT(reader: StructReader<this>): void {
+    reader(this);
 
     const outs = this.outputs as unknown as { key: string; val: ToolProperty }[];
     const ins = this.inputs as unknown as { key: string; val: ToolProperty }[];
@@ -1064,8 +1066,8 @@ export class ToolOp<
     this.inputs = {} as InputSlots;
     this.outputs = {} as OutputSlots;
 
-    const inputsRec = this.inputs as Record<string, ToolProperty>;
-    const outputsRec = this.outputs as Record<string, ToolProperty>;
+    const inputsRec = this.inputs as any;
+    const outputsRec = this.outputs as any;
 
     for (const pair of ins) {
       inputsRec[pair.key] = pair.val;
@@ -1078,7 +1080,7 @@ export class ToolOp<
 
   _save_inputs(): PropKey[] {
     const ret: PropKey[] = [];
-    const inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs;
     for (const k in inputs) {
       ret.push(new PropKey(k, inputs[k]));
     }
@@ -1088,7 +1090,7 @@ export class ToolOp<
 
   _save_outputs(): PropKey[] {
     const ret: PropKey[] = [];
-    const outputs = this.outputs as Record<string, ToolProperty>;
+    const outputs = this.outputs;
     for (const k in outputs) {
       ret.push(new PropKey(k, outputs[k]));
     }
@@ -1284,7 +1286,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     }
 
     const inputs: Record<string, ToolProperty> = {};
-    const selfInputs = this.inputs as Record<string, ToolProperty>;
+    const selfInputs = this.inputs;
 
     for (const k in selfInputs) {
       inputs[k] = selfInputs[k].copy().clearEventCallbacks();
@@ -1321,7 +1323,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
   }
 
   override saveDefaultInputs(): this {
-    const inputs = this.inputs as Record<string, ToolProperty>;
+    const inputs = this.inputs;
 
     for (const k in inputs) {
       const prop = inputs[k];
@@ -1373,13 +1375,13 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     }
 
     //remove linked properties from this.inputs
-    const selfInputs = this.inputs as Record<string, ToolProperty>;
+    const selfInputs = this.inputs;
 
     if (srcprops === "inputs") {
       const tool = this.tools[i1];
-      const toolInputs = tool.inputs as Record<string, ToolProperty>;
+      const toolInputs = tool.inputs as any;
 
-      const prop = toolInputs[srcoutput as string];
+      const prop = toolInputs[srcoutput as string] as ToolProperty;
       if (prop === selfInputs[srcoutput as string]) {
         delete selfInputs[srcoutput as string];
       }
@@ -1387,8 +1389,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     if (dstprops === "inputs") {
       const tool = this.tools[i2];
-      const toolInputs = tool.inputs as Record<string, ToolProperty>;
-      const prop = toolInputs[dstinput as string];
+      const toolInputs = tool.inputs as any;
+      const prop = toolInputs[dstinput as string] as ToolProperty;
 
       if (selfInputs[dstinput as string] === prop) {
         delete selfInputs[dstinput as string];
@@ -1415,8 +1417,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       this.is_modal = true;
     }
 
-    const toolInputs = tool.inputs as Record<string, ToolProperty>;
-    const selfInputs = this.inputs as Record<string, ToolProperty>;
+    const toolInputs = tool.inputs as any;
+    const selfInputs = this.inputs as any;
 
     for (const k in toolInputs) {
       const prop = toolInputs[k];
@@ -1431,16 +1433,15 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     return this;
   }
 
-  _do_connections(tool: ToolOp): void {
-    const i = this.tools.indexOf(tool);
+  _do_connections(_tool: ToolOp): void {
+    const i = this.tools.indexOf(_tool);
 
+    // type erase tool
+    const tool = _tool as any;
     for (const c of this.connectLinks) {
       if (c.source === i) {
-        const tool2 = this.tools[c.dest];
-
-        (tool2 as unknown as Record<string, Record<string, ToolProperty>>)[c.destProps][c.destPropKey].setValue(
-          (tool as unknown as Record<string, Record<string, ToolProperty>>)[c.sourceProps][c.sourcePropKey].getValue()
-        );
+        const tool2 = this.tools[c.dest] as any;
+        tool2[c.destProps][c.destPropKey].setValue(tool[c.sourceProps][c.sourcePropKey].getValue());
       }
     }
 
@@ -1599,7 +1600,7 @@ export class ToolStack<
   modal_running!: boolean;
   toolctx?: ContextCls;
   _undo_branch: ToolOp[] | undefined;
-  _stack!: this[0][];
+  _stack?: this[0][];
 
   constructor(ctx: ContextCls) {
     super();
@@ -1876,7 +1877,7 @@ export class ToolStack<
 
   save(): number[] {
     const data: number[] = [];
-    nstructjs.writeObject(data, this as unknown as Record<string, unknown>);
+    nstructjs.writeObject(data, this);
     return data;
   }
 
@@ -1948,11 +1949,11 @@ export class ToolStack<
   loadSTRUCT(reader: StructReader<this>) {
     reader(this);
 
-    for (const item of this._stack) {
+    for (const item of this._stack!) {
       this.push(item);
     }
 
-    delete (this as Record<string, unknown>)._stack;
+    delete this._stack;
   }
 
   //note that this makes sure tool classes are registered with nstructjs
@@ -1985,24 +1986,24 @@ toolsys.ToolStack {
 nstructjs.register(ToolStack);
 
 /*
-(window as any)._testToolStackIO = function (): ToolStack {
+(window )._testToolStackIO = function (): ToolStack {
   let data: number[] = [];
-  let cls = ((window as Window)._appstate as Record<string, unknown>).toolstack!
+  let cls = ((window as Window)._appstate ).toolstack!
     .constructor as unknown as import("../util/nstructjs_es6.js").StructableClass;
 
   nstructjs.writeObject(
     data,
-    ((window as Window)._appstate as Record<string, unknown>).toolstack as Record<string, unknown>
+    ((window as Window)._appstate ).toolstack 
   );
   let dataView = new DataView(new Uint8Array(data).buffer);
 
   let toolstack = nstructjs.readObject(dataView, cls) as unknown as ToolStack;
 
-  (((window as Window)._appstate as Record<string, unknown>).toolstack as ToolStack).rewind();
+  (((window as Window)._appstate ).toolstack as ToolStack).rewind();
 
   toolstack.cur = -1;
-  toolstack.ctx = (((window as Window)._appstate as Record<string, unknown>).toolstack as ToolStack).ctx;
-  ((window as Window)._appstate as Record<string, unknown>).toolstack = toolstack;
+  toolstack.ctx = (((window as Window)._appstate ).toolstack as ToolStack).ctx;
+  ((window as Window)._appstate ).toolstack = toolstack;
 
   return toolstack;
 };
@@ -2029,11 +2030,14 @@ export function buildToolOpAPI(api: DataAPI, cls: ToolOpConstructor): unknown {
     st.add(dpath);
 
     dpath.customGetSet(
+      // we can type erase here safely,
+      // since this is part of a strongly typed
+      // runtime type system
       function (this: { dataref: ToolOp }) {
-        return (this.dataref.inputs as Record<string, ToolProperty>)[k].getValue();
+        return (this.dataref.inputs as any)[k].getValue();
       },
       function (this: { dataref: ToolOp }, val: unknown) {
-        (this.dataref.inputs as Record<string, ToolProperty>)[k].setValue(val);
+        (this.dataref.inputs as any)[k].setValue(val);
       }
     );
   }
@@ -2056,7 +2060,7 @@ export function buildToolSysAPI(
   api: DataAPI,
   registerWithNStructjs: boolean = true,
   rootCtxStruct?: DataStruct,
-  rootCtxClass?: (new (arg: Record<string, unknown>) => unknown) | undefined,
+  rootCtxClass?: (new (arg: any) => ContextLike) | undefined,
   insertToolDefaultsIntoContext: boolean = true
 ): void {
   const datastruct = api.mapStruct(ToolPropertyCache, true);
@@ -2081,13 +2085,10 @@ export function buildToolSysAPI(
   }
 
   if (rootCtxClass && insertToolDefaultsIntoContext) {
-    const inst = new rootCtxClass({}) as Record<string | symbol, unknown>;
+    const inst = new rootCtxClass({});
 
     function haveprop(k: string | symbol): boolean {
-      return (
-        Reflect.ownKeys(inst).includes(k) ||
-        Reflect.ownKeys(rootCtxClass!.prototype as Record<string, unknown>).includes(k)
-      );
+      return Reflect.ownKeys(inst).includes(k) || Reflect.ownKeys(rootCtxClass!.prototype).includes(k);
     }
 
     if (!haveprop("last_tool")) {
@@ -2098,8 +2099,8 @@ export function buildToolSysAPI(
       });
 
       if (Context.isContextSubclass(rootCtxClass)) {
-        (rootCtxClass.prototype as Record<string, unknown>).last_tool_save = () => ({});
-        (rootCtxClass.prototype as Record<string, unknown>).last_tool_load = () => undefined;
+        rootCtxClass.prototype.last_tool_save = () => ({});
+        rootCtxClass.prototype.last_tool_load = () => undefined;
       }
     }
 
@@ -2111,8 +2112,8 @@ export function buildToolSysAPI(
       });
 
       if (Context.isContextSubclass(rootCtxClass)) {
-        (rootCtxClass.prototype as Record<string, unknown>).toolDefaults_save = () => ({});
-        (rootCtxClass.prototype as Record<string, unknown>).toolDefaults_load = () => undefined;
+        rootCtxClass.prototype.toolDefaults_save = () => ({});
+        rootCtxClass.prototype.toolDefaults_load = () => undefined;
       }
     }
   }
