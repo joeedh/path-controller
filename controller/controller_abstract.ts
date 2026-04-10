@@ -29,14 +29,9 @@ export interface IToolStack {
 
 export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack> {
   state: AppState;
-  // @ts-expect-error bleh
   api: DataAPI<this>;
   toolstack: TS;
   toLocked?(): this;
-
-  // TODO: split screen dependent stuff out of base ToolOp
-  // into it's own subclass in main path.ux repo
-  //@ts-expect-error bleh
   screen: Screen<this>;
 }
 
