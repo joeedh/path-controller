@@ -14,10 +14,32 @@ class ContextLocker<OVERLAYS extends {}> {
    * Needed for consistent undo/redo.
    **/
   lock(ctx: any, saveProperty?: PropertySaver, loadProperty?: PropertyLoader) {
+    if (ctx === undefined) {
+      throw new Error("ctx was undefined! in ContextLocker.lock()!");
+    }
     let keys = [] as (string | symbol)[];
     let props = {} as any;
 
-    const keys2 = new Set(Reflect.ownKeys(ctx).concat(Reflect.ownKeys((ctx as any).prototype)));
+    console.log(ctx);
+    function getAllKeys(obj: any) {
+      const keys = new Set<string>();
+      while (obj && obj !== Object) {
+        for (const k in Object.getOwnPropertyDescriptors(obj)) {
+          if (typeof k === "string") {
+            keys.add(k);
+          }
+        }
+        for (let k in obj) {
+          if (typeof k === "string") {
+            keys.add(k);
+          }
+        }
+        obj = Object.getPrototypeOf(obj);
+      }
+      return keys;
+    }
+    let keys2 = new Set(getAllKeys(ctx));
+
     // use forEach to capture key at each iteration
     keys2.forEach((key) => {
       if (typeof key === "string" && (key.endsWith("_save") || key.endsWith("_load"))) {

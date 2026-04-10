@@ -1287,9 +1287,9 @@ export class MinMax<N extends 2 | 3 | 4> {
     this,
     `
   math.MinMax {
-    min: array(float);
-    max: array(float);
-    totaxis: number;
+    min    : array(float);
+    max    : array(float);
+    totaxis: int;
   }  
   `
   );

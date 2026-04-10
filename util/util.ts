@@ -1636,17 +1636,16 @@ export class HashDigest {
       v = strhash(v);
     }
 
-    if (
-      (typeof v === "object" && Array.isArray(v)) ||
-      v instanceof Vector2 ||
-      v instanceof Vector3 ||
-      v instanceof Vector4
-    ) {
+    if (typeof v === "object" && "length" in v && typeof v[0] === "number") {
       for (let i = 0; i < v.length; i++) {
         this.add((v as unknown as number[])[i]);
       }
 
       return this;
+    }
+
+    if (typeof v !== "number") {
+      throw new Error("unreachable code");
     }
 
     if (v >= -5 && v <= 5) {
@@ -2695,7 +2694,7 @@ window.setInterval(() => {
 
 import lzstring from "../extern/lz-string/lz-string.js";
 import { StructReader } from "./nstructjs_es6.js";
-import { Vector2, Vector3, Vector4 } from "./vectormath.js";
+import type { Vector2, Vector3, Vector4 } from "./vectormath.js";
 
 export function compress(data: string): Uint8Array {
   return lzstring.compressToUint8Array(data);

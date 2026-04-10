@@ -691,12 +691,16 @@ export class Curve1DPoint {
       ret.co.load(obj.co as Vector2);
     }
 
-    ret.startco.load(obj.startco as Vector2);
+    if (obj.startco !== undefined) {
+      ret.startco.load(obj.startco as Vector2);
+    }
     ret.eid = obj.eid as number;
     ret.flag = obj.flag as number;
     ret.tangent = obj.tangent as number;
 
-    ret.rco.load(obj.rco as Vector2);
+    if (obj.rco !== undefined) {
+      ret.rco.load(obj.rco as Vector2);
+    }
 
     return ret;
   }
@@ -2194,7 +2198,6 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve"> {
           let val = this.basis(f, si);
 
           if (ssi) val /= totbasis === 0 ? 1 : totbasis;
-
           (i === 0 ? g.moveTo : g.lineTo).call(g, f, ssi ? val : val * 0.5);
         }
 
