@@ -833,7 +833,7 @@ const splineCache = new BSplineCache();
 
 let _idgen = 1;
 
-class BSplineCurve extends CurveTypeData {
+export class BSplineCurve extends CurveTypeData<"BSplineCurve"> {
   static STRUCT: string;
 
   _bid: number;

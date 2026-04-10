@@ -19,6 +19,8 @@ export * from "./curve/curve1d_toolprop";
 import * as eventgraph from "./dag/eventdag";
 export { eventgraph };
 
+export * from "./util/indexRange";
+
 import * as solver from "./util/solver";
 export { solver };
 

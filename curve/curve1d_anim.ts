@@ -53,7 +53,7 @@ interface SimpleCurveConstructor {
   define(): CurveDefineResult;
 }
 
-export class SimpleCurveBase extends CurveTypeData {
+export class SimpleCurveBase<TYPE extends string> extends CurveTypeData<TYPE> {
   declare ["constructor"]: SimpleCurveConstructor;
   params: Record<string, number>;
   declare uidata: Record<string, unknown> | undefined;
@@ -62,9 +62,8 @@ export class SimpleCurveBase extends CurveTypeData {
   constructor() {
     super();
 
-    this.type = this.constructor.name;
-
     let def = this.constructor.define();
+    this.type = def.typeName as TYPE;
     let params = def.params;
 
     this.params = {};
@@ -90,7 +89,7 @@ export class SimpleCurveBase extends CurveTypeData {
   }
 
   equals(b: CurveTypeData): boolean {
-    let sb = b as unknown as SimpleCurveBase;
+    let sb = b as unknown as SimpleCurveBase<TYPE>;
     if (this.type !== sb.type) {
       return false;
     }
@@ -241,7 +240,7 @@ SimpleCurveBase.STRUCT =
 `;
 nstructjs.register(SimpleCurveBase);
 
-export class BounceCurve extends SimpleCurveBase {
+export class BounceCurve extends SimpleCurveBase<"BounceCurve"> {
   static define(): CurveDefineResult {
     return {
       params: {
@@ -289,7 +288,7 @@ BounceCurve.STRUCT =
 }`;
 nstructjs.register(BounceCurve);
 
-export class ElasticCurve extends SimpleCurveBase {
+export class ElasticCurve extends SimpleCurveBase<"ElasticCurve"> {
   _func: ((t: number) => number) | undefined;
   _last_hash: number | undefined;
 
@@ -338,7 +337,7 @@ ElasticCurve.STRUCT =
 }`;
 nstructjs.register(ElasticCurve);
 
-export class EaseCurve extends SimpleCurveBase {
+export class EaseCurve extends SimpleCurveBase<"EaseCurve"> {
   constructor() {
     super();
   }
@@ -374,7 +373,7 @@ EaseCurve.STRUCT =
 }`;
 nstructjs.register(EaseCurve);
 
-export class RandCurve extends SimpleCurveBase {
+export class RandCurve extends SimpleCurveBase<"RandCurve"> {
   random: util.MersenneRandom;
   _seed: number;
 

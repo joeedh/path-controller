@@ -54,6 +54,10 @@ for (let i = 0; i < 2048; i++) {
   indexRangeStack[i] = new _IndexRange(0, 0);
 }
 
-export function IndexRange(len: number): Iterable<number> {
-  return indexRangeStack[indexRangeStack.cur++].reset(0, len) as unknown as Iterable<number>;
+type Enumerate<N extends number, Acc extends number[] = []> = Acc["length"] extends N
+  ? Acc[number]
+  : Enumerate<N, [...Acc, Acc["length"]]>;
+
+export function IndexRange<LEN extends number>(len: LEN): Iterable<Enumerate<LEN>> {
+  return indexRangeStack[indexRangeStack.cur++].reset(0, len) as unknown as Iterable<Enumerate<LEN>>;
 }

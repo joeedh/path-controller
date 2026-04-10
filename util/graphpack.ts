@@ -35,11 +35,12 @@ export class PackNodeVertex extends Vector2 {
 }
 
 export class PackNode {
-  pos: InstanceType<typeof Vector2>;
-  vel: InstanceType<typeof Vector2>;
-  oldpos: InstanceType<typeof Vector2>;
+  pos: Vector2;
+  vel: Vector2;
+  oldpos: Vector2;
   _id: number;
-  size: InstanceType<typeof Vector2>;
+  size: Vector2;
+  startpos?: Vector2;
   verts: PackNodeVertex[];
 
   constructor() {

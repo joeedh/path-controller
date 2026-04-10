@@ -1,107 +1,94 @@
-import { ContextLike } from "./controller_abstract";
-
-type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
-
-interface ILockedContext {
-  toLocked(): this;
-}
-
-export type _Context<OVERLAYS extends {}> = UnionToIntersection<OVERLAYS> & ILockedContext;
+export type PropertyLoader = (ctx: any, key: string | number | symbol, data: any) => any;
+export type PropertySaver = (ctx: any, key: string | number | symbol, existing: any) => any;
+type CtxAny = any;
 
 class ContextLocker<OVERLAYS extends {}> {
-  private overlays: OVERLAYS[];
+  private ctx: CtxAny;
 
-  constructor(overlays: OVERLAYS[]) {
-    this.overlays = overlays;
+  constructor(ctx: CtxAny) {
+    this.ctx = ctx;
   }
 
   /**
    * Serializes the current context into a 'locked' read-only form.
    * Needed for consistent undo/redo.
    **/
-  lock(ctx: any) {
+  lock(ctx: any, saveProperty?: PropertySaver, loadProperty?: PropertyLoader) {
     let keys = [] as (string | symbol)[];
     let props = {} as any;
 
-    for (const overlay of this.overlays) {
-      const keys2 = new Set(Reflect.ownKeys(overlay).concat(Reflect.ownKeys((overlay as any).prototype)));
-      for (const key of keys2) {
-        if (typeof key === "string" && (key.endsWith("_save") || key.endsWith("_load"))) {
-          continue;
-        }
-        if (typeof key === "symbol") {
-          props[key] = (overlay as any)[key];
-          continue;
-        }
+    const keys2 = new Set(Reflect.ownKeys(ctx).concat(Reflect.ownKeys((ctx as any).prototype)));
+    // use forEach to capture key at each iteration
+    keys2.forEach((key) => {
+      if (typeof key === "string" && (key.endsWith("_save") || key.endsWith("_load"))) {
+        return;
+      }
+      if (typeof key === "symbol") {
+        props[key] = (ctx as any)[key];
+        return;
+      }
 
-        const hasSave = `${key}_save` in overlay;
-        const hasLoad = `${key}_load` in overlay;
-        const savedKey = (s: string) => "$$" + s;
+      const hasSave = `${key}_save` in ctx;
+      const hasLoad = `${key}_load` in ctx;
+      const savedKey = (s: string) => "$$" + s;
 
-        if (hasSave || hasLoad) {
-          // create a hidden property with the saved prop
-          Object.defineProperty(props, savedKey(key), {
-            value       : hasSave ? (overlay as any)[key + "_save"](ctx) : (overlay as any)[key],
-            enumerable  : false,
-            configurable: true,
-          });
-          // create a property with the getter
-          Object.defineProperty(props, key, {
-            configurable: true,
-            enumerable  : true,
-            get(): any {
-              return hasLoad ? (overlay as any)[key + "_load"](ctx, props[savedKey(key)]) : props[savedKey(key)];
-            },
-            set(value: any) {
-              throw new Error(`cannot set property ${key} in locked context`);
-            },
-          });
+      function loadProp(key: string, hasLoad: boolean) {
+        if (hasLoad) {
+          return (ctx as any)[key + "_load"](ctx, props[savedKey(key)]);
+        } else if (typeof loadProperty === "function") {
+          return loadProperty(ctx, key, props[savedKey(key)]);
         } else {
-          props[key] = (overlay as any)[key];
+          return props[savedKey(key)];
         }
       }
-    }
+
+      function saveProp(key: string, hasSave: boolean) {
+        if (hasSave) {
+          return (ctx as any)[key + "_save"](ctx);
+        } else if (typeof saveProperty === "function") {
+          // forcibly set this to undefined here
+          return saveProperty.call(undefined, ctx, key, (ctx as any)[key]);
+        } else {
+          return (ctx as any)[key];
+        }
+      }
+
+      if (hasSave || hasLoad) {
+        // create a hidden property with the saved prop
+        Object.defineProperty(props, savedKey(key), {
+          value       : saveProp(key, hasSave),
+          enumerable  : false,
+          configurable: true,
+        });
+        // create a property with the getter
+        Object.defineProperty(props, key, {
+          configurable: true,
+          enumerable  : true,
+          get(): any {
+            return loadProp(key, hasLoad);
+          },
+          set(value: any) {
+            throw new Error(`cannot set property ${key} in locked context`);
+          },
+        });
+      } else {
+        props[key] = (ctx as any)[key];
+      }
+    });
+
+    return props as CtxAny;
   }
 }
 
-export function createOverlays<OVERLAYS extends {}>(overlays: OVERLAYS[]): _Context<OVERLAYS> {
-  return new Proxy(
-    {},
-    {
-      get(target, prop) {
-        if (prop === "toLocked") {
-          const locker = new ContextLocker<OVERLAYS>(overlays);
-          return locker.lock.bind(locker);
-        }
-        for (const overlay of overlays) {
-          if (prop in overlay || prop in (overlay as any).prototype) {
-            return (overlay as any)[prop];
-          }
-        }
-      },
-      set(target, prop, value) {
-        for (const overlay of overlays) {
-          if (prop in overlay || prop in (overlay as any).prototype) {
-            (overlay as any)[prop] = value;
-            return true;
-          }
-        }
-        return false;
-      },
-    }
-  ) as unknown as _Context<OVERLAYS>;
+export function toLockedImpl(this: any) {
+  return new ContextLocker(this).lock(this, this.saveProperty, this.loadProperty);
 }
 
-class A {
-  bleh = 0;
-  bleh2 = 1;
-  bleh3 = 2;
+export interface ILockableCtx {
+  /** use toLockedImpl, e.g. toLocked = toLockedImpl */
+  toLocked: () => CtxAny;
+  /** default property serializer */
+  saveProperty?: PropertySaver;
+  /** default property deserializer */
+  loadProperty?: PropertyLoader;
 }
-
-class B {
-  t1 = 0;
-  t2 = 2;
-  t3 = false;
-}
-
-const ctx = createOverlays<A | B>([new A(), new B()]);

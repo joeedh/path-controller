@@ -10,7 +10,7 @@ function feq(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.00001;
 }
 
-class EquationCurve extends CurveTypeData {
+export class EquationCurve extends CurveTypeData<"EquationCurve"> {
   declare parent:
     | {
         xRange: InstanceType<typeof Vector2>;
@@ -319,7 +319,7 @@ EquationCurve.STRUCT =
 nstructjs.register(EquationCurve);
 CurveTypeData.register(EquationCurve);
 
-class GuassianCurve extends CurveTypeData {
+export class GuassianCurve extends CurveTypeData<"GuassianCurve"> {
   height: number;
   offset: number;
   deviation: number;

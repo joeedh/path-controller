@@ -116,26 +116,26 @@ interface ResolvedToolDef {
 }
 
 /** ToolOp constructor shape for static-side typing */
-interface ToolOpConstructor {
+export interface IToolOpConstructor {
   new (): ToolOp;
   name: string;
   STRUCT?: string;
   tooldef(): ToolDef;
   _getFinalToolDef(): ResolvedToolDef;
-  _regWithNstructjs(cls: ToolOpConstructor, structName?: string): void;
+  _regWithNstructjs(cls: IToolOpConstructor, structName?: string): void;
   canRun<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     ctx: CTX,
     toolop?: ToolOp<any, any, CTX, ModalCTX>
   ): boolean;
-  isRegistered(cls: ToolOpConstructor): boolean;
-  register(cls: ToolOpConstructor): void;
-  unregister(cls: ToolOpConstructor): void;
+  isRegistered(cls: IToolOpConstructor): boolean;
+  register(cls: IToolOpConstructor): void;
+  unregister(cls: IToolOpConstructor): void;
   searchBoxOk(ctx: unknown): boolean;
   onTick(): void;
   invoke(ctx: unknown, args: Record<string, unknown>): ToolOp;
   inherit<Slots>(slots: Slots): InheritFlag<Slots>;
   Equals(a: ToolOp | undefined | null, b: ToolOp | undefined | null): boolean;
-  prototype: ToolOp & { __proto__: { constructor: ToolOpConstructor } };
+  prototype: ToolOp & { __proto__: { constructor: IToolOpConstructor } };
 }
 
 /** Runtime-generated macro class shape */
@@ -160,7 +160,7 @@ export type SlotType<slot extends ToolProperty<unknown>> = slot extends ToolProp
 /*  Module-level state                                                */
 /* ------------------------------------------------------------------ */
 
-export const ToolClasses: ToolOpConstructor[] = [];
+export const ToolClasses: IToolOpConstructor[] = [];
 
 export function setContextClass(_cls: unknown): void {
   console.warn("setContextClass is deprecated");
@@ -233,13 +233,13 @@ export class ToolPropertyCache {
   }
 
   _buildAccessors(
-    cls: ToolOpConstructor | MacroClassType,
+    cls: IToolOpConstructor | MacroClassType,
     key: string,
     prop: ToolProperty,
     dstruct: DataStruct,
     api: DataAPI
   ): void {
-    const tdef = (cls as ToolOpConstructor)._getFinalToolDef();
+    const tdef = (cls as IToolOpConstructor)._getFinalToolDef();
 
     this.api = api;
     this.dstruct = dstruct;
@@ -307,23 +307,23 @@ export class ToolPropertyCache {
     obj[name] = prop2.getValue();
   }
 
-  _getAccessor(cls: ToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
+  _getAccessor(cls: IToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
     const toolpath = cls.tooldef().toolpath;
     if (!toolpath) return undefined;
     return this.pathmap.get(toolpath.trim());
   }
 
-  static getFullPath(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): string {
+  static getFullPath(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): string {
     const toolpath = cls.tooldef()!.toolpath!.trim();
     const propKey = ToolPropertyCache.getPropKey(cls, key, prop);
     return `${toolpath}.${propKey}`;
   }
 
-  useDefault(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
+  useDefault(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
     return this.userSetMap.has(ToolPropertyCache.getFullPath(cls, key, prop));
   }
 
-  has(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
+  has(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): boolean {
     if (prop.flag & PropFlags.NO_DEFAULT) {
       return false;
     }
@@ -334,7 +334,7 @@ export class ToolPropertyCache {
     return !!obj && key in obj;
   }
 
-  get<T>(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): T | undefined {
+  get<T>(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): T | undefined {
     if ((cls as unknown) === ToolMacro) {
       return undefined;
     }
@@ -349,7 +349,7 @@ export class ToolPropertyCache {
     return undefined;
   }
 
-  set<T>(cls: ToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): this | undefined {
+  set<T>(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): this | undefined {
     if ((cls as unknown) === ToolMacro) {
       return;
     }
@@ -364,7 +364,7 @@ export class ToolPropertyCache {
 
     if (!obj) {
       console.warn("Warning, toolop " + cls.name + " was not in the default map; unregistered?");
-      this._buildAccessors(cls as ToolOpConstructor, key, prop, this.dstruct, this.api);
+      this._buildAccessors(cls as IToolOpConstructor, key, prop, this.dstruct, this.api);
 
       obj = this.pathmap.get(toolpath);
     }
@@ -422,7 +422,7 @@ export class ToolOp<
   _accept: ((ctx: unknown, wasCancelled: boolean) => void) | undefined;
   _reject: ((reason?: unknown) => void) | undefined;
   _promise: Promise<unknown> | undefined;
-  _on_cancel: ((tool: ToolOp<any, any, CTX, ModalCTX>) => void) | undefined;
+  _on_cancel: ((tool: any) => void) | undefined;
   _was_redo!: boolean;
   inputs!: InputSlots;
   outputs!: OutputSlots;
@@ -439,7 +439,7 @@ export class ToolOp<
     this._overdraw = undefined;
     this.__memsize = undefined;
 
-    const def = (this.constructor as unknown as ToolOpConstructor).tooldef();
+    const def = (this.constructor as unknown as IToolOpConstructor).tooldef();
 
     if (def.undoflag !== undefined) {
       this.undoflag = def.undoflag;
@@ -463,8 +463,8 @@ export class ToolOp<
       if (slots === undefined) return {};
 
       const result: Record<string, ToolProperty> = {};
-      let p: ToolOpConstructor | undefined = this.constructor as unknown as ToolOpConstructor;
-      let lastp: ToolOpConstructor | undefined = undefined;
+      let p: IToolOpConstructor | undefined = this.constructor as unknown as IToolOpConstructor;
+      let lastp: IToolOpConstructor | undefined = undefined;
 
       while (p !== undefined && (p as unknown) !== Object && (p as unknown) !== ToolOp && p !== lastp) {
         if (p.tooldef) {
@@ -489,7 +489,7 @@ export class ToolOp<
 
         lastp = p;
         //p = (p as any).prototype?.constructor as unknown as ToolOpConstructor | undefined;
-        p = (p as any).__proto__ as unknown as ToolOpConstructor | undefined;
+        p = (p as any).__proto__ as unknown as IToolOpConstructor | undefined;
       }
 
       return result;
@@ -527,7 +527,6 @@ export class ToolOp<
       for (const ok in doutputs) {
         const prop = doutputs[ok].copy();
         prop.apiname = prop.apiname && prop.apiname.length > 0 ? prop.apiname : ok;
-
         (this.outputs as any)[ok] = prop;
       }
     }
@@ -622,7 +621,8 @@ export class ToolOp<
    stored somewhere in the context.
 
    */
-  static invoke<CTX extends ContextLike>(ctx: CTX, args: Record<string, unknown>): ToolOp {
+  static invoke(_ctx: any, args: Record<string, unknown>): ToolOpAny {
+    const ctx = _ctx as ContextLike;
     const tool = new (this as unknown as new () => ToolOp)();
     const inputs = tool.inputs as any;
 
@@ -660,12 +660,12 @@ export class ToolOp<
     ToolClasses.push(cls);
   }
 
-  static _regWithNstructjs(cls: ToolOpConstructor, structName: string = cls.name): void {
+  static _regWithNstructjs(cls: IToolOpConstructor, structName: string = cls.name): void {
     if (nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
       return;
     }
 
-    const parent = cls.prototype.__proto__?.constructor as unknown as ToolOpConstructor;
+    const parent = cls.prototype.__proto__?.constructor as unknown as IToolOpConstructor;
 
     // eslint-disable-next-line no-prototype-builtins
     if (!cls.hasOwnProperty("STRUCT")) {
@@ -683,7 +683,7 @@ export class ToolOp<
     nstructjs.register(cls as unknown as import("../util/nstructjs_es6.js").StructableClass);
   }
 
-  static isRegistered(cls: ToolOpConstructor): boolean {
+  static isRegistered(cls: IToolOpConstructor): boolean {
     return ToolClasses.includes(cls);
   }
 
@@ -705,7 +705,7 @@ export class ToolOp<
       if (slots === undefined) return {};
 
       const result: Record<string, ToolProperty> = {};
-      let p: ToolOpConstructor | undefined = this as unknown as ToolOpConstructor;
+      let p: IToolOpConstructor | undefined = this as unknown as IToolOpConstructor;
 
       while (p !== undefined && (p as unknown) !== Object && (p as unknown) !== ToolOp) {
         if (p.tooldef) {
@@ -726,7 +726,7 @@ export class ToolOp<
             }
           }
         }
-        p = (p as any).__proto__ as unknown as ToolOpConstructor | undefined;
+        p = (p as any).__proto__ as unknown as IToolOpConstructor | undefined;
       }
 
       return result;
@@ -822,11 +822,11 @@ export class ToolOp<
   }
 
   hasDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): boolean {
-    return SavedToolDefaults.has(this.constructor as unknown as ToolOpConstructor, key, toolprop);
+    return SavedToolDefaults.has(this.constructor as unknown as IToolOpConstructor, key, toolprop);
   }
 
   getDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): unknown {
-    const cls = this.constructor as unknown as ToolOpConstructor;
+    const cls = this.constructor as unknown as IToolOpConstructor;
 
     if (SavedToolDefaults.has(cls, key, toolprop)) {
       return SavedToolDefaults.get(cls, key, toolprop);
@@ -842,7 +842,7 @@ export class ToolOp<
       const prop = inputs[k];
 
       if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
-        SavedToolDefaults.set(this.constructor as unknown as ToolOpConstructor, k, prop);
+        SavedToolDefaults.set(this.constructor as unknown as IToolOpConstructor, k, prop);
       }
     }
 
@@ -850,7 +850,7 @@ export class ToolOp<
   }
 
   genToolString(): string {
-    const def = (this.constructor as unknown as ToolOpConstructor).tooldef();
+    const def = (this.constructor as unknown as IToolOpConstructor).tooldef();
     let path = (def.toolpath || "") + "(";
     const inputs = this.inputs;
 
@@ -1216,7 +1216,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       } as unknown as MacroClassType;
 
       this._macro_class.__tooldef = {
-        toolpath: (this.constructor as unknown as ToolOpConstructor).tooldef().toolpath || "",
+        toolpath: (this.constructor as unknown as IToolOpConstructor).tooldef().toolpath || "",
       };
       this._macro_class.ready = false;
     }
@@ -1234,7 +1234,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     /* Handle child classes of ToolMacro */
     if (this.constructor !== ToolMacro) {
-      key += ":" + (this.constructor as unknown as ToolOpConstructor).tooldef().toolpath;
+      key += ":" + (this.constructor as unknown as IToolOpConstructor).tooldef().toolpath;
     }
 
     for (const k in this.inputs) {
@@ -1251,7 +1251,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     let is_modal: boolean | undefined;
 
     for (const tool of this.tools) {
-      const def = (tool.constructor as unknown as ToolOpConstructor).tooldef();
+      const def = (tool.constructor as unknown as IToolOpConstructor).tooldef();
 
       if (i > 0) {
         name += ", ";
@@ -1397,7 +1397,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     return this;
   }
 
-  add(tool: ToolOp): this {
+  add(tool: ToolOpAny): this {
     if (tool.is_modal) {
       this.is_modal = true;
     }
@@ -1711,7 +1711,7 @@ export class ToolStack<
     }
 
     if (
-      !(toolop.constructor as unknown as ToolOpConstructor).canRun<ContextCls, ModalContextCls>(
+      !(toolop.constructor as unknown as IToolOpConstructor).canRun<ContextCls, ModalContextCls>(
         ctx as ContextCls,
         toolop as unknown as this[0]
       )
@@ -1725,7 +1725,7 @@ export class ToolStack<
     }
     const tctx = ctx.toLocked ? ctx.toLocked() : ctx;
 
-    let undoflag = (toolop.constructor as unknown as ToolOpConstructor).tooldef().undoflag;
+    let undoflag = (toolop.constructor as unknown as IToolOpConstructor).tooldef().undoflag;
     if (toolop.undoflag !== undefined) {
       undoflag = toolop.undoflag;
     }
@@ -1886,7 +1886,7 @@ export class ToolStack<
    onstep is a callback, if it returns a promise that promise will be
    waited on, otherwise execution is queue with window.setTimeout().
    */
-  replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown): Promise<unknown> {
+  replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown | Promise<unknown>): Promise<unknown> {
     this.rewind();
 
     let last = this.cur;
@@ -1945,7 +1945,7 @@ export class ToolStack<
   //during save
   _save(): this {
     for (const tool of this) {
-      const cls = tool.constructor as unknown as ToolOpConstructor;
+      const cls = tool.constructor as unknown as IToolOpConstructor;
 
       if (!nstructjs.isRegistered(cls)) {
         cls._regWithNstructjs(cls);
@@ -1998,7 +1998,7 @@ nstructjs.register(ToolStack);
 /*  API builders                                                      */
 /* ------------------------------------------------------------------ */
 
-export function buildToolOpAPI(api: DataAPI, cls: ToolOpConstructor): unknown {
+export function buildToolOpAPI(api: DataAPI, cls: IToolOpConstructor): unknown {
   const st = api.mapStruct(cls, true);
   const def = cls._getFinalToolDef();
 

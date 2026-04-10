@@ -4,6 +4,7 @@ import { Vector2 } from "./vectormath.js";
 import { ContextLike } from "../controller.js";
 
 declare global {
+  // @ts-ignore XXX
   interface Window {
     testSingleMouseUpEvent: (type?: string) => void;
     _findScreen: () => unknown;

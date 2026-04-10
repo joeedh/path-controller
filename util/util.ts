@@ -28,23 +28,23 @@ export function isDenormal(f: number): boolean {
 }
 
 const colormap: Record<string, number> = {
-  "black"   : 30,
-  "red"     : 31,
-  "green"   : 32,
-  "yellow"  : 33,
-  "blue"    : 34,
-  "magenta" : 35,
-  "cyan"    : 36,
-  "teal"    : 36,
-  "white"   : 37,
-  "reset"   : 0,
-  "grey"    : 2,
-  "gray"    : 2,
-  "orange"  : 202,
-  "pink"    : 198,
-  "brown"   : 314,
-  "lightred": 91,
-  "peach"   : 210,
+  black   : 30,
+  red     : 31,
+  green   : 32,
+  yellow  : 33,
+  blue    : 34,
+  magenta : 35,
+  cyan    : 36,
+  teal    : 36,
+  white   : 37,
+  reset   : 0,
+  grey    : 2,
+  gray    : 2,
+  orange  : 202,
+  pink    : 198,
+  brown   : 314,
+  lightred: 91,
+  peach   : 210,
 };
 
 export const termColorMap: Record<string | number, string | number> = {};
@@ -496,7 +496,6 @@ export class SmartConsole {
 }
 
 export const console = new SmartConsole();
-
 (globalThis as Record<string, unknown>).tm = 0.0;
 
 const EmptySlot: object = {};
@@ -669,6 +668,7 @@ export function merge<A extends object, B extends object>(obja: A, objb: B): A &
 const debug_cacherings = false;
 
 declare global {
+  // @ts-ignore XXX
   interface Window {
     /** debug cacherings */
     _cacherings?: cachering<any>[];
@@ -801,7 +801,7 @@ export class cachering<T> extends Array<T> {
 }
 
 interface KeystrObject {
-  [Symbol.keystr](): string;
+  [Symbol.keystr](): string | number;
 }
 
 export class SetIter<T extends KeystrObject> {
@@ -844,9 +844,9 @@ export class SetIter<T extends KeystrObject> {
  Stores objects in a set; each object is converted to a value via
  a [Symbol.keystr] method, and if that value already exists in the set
  then the object is not added.
-
-
- * */
+ 
+ @deprecated
+ **/
 export class set<T extends KeystrObject> {
   items: (T | object)[];
   keys: Record<string, number>;
@@ -1306,7 +1306,7 @@ export class MersenneRandom {
   index: number;
   mt: Uint32Array;
 
-  constructor(seed: number) {
+  constructor(seed = 0) {
     // Initialize the index to 0
     this.index = 624;
     this.mt = new Uint32Array(624);
@@ -1627,7 +1627,7 @@ export class HashDigest {
     return this.hash;
   }
 
-  add(v: number | string | number[] | boolean): this {
+  add(v: number | string | number[] | boolean | Vector2 | Vector3 | Vector4): this {
     if (typeof v === "boolean") {
       this.add(v ? 1 : 0);
       return this;
@@ -1636,9 +1636,14 @@ export class HashDigest {
       v = strhash(v);
     }
 
-    if (typeof v === "object" && Array.isArray(v)) {
+    if (
+      (typeof v === "object" && Array.isArray(v)) ||
+      v instanceof Vector2 ||
+      v instanceof Vector3 ||
+      v instanceof Vector4
+    ) {
       for (let i = 0; i < v.length; i++) {
-        this.add(v[i]);
+        this.add((v as unknown as number[])[i]);
       }
 
       return this;
@@ -1970,23 +1975,29 @@ export class IDMap<T> extends Array<T | object | undefined> {
     const this2 = this;
     return (function* () {
       for (const id of this2._keys) {
+        if (this2[id] === UndefinedTag) {
+          continue;
+        }
         yield id;
       }
     })();
   }
 
-  values(): Generator<T | undefined> {
+  values(): Generator<T> {
     const this2 = this;
     return (function* () {
       for (const id of this2._keys) {
-        yield this2[id] as T | undefined;
+        if (this2[id] === UndefinedTag) {
+          continue;
+        }
+        yield this2[id] as T;
       }
     })();
   }
 
-  [Symbol.iterator](): Generator<[number, T | undefined]> {
+  [Symbol.iterator](): Generator<[number, T]> {
     const this2 = this;
-    const iteritem: [number, T | undefined] = [0, undefined];
+    const iteritem: [number, T] = [0, undefined as unknown as T];
 
     return (function* () {
       for (const id of this2._keys) {
@@ -1994,9 +2005,10 @@ export class IDMap<T> extends Array<T | object | undefined> {
         const val = this2[id];
 
         if (val === UndefinedTag) {
-          iteritem[1] = undefined;
+          //iteritem[1] = undefined
+          continue;
         } else {
-          iteritem[1] = val as T | undefined;
+          iteritem[1] = val as T;
         }
 
         yield iteritem;
@@ -2346,13 +2358,13 @@ export class ArrayPool {
     this.map = new Array(1024);
   }
 
-  get(n: number, clear: boolean = false): unknown[] {
-    let pool: cachering<unknown[]> | undefined;
+  get<T>(n: number, clear: boolean = false): T[] {
+    let pool: cachering<T[]> | undefined;
 
     if (n < 1024) {
-      pool = this.map[n];
+      pool = this.map[n] as unknown as cachering<T[]>;
     } else {
-      pool = this.pools.get(n);
+      pool = this.pools.get(n) as unknown as cachering<T[]>;
     }
 
     if (!pool) {
@@ -2370,7 +2382,7 @@ export class ArrayPool {
         tot = 1024;
       }
 
-      pool = new cachering(() => new Array(n) as unknown[], tot);
+      pool = new cachering(() => new Array(n) as T[], tot);
       if (n < 1024) {
         this.map[n] = pool;
       }
@@ -2387,7 +2399,7 @@ export class ArrayPool {
 
     if (clear) {
       for (let i = 0; i < n; i++) {
-        ret[i] = undefined;
+        ret[i] = undefined as unknown as T;
       }
     }
 
@@ -2442,7 +2454,7 @@ export class DivLogger {
     }
 
     if (typeof obj === "symbol") {
-      return `[${obj.description}]`;
+      return `[${(obj as any).description}]`;
     }
 
     const DEPTH_LIMIT = 1;
@@ -2683,6 +2695,7 @@ window.setInterval(() => {
 
 import lzstring from "../extern/lz-string/lz-string.js";
 import { StructReader } from "./nstructjs_es6.js";
+import { Vector2, Vector3, Vector4 } from "./vectormath.js";
 
 export function compress(data: string): Uint8Array {
   return lzstring.compressToUint8Array(data);

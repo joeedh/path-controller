@@ -8,7 +8,7 @@ import type { Screen } from "../../screen/FrameManager";
 export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
 export interface IToolStack {
-  head: ToolOpAny;
+  head?: ToolOpAny;
   [k: number]: ToolOpAny;
   length: number;
   cur: number;
@@ -95,14 +95,14 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
-  execTool<T extends ToolOp | unknown = unknown>(
+  execTool<T extends ToolOpAny | unknown = unknown>(
     ctx: CTX,
-    path: string | (T extends ToolOp ? T : ToolOp),
+    path: string | (T extends ToolOpAny ? T : ToolOpAny),
     inputs?: T extends ToolOp ? ReturnType<T["getInputs"]> : Record<string, any>,
     unused?: unknown,
     event?: PointerEvent | undefined
-  ): Promise<T extends ToolOp ? T : ToolOp> {
-    type Tool = T extends ToolOp ? T : ToolOp;
+  ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
+    type Tool = T extends ToolOpAny ? T : ToolOpAny;
 
     return new Promise((accept, reject) => {
       let tool: string | Tool = path;
@@ -364,7 +364,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return path;
   }
 
-  getValue(ctx: CTX, path: string, rootStruct?: unknown): unknown {
+  getValue<T = unknown>(ctx: CTX, path: string, rootStruct?: T): T | undefined {
     if (typeof ctx == "string") {
       throw new Error("You forgot to pass context to getValue");
     }
@@ -411,7 +411,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
         val = (val as number) & prop.values[ret.subkey];
       }
 
-      return val;
+      return val as T;
     }
 
     return ret.value;

@@ -123,12 +123,11 @@ class OnceTag {
   }
 }
 
-interface ToolPropertyConstructor<T = unknown, TYPE extends number = number> {
+interface ToolPropertyConstructor {
   PROP_TYPE_ID?: number;
-  new (...args: unknown[]): ToolProperty<T, TYPE>;
 }
 
-type ToolPropertySubclass<T, TYPE extends number> = ToolPropertyConstructor<T, TYPE> & {
+type ToolPropertySubclass<T, TYPE extends number> = ToolPropertyConstructor & {
   STRUCT?: string;
   PROP_TYPE_ID?: number;
 };
@@ -570,7 +569,7 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
 
   copy(): this {
     //default copy method
-    const ret = new (this.constructor as ToolPropertyConstructor<T, TYPE>)();
+    const ret = new (this.constructor as any)();
 
     this.copyTo(ret as this);
 
@@ -1647,13 +1646,15 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
   }
 }
 
-export class EnumProperty extends EnumPropertyBase<PropTypes["ENUM"], string | number> {
+export class EnumProperty<VALUE extends string | number = string | number> //
+  extends EnumPropertyBase<PropTypes["ENUM"], VALUE>
+{
   static PROP_TYPE_ID = PropTypes["ENUM"];
   static STRUCT = nstructjs.inlineRegister(this, `EnumProperty {}`);
 
   constructor(
     string_or_int?: string | number,
-    valid_values?: Record<string, string | number> | string[] | EnumPropertyBase<PropTypes["ENUM"], string | number>,
+    valid_values?: Record<string, VALUE> | string[] | EnumPropertyBase<PropTypes["ENUM"], VALUE>,
     apiname?: string,
     uiname?: string,
     description?: string,
@@ -2011,10 +2012,9 @@ ToolProperty.internalRegister(Mat4Property);
 /**
  * List of other tool props (all of one type)
  */
-export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolProperty<unknown>> extends ToolProperty<
-  ToolPropType[],
-  PropTypes["PROPLIST"]
-> {
+export class ListProperty<ToolPropType extends ToolProperty = ToolProperty> //
+  extends ToolProperty<ToolPropType[], PropTypes["PROPLIST"]>
+{
   static PROP_TYPE_ID = PropTypes.PROPLIST;
   static STRUCT: string;
 
@@ -2038,13 +2038,13 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
       const cls = PropClasses[prop];
 
       if (cls !== undefined) {
-        prop = new (cls as unknown as ToolPropertyConstructor)();
+        prop = new (cls as any)();
       }
     } else if (prop !== undefined) {
       if (prop instanceof ToolProperty) {
         prop = prop.copy();
       } else {
-        prop = new (prop as ToolPropertyConstructor)();
+        prop = new (prop as any)();
       }
     }
 
@@ -2187,14 +2187,14 @@ export class ListProperty<ToolPropType extends ToolProperty<unknown> = ToolPrope
     return this.value;
   }
 
-  [Symbol.iterator](): IterableIterator<unknown> {
+  [Symbol.iterator](): IterableIterator<ReturnType<ToolPropType["getValue"]>> {
     const list = this.value;
 
     return (function* () {
       for (const item of list) {
         yield item.getValue();
       }
-    })();
+    })() as unknown as IterableIterator<ReturnType<ToolPropType["getValue"]>>;
   }
 }
 

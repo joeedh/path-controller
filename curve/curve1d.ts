@@ -1,6 +1,3 @@
-"use strict";
-
-/*FIXME: not sure this works anymore*/
 import nstructjs from "../util/struct.js";
 
 import * as util from "../util/util.js";
@@ -11,6 +8,7 @@ import type { StructReader } from "../util/nstructjs_es6.js";
 
 export { getCurve } from "./curve1d_base.js";
 export { SplineTemplates, SplineTemplateIcons } from "./curve1d_bspline.js";
+import type { AllCurveTypes } from "./curve1d_all.js";
 
 export function mySafeJSONStringify(obj: { toJSON(): Record<string, unknown> }): string {
   return JSON.stringify(obj.toJSON(), function (key) {
@@ -292,33 +290,36 @@ export class Curve1D {
     return ret;
   }
 
-  getGenerator(type: string, throw_on_error: boolean = true): CurveTypeData | undefined {
+  /** throw_on_error defaults to true */
+  checkGenerator<KEY extends AllCurveTypes["type"]>(type: KEY): Extract<AllCurveTypes, { type: KEY }> | undefined {
     for (const gen of this.generators) {
       if (gen.type === type) {
-        return gen;
+        return gen as Extract<AllCurveTypes, { type: KEY }>;
       }
     }
 
     //was a new generator registered?
     for (const cls of CurveConstructors) {
       if (cls.define().typeName === type) {
-        const gen = new cls() as CurveTypeData;
+        const gen = new cls() as Extract<AllCurveTypes, { type: KEY }>;
         gen.type = type;
         gen.parent = this;
         this.generators.push(gen);
         return gen;
       }
     }
+  }
 
-    if (throw_on_error) {
+  getGenerator<KEY extends AllCurveTypes["type"]>(type: KEY): Extract<AllCurveTypes, { type: KEY }> {
+    const gen = this.checkGenerator(type);
+    if (!gen) {
       throw new Error("Unknown generator " + type + ".");
-    } else {
-      return undefined;
     }
+    return gen;
   }
 
   switchGenerator(type: string): CurveTypeData {
-    const gen = this.getGenerator(type)!;
+    const gen = this.getGenerator(type as AllCurveTypes["type"])!;
 
     if (gen !== this.generators.active) {
       const old = this.generators.active;
@@ -350,7 +351,7 @@ export class Curve1D {
 
     //this.generators = [];
     for (const gen of obj.generators as Record<string, unknown>[]) {
-      const gen2 = this.getGenerator(gen.type as string, false);
+      const gen2 = this.checkGenerator(gen.type as AllCurveTypes["type"]);
 
       if (!gen2 || !(gen2 instanceof CurveTypeData)) {
         //old curve class?
@@ -523,7 +524,7 @@ export class Curve1D {
   }
 
   #patchRange(): void {
-    const gen = this.getGenerator("BSplineCurve") as Record<string, unknown> | undefined;
+    const gen = this.checkGenerator("BSplineCurve") as any;
     const range = gen?.range as [Vec2, Vec2] | undefined;
     if (range) {
       this.xRange.load(range[0]);

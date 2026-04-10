@@ -59,15 +59,15 @@ export interface CurveGUIContainer {
   [key: string]: unknown;
 }
 
-export class CurveTypeData {
+export class CurveTypeData<TYPE extends string = string> {
   static STRUCT: string;
-  type: string;
+  type: TYPE;
   parent: CurveParent | undefined;
   fastmode: boolean;
   uidata: Record<string, unknown> | undefined;
 
   constructor() {
-    this.type = (this.constructor as CurveTypeDataConstructor).define().typeName;
+    this.type = (this.constructor as CurveTypeDataConstructor).define().typeName as TYPE;
     this.parent = undefined;
     this.fastmode = false;
     this.uidata = undefined;
@@ -124,7 +124,7 @@ export class CurveTypeData {
   }
 
   loadJSON(obj: Record<string, unknown>): this {
-    this.type = obj.type as string;
+    this.type = obj.type as TYPE;
 
     return this;
   }

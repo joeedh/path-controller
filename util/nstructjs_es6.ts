@@ -5845,12 +5845,12 @@ function inherit(child: StructableClass | Function, parent: StructableClass | Fu
 /**
  @param data : DataView
  */
-function readObject(
+function readObject<T = any>(
   data: DataView | Uint8Array | Uint8ClampedArray | number[],
   cls: StructableClass | number,
   __uctx?: unpack_context
-): any {
-  return manager.readObject(data, cls, __uctx);
+): T {
+  return manager.readObject(data, cls, __uctx) as unknown as T;
 }
 
 /**

@@ -1,21 +1,31 @@
-type ConstraintFunc = (params: unknown) => number;
-type ConstraintDvFunc = (params: unknown, glst: Float64Array[]) => void;
+import { Quat } from "../old_types/controller";
+import { Vector2, Vector3, Vector4 } from "./vectormath";
 
-export class Constraint {
+type ConstraintFunc<PARAMS> = (params: PARAMS) => number;
+type ConstraintDvFunc<PARAMS> = (params: PARAMS, glst: Float64Array[]) => void;
+export type KVector = (Float64Array | number[] | Vector2 | Vector3 | Vector4 | Quat) | Float32Array;
+
+export class Constraint<PARAMS = unknown[]> {
   glst: Float64Array[];
-  klst: Float64Array[];
+  klst: number[][];
   wlst: Float64Array[];
   k: number;
-  params: unknown;
+  private params: Readonly<PARAMS>;
   name: string;
   df: number;
   threshold: number;
-  func: ConstraintFunc;
-  funcDv: ConstraintDvFunc | null;
+  private func: ConstraintFunc<Readonly<PARAMS>>;
+  private funcDv: ConstraintDvFunc<Readonly<PARAMS>> | null;
 
-  constructor(name: string, func: ConstraintFunc | undefined, klst: Float64Array[], params: unknown, k: number = 1.0) {
+  constructor(
+    name: string,
+    func: ConstraintFunc<PARAMS> | undefined,
+    klst: KVector[],
+    params: Readonly<PARAMS>,
+    k: number = 1.0
+  ) {
     this.glst = [];
-    this.klst = klst;
+    this.klst = klst as unknown as number[][];
     this.wlst = [];
     this.k = k;
     this.params = params;
@@ -91,8 +101,8 @@ export class Solver {
     this.constraints.remove(con);
   }
 
-  add(con: Constraint): void {
-    this.constraints.push(con);
+  add<PARAMS>(con: Constraint<PARAMS>): void {
+    this.constraints.push(con as unknown as Constraint);
   }
 
   solveStep(gk: number = this.gk): number {
