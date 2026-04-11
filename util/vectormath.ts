@@ -17,7 +17,7 @@ export type VectorLike<LEN extends 0 | 1 | 2 | 3 | 4> = {
   length: number;
 };
 
-declare interface IOpenNumVector {
+export declare interface IOpenNumVector {
   [k: number]: number;
   length: number;
 }
