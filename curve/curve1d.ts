@@ -4,7 +4,7 @@ import * as util from "../util/util.js";
 //import * as ui_base from './ui_base.js';
 import { Vector2, Vector3, Vector4, Matrix4 } from "../util/vectormath.js";
 import { EventDispatcher } from "../util/events.js";
-import type { StructReader } from "../util/nstructjs_es6.js";
+import type { StructReader } from "../util/nstructjs.js";
 
 export { getCurve } from "./curve1d_base.js";
 export { SplineTemplates, SplineTemplateIcons } from "./curve1d_bspline.js";

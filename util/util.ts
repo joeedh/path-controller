@@ -2693,7 +2693,7 @@ window.setInterval(() => {
 }, 250);
 
 import lzstring from "../extern/lz-string/lz-string.js";
-import { StructReader } from "./nstructjs_es6.js";
+import { StructReader } from "./nstructjs.js";
 import type { Vector2, Vector3, Vector4 } from "./vectormath.js";
 
 export function compress(data: string): Uint8Array {

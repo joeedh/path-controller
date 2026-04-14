@@ -2,7 +2,7 @@ import nstructjs from "../util/struct.js";
 import { CurveConstructors, CurveTypeData } from "./curve1d_base.js";
 import Ease from "./ease.js";
 import * as util from "../util/util.js";
-import type { StructReader } from "../util/nstructjs_es6.js";
+import type { StructReader } from "../util/nstructjs.js";
 
 function bez3(a: number, b: number, c: number, t: number): number {
   var r1 = a + (b - a) * t;
@@ -19,23 +19,27 @@ function bez4(a: number, b: number, c: number, d: number, t: number): number {
 }
 
 export class ParamKey {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `ParamKey {
+      key : string;
+      val : float;
+    }`
+  );
+
   key: string;
   val: number;
 
-  constructor(key: string, val: number) {
-    this.key = key;
-    this.val = val;
+  constructor(key?: string, val?: number) {
+    // note: nstructjs requires constructors take no required parameters
+    this.key = key ?? "";
+    this.val = val ?? 0;
   }
 
-  static STRUCT: string;
+  loadSTRUCT(reader: StructReader<this>): void {
+    reader(this);
+  }
 }
-
-ParamKey.STRUCT = `
-ParamKey {
-  key : string;
-  val : float;
-}
-`;
 nstructjs.register(ParamKey);
 let BOOL_FLAG = 1e17;
 

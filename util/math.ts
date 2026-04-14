@@ -6,8 +6,7 @@
  *
  * TODO: cleanup this file.
  */
-import { IBaseVector } from "../old_types/controller";
-import { StructReader } from "./nstructjs_es6";
+import { StructReader } from "./nstructjs";
 import nstructjs from "./struct";
 import * as util from "./util";
 import {
@@ -1275,7 +1274,7 @@ export class MinMax1 {
   }
 }
 
-export class MinMax<N extends 2 | 3 | 4> {
+export class MinMax<N extends 2 | 3 | 4 = 2> {
   totaxis: number;
   min: Vector4;
   max: Vector4;
@@ -1294,8 +1293,9 @@ export class MinMax<N extends 2 | 3 | 4> {
   `
   );
 
-  constructor(totaxis: N) {
-    this.totaxis = totaxis;
+  constructor(totaxis?: N) {
+    // note: nstructjs requires no required arguments in constructor
+    this.totaxis = totaxis as unknown as N;
 
     this.#_min = new Vector4();
     this.#_max = new Vector4();

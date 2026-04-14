@@ -77,7 +77,7 @@ import { DataPath } from "../controller/controller_base.js";
 import * as util from "../util/util.js";
 import { Context } from "../controller/context.js";
 import { ContextLike, DataAPI, DataStruct, ToolOpAny } from "../controller.js";
-import { StructReader } from "../util/nstructjs.js";
+import { StructableClass, StructReader } from "../util/nstructjs.js";
 
 // Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
 
@@ -661,7 +661,7 @@ export class ToolOp<
   }
 
   static _regWithNstructjs(cls: IToolOpConstructor, structName: string = cls.name): void {
-    if (nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
+    if (nstructjs.isRegistered(cls as unknown as StructableClass)) {
       return;
     }
 
@@ -673,14 +673,10 @@ export class ToolOp<
         this._regWithNstructjs(parent);
       }
 
-      cls.STRUCT =
-        nstructjs.inherit(
-          cls as unknown as import("../util/nstructjs_es6.js").StructableClass,
-          parent as unknown as import("../util/nstructjs_es6.js").StructableClass
-        ) + "}\n";
+      cls.STRUCT = nstructjs.inherit(cls as unknown as StructableClass, parent as unknown as StructableClass) + "}\n";
     }
 
-    nstructjs.register(cls as unknown as import("../util/nstructjs_es6.js").StructableClass);
+    nstructjs.register(cls as unknown as StructableClass);
   }
 
   static isRegistered(cls: IToolOpConstructor): boolean {
@@ -1090,7 +1086,7 @@ toolsys.ToolOp {
   outputs : array(toolsys.PropKey) | this._save_outputs();
 }
 `;
-nstructjs.register(ToolOp as unknown as import("../util/nstructjs_es6.js").StructableClass);
+nstructjs.register(ToolOp as unknown as StructableClass);
 
 class PropKey {
   static STRUCT: string;
@@ -1109,14 +1105,27 @@ toolsys.PropKey {
   val : abstract(ToolProperty);
 }
 `;
-nstructjs.register(PropKey as unknown as import("../util/nstructjs_es6.js").StructableClass);
+nstructjs.register(PropKey as unknown as StructableClass);
 
 /* ------------------------------------------------------------------ */
 /*  MacroLink                                                         */
 /* ------------------------------------------------------------------ */
 
 export class MacroLink {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+    toolsys.MacroLink {
+      source         : int;
+      dest           : int;
+      sourcePropKey  : string;
+      destPropKey    : string;
+      sourceProps    : string;
+      destProps      : string;
+    }
+    `
+  );
+
   source: number;
   dest: number;
   sourceProps: string;
@@ -1125,35 +1134,28 @@ export class MacroLink {
   destPropKey: string;
 
   constructor(
-    sourcetool_idx: number,
-    srckey: string,
+    sourcetool_idx?: number,
+    srckey?: string,
     srcprops: string = "outputs",
-    desttool_idx: number,
-    dstkey: string,
+    desttool_idx?: number,
+    dstkey?: string,
     dstprops: string = "inputs"
   ) {
-    this.source = sourcetool_idx;
-    this.dest = desttool_idx;
+    // note: nstructjs requires constructors take no required arguments
+    this.source = sourcetool_idx ?? -1;
+    this.dest = desttool_idx ?? -1;
 
     this.sourceProps = srcprops;
     this.destProps = dstprops;
 
-    this.sourcePropKey = srckey;
-    this.destPropKey = dstkey;
+    this.sourcePropKey = srckey ?? "";
+    this.destPropKey = dstkey ?? "";
+  }
+
+  loadSTRUCT(reader: StructReader<this>) {
+    reader(this);
   }
 }
-
-MacroLink.STRUCT = `
-toolsys.MacroLink {
-  source         : int;
-  dest           : int;
-  sourcePropKey  : string;
-  destPropKey    : string;
-  sourceProps    : string;
-  destProps      : string;
-}
-`;
-nstructjs.register(MacroLink);
 
 export const MacroClasses: Record<string, MacroClassType> = {};
 
@@ -1554,8 +1556,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
 ToolMacro.STRUCT =
   nstructjs.inherit(
-    ToolMacro as unknown as import("../util/nstructjs_es6.js").StructableClass,
-    ToolOp as unknown as import("../util/nstructjs_es6.js").StructableClass,
+    ToolMacro as unknown as StructableClass,
+    ToolOp as unknown as StructableClass,
     "toolsys.ToolMacro"
   ) +
   `
@@ -1563,7 +1565,7 @@ ToolMacro.STRUCT =
   connectLinks : array(toolsys.MacroLink);
 }
 `;
-nstructjs.register(ToolMacro as unknown as import("../util/nstructjs_es6.js").StructableClass);
+nstructjs.register(ToolMacro as unknown as StructableClass);
 
 /* ------------------------------------------------------------------ */
 /*  ToolStack                                                         */
@@ -1587,14 +1589,17 @@ export class ToolStack<
   _undo_branch: ToolOp[] | undefined;
   _stack?: this[0][];
 
-  constructor(ctx: ContextCls) {
+  constructor(ctx?: ContextCls) {
+    // note: nstructjs requires constructors take no required arguments
     super();
 
     this.memLimit = 512 * 1024 * 1024;
     this.enforceMemLimit = false;
 
+    // ctx will be properly added later
+    // TODO: remove ctx parameter from constructor
     this.cur = -1;
-    this.ctx = ctx;
+    this.ctx = ctx!;
 
     this.modalRunning = 0;
 
@@ -1974,7 +1979,7 @@ nstructjs.register(ToolStack);
 (window )._testToolStackIO = function (): ToolStack {
   let data: number[] = [];
   let cls = ((window as Window)._appstate ).toolstack!
-    .constructor as unknown as import("../util/nstructjs_es6.js").StructableClass;
+    .constructor as unknown as StructableClass;
 
   nstructjs.writeObject(
     data,
@@ -2110,7 +2115,7 @@ export function buildToolSysAPI(
   //register tools with nstructjs
   for (const cls of ToolClasses) {
     try {
-      if (!nstructjs.isRegistered(cls as unknown as import("../util/nstructjs_es6.js").StructableClass)) {
+      if (!nstructjs.isRegistered(cls as unknown as StructableClass)) {
         ToolOp._regWithNstructjs(cls);
       }
     } catch (error) {

@@ -1,6 +1,6 @@
 import { Curve1D } from "./curve1d.js";
 import { ToolProperty, PropTypes, PropFlags } from "../toolsys/toolprop.js";
-import * as nstructjs from "../util/nstructjs_es6.js";
+import * as nstructjs from "../util/nstructjs.js";
 
 import "./curve1d_all.js";
 

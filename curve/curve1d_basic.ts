@@ -2,7 +2,6 @@ import nstructjs from "../util/struct.js";
 import { CurveTypeData } from "./curve1d_base.js";
 import { Vector2 } from "../util/vectormath.js";
 import * as util from "../util/util.js";
-import type { StructReader } from "../util/nstructjs_es6.js";
 
 let _udigest = new util.HashDigest();
 

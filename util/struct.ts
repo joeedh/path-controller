@@ -1,2 +1,4 @@
-import * as nstructjs from "./nstructjs_es6.js";
-export default nstructjs;
+/** @deprecated file, use nstructjs instead */
+import * as nstructjs from "./nstructjs";
+export default nstructjs
+

@@ -1,5 +1,5 @@
 import nstructjs from "../util/struct.js";
-import { StructableClass, StructReader } from "../util/nstructjs_es6.js";
+import { StructableClass, StructReader } from "../util/nstructjs.js";
 import * as util from "../util/util.js";
 
 /** Definition returned by CurveTypeData.define() and subclass overrides */

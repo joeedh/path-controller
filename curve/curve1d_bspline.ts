@@ -21,7 +21,7 @@ import { ToolOp, PropertySlots } from "../toolsys/toolsys";
 import * as util from "../util/util";
 import { Vector2 } from "../util/vectormath";
 import { IndexRange } from "../util/indexRange";
-import type { StructReader } from "../util/nstructjs_es6";
+import type { StructReader } from "../util/nstructjs";
 import type { ContextLike } from "../controller/controller_abstract";
 
 export const SplineTemplates = {
