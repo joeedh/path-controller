@@ -1,3 +1,4 @@
+// UNUSED FILE
 /* ---- color / terminal utilities ---- */
 
 type StructJSONValue = any;
