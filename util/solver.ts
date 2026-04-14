@@ -1,5 +1,4 @@
-import { Quat } from "../old_types/controller";
-import { Vector2, Vector3, Vector4 } from "./vectormath";
+import { Vector2, Vector3, Vector4, Quat } from "./vectormath";
 
 type ConstraintFunc<PARAMS> = (params: PARAMS) => number;
 type ConstraintDvFunc<PARAMS> = (params: PARAMS, glst: Float64Array[]) => void;
