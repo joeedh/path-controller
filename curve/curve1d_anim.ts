@@ -40,7 +40,6 @@ export class ParamKey {
     reader(this);
   }
 }
-nstructjs.register(ParamKey);
 let BOOL_FLAG = 1e17;
 
 let _udigest = new util.HashDigest();

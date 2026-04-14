@@ -20,7 +20,6 @@ class ContextLocker<OVERLAYS extends {}> {
     let keys = [] as (string | symbol)[];
     let props = {} as any;
 
-    console.log(ctx);
     function getAllKeys(obj: any) {
       const keys = new Set<string>();
       while (obj && obj !== Object) {

@@ -2146,7 +2146,6 @@ export function closest_point_on_line(
   l2.load(p).sub(v1);
   let t = l2.dot(l1);
   if (clip) {
-    //t = t*(t<0.0) + t*(t>1.0) + (t>1.0);
     t = t < 0.0 ? 0.0 : t;
     t = t > len ? len : t;
   }
