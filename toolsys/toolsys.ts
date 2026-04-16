@@ -154,7 +154,7 @@ type MacroClassType = (new () => ToolOp) & {
 /* ------------------------------------------------------------------ */
 
 export type PropertySlots = { [k: string]: ToolProperty<unknown> };
-export type SlotType<slot extends ToolProperty<unknown>> = slot extends ToolProperty<infer T> ? T : unknown;
+export type SlotType<slot extends ToolProperty<unknown>> = ReturnType<slot['getValue']>
 
 /* ------------------------------------------------------------------ */
 /*  Module-level state                                                */
