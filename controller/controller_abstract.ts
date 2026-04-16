@@ -93,7 +93,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
   execTool<T extends ToolOpAny | unknown = unknown>(
     ctx: CTX,
     path: string | (T extends ToolOpAny ? T : ToolOpAny),
-    inputs?: T extends ToolOp ? ReturnType<T["getInputs"]> : Record<string, any>,
+    inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
     unused?: unknown,
     event?: PointerEvent | undefined
   ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
@@ -110,6 +110,17 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
         print_stack(error as Error);
         reject(error);
         return;
+      }
+
+      if (typeof path !== "string") {
+        // assign inputs since we didn't go through createTool
+        for (const k in inputs) {
+          if (!(k in tool.inputs)) {
+            console.warn('Unknown tool property "' + k + '"', "in tool", tool);
+            continue;
+          }
+          tool.inputs[k].setValue(inputs[k]);
+        }
       }
 
       //give client a chance to change tool instance directly
