@@ -403,9 +403,9 @@ export class GuassianCurve extends CurveTypeData<
       canvas    : canvas!,
       g         : canvas!.g,
       draw_trans: drawTransform!,
-      hslider   : container.slider(undefined, 'Height', this.height, -10, 10, 0.0001),
-      oslider   : container.slider(undefined, 'Offset', this.offset, -10, 10, 0.0001),
-      dslider   : container.slider(undefined, 'STD Deviation', this.deviation, -10, 10, 0.0001),
+      hslider   : container.slider(undefined, 'Height', this.height, -10, 10, 0.05),
+      oslider   : container.slider(undefined, 'Offset', this.offset, -10, 10, 0.05),
+      dslider   : container.slider(undefined, 'STD Deviation', this.deviation, -10, 10, 0.05),
     }
 
     this.uidata.hslider.onchange = () => {

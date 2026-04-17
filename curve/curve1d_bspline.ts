@@ -206,7 +206,7 @@ interface WrappedMouseEvent {
 }
 
 /** Points array with highlight and active properties */
-interface CurvePointList extends Array<Curve1DPoint> {
+class CurvePointList extends Array<Curve1DPoint> {
   highlight: Curve1DPoint | undefined
   active: Curve1DPoint | undefined
 }
@@ -877,7 +877,7 @@ export class BSplineCurve extends CurveTypeData<'BSplineCurve', BSplineUIData> {
     this._last_cache_key = 0
 
     this.fastmode = false
-    this.points = [] as unknown as CurvePointList
+    this.points = new CurvePointList()
     this.length = 0
     this.interpolating = false
 
@@ -1045,8 +1045,6 @@ export class BSplineCurve extends CurveTypeData<'BSplineCurve', BSplineUIData> {
     if (points.length < 2) {
       return
     }
-    const a = points[0].co[0]
-    const b = points[points.length - 1].co[0]
 
     const degExtra = this.deg
     this._degOffset = -this.deg
