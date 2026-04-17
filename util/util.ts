@@ -9,7 +9,7 @@ export function insideNodeJS() {
 
 export function insideJest() {
   const globalAny = globalThis as any;
-  return globalAny.INSIDE_JEST_TEST === true
+  return globalAny.INSIDE_JEST_TEST === true;
 }
 const f64tmp = new Float64Array(1);
 const u16tmp = new Uint16Array(f64tmp.buffer);

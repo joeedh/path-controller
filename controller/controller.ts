@@ -710,11 +710,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
   }
 
-  /** 
-   * 
+  /**
+   *
    * Mass set paths take the form list[{$.prop}]`, where the filter is inside of the list.
    * Note: `$.prop` cannot be an expression unless you enable eval with `struct.list().evalMassSetFilter()`.
-   * An example of a more complicated expression might be: 
+   * An example of a more complicated expression might be:
    * `canvas.paths[{$.id % 2 === 0}].material.color`
    */
   resolveMassSetPaths(ctx: CTX, massSetPath: string): string[] {
