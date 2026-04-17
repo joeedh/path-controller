@@ -566,7 +566,10 @@ export class PropertySocket<T = any> extends EventSocket {
       }
     }
 
-    if (this.#invert && (typeof v === "number" || typeof v === "boolean" || typeof v === "undefined")) {
+    if (
+      this.#invert &&
+      (typeof v === "number" || typeof v === "boolean" || typeof v === "undefined")
+    ) {
       v = !v as unknown as T;
     } else if (this.#invert && typeof v === "string") {
       let s = v.toLowerCase().trim();

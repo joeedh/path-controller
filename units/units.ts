@@ -455,10 +455,21 @@ function isnumber(s: string): boolean {
     return s.search(re) === 0;
   }
 
-  return test(intre) || test(numre1) || test(numre2) || test(hexre1) || test(hexre2) || test(binre) || test(expre);
+  return (
+    test(intre) ||
+    test(numre1) ||
+    test(numre2) ||
+    test(hexre1) ||
+    test(hexre2) ||
+    test(binre) ||
+    test(expre)
+  );
 }
 
-export function parseValueIntern(string: string, baseUnit?: string | UnitClass | undefined): number {
+export function parseValueIntern(
+  string: string,
+  baseUnit?: string | UnitClass | undefined
+): number {
   string = string.trim();
   if (string[0] === ".") {
     string = "0" + string;
@@ -507,7 +518,11 @@ export function parseValueIntern(string: string, baseUnit?: string | UnitClass |
 }
 
 /* if displayUnit is undefined, final value will be converted from displayUnit to baseUnit */
-export function parseValue(string: string, baseUnit?: string | undefined, displayUnit?: string | undefined): number {
+export function parseValue(
+  string: string,
+  baseUnit?: string | undefined,
+  displayUnit?: string | undefined
+): number {
   const displayUnitCls = Unit.getUnit(displayUnit);
   const baseUnitCls = Unit.getUnit(baseUnit);
 

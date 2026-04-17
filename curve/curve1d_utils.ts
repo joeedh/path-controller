@@ -18,5 +18,7 @@ export function makeGenEnum(): EnumProperty {
   }
 
   //return enumdef;
-  return new EnumProperty(undefined, enumdef as unknown as Record<string, number>).addUINames(uinames).addIcons(icons);
+  return new EnumProperty(undefined, enumdef as unknown as Record<string, number>)
+    .addUINames(uinames)
+    .addIcons(icons);
 }

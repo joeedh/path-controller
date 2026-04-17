@@ -50,11 +50,15 @@ export const IntegerConstraints: Set<IntegerConstraint> = new Set<IntegerConstra
 );
 
 export const FloatConstrinats: Set<FloatConstraint> = new Set<FloatConstraint>(
-  (["decimalPlaces"] as FloatConstraint[]).concat(util.list(NumberConstraintsBase) as FloatConstraint[])
+  (["decimalPlaces"] as FloatConstraint[]).concat(
+    util.list(NumberConstraintsBase) as FloatConstraint[]
+  )
 );
 
 export const NumberConstraints: Set<NumberConstraint> = new Set<NumberConstraint>(
-  (util.list(IntegerConstraints) as NumberConstraint[]).concat(util.list(FloatConstrinats) as NumberConstraint[])
+  (util.list(IntegerConstraints) as NumberConstraint[]).concat(
+    util.list(FloatConstrinats) as NumberConstraint[]
+  )
 );
 
 export const PropSubTypes: Record<string, number> = {
@@ -823,7 +827,14 @@ export class StringProperty extends StringPropertyBase<PropTypes["STRING"]> {
   static PROP_TYPE_ID = PropTypes.STRING;
   static STRUCT = nstructjs.inlineRegister(this, `StringProperty {}`);
 
-  constructor(value?: string, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
+  constructor(
+    value?: string,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
     super(PropTypes.STRING, value, apiname, uiname, description, flag, icon);
   }
 }
@@ -906,7 +917,10 @@ NumProperty.STRUCT =
 }
 `;
 
-export class _NumberPropertyBase<T = number, TYPE extends number = number> extends ToolProperty<T, TYPE> {
+export class _NumberPropertyBase<T = number, TYPE extends number = number> extends ToolProperty<
+  T,
+  TYPE
+> {
   static STRUCT: string;
 
   /** Display simple sliders with exponent divisions, don't
@@ -995,7 +1009,9 @@ export class _NumberPropertyBase<T = number, TYPE extends number = number> exten
     nb.expRate = this.expRate;
     nb.step = this.step;
     nb.range = this.range ? ([this.range[0], this.range[1]] as [number, number]) : undefined!;
-    nb.uiRange = this.uiRange ? ([this.uiRange[0], this.uiRange[1]] as [number, number]) : undefined;
+    nb.uiRange = this.uiRange
+      ? ([this.uiRange[0], this.uiRange[1]] as [number, number])
+      : undefined;
     nb.slideSpeed = this.slideSpeed;
     nb.sliderDisplayExp = this.sliderDisplayExp;
 
@@ -1071,7 +1087,14 @@ export class IntProperty extends _NumberPropertyBase<number, PropTypes["INT"]> {
 
   declare radix: number;
 
-  constructor(value?: number, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
+  constructor(
+    value?: number,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
     super(PropTypes.INT, value, apiname, uiname, description, flag, icon);
 
     //remember to update NumberConstraintsBase et al when adding new number
@@ -1131,7 +1154,14 @@ export class ReportProperty extends StringPropertyBase<PropTypes["REPORT"]> {
   static PROP_TYPE_ID = PropTypes.REPORT;
   static STRUCT = nstructjs.inlineRegister(this, "ReportProperty {}");
 
-  constructor(value?: string, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
+  constructor(
+    value?: string,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
     super(PropTypes.REPORT, value, apiname, uiname, description, flag, icon);
     this.type = PropTypes.REPORT;
   }
@@ -1195,7 +1225,10 @@ BoolProperty.STRUCT =
 `;
 nstructjs.register(BoolProperty);
 
-class FloatPropertyBase<T = number, TYPE extends number = number> extends _NumberPropertyBase<T, TYPE> {
+class FloatPropertyBase<T = number, TYPE extends number = number> extends _NumberPropertyBase<
+  T,
+  TYPE
+> {
   static STRUCT = nstructjs.inlineRegister(
     this,
     `
@@ -1348,7 +1381,10 @@ EnumKeyPair {
 `;
 nstructjs.register(EnumKeyPair);
 
-export class EnumPropertyBase<TYPE extends number, VALUE extends string | number> extends ToolProperty<VALUE, TYPE> {
+export class EnumPropertyBase<
+  TYPE extends number,
+  VALUE extends string | number,
+> extends ToolProperty<VALUE, TYPE> {
   static STRUCT = nstructjs.inlineRegister(
     this,
     `
@@ -1464,7 +1500,9 @@ export class EnumPropertyBase<TYPE extends number, VALUE extends string | number
     return digest.get();
   }
 
-  updateDefinition(enumdef_or_prop: EnumPropertyBase<TYPE, string | number> | Record<string, number | string>): this {
+  updateDefinition(
+    enumdef_or_prop: EnumPropertyBase<TYPE, string | number> | Record<string, number | string>
+  ): this {
     const descriptions = this.descriptions;
     const ui_value_names = this.ui_value_names;
 
@@ -1718,7 +1756,13 @@ export class VecPropertyBase<
   descriptions?: { [k: number]: string };
   icons?: { [k: number]: number };
 
-  constructor(type?: TYPE, data?: unknown, apiname?: string, uiname?: string, description?: string) {
+  constructor(
+    type?: TYPE,
+    data?: unknown,
+    apiname?: string,
+    uiname?: string,
+    description?: string
+  ) {
     super(type, undefined, apiname, uiname, description);
 
     this.hasUniformSlider = false;

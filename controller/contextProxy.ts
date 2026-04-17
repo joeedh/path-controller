@@ -4,7 +4,9 @@
 
 import { ContextLike } from "./controller_abstract";
 
-type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
+type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void
+  ? I
+  : never;
 
 interface ILockedContext {
   toLocked(): this;
@@ -30,7 +32,9 @@ class ContextLocker<OVERLAYS extends {}> {
     let props = {} as any;
 
     for (const overlay of this.overlays) {
-      const keys2 = new Set(Reflect.ownKeys(overlay).concat(Reflect.ownKeys((overlay as any).prototype)));
+      const keys2 = new Set(
+        Reflect.ownKeys(overlay).concat(Reflect.ownKeys((overlay as any).prototype))
+      );
       // use forEach to capture key at each iteration
       keys2.forEach((key) => {
         if (typeof key === "string" && (key.endsWith("_save") || key.endsWith("_load"))) {

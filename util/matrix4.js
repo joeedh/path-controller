@@ -464,7 +464,10 @@ export var Matrix4 = /*#__PURE__*/ (function () {
       {
         key  : "translate",
         value: function translate(x, y, z) {
-          if ((typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" && "length" in x) {
+          if (
+            (typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" &&
+            "length" in x
+          ) {
             var t = x;
             x = t[0];
             y = t[1];
@@ -484,7 +487,10 @@ export var Matrix4 = /*#__PURE__*/ (function () {
       {
         key  : "preTranslate",
         value: function preTranslate(x, y, z) {
-          if ((typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" && "length" in x) {
+          if (
+            (typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" &&
+            "length" in x
+          ) {
             var t = x;
             x = t[0];
             y = t[1];
@@ -505,7 +511,10 @@ export var Matrix4 = /*#__PURE__*/ (function () {
         key  : "scale",
         value: function scale(x, y, z) {
           var w = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : 1.0;
-          if ((typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" && "length" in x) {
+          if (
+            (typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" &&
+            "length" in x
+          ) {
             var t = x;
             x = t[0];
             y = t[1];
@@ -625,7 +634,8 @@ export var Matrix4 = /*#__PURE__*/ (function () {
 
   */ key  : "euler_rotate_order",
         value: function euler_rotate_order(x, y, z) {
-          var order = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : EulerOrders.XYZ;
+          var order =
+            arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : EulerOrders.XYZ;
           if (y === undefined) {
             y = 0.0;
           }
@@ -761,7 +771,10 @@ export var Matrix4 = /*#__PURE__*/ (function () {
       {
         key  : "rotate",
         value: function rotate(angle, x, y, z) {
-          if ((typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" && "length" in x) {
+          if (
+            (typeof x === "undefined" ? "undefined" : _type_of(x)) === "object" &&
+            "length" in x
+          ) {
             var t = x;
             x = t[0];
             y = t[1];
@@ -1172,10 +1185,30 @@ export var Matrix4 = /*#__PURE__*/ (function () {
         key  : "getAsVecs",
         value: function getAsVecs() {
           return [
-            new Vector4Cls().loadXYZW(this.$matrix.m11, this.$matrix.m12, this.$matrix.m13, this.$matrix.m14),
-            new Vector4Cls().loadXYZW(this.$matrix.m21, this.$matrix.m22, this.$matrix.m23, this.$matrix.m24),
-            new Vector4Cls().loadXYZW(this.$matrix.m31, this.$matrix.m32, this.$matrix.m33, this.$matrix.m34),
-            new Vector4Cls().loadXYZW(this.$matrix.m41, this.$matrix.m42, this.$matrix.m43, this.$matrix.m44),
+            new Vector4Cls().loadXYZW(
+              this.$matrix.m11,
+              this.$matrix.m12,
+              this.$matrix.m13,
+              this.$matrix.m14
+            ),
+            new Vector4Cls().loadXYZW(
+              this.$matrix.m21,
+              this.$matrix.m22,
+              this.$matrix.m23,
+              this.$matrix.m24
+            ),
+            new Vector4Cls().loadXYZW(
+              this.$matrix.m31,
+              this.$matrix.m32,
+              this.$matrix.m33,
+              this.$matrix.m34
+            ),
+            new Vector4Cls().loadXYZW(
+              this.$matrix.m41,
+              this.$matrix.m42,
+              this.$matrix.m43,
+              this.$matrix.m44
+            ),
           ];
         },
       },
@@ -1239,7 +1272,8 @@ export var Matrix4 = /*#__PURE__*/ (function () {
       {
         key  : "decompose",
         value: function decompose(_translate, _rotate, _scale, _skew, _perspective) {
-          var order = arguments.length > 5 && arguments[5] !== void 0 ? arguments[5] : EulerOrders.XYZ;
+          var order =
+            arguments.length > 5 && arguments[5] !== void 0 ? arguments[5] : EulerOrders.XYZ;
           if (this.$matrix.m44 === 0) return false;
           var mat = temp_mats.next().load(this);
           var m = mat.$matrix;

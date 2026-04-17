@@ -170,7 +170,9 @@ export class EventHandler {
   popModal(): void {
     if (this._modalstate !== undefined) {
       const modalstate = this._modalstate;
-      simple_events.popModalLight(modalstate as unknown as Parameters<typeof simple_events.popModalLight>[0]);
+      simple_events.popModalLight(
+        modalstate as unknown as Parameters<typeof simple_events.popModalLight>[0]
+      );
       this._modalstate = undefined;
     }
   }

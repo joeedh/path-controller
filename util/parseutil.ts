@@ -35,7 +35,8 @@ export class token {
   }
 
   toString(): string {
-    if (this.value !== undefined) return "token(type=" + this.type + ", value='" + this.value + "')";
+    if (this.value !== undefined)
+      return "token(type=" + this.type + ", value='" + this.value + "')";
     else return "token(type=" + this.type + ")";
   }
 }
@@ -605,12 +606,13 @@ function test_parser(): void {
     set: string | undefined;
     get: string | undefined;
   } {
-    const field: { name: string; type: unknown; set: string | undefined; get: string | undefined } = {
-      name: "",
-      type: undefined,
-      set : undefined,
-      get : undefined,
-    };
+    const field: { name: string; type: unknown; set: string | undefined; get: string | undefined } =
+      {
+        name: "",
+        type: undefined,
+        set : undefined,
+        get : undefined,
+      };
 
     console.log("-----", p.peek()!.type);
 

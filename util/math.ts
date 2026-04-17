@@ -31,7 +31,14 @@ type Vec4Arr = Vec4Like | number[];
 
 const dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 const quad_co_rets2 = util.cachering.fromConstructor(Vector2, 512);
-export function quad_bilinear(v1: number, v2: number, v3: number, v4: number, u: number, v: number): number {
+export function quad_bilinear(
+  v1: number,
+  v2: number,
+  v3: number,
+  v4: number,
+  u: number,
+  v: number
+): number {
   return -((v1 - v2) * u - v1 - (u * v1 - u * v2 + u * v3 - u * v4 - v1 + v4) * v);
 }
 /*
@@ -73,7 +80,11 @@ export function quad_uv_2d(p: Vec2Like, v1: Vec2Like, v2: Vec2Like, v3: Vec2Like
         (v4x * y - v4y * x) * (v4y + y) -
         ((v4x - x) * v2y - v3x * y) * (v4y - y)) *
       v2x -
-    2 * ((v4x * y - v4y * x) * (v4x + x) - (v4x - x) * v3y * x + ((2 * v4y - y) * x - v4x * y) * v3x) * v2y +
+    2 *
+      ((v4x * y - v4y * x) * (v4x + x) -
+        (v4x - x) * v3y * x +
+        ((2 * v4y - y) * x - v4x * y) * v3x) *
+      v2y +
     (v4x * y - v4y * x + v3y * x - v3x * y) ** 2 +
     (v4x - x) ** 2 * v2y ** 2 +
     (v4y - y) ** 2 * v2x ** 2;
@@ -160,7 +171,11 @@ export class ClosestCurveRets {
     this.t = 0;
   }
 }
-/** @deprecated */ export function closestPoint(p: Vec3Like, curve: AbstractCurve, mode: number): void {
+/** @deprecated */ export function closestPoint(
+  p: Vec3Like,
+  curve: AbstractCurve,
+  mode: number
+): void {
   const steps = 5;
   let s = 0;
   const ds = 1.0 / steps;
@@ -318,7 +333,12 @@ function inrect_3d(p: Vec3Like, min: Vec3Like, max: Vec3Like): boolean {
   ok = ok && p[2] >= min[2] && p[2] <= max[2];
   return ok;
 }
-export function aabb_isect_line_3d(v1: Vec3Like, v2: Vec3Like, min: Vec3Like, max: Vec3Like): boolean {
+export function aabb_isect_line_3d(
+  v1: Vec3Like,
+  v2: Vec3Like,
+  min: Vec3Like,
+  max: Vec3Like
+): boolean {
   let inside = inrect_3d(v1, min, max);
   inside = inside || inrect_3d(v2, min, max);
   if (inside) {
@@ -390,7 +410,11 @@ export function barycentric_v2(
       (v2arr[axis1] - v3arr[axis1]) * parr[axis2]) /
     div;
   const v =
-    (-(v1arr[axis1] * v3arr[axis2] - v1arr[axis2] * v3arr[axis1] + (v1arr[axis2] - v3arr[axis2]) * parr[axis1]) +
+    (-(
+      v1arr[axis1] * v3arr[axis2] -
+      v1arr[axis2] * v3arr[axis1] +
+      (v1arr[axis2] - v3arr[axis2]) * parr[axis1]
+    ) +
       (v1arr[axis1] - v3arr[axis1]) * parr[axis2]) /
     div;
   if (!out) {
@@ -611,7 +635,13 @@ export function closest_point_on_tri(
   ret.co.add(op);
   return ret;
 }
-export function dist_to_tri_v3_old(co: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, no?: Vec3Like): number {
+export function dist_to_tri_v3_old(
+  co: Vec3Like,
+  v1: Vec3Like,
+  v2: Vec3Like,
+  v3: Vec3Like,
+  no?: Vec3Like
+): number {
   let lno;
   if (!no) {
     lno = dtvtmps.next().load(normal_tri(v1, v2, v3));
@@ -693,7 +723,13 @@ export function dist_to_tri_v3_old(co: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3:
   }
   return dis;
 }
-export function dist_to_tri_v3(p: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, n?: Vec3Like): number {
+export function dist_to_tri_v3(
+  p: Vec3Like,
+  v1: Vec3Like,
+  v2: Vec3Like,
+  v3: Vec3Like,
+  n?: Vec3Like
+): number {
   return dist_to_tri_v3_old(p, v1, v2, v3, n);
   //return Math.sqrt(Math.abs(dist_to_tri_v3_sqr(p, v1, v2, v3, n)));
 }
@@ -736,7 +772,13 @@ d3;
 off fort;
 
 */ const _dt3s_n = new Vector3();
-export function dist_to_tri_v3_sqr(p: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, n?: Vec3Like): number {
+export function dist_to_tri_v3_sqr(
+  p: Vec3Like,
+  v1: Vec3Like,
+  v2: Vec3Like,
+  v3: Vec3Like,
+  n?: Vec3Like
+): number {
   if (n === undefined) {
     n = _dt3s_n;
     n.load(normal_tri(v1, v2, v3));
@@ -769,7 +811,10 @@ export function dist_to_tri_v3_sqr(p: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3: 
     axis3 = 2;
   }
   //n.load(normal_tri(v1, v2, v3));
-  let planedis = (parr[0] - v1arr[0]) * narr[0] + (parr[1] - v1arr[1]) * narr[1] + (parr[2] - v1arr[2]) * narr[2];
+  let planedis =
+    (parr[0] - v1arr[0]) * narr[0] +
+    (parr[1] - v1arr[1]) * narr[1] +
+    (parr[2] - v1arr[2]) * narr[2];
   planedis = planedis < 0.0 ? -planedis : planedis;
   const ax = v1arr[axis1];
   const ay = v1arr[axis2];
@@ -931,7 +976,8 @@ export function dist_to_tri_v3_sqr(p: Vec3Like, v1: Vec3Like, v2: Vec3Like, v3: 
       console.log(lx * nx + ly * ny + lz * nz);
     }
   }
-  let mul = ((lx ** 2 + ly ** 2) * nz ** 2 + (lx * nx + ly * ny) ** 2) / ((lx ** 2 + ly ** 2) * nz ** 2);
+  let mul =
+    ((lx ** 2 + ly ** 2) * nz ** 2 + (lx * nx + ly * ny) ** 2) / ((lx ** 2 + ly ** 2) * nz ** 2);
   //let mul = ((lx**2+ly**2)*nz**2+(lx*nx+ly*ny)**2)/((ly**2+lz**2+lx**2)*nz**2);
   //mul = 1.0 / nz;
   //mul *= mul;
@@ -977,7 +1023,12 @@ export function tri_area(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like): number {
   s = Math.max(s, 0);
   /* Numerical error can dip into negative numbers. */ return Math.sqrt(s);
 }
-export function aabb_overlap_area(pos1: Vec2Like, size1: Vec2Like, pos2: Vec2Like, size2: Vec2Like): number {
+export function aabb_overlap_area(
+  pos1: Vec2Like,
+  size1: Vec2Like,
+  pos2: Vec2Like,
+  size2: Vec2Like
+): number {
   let r1 = 0.0;
   let r2 = 0.0;
   for (let _i = 0; _i < 2; _i++) {
@@ -1004,7 +1055,12 @@ export function aabb_overlap_area(pos1: Vec2Like, size1: Vec2Like, pos2: Vec2Lik
  * @param {*} size1
  * @param {*} pos2
  * @param {*} size2
- */ export function aabb_isect_2d(pos1: Vec2Like, size1: Vec2Like, pos2: Vec2Like, size2: Vec2Like): boolean {
+ */ export function aabb_isect_2d(
+  pos1: Vec2Like,
+  size1: Vec2Like,
+  pos2: Vec2Like,
+  size2: Vec2Like
+): boolean {
   let ret = 0;
   for (let _i = 0; _i < 2; _i++) {
     const i = _i as Number2;
@@ -1016,7 +1072,12 @@ export function aabb_overlap_area(pos1: Vec2Like, size1: Vec2Like, pos2: Vec2Lik
   }
   return ret === 2;
 }
-export function aabb_isect_3d(pos1: Vec3Like, size1: Vec3Like, pos2: Vec3Like, size2: Vec3Like): boolean {
+export function aabb_isect_3d(
+  pos1: Vec3Like,
+  size1: Vec3Like,
+  pos2: Vec3Like,
+  size2: Vec3Like
+): boolean {
   let ret = 0;
   for (let _i = 0; _i < 3; _i++) {
     const i = _i as Number3;
@@ -1084,7 +1145,12 @@ const aabb_intersect_rets = new util.cachering(() => {
   return ret;
 }
 
-export function aabb_intersect_3d(min1: Vec3Like, max1: Vec3Like, min2: Vec3Like, max2: Vec3Like): boolean {
+export function aabb_intersect_3d(
+  min1: Vec3Like,
+  max1: Vec3Like,
+  min2: Vec3Like,
+  max2: Vec3Like
+): boolean {
   let tot = 0;
   for (let _i = 0; _i < 2; _i++) {
     let i = _i as Number2;
@@ -1104,7 +1170,10 @@ export function aabb_intersect_3d(min1: Vec3Like, max1: Vec3Like, min2: Vec3Like
  * @param a List of two vectors
  * @param b List of two vectors
  * @returns a
- */ export function aabb_union(a: [Vec2Like, Vec2Like], b: [Vec2Like, Vec2Like]): [Vec2Like, Vec2Like] {
+ */ export function aabb_union(
+  a: [Vec2Like, Vec2Like],
+  b: [Vec2Like, Vec2Like]
+): [Vec2Like, Vec2Like] {
   for (let i = 0; i < 2; i++) {
     for (let _j = 0; _j < a[i].length; _j++) {
       const j = _j as Number2;
@@ -1187,7 +1256,10 @@ if (FLOAT_MIN != FLOAT_MIN || FLOAT_MAX != FLOAT_MAX) {
 }
 */ const _static_grp_points4 = new Array<[number, number, number?]>(4);
 const _static_grp_points8 = new Array<[number, number, number?]>(8);
-export function get_rect_points(p: Vec2Like | Vec3Like, size: Vec2Like | Vec3Like): (Vec2Like | Vec3Like)[] {
+export function get_rect_points(
+  p: Vec2Like | Vec3Like,
+  size: Vec2Like | Vec3Like
+): (Vec2Like | Vec3Like)[] {
   let cs;
   if (p.length === 2) {
     cs = _static_grp_points4;
@@ -1250,7 +1322,13 @@ export function get_rect_lines(
   }
 }
 const $vs_simple_tri_aabb_isect = new Array<Vec3Like>(3);
-export function simple_tri_aabb_isect(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, min: Vec3Like, max: Vec3Like): boolean {
+export function simple_tri_aabb_isect(
+  v1: Vec3Like,
+  v2: Vec3Like,
+  v3: Vec3Like,
+  min: Vec3Like,
+  max: Vec3Like
+): boolean {
   $vs_simple_tri_aabb_isect[0] = v1;
   $vs_simple_tri_aabb_isect[1] = v2;
   $vs_simple_tri_aabb_isect[2] = v3;
@@ -1258,7 +1336,8 @@ export function simple_tri_aabb_isect(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, 
     let i = _i as Number3;
     let isect = true;
     for (let j = 0; j < 3; j++) {
-      if ($vs_simple_tri_aabb_isect[j][i] < min[i] || $vs_simple_tri_aabb_isect[j][i] >= max[i]) isect = false;
+      if ($vs_simple_tri_aabb_isect[j][i] < min[i] || $vs_simple_tri_aabb_isect[j][i] >= max[i])
+        isect = false;
     }
     if (isect) return true;
   }
@@ -1454,7 +1533,12 @@ export function inrect_2d(p: Vec2Like, pos: Vec2Like, size: Vec2Like): boolean {
   return p[0] >= pos[0] && p[0] <= pos[0] + size[0] && p[1] >= pos[1] && p[1] <= pos[1] + size[1];
 }
 const $ps_aabb_isect_line_2d = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
-export function aabb_isect_line_2d(v1: Vec2Like, v2: Vec2Like, min: Vec2Like, max: Vec2Like): boolean {
+export function aabb_isect_line_2d(
+  v1: Vec2Like,
+  v2: Vec2Like,
+  min: Vec2Like,
+  max: Vec2Like
+): boolean {
   if (point_in_aabb_2d(v1, min, max) || point_in_aabb_2d(v2, min, max)) {
     return true;
   }
@@ -1528,7 +1612,13 @@ export function colinear(
   t1.cross(t2);
   return t1.dot(t1) <= limit;
 }
-export function colinear2d(a: Vec2Like, b: Vec2Like, c: Vec2Like, limit = 0.00001, precise = false): boolean {
+export function colinear2d(
+  a: Vec2Like,
+  b: Vec2Like,
+  c: Vec2Like,
+  limit = 0.00001,
+  precise = false
+): boolean {
   const dx1 = a[0] - b[0];
   const dy1 = a[1] - b[1];
   const dx2 = c[0] - b[0];
@@ -1691,7 +1781,12 @@ const _asi2d_v3 = new Vector2();
 const _asi2d_v4 = new Vector2();
 const _asi2d_v5 = new Vector2();
 const _asi2d_v6 = new Vector2();
-export function aabb_sphere_isect_2d(p: Vec2Like, r: number, min: Vec2Like, max: Vec2Like): boolean {
+export function aabb_sphere_isect_2d(
+  p: Vec2Like,
+  r: number,
+  min: Vec2Like,
+  max: Vec2Like
+): boolean {
   const v1 = _asi2d_v1;
   const v2 = _asi2d_v2;
   const v3 = _asi2d_v3;
@@ -1711,7 +1806,10 @@ export function aabb_sphere_isect_2d(p: Vec2Like, r: number, min: Vec2Like, max:
   v1.sub(mvec);
   v2.add(mvec);
   v3.load(lp);
-  let ret = point_in_aabb_2d(v1, lmin, lmax) || point_in_aabb_2d(v2, lmin, lmax) || point_in_aabb_2d(v3, lmin, lmax);
+  let ret =
+    point_in_aabb_2d(v1, lmin, lmax) ||
+    point_in_aabb_2d(v2, lmin, lmax) ||
+    point_in_aabb_2d(v3, lmin, lmax);
   if (ret) return ret;
   /*
   v1.load(min).add(max).mulScalar(0.5);
@@ -1749,7 +1847,14 @@ export function aabb_sphere_isect_2d(p: Vec2Like, r: number, min: Vec2Like, max:
   return ret;
 }
 export function point_in_aabb(p: Vec3Like, min: Vec3Like, max: Vec3Like): boolean {
-  return p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1] && p[2] >= min[2] && p[2] <= max[2];
+  return (
+    p[0] >= min[0] &&
+    p[0] <= max[0] &&
+    p[1] >= min[1] &&
+    p[1] <= max[1] &&
+    p[2] >= min[2] &&
+    p[2] <= max[2]
+  );
 }
 const asi_rect = new Array<Vector3>(8);
 for (let i = 0; i < 8; i++) {
@@ -1825,7 +1930,11 @@ export function aabb_sphere_isect(
   }
   return false;
 }
-export function aabb_sphere_dist(p: Vec2Like | Vec3Like, min: Vec2Like | Vec3Like, max: Vec2Like | Vec3Like): number {
+export function aabb_sphere_dist(
+  p: Vec2Like | Vec3Like,
+  min: Vec2Like | Vec3Like,
+  max: Vec2Like | Vec3Like
+): number {
   let lp;
   let lmin;
   let lmax;
@@ -1880,8 +1989,14 @@ export function aabb_sphere_dist(p: Vec2Like | Vec3Like, min: Vec2Like | Vec3Lik
     const i2 = (i + 1) % 3;
     const i3 = (i + 2) % 3;
     p2arr[i] = p2arr[i as Number3] < 0.0 ? lminarr[i as Number3] : lmaxarr[i as Number3];
-    p2arr[i2] = Math.min(Math.max(p2arr[i2 as Number3], lminarr[i2 as Number3]), lmaxarr[i2 as Number3]);
-    p2arr[i3] = Math.min(Math.max(p2arr[i3 as Number3], lminarr[i3 as Number3]), lmaxarr[i3 as Number3]);
+    p2arr[i2] = Math.min(
+      Math.max(p2arr[i2 as Number3], lminarr[i2 as Number3]),
+      lmaxarr[i2 as Number3]
+    );
+    p2arr[i3] = Math.min(
+      Math.max(p2arr[i3 as Number3], lminarr[i3 as Number3]),
+      lmaxarr[i3 as Number3]
+    );
     const dis = p2.vectorDistanceSqr(lp);
     if (mindis === undefined || dis < mindis) {
       mindis = dis;
@@ -1984,13 +2099,21 @@ export function line_isect<CALCT extends true | false | undefined>(
 ): CALCT extends true ? [Vector3, number, number] : [Vector3, number] {
   const div = (v2[0] - v1[0]) * (v4[1] - v3[1]) - (v2[1] - v1[1]) * (v4[0] - v3[0]);
   if (div === 0.0)
-    return [new Vector3(), COLINEAR, 0.0] as CALCT extends true ? [Vector3, number, number] : [Vector3, number];
+    return [new Vector3(), COLINEAR, 0.0] as CALCT extends true
+      ? [Vector3, number, number]
+      : [Vector3, number];
   const vi = _li_vi;
   vi[0] = 0;
   vi[1] = 0;
   vi[2] = 0;
-  vi[0] = ((v3[0] - v4[0]) * (v1[0] * v2[1] - v1[1] * v2[0]) - (v1[0] - v2[0]) * (v3[0] * v4[1] - v3[1] * v4[0])) / div;
-  vi[1] = ((v3[1] - v4[1]) * (v1[0] * v2[1] - v1[1] * v2[0]) - (v1[1] - v2[1]) * (v3[0] * v4[1] - v3[1] * v4[0])) / div;
+  vi[0] =
+    ((v3[0] - v4[0]) * (v1[0] * v2[1] - v1[1] * v2[0]) -
+      (v1[0] - v2[0]) * (v3[0] * v4[1] - v3[1] * v4[0])) /
+    div;
+  vi[1] =
+    ((v3[1] - v4[1]) * (v1[0] * v2[1] - v1[1] * v2[0]) -
+      (v1[1] - v2[1]) * (v3[0] * v4[1] - v3[1] * v4[0])) /
+    div;
   if (calc_t || v1.length === 3) {
     const n1 = new Vector2(v2).sub(v1);
     const n2 = new Vector2(vi).sub(v1);
@@ -2096,7 +2219,12 @@ function clip(a: number, b: number, znear: number): number {
   v1 and v2 are assumed to be projected, pre-division Vector4's
   returns a positive number (how much the line was scaled) if either _v1 or _v2 are
   in front of the near clipping plane otherwise, returns 0
- */ export function clip_line_w(_v1: Vec4Like, _v2: Vec4Like, znear: number, zfar: number): boolean {
+ */ export function clip_line_w(
+  _v1: Vec4Like,
+  _v2: Vec4Like,
+  znear: number,
+  zfar: number
+): boolean {
   const v1 = _cplw_vs4.next().load(_v1);
   const v2 = _cplw_vs4.next().load(_v2);
   //are we fully behind the view plane?
@@ -2211,7 +2339,11 @@ const _circ_from_line_tan2d_vs = util.cachering.fromConstructor(Vector3, 32);
 const _circ_from_line_tan2d_ret = new util.cachering(function () {
   return [new Vector2(), 0] as [Vector2, number];
 }, 64);
-export function circ_from_line_tan_2d(a: Vec2Like, b: Vec2Like, t: Vec2Like): [Vector2, number] | undefined {
+export function circ_from_line_tan_2d(
+  a: Vec2Like,
+  b: Vec2Like,
+  t: Vec2Like
+): [Vector2, number] | undefined {
   const la = _circ_from_line_tan2d_vs.next().load2(a);
   const lb = _circ_from_line_tan2d_vs.next().load2(b);
   const lt = _circ_from_line_tan2d_vs.next().load2(t);
@@ -2246,7 +2378,10 @@ export function circ_from_line_tan_2d(a: Vec2Like, b: Vec2Like, t: Vec2Like): [V
       return ret;
     }
     cx = (((x1 + x2) * (x1 - x2) - (y1 - y2) ** 2) * tany1 - 2.0 * (y1 - y2) * tanx1 * x1) / div2;
-    cy = (-((y1 + y2) * (y1 - y2) - x2 ** 2 - (x1 - 2.0 * x2) * x1) * tanx1 + 2.0 * (x1 - x2) * tany1 * y1) / div2;
+    cy =
+      (-((y1 + y2) * (y1 - y2) - x2 ** 2 - (x1 - 2.0 * x2) * x1) * tanx1 +
+        2.0 * (x1 - x2) * tany1 * y1) /
+      div2;
     r = (((y1 - y2) ** 2 + x2 ** 2 + (x1 - 2.0 * x2) * x1) ** 2 * (tanx1 ** 2 + tany1 ** 2)) / div;
     const midx = la[0] * 0.5 + lb[0] * 0.5;
     const midy = la[1] * 0.5 + lb[1] * 0.5;

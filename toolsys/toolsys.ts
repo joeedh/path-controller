@@ -197,7 +197,10 @@ const defaultUndoHandlers: { undoPre: (ctx: unknown) => void; undo: (ctx: unknow
   },
 };
 
-export function setDefaultUndoHandlers(undoPre: (ctx: unknown) => void, undo: (ctx: unknown) => void): void {
+export function setDefaultUndoHandlers(
+  undoPre: (ctx: unknown) => void,
+  undo: (ctx: unknown) => void
+): void {
   if (!undoPre || !undo) {
     throw new Error("invalid parameters to setDefaultUndoHandlers");
   }
@@ -313,7 +316,11 @@ export class ToolPropertyCache {
     return this.pathmap.get(toolpath.trim());
   }
 
-  static getFullPath(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty): string {
+  static getFullPath(
+    cls: IToolOpConstructor | MacroClassType,
+    key: string,
+    prop: ToolProperty
+  ): string {
     const toolpath = cls.tooldef()!.toolpath!.trim();
     const propKey = ToolPropertyCache.getPropKey(cls, key, prop);
     return `${toolpath}.${propKey}`;
@@ -334,7 +341,11 @@ export class ToolPropertyCache {
     return !!obj && key in obj;
   }
 
-  get<T>(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): T | undefined {
+  get<T>(
+    cls: IToolOpConstructor | MacroClassType,
+    key: string,
+    prop: ToolProperty<T>
+  ): T | undefined {
     if ((cls as unknown) === ToolMacro) {
       return undefined;
     }
@@ -349,7 +360,11 @@ export class ToolPropertyCache {
     return undefined;
   }
 
-  set<T>(cls: IToolOpConstructor | MacroClassType, key: string, prop: ToolProperty<T>): this | undefined {
+  set<T>(
+    cls: IToolOpConstructor | MacroClassType,
+    key: string,
+    prop: ToolProperty<T>
+  ): this | undefined {
     if ((cls as unknown) === ToolMacro) {
       return;
     }
@@ -466,7 +481,12 @@ export class ToolOp<
       let p: IToolOpConstructor | undefined = this.constructor as unknown as IToolOpConstructor;
       let lastp: IToolOpConstructor | undefined = undefined;
 
-      while (p !== undefined && (p as unknown) !== Object && (p as unknown) !== ToolOp && p !== lastp) {
+      while (
+        p !== undefined &&
+        (p as unknown) !== Object &&
+        (p as unknown) !== ToolOp &&
+        p !== lastp
+      ) {
         if (p.tooldef) {
           const pdef = p.tooldef();
 
@@ -669,11 +689,17 @@ export class ToolOp<
 
     // eslint-disable-next-line no-prototype-builtins
     if (!cls.hasOwnProperty("STRUCT")) {
-      if ((parent as unknown) !== ToolOp && (parent as unknown) !== ToolMacro && (parent as unknown) !== Object) {
+      if (
+        (parent as unknown) !== ToolOp &&
+        (parent as unknown) !== ToolMacro &&
+        (parent as unknown) !== Object
+      ) {
         this._regWithNstructjs(parent);
       }
 
-      cls.STRUCT = nstructjs.inherit(cls as unknown as StructableClass, parent as unknown as StructableClass) + "}\n";
+      cls.STRUCT =
+        nstructjs.inherit(cls as unknown as StructableClass, parent as unknown as StructableClass) +
+        "}\n";
     }
 
     nstructjs.register(cls as unknown as StructableClass);
@@ -1172,7 +1198,12 @@ interface ConnectCB {
   thisvar: unknown;
 }
 
-export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> extends ToolOp<any, any, CTX, ModalCTX> {
+export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> extends ToolOp<
+  any,
+  any,
+  CTX,
+  ModalCTX
+> {
   static override STRUCT: string;
 
   tools: ToolOp[];
@@ -1201,7 +1232,10 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
   }
 
   //toolop is an optional instance of this class, may be undefined
-  static override canRun<CTX extends ContextLike = ContextLike>(_ctx: CTX, _toolop?: ToolOp | undefined): boolean {
+  static override canRun<CTX extends ContextLike = ContextLike>(
+    _ctx: CTX,
+    _toolop?: ToolOp | undefined
+  ): boolean {
     return true;
   }
 
@@ -1384,11 +1418,18 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       }
     }
 
-    this.connectLinks.push(new MacroLink(i1, srcoutput as string, srcprops, i2, dstinput as string, dstprops));
+    this.connectLinks.push(
+      new MacroLink(i1, srcoutput as string, srcprops, i2, dstinput as string, dstprops)
+    );
     return this;
   }
 
-  connectCB(srctool: ToolOp, dsttool: ToolOp, callback: (src: ToolOp, dst: ToolOp) => void, thisvar: unknown): this {
+  connectCB(
+    srctool: ToolOp,
+    dsttool: ToolOp,
+    callback: (src: ToolOp, dst: ToolOp) => void,
+    thisvar: unknown
+  ): this {
     this.connects.push({
       srctool : srctool,
       dsttool : dsttool,
@@ -1710,7 +1751,11 @@ export class ToolStack<
     }
   }
 
-  execTool(ctx: ContextCls | ModalContextCls, toolop: this[0] | ToolOpAny, event?: PointerEvent): void {
+  execTool(
+    ctx: ContextCls | ModalContextCls,
+    toolop: this[0] | ToolOpAny,
+    event?: PointerEvent
+  ): void {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx as ContextCls);
     }
@@ -1891,7 +1936,10 @@ export class ToolStack<
    onstep is a callback, if it returns a promise that promise will be
    waited on, otherwise execution is queue with window.setTimeout().
    */
-  replay(cb?: (ctx: ContextCls) => unknown, onStep?: () => unknown | Promise<unknown>): Promise<unknown> {
+  replay(
+    cb?: (ctx: ContextCls) => unknown,
+    onStep?: () => unknown | Promise<unknown>
+  ): Promise<unknown> {
     this.rewind();
 
     let last = this.cur;
@@ -2070,7 +2118,12 @@ export function buildToolSysAPI(
   }
 
   if (rootCtxStruct) {
-    rootCtxStruct.struct("toolDefaults", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+    rootCtxStruct.struct(
+      "toolDefaults",
+      "toolDefaults",
+      "Tool Defaults",
+      api.mapStruct(ToolPropertyCache)
+    );
     rootCtxStruct.dynamicStruct("last_tool", "last_tool", "Last Tool");
   }
 
@@ -2078,7 +2131,9 @@ export function buildToolSysAPI(
     const inst = new rootCtxClass({});
 
     function haveprop(k: string | symbol): boolean {
-      return Reflect.ownKeys(inst).includes(k) || Reflect.ownKeys(rootCtxClass!.prototype).includes(k);
+      return (
+        Reflect.ownKeys(inst).includes(k) || Reflect.ownKeys(rootCtxClass!.prototype).includes(k)
+      );
     }
 
     if (!haveprop("last_tool")) {

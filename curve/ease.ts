@@ -451,7 +451,8 @@ class Ease {
     var pi2 = Math.PI * 2;
     return function (t: number): number {
       var s = (period / pi2) * Math.asin(1 / amplitude);
-      if ((t *= 2) < 1) return -0.5 * (amplitude * Math.pow(2, 10 * (t -= 1)) * Math.sin(((t - s) * pi2) / period));
+      if ((t *= 2) < 1)
+        return -0.5 * (amplitude * Math.pow(2, 10 * (t -= 1)) * Math.sin(((t - s) * pi2) / period));
       return amplitude * Math.pow(2, -10 * (t -= 1)) * Math.sin(((t - s) * pi2) / period) * 0.5 + 1;
     };
   }

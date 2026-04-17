@@ -74,7 +74,9 @@ export function getTempProp<P extends ToolProperty | ToolPropertyTypes>(type: nu
 
 export class DataPathError extends Error {}
 
-export function getVecClass(proptype: number): typeof Vector2 | typeof Vector3 | typeof Vector4 | typeof Quat {
+export function getVecClass(
+  proptype: number
+): typeof Vector2 | typeof Vector3 | typeof Vector4 | typeof Quat {
   switch (proptype) {
     case PropTypes.VEC2:
       return Vector2;
@@ -109,7 +111,12 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
   getSet?: DataPathGetSet;
   ui_name_get?: (this: ToolProperty) => string;
 
-  constructor(path?: string, apiname?: string, prop?: ToolProperty | DataList, type: DataTypeValue = DataTypes.PROP) {
+  constructor(
+    path?: string,
+    apiname?: string,
+    prop?: ToolProperty | DataList,
+    type: DataTypeValue = DataTypes.PROP
+  ) {
     this.type = type;
     this.data = prop as DataPathToolProperty;
     this.apiname = apiname!;

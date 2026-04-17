@@ -20,7 +20,14 @@ interface Notifier {
   error(screen: unknown, message: string, timeout: number): unknown;
   warning(screen: unknown, message: string, timeout: number): unknown;
   message(screen: unknown, msg: string, timeout: number): unknown;
-  progbarNote(screen: unknown, msg: string, perc: number, color: string, timeout: number, id: string): unknown;
+  progbarNote(
+    screen: unknown,
+    msg: string,
+    perc: number,
+    color: string,
+    timeout: number,
+    id: string
+  ): unknown;
 }
 
 let notifier: Notifier | undefined = undefined;
@@ -107,7 +114,9 @@ export function makeDerivedOverlay(parent: OverlayParent) {
     //don't override this
     static resolveDef(): { name?: string; flag: number } {
       if (this.hasOwnProperty(Symbol.CachedDef)) {
-        return (this as unknown as Record<symbol, { name?: string; flag: number }>)[Symbol.CachedDef];
+        return (this as unknown as Record<symbol, { name?: string; flag: number }>)[
+          Symbol.CachedDef
+        ];
       }
 
       let def2: Record<string, unknown> = {};
@@ -138,7 +147,10 @@ export function makeDerivedOverlay(parent: OverlayParent) {
       if (def2.flag instanceof InheritFlag) {
         let flag = def2.flag.data;
         for (let parent of parents) {
-          let pdef = (parent as unknown as typeof ContextOverlay).contextDefine() as Record<string, unknown>;
+          let pdef = (parent as unknown as typeof ContextOverlay).contextDefine() as Record<
+            string,
+            unknown
+          >;
 
           if (!pdef.flag) {
             continue;
@@ -217,13 +229,19 @@ export class LockedContext {
     return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).error(...args);
   }
   warning(...args: unknown[]): unknown {
-    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).warning(...args);
+    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).warning(
+      ...args
+    );
   }
   message(...args: unknown[]): unknown {
-    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).message(...args);
+    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).message(
+      ...args
+    );
   }
   progbar(...args: unknown[]): unknown {
-    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).progbar(...args);
+    return (this.ctx as unknown as Record<string, (...args: unknown[]) => unknown>).progbar(
+      ...args
+    );
   }
   progressBar(...args: unknown[]): unknown {
     let ctxRec = this.ctx as unknown as Record<string, Function | undefined>;
@@ -473,11 +491,15 @@ export class Context<Overlays extends ContextLike = ContextLike> {
       let overlay = stack[i];
       let ret: unknown = next_key;
 
-      if ((overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] === undefined) {
+      if (
+        (overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] === undefined
+      ) {
         throw new Error("context corruption");
       }
 
-      let ikey = (overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] as number;
+      let ikey = (overlay as unknown as Record<string | symbol, unknown>)[
+        Symbol.ContextID
+      ] as number;
 
       if ((cconst.DEBUG as Record<string, boolean>).contextSystem) {
         console.log(ikey, overlay);
@@ -545,7 +567,9 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   pushOverlay(overlay: OverlayInstance): void {
-    if (!(overlay as unknown as Record<string | symbol, unknown>).hasOwnProperty(Symbol.ContextID)) {
+    if (
+      !(overlay as unknown as Record<string | symbol, unknown>).hasOwnProperty(Symbol.ContextID)
+    ) {
       (overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] = idgen++;
     }
 

@@ -59,5 +59,7 @@ type Enumerate<N extends number, Acc extends number[] = []> = Acc["length"] exte
   : Enumerate<N, [...Acc, Acc["length"]]>;
 
 export function IndexRange<LEN extends number>(len: LEN): Iterable<Enumerate<LEN>> {
-  return indexRangeStack[indexRangeStack.cur++].reset(0, len) as unknown as Iterable<Enumerate<LEN>>;
+  return indexRangeStack[indexRangeStack.cur++].reset(0, len) as unknown as Iterable<
+    Enumerate<LEN>
+  >;
 }

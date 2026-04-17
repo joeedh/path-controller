@@ -115,7 +115,12 @@ export class Curve1D {
     this._eventCBs = this._eventCBs.filter((item) => item.cb !== cb);
   }
 
-  once(type: string, cb: (data: unknown) => void, owner?: unknown, cb_is_dead?: () => boolean): void {
+  once(
+    type: string,
+    cb: (data: unknown) => void,
+    owner?: unknown,
+    cb_is_dead?: () => boolean
+  ): void {
     this.on(type, cb, owner, cb_is_dead);
     this._eventCBs[this._eventCBs.length - 1].once = true;
   }
@@ -185,7 +190,10 @@ export class Curve1D {
     }
 
     const json = nstructjs.writeJSON(b as unknown as Record<string, unknown>);
-    const cpy = nstructjs.readJSON(json, Curve1D as unknown as { new (): Curve1D }) as unknown as Curve1D;
+    const cpy = nstructjs.readJSON(
+      json,
+      Curve1D as unknown as { new (): Curve1D }
+    ) as unknown as Curve1D;
 
     const activeCls = cpy.generators.active.constructor;
     const oldGens = this.generators;
@@ -195,7 +203,10 @@ export class Curve1D {
     for (let gen of cpy.generators) {
       /* See if generator provides a .load() method. */
       for (const gen2 of oldGens) {
-        if (gen2.constructor === gen.constructor && (gen2 as unknown as Record<string, unknown>).load !== undefined) {
+        if (
+          gen2.constructor === gen.constructor &&
+          (gen2 as unknown as Record<string, unknown>).load !== undefined
+        ) {
           cpy.generators[cpy.generators.indexOf(gen)] = gen2;
 
           if (gen2.constructor === activeCls) {
@@ -226,7 +237,12 @@ export class Curve1D {
       const v = (cpy as unknown as Record<string, unknown>)[k];
       if (typeof v === "number" || typeof v === "boolean" || typeof v === "string") {
         (this as unknown as Record<string, unknown>)[k] = v;
-      } else if (v instanceof Vector2 || v instanceof Vector3 || v instanceof Vector4 || v instanceof Matrix4) {
+      } else if (
+        v instanceof Vector2 ||
+        v instanceof Vector3 ||
+        v instanceof Vector4 ||
+        v instanceof Matrix4
+      ) {
         ((this as unknown as Record<string, unknown>)[k] as { load(v: unknown): void }).load(v);
       }
     }
@@ -291,7 +307,9 @@ export class Curve1D {
   }
 
   /** throw_on_error defaults to true */
-  checkGenerator<KEY extends AllCurveTypes["type"]>(type: KEY): Extract<AllCurveTypes, { type: KEY }> | undefined {
+  checkGenerator<KEY extends AllCurveTypes["type"]>(
+    type: KEY
+  ): Extract<AllCurveTypes, { type: KEY }> | undefined {
     for (const gen of this.generators) {
       if (gen.type === type) {
         return gen as Extract<AllCurveTypes, { type: KEY }>;
@@ -310,7 +328,9 @@ export class Curve1D {
     }
   }
 
-  getGenerator<KEY extends AllCurveTypes["type"]>(type: KEY): Extract<AllCurveTypes, { type: KEY }> {
+  getGenerator<KEY extends AllCurveTypes["type"]>(
+    type: KEY
+  ): Extract<AllCurveTypes, { type: KEY }> {
     const gen = this.checkGenerator(type);
     if (!gen) {
       throw new Error("Unknown generator " + type + ".");
@@ -427,7 +447,11 @@ export class Curve1D {
     return this.generators.active.update();
   }
 
-  draw(canvas: HTMLCanvasElement, g: CanvasRenderingContext2D, draw_transform: [number, [number, number]]): this {
+  draw(
+    canvas: HTMLCanvasElement,
+    g: CanvasRenderingContext2D,
+    draw_transform: [number, [number, number]]
+  ): this {
     let w = canvas.width;
     const h = canvas.height;
 

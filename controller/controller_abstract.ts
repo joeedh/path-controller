@@ -1,6 +1,13 @@
 import { print_stack } from "../util/util";
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract";
-import { ToolPropertyTypes, VecPropertyTypes, isVecProperty, ToolDef, ToolOp, ToolProperty } from "../toolsys";
+import {
+  ToolPropertyTypes,
+  VecPropertyTypes,
+  isVecProperty,
+  ToolDef,
+  ToolOp,
+  ToolProperty,
+} from "../toolsys";
 import { DataList, DataPath, DataPathError } from "./controller_base";
 import type { DataAPI, DataStruct } from "./controller";
 import type { Screen } from "../../screen/FrameManager";
@@ -234,9 +241,14 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
 
       let use_range: boolean | number = prop.type & (PropTypes.INT | PropTypes.FLOAT);
 
-      use_range = use_range || (res.subkey ? prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4) : 0);
+      use_range =
+        use_range ||
+        (res.subkey ? prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4) : 0);
       use_range = use_range && prop.range ? 1 : 0;
-      use_range = use_range && prop.range !== undefined && !(prop.range[0] === 0.0 && prop.range[1] === 0.0) ? 1 : 0;
+      use_range =
+        use_range && prop.range !== undefined && !(prop.range[0] === 0.0 && prop.range[1] === 0.0)
+          ? 1
+          : 0;
       use_range = use_range && typeof val === "number" ? 1 : 0;
 
       if (use_range && prop.range !== undefined) {
@@ -309,7 +321,10 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     if (rdef.subkey !== undefined) {
       let subkey: string | number = rdef.subkey;
 
-      if (prop.type !== undefined && prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4)) {
+      if (
+        prop.type !== undefined &&
+        prop.type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4)
+      ) {
         if (typeof subkey === "string") {
           subkey = parseInt(subkey);
         }
@@ -382,7 +397,8 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
       throw new DataPathError("invalid path " + path);
     }
 
-    let exec: boolean | number = ret.prop !== undefined && ret.prop.flag & PropFlags.USE_CUSTOM_GETSET;
+    let exec: boolean | number =
+      ret.prop !== undefined && ret.prop.flag & PropFlags.USE_CUSTOM_GETSET;
 
     //resolvePath handles the case of vector properties with custom callbacks for us
     //(and possibly all the other cases too, need to check)

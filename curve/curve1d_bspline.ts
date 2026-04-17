@@ -80,7 +80,15 @@ const templates = {
     [0, 1],
     [1, 0],
   ],
-  [SplineTemplates.GUASSIAN]: ["DEG", 5, [0, 0], [0.17969, 0.007], [0.48958, 0.01172], [0.77995, 0.99609], [1, 1]],
+  [SplineTemplates.GUASSIAN]: [
+    "DEG",
+    5,
+    [0, 0],
+    [0.17969, 0.007],
+    [0.48958, 0.01172],
+    [0.77995, 0.99609],
+    [1, 1],
+  ],
 };
 
 //is initialized below
@@ -263,10 +271,9 @@ export class Curve1dBSplineOpBase<
 
     let curve1d: Curve1DObject | undefined;
     try {
-      curve1d = (ctx as { api: { getValue(ctx: unknown, path: unknown): Curve1DObject } }).api.getValue(
-        ctx,
-        dataPath
-      ) as Curve1DObject;
+      curve1d = (
+        ctx as { api: { getValue(ctx: unknown, path: unknown): Curve1DObject } }
+      ).api.getValue(ctx, dataPath) as Curve1DObject;
     } catch (error: unknown) {
       console.error((error as Error).stack);
       console.error((error as Error).message);
@@ -285,7 +292,9 @@ export class Curve1dBSplineOpBase<
   }
 }
 
-export class Curve1dBSplineResetOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<{}, {}, CTX> {
+export class Curve1dBSplineResetOp<
+  CTX extends ContextLike = ContextLike,
+> extends Curve1dBSplineOpBase<{}, {}, CTX> {
   static override tooldef() {
     return {
       ...super.tooldef(),
@@ -303,7 +312,9 @@ export class Curve1dBSplineResetOp<CTX extends ContextLike = ContextLike> extend
 
 ToolOp.register(Curve1dBSplineResetOp);
 
-export class Curve1dBSplineLoadTemplOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+export class Curve1dBSplineLoadTemplOp<
+  CTX extends ContextLike = ContextLike,
+> extends Curve1dBSplineOpBase<
   {
     template: EnumProperty;
   },
@@ -334,7 +345,9 @@ export class Curve1dBSplineLoadTemplOp<CTX extends ContextLike = ContextLike> ex
 
 ToolOp.register(Curve1dBSplineLoadTemplOp);
 
-export class Curve1dBSplineDeleteOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<{}, {}, CTX> {
+export class Curve1dBSplineDeleteOp<
+  CTX extends ContextLike = ContextLike,
+> extends Curve1dBSplineOpBase<{}, {}, CTX> {
   static override tooldef() {
     return {
       ...super.tooldef(),
@@ -353,7 +366,9 @@ export class Curve1dBSplineDeleteOp<CTX extends ContextLike = ContextLike> exten
 
 ToolOp.register(Curve1dBSplineDeleteOp);
 
-export class Curve1dBSplineSelectOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+export class Curve1dBSplineSelectOp<
+  CTX extends ContextLike = ContextLike,
+> extends Curve1dBSplineOpBase<
   {
     point: IntProperty;
     state: BoolProperty;
@@ -402,7 +417,9 @@ export class Curve1dBSplineSelectOp<CTX extends ContextLike = ContextLike> exten
 
 ToolOp.register(Curve1dBSplineSelectOp);
 
-export class Curve1dBSplineAddOp<CTX extends ContextLike = ContextLike> extends Curve1dBSplineOpBase<
+export class Curve1dBSplineAddOp<
+  CTX extends ContextLike = ContextLike,
+> extends Curve1dBSplineOpBase<
   {
     x: FloatProperty;
     y: FloatProperty;
@@ -510,10 +527,9 @@ export class BSplineTransformOp<CTX extends ContextLike> extends ToolOp<
 
     let curve1d: Record<string, unknown> | undefined;
     try {
-      curve1d = (ctx as { api: { getValue(ctx: unknown, path: unknown): Record<string, unknown> } }).api.getValue(
-        ctx,
-        dataPath
-      );
+      curve1d = (
+        ctx as { api: { getValue(ctx: unknown, path: unknown): Record<string, unknown> } }
+      ).api.getValue(ctx, dataPath);
     } catch (error: unknown) {
       console.error((error as Error).stack);
       console.error((error as Error).message);
@@ -1731,7 +1747,12 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
     const dpath = datapath;
     const srcUpdate = onSourceUpdate;
 
-    console.warn(this._bid, "makeGUI", this.uidata, this.uidata ? this.uidata.start_mpos : undefined);
+    console.warn(
+      this._bid,
+      "makeGUI",
+      this.uidata,
+      this.uidata ? this.uidata.start_mpos : undefined
+    );
 
     let start_mpos: Vector2 | undefined;
     if (this.uidata) {

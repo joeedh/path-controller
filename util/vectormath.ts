@@ -34,7 +34,11 @@ export type INumVectorLimited<LEN extends 0 | 1 | 2 | 3 | 4> = {
   length: number;
 };
 
-declare type INumVector = IOpenNumVector | INumVectorLimited<2> | INumVectorLimited<3> | INumVectorLimited<4>;
+declare type INumVector =
+  | IOpenNumVector
+  | INumVectorLimited<2>
+  | INumVectorLimited<3>
+  | INumVectorLimited<4>;
 
 export type IndexUnion<L extends 0 | 1 | 2 | 3 | 4> = indexUnions[L];
 
@@ -172,7 +176,12 @@ export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
   normalizedDot3(a: IBaseVector<LEN>, center: IBaseVector<LEN>, b: IBaseVector<LEN>): number;
 
   /** |(b - a)| dot |(d - c)| */
-  normalizedDot4(a: IBaseVector<LEN>, b: IBaseVector<LEN>, c: IBaseVector<LEN>, d: IBaseVector<LEN>): number;
+  normalizedDot4(
+    a: IBaseVector<LEN>,
+    b: IBaseVector<LEN>,
+    c: IBaseVector<LEN>,
+    d: IBaseVector<LEN>
+  ): number;
 
   structName?: string;
   STRUCT?: string;
@@ -209,7 +218,12 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
           )
         : undefined;
 
-    static normalizedDot4(v1: IBaseVector<2>, v2: IBaseVector<2>, v3: IBaseVector<2>, v4: IBaseVector<2>) {
+    static normalizedDot4(
+      v1: IBaseVector<2>,
+      v2: IBaseVector<2>,
+      v3: IBaseVector<2>,
+      v4: IBaseVector<2>
+    ) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dx2 = v4[0] - v3[0];
@@ -584,7 +598,12 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
           )
         : undefined;
 
-    static normalizedDot4(v1: IBaseVector<3>, v2: IBaseVector<3>, v3: IBaseVector<3>, v4: IBaseVector<3>) {
+    static normalizedDot4(
+      v1: IBaseVector<3>,
+      v2: IBaseVector<3>,
+      v3: IBaseVector<3>,
+      v4: IBaseVector<3>
+    ) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
@@ -936,10 +955,26 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let x = this[0];
       let y = this[1];
       let z = this[2];
-      this[0] = matrix.$matrix.m41 + x * matrix.$matrix.m11 + y * matrix.$matrix.m21 + z * matrix.$matrix.m31;
-      this[1] = matrix.$matrix.m42 + x * matrix.$matrix.m12 + y * matrix.$matrix.m22 + z * matrix.$matrix.m32;
-      this[2] = matrix.$matrix.m43 + x * matrix.$matrix.m13 + y * matrix.$matrix.m23 + z * matrix.$matrix.m33;
-      let w = matrix.$matrix.m44 + x * matrix.$matrix.m14 + y * matrix.$matrix.m24 + z * matrix.$matrix.m34;
+      this[0] =
+        matrix.$matrix.m41 +
+        x * matrix.$matrix.m11 +
+        y * matrix.$matrix.m21 +
+        z * matrix.$matrix.m31;
+      this[1] =
+        matrix.$matrix.m42 +
+        x * matrix.$matrix.m12 +
+        y * matrix.$matrix.m22 +
+        z * matrix.$matrix.m32;
+      this[2] =
+        matrix.$matrix.m43 +
+        x * matrix.$matrix.m13 +
+        y * matrix.$matrix.m23 +
+        z * matrix.$matrix.m33;
+      let w =
+        matrix.$matrix.m44 +
+        x * matrix.$matrix.m14 +
+        y * matrix.$matrix.m24 +
+        z * matrix.$matrix.m34;
 
       if (!ignore_w && w !== 1 && w !== 0 && matrix.isPersp) {
         this[0] /= w;
@@ -1029,7 +1064,12 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
           )
         : undefined;
 
-    static normalizedDot4(v1: IBaseVector<4>, v2: IBaseVector<4>, v3: IBaseVector<4>, v4: IBaseVector<4>) {
+    static normalizedDot4(
+      v1: IBaseVector<4>,
+      v2: IBaseVector<4>,
+      v3: IBaseVector<4>,
+      v4: IBaseVector<4>
+    ) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
@@ -1431,10 +1471,26 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let z = this[2];
       let w = this[3];
 
-      this[0] = w * matrix.$matrix.m41 + x * matrix.$matrix.m11 + y * matrix.$matrix.m21 + z * matrix.$matrix.m31;
-      this[1] = w * matrix.$matrix.m42 + x * matrix.$matrix.m12 + y * matrix.$matrix.m22 + z * matrix.$matrix.m32;
-      this[2] = w * matrix.$matrix.m43 + x * matrix.$matrix.m13 + y * matrix.$matrix.m23 + z * matrix.$matrix.m33;
-      this[3] = w * matrix.$matrix.m44 + x * matrix.$matrix.m14 + y * matrix.$matrix.m24 + z * matrix.$matrix.m34;
+      this[0] =
+        w * matrix.$matrix.m41 +
+        x * matrix.$matrix.m11 +
+        y * matrix.$matrix.m21 +
+        z * matrix.$matrix.m31;
+      this[1] =
+        w * matrix.$matrix.m42 +
+        x * matrix.$matrix.m12 +
+        y * matrix.$matrix.m22 +
+        z * matrix.$matrix.m32;
+      this[2] =
+        w * matrix.$matrix.m43 +
+        x * matrix.$matrix.m13 +
+        y * matrix.$matrix.m23 +
+        z * matrix.$matrix.m33;
+      this[3] =
+        w * matrix.$matrix.m44 +
+        x * matrix.$matrix.m14 +
+        y * matrix.$matrix.m24 +
+        z * matrix.$matrix.m34;
 
       return this[3];
     }
@@ -2068,7 +2124,11 @@ export class Matrix4 {
     return new Float32Array(this.getAsArray());
   }
 
-  setUniform(ctx: WebGL2RenderingContext | WebGLRenderingContext, loc: WebGLUniformLocation, transpose = false) {
+  setUniform(
+    ctx: WebGL2RenderingContext | WebGLRenderingContext,
+    loc: WebGLUniformLocation,
+    transpose = false
+  ) {
     if (Matrix4.setUniformArray === undefined) {
       Matrix4.setUniformWebGLArray = new Float32Array(16);
       Matrix4.setUniformArray = new Array(16);
@@ -2942,10 +3002,30 @@ export class Matrix4 {
 
   getAsVecs(): Vector4[] {
     return [
-      new Vector4().loadXYZW(this.$matrix.m11, this.$matrix.m12, this.$matrix.m13, this.$matrix.m14),
-      new Vector4().loadXYZW(this.$matrix.m21, this.$matrix.m22, this.$matrix.m23, this.$matrix.m24),
-      new Vector4().loadXYZW(this.$matrix.m31, this.$matrix.m32, this.$matrix.m33, this.$matrix.m34),
-      new Vector4().loadXYZW(this.$matrix.m41, this.$matrix.m42, this.$matrix.m43, this.$matrix.m44),
+      new Vector4().loadXYZW(
+        this.$matrix.m11,
+        this.$matrix.m12,
+        this.$matrix.m13,
+        this.$matrix.m14
+      ),
+      new Vector4().loadXYZW(
+        this.$matrix.m21,
+        this.$matrix.m22,
+        this.$matrix.m23,
+        this.$matrix.m24
+      ),
+      new Vector4().loadXYZW(
+        this.$matrix.m31,
+        this.$matrix.m32,
+        this.$matrix.m33,
+        this.$matrix.m34
+      ),
+      new Vector4().loadXYZW(
+        this.$matrix.m41,
+        this.$matrix.m42,
+        this.$matrix.m43,
+        this.$matrix.m44
+      ),
     ];
   }
 
@@ -3016,7 +3096,14 @@ export class Matrix4 {
     return this;
   }
 
-  decompose(_translate: any, _rotate?: any, _scale?: any, _skew?: any, _perspective?: any, order = EulerOrders.XYZ) {
+  decompose(
+    _translate: any,
+    _rotate?: any,
+    _scale?: any,
+    _skew?: any,
+    _perspective?: any,
+    order = EulerOrders.XYZ
+  ) {
     if (this.$matrix.m44 === 0) return false;
 
     let mat = temp_mats.next().load(this);
@@ -3253,7 +3340,10 @@ temp_mats = util.cachering.fromConstructor(Matrix4, 512);
 preMultTemp = new Matrix4();
 vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);
 
-export type VectorArg<V extends Vector2 | Vector3 | Vector4 | Quat, N extends 2 | 3 | 4> = VectorLikeOrHigher<N, V>;
+export type VectorArg<
+  V extends Vector2 | Vector3 | Vector4 | Quat,
+  N extends 2 | 3 | 4,
+> = VectorLikeOrHigher<N, V>;
 
 export type Vector2Like = VectorArg<Vector2, 2>;
 export type Vector3Like = VectorArg<Vector3, 3>;

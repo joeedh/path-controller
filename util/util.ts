@@ -620,7 +620,11 @@ export function btoa(buf: ArrayBuffer | Uint8Array | string | string): string {
   return btoa(ret);
 }
 
-export function formatNumberUI(val: number | undefined | null, isInt: boolean = false, decimals: number = 5): string {
+export function formatNumberUI(
+  val: number | undefined | null,
+  isInt: boolean = false,
+  decimals: number = 5
+): string {
   if (val === undefined || val === null) {
     return "0";
   } else if (isNaN(val)) {
@@ -691,9 +695,17 @@ if (debug_cacherings) {
 
   window._clear_all_cacherings = function (kill_all: boolean = false): void {
     function copy(obj: unknown): unknown {
-      if (typeof obj === "object" && obj !== null && typeof (obj as { copy?: Function }).copy === "function") {
+      if (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof (obj as { copy?: Function }).copy === "function"
+      ) {
         return (obj as { copy: () => unknown }).copy();
-      } else if (typeof obj === "object" && obj !== null && (obj as object).constructor === Object) {
+      } else if (
+        typeof obj === "object" &&
+        obj !== null &&
+        (obj as object).constructor === Object
+      ) {
         const ret: Record<string | symbol, unknown> = {};
 
         for (const k of Reflect.ownKeys(obj as object)) {
@@ -788,7 +800,11 @@ export class cachering<T> extends Array<T> {
     }
   }
 
-  static fromConstructor<U>(cls: new () => U, size: number, isprivate: boolean = false): cachering<U> {
+  static fromConstructor<U>(
+    cls: new () => U,
+    size: number,
+    isprivate: boolean = false
+  ): cachering<U> {
     const func = function (): U {
       return new cls();
     };
@@ -861,7 +877,9 @@ export class set<T extends KeystrObject> {
   freelist: number[];
   length: number;
 
-  constructor(input?: Iterable<T> | { forEach(fn: (item: T) => void, thisArg: unknown): void } | T[]) {
+  constructor(
+    input?: Iterable<T> | { forEach(fn: (item: T) => void, thisArg: unknown): void } | T[]
+  ) {
     this.items = [];
     this.keys = {};
     this.freelist = [];
@@ -878,7 +896,10 @@ export class set<T extends KeystrObject> {
           this.add(item);
         }
       } else if ("forEach" in (input as object)) {
-        (input as { forEach(fn: (item: T) => void, thisArg: set<T>): void }).forEach(function (this: set<T>, item: T) {
+        (input as { forEach(fn: (item: T) => void, thisArg: set<T>): void }).forEach(function (
+          this: set<T>,
+          item: T
+        ) {
           this.add(item);
         }, this);
       } else if (input instanceof Array) {
@@ -1426,9 +1447,9 @@ export function strhash(str: string): number {
 }
 
 const hashsizes = [
-  /*2, 5, 11, 19, 37, 67, 127, */ 223, 383, 653, 1117, 1901, 3251, 5527, 9397, 15991, 27191, 46229, 78593, 133631,
-  227177, 38619, 656587, 1116209, 1897561, 3225883, 5484019, 9322861, 15848867, 26943089, 45803279, 77865577, 132371489,
-  225031553,
+  /*2, 5, 11, 19, 37, 67, 127, */ 223, 383, 653, 1117, 1901, 3251, 5527, 9397, 15991, 27191, 46229,
+  78593, 133631, 227177, 38619, 656587, 1116209, 1897561, 3225883, 5484019, 9322861, 15848867,
+  26943089, 45803279, 77865577, 132371489, 225031553,
 ];
 
 const FTAKEN = 0;
@@ -1471,7 +1492,8 @@ export class FastHash extends Array<unknown> {
   }
 
   get(key: string | number | { valueOf(): number }): unknown {
-    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number =
+      typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     let probe = 0;
 
@@ -1491,7 +1513,8 @@ export class FastHash extends Array<unknown> {
   }
 
   has(key: string | number | { valueOf(): number }): boolean {
-    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number =
+      typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     let probe = 0;
 
@@ -1512,7 +1535,8 @@ export class FastHash extends Array<unknown> {
 
   // @ts-ignore - intentionally shadows Array.prototype.set from polyfill
   set(key: string | number | { valueOf(): number }, val: unknown): void {
-    const hash: number = typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
+    const hash: number =
+      typeof key === "string" ? strhash(key) : typeof key === "object" ? key.valueOf() : key;
 
     if (this.used > this.size / 3) {
       this.resize(hashsizes[this.cursize++]);
@@ -1865,7 +1889,10 @@ export class map<K extends KeystrObject, V> {
   }
 }
 
-(globalThis as Record<string, unknown>)._test_map = function (): map<string & KeystrObject, number> {
+(globalThis as Record<string, unknown>)._test_map = function (): map<
+  string & KeystrObject,
+  number
+> {
   const m = new map<string & KeystrObject, number>();
 
   m.set("1" as string & KeystrObject, 2);
@@ -2232,7 +2259,9 @@ export class MinHeapQueue<T> {
   }
 }
 
-(globalThis as Record<string, unknown>).testHeapQueue = function (list1: number[] = [1, 8, -3, 11, 33]): number[] {
+(globalThis as Record<string, unknown>).testHeapQueue = function (
+  list1: number[] = [1, 8, -3, 11, 33]
+): number[] {
   const h = new MinHeapQueue<number>(list1);
 
   window.console.log((h.heap as unknown[]).concat([]));
@@ -2323,7 +2352,10 @@ export class Queue<T> {
   }
 }
 
-(globalThis as Record<string, unknown>)._testQueue = function (steps: number = 15, samples: number = 15): void {
+(globalThis as Record<string, unknown>)._testQueue = function (
+  steps: number = 15,
+  samples: number = 15
+): void {
   const queue = new Queue<{ f: number }>(3);
 
   for (let i = 0; i < steps; i++) {
@@ -2625,7 +2657,11 @@ export class TimeoutPromise<T = unknown> {
     }
   }
 
-  static wrapPromise<U>(promise: Promise<U>, timeout: number = 3000, callback: AcceptFn<U>): TimeoutPromise<U> {
+  static wrapPromise<U>(
+    promise: Promise<U>,
+    timeout: number = 3000,
+    callback: AcceptFn<U>
+  ): TimeoutPromise<U> {
     const p = new TimeoutPromise<U>();
 
     p._promise = promise;

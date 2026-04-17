@@ -24,7 +24,11 @@ type DataPathSetInputs = {
   [k: string]: ToolProperty;
 };
 
-export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp<DataPathSetInputs, {}, CTX> {
+export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp<
+  DataPathSetInputs,
+  {},
+  CTX
+> {
   propType: number;
   _undo: Record<string, unknown> | undefined;
   hadError: boolean;
@@ -166,7 +170,12 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     return tool;
   }
 
-  hash(massSetPath: string | undefined | null, dataPath: string, prop: unknown, id: unknown): string {
+  hash(
+    massSetPath: string | undefined | null,
+    dataPath: string,
+    prop: unknown,
+    id: unknown
+  ): string {
     massSetPath = massSetPath === undefined ? "" : massSetPath;
     massSetPath = massSetPath === null ? "" : massSetPath;
 
@@ -310,8 +319,12 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 
   modalStart(ctx: CTX) {
     if (ctx.toLocked === undefined) {
-      console.warn("Warning: no toLocked in context class, this may lead to subtle undo behaviours");
-      console.warn("  (ctx locking creates a copy with values of the context at the time it as locked)");
+      console.warn(
+        "Warning: no toLocked in context class, this may lead to subtle undo behaviours"
+      );
+      console.warn(
+        "  (ctx locking creates a copy with values of the context at the time it as locked)"
+      );
     }
     this.__ctx = (ctx.toLocked ? ctx.toLocked() : ctx) as typeof this.__ctx;
 

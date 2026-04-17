@@ -228,10 +228,20 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
    * @param default_struct : default struct if one can't be looked up
    * @returns {*}
    */
-  dynamicStruct(path: string, apiname: string, uiname: string, default_struct?: DataStruct): DataStruct {
+  dynamicStruct(
+    path: string,
+    apiname: string,
+    uiname: string,
+    default_struct?: DataStruct
+  ): DataStruct {
     const ret = default_struct ? default_struct : new DataStruct();
 
-    const dpath = new DataPath(path, apiname, ret as unknown as ToolProperty, DataTypes.DYNAMIC_STRUCT);
+    const dpath = new DataPath(
+      path,
+      apiname,
+      ret as unknown as ToolProperty,
+      DataTypes.DYNAMIC_STRUCT
+    );
     ret.inheritFlag |= this.inheritFlag;
 
     ret.dpath = dpath;
@@ -258,7 +268,10 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     return this;
   }
 
-  customGetSet(getter: (this: ToolProperty) => unknown, setter: (this: ToolProperty, val: unknown) => void): this {
+  customGetSet(
+    getter: (this: ToolProperty) => unknown,
+    setter: (this: ToolProperty, val: unknown) => void
+  ): this {
     this.dpath!.customGetSet(getter, setter);
 
     return this;
@@ -504,7 +517,9 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   list<ListType = any, KeyType = any, ObjType = any>(
     path: string,
     apiname: string,
-    funcs: ListIFace<DataAPI, ListType, KeyType, ObjType, CTX> | ListFuncs<DataAPI, ListType, KeyType, ObjType, CTX>
+    funcs:
+      | ListIFace<DataAPI, ListType, KeyType, ObjType, CTX>
+      | ListFuncs<DataAPI, ListType, KeyType, ObjType, CTX>
   ) {
     const array = new DataList<DataAPI, ListType, KeyType, ObjType, CTX>(funcs);
     const dpath = new DataPath(path, apiname, array);
@@ -541,7 +556,11 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     this.members.remove(m);
   }
 
-  fromToolProp(path: string, prop: ToolProperty, apiname = prop.apiname?.length ? prop.apiname : path) {
+  fromToolProp(
+    path: string,
+    prop: ToolProperty,
+    apiname = prop.apiname?.length ? prop.apiname : path
+  ) {
     const dpath = new DataPath(path, apiname, prop);
     this.add(dpath);
     return dpath;
@@ -550,7 +569,10 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   add(dpath: DataPath) {
     if (dpath.apiname in this.pathmap) {
       if (window.DEBUG?.datapaths) {
-        console.warn("Overriding existing member '" + dpath.apiname + "' in datapath struct", this.name);
+        console.warn(
+          "Overriding existing member '" + dpath.apiname + "' in datapath struct",
+          this.name
+        );
       }
 
       this.remove(this.pathmap[dpath.apiname]);
@@ -750,7 +772,9 @@ An example of a more complicated expression might be:
     const rdef = rdef1!;
 
     if (!(rdef.prop instanceof DataList)) {
-      throw new DataPathError("massSetPath expected a path resolving to a DataList: " + massSetPath);
+      throw new DataPathError(
+        "massSetPath expected a path resolving to a DataList: " + massSetPath
+      );
     }
 
     const paths = [];
@@ -822,7 +846,12 @@ An example of a more complicated expression might be:
     return paths;
   }
 
-  resolvePath(ctx: CTX, inpath: string, ignoreExistence = false, dstruct?: DataStruct): ResolvePathResult | undefined {
+  resolvePath(
+    ctx: CTX,
+    inpath: string,
+    ignoreExistence = false,
+    dstruct?: DataStruct
+  ): ResolvePathResult | undefined {
     const parser = parserStack[parserStackCur++];
     let ret = undefined;
 
@@ -959,11 +988,14 @@ An example of a more complicated expression might be:
             throw new DataPathError("no active elem ent for list");
           }
 
-          const actkey = obj !== undefined && act !== undefined ? prop.getKey(this, obj, act) : undefined;
+          const actkey =
+            obj !== undefined && act !== undefined ? prop.getKey(this, obj, act) : undefined;
 
           dstruct = prop.getStruct(this, obj, actkey);
           if (dstruct === undefined) {
-            throw new DataPathError("couldn't get data type for " + inpath + "'s element '" + key + "'");
+            throw new DataPathError(
+              "couldn't get data type for " + inpath + "'s element '" + key + "'"
+            );
           }
 
           _dummypath.parent = dpath;
@@ -1226,7 +1258,10 @@ An example of a more complicated expression might be:
 
         if (
           prop !== undefined &&
-          !((prop as ToolProperty).type & (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT))
+          !(
+            (prop as ToolProperty).type &
+            (PropTypes.VEC2 | PropTypes.VEC3 | PropTypes.VEC4 | PropTypes.QUAT)
+          )
         ) {
           lastobj = obj;
         }

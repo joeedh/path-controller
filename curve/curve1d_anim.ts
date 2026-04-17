@@ -58,11 +58,16 @@ interface SimpleCurveConstructor {
   define(): CurveDefineResult;
 }
 
-export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTypeData<TYPE, UIDATA> {
+export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTypeData<
+  TYPE,
+  UIDATA
+> {
   declare ["constructor"]: SimpleCurveConstructor;
 
   params: Record<string, number>;
-  declare parent: { redraw(): void; _on_change(): void; _fireEvent(evt: string, data: unknown): void } | undefined;
+  declare parent:
+    | { redraw(): void; _on_change(): void; _fireEvent(evt: string, data: unknown): void }
+    | undefined;
 
   constructor() {
     super();
@@ -165,7 +170,11 @@ export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTyp
     super.update();
   }
 
-  draw(_canvas: HTMLCanvasElement, g: CanvasRenderingContext2D, _draw_transform: [number, [number, number]]): void {
+  draw(
+    _canvas: HTMLCanvasElement,
+    g: CanvasRenderingContext2D,
+    _draw_transform: [number, [number, number]]
+  ): void {
     const steps = 128;
     let s = 0;
     const ds = 1.0 / (steps - 1);
@@ -318,7 +327,11 @@ export class ElasticCurve extends SimpleCurveBase<"ElasticCurve"> {
   }
 
   evaluate(t: number): number {
-    const hash = ~~(this.params.mode * 127 + this.params.amplitude * 256 + this.params.period * 512);
+    const hash = ~~(
+      this.params.mode * 127 +
+      this.params.amplitude * 256 +
+      this.params.period * 512
+    );
 
     if (hash !== this._last_hash || !this._func) {
       this._last_hash = hash;

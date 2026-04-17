@@ -91,7 +91,8 @@ export class CurveTypeData<TYPE extends string = string, UIDATA = any> {
 
     if (!def.typeName) {
       throw new Error(
-        cls.name + ".define() is missing .typeName, which should equal class name; needed for minificaiton"
+        cls.name +
+          ".define() is missing .typeName, which should equal class name; needed for minificaiton"
       );
     }
 
@@ -142,7 +143,13 @@ export class CurveTypeData<TYPE extends string = string, UIDATA = any> {
     onSourceUpdate?: unknown
   ): void {}
 
-  killGUI(container: Container, canvas?: unknown, g?: unknown, draw_transform?: unknown, extra?: unknown): void {
+  killGUI(
+    container: Container,
+    canvas?: unknown,
+    g?: unknown,
+    draw_transform?: unknown,
+    extra?: unknown
+  ): void {
     if (container && typeof container === "object" && "clear" in container) {
       container.clear();
     }
@@ -251,7 +258,11 @@ nstructjs.register(CurveTypeData);
 
 const unitRange: [number, number] = [0, 1];
 
-export function evalHermiteTable(table: number[], t: number, range: [number, number] | number[] = unitRange): number {
+export function evalHermiteTable(
+  table: number[],
+  t: number,
+  range: [number, number] | number[] = unitRange
+): number {
   t = (t - range[0]) / (range[1] - range[0]);
 
   let s = t * (table.length / 4);
@@ -267,7 +278,11 @@ export function evalHermiteTable(table: number[], t: number, range: [number, num
   //return table[i] + (table[i + 3] - table[i])*s;
 }
 
-export function genHermiteTable(evaluate: (t: number) => number, steps: number, range: number[] = [0, 1]): number[] {
+export function genHermiteTable(
+  evaluate: (t: number) => number,
+  steps: number,
+  range: number[] = [0, 1]
+): number[] {
   //console.log("building spline approx");
 
   const table = new Array<number>(steps);

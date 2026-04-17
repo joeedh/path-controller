@@ -321,7 +321,11 @@ export class DoubleClickHandler {
 
       singleMouseEvent(this._on_mousemove, "mousemove");
 
-      if ((e.type as string).search("touch") >= 0 && e instanceof TouchEvent && (e.touches as TouchList).length > 0) {
+      if (
+        (e.type as string).search("touch") >= 0 &&
+        e instanceof TouchEvent &&
+        (e.touches as TouchList).length > 0
+      ) {
         cpy.x = cpy.pageX = (e.touches as TouchList)[0].pageX;
         cpy.y = cpy.pageY = (e.touches as TouchList)[1].pageY;
       } else {
@@ -392,7 +396,10 @@ export function pathDebugEvent(event: Event, extra?: unknown): void {
   };
 }
 
-export function eventWasMouseDown(e: PointerEvent | MouseEvent | TouchEvent, button: number = 0): boolean {
+export function eventWasMouseDown(
+  e: PointerEvent | MouseEvent | TouchEvent,
+  button: number = 0
+): boolean {
   if (e instanceof MouseEvent && !(e instanceof PointerEvent)) {
     return e.buttons === 1 << button;
   }
@@ -403,7 +410,9 @@ export function eventWasMouseDown(e: PointerEvent | MouseEvent | TouchEvent, but
   let mdown = false;
   switch (e.pointerType) {
     case "touch":
-      mdown = (e as unknown as Record<string, unknown>).persistentDeviceId === 0 && !!(e.buttons & (1 << button));
+      mdown =
+        (e as unknown as Record<string, unknown>).persistentDeviceId === 0 &&
+        !!(e.buttons & (1 << button));
       break;
     case "pen":
       mdown = !!(e.buttons & (1 << button));
@@ -581,7 +590,9 @@ export function pushModalLight(
   function handleAreaContext(): void {
     const screen = findScreen();
     if (screen) {
-      const sarea = (screen.findScreenArea as Function)(mpos[0], mpos[1]) as Record<string, unknown> | undefined;
+      const sarea = (screen.findScreenArea as Function)(mpos[0], mpos[1]) as
+        | Record<string, unknown>
+        | undefined;
       if (sarea?.area) {
         const area = sarea.area as Record<string, Function>;
         area.push_ctx_active();
@@ -929,7 +940,12 @@ export class HotKey {
   uiname: string | undefined;
 
   /**action can be a callback or a toolpath string*/
-  constructor(key: string, modifiers: string[], action: string | ((ctx: ContextLike) => void), uiname?: string) {
+  constructor(
+    key: string,
+    modifiers: string[],
+    action: string | ((ctx: ContextLike) => void),
+    uiname?: string
+  ) {
     this.action = action;
     this.mods = modifiers;
     this.key = keymap[key];

@@ -137,7 +137,15 @@ export class KDTree {
       if (depth >= this.maxdepth) {
         if (log_everything || util.time_ms() - this.last_warn_time > 500) {
           console.log(depth);
-          console.warn("Malformed data: 3 to insert point", depth, x.toFixed(4), y.toFixed(4), z.toFixed(4), "id=", id);
+          console.warn(
+            "Malformed data: 3 to insert point",
+            depth,
+            x.toFixed(4),
+            y.toFixed(4),
+            z.toFixed(4),
+            "id=",
+            id
+          );
           this.last_warn_time = util.time_ms();
         }
         return;
@@ -365,7 +373,13 @@ export class KDTree {
     }
   }
 
-  forEachPoint(x: number, y: number, r: number, callback: (id: number) => boolean | void, thisvar?: unknown): void {
+  forEachPoint(
+    x: number,
+    y: number,
+    r: number,
+    callback: (id: number) => boolean | void,
+    thisvar?: unknown
+  ): void {
     const p = _foreach_tmp;
 
     p[0] = x;
@@ -376,7 +390,12 @@ export class KDTree {
   }
 
   //if callback returns true then the search will stop
-  search(p: number[] | Vector3, r: number, callback: (id: number) => boolean | void, thisvar?: unknown): void {
+  search(
+    p: number[] | Vector3,
+    r: number,
+    callback: (id: number) => boolean | void,
+    thisvar?: unknown
+  ): void {
     let stop = false;
 
     const data = this.data;
@@ -444,7 +463,12 @@ export class KDTree {
 
     const recurse = (ni: number): void => {
       g.beginPath();
-      g.rect(d[ni + NXMIN], d[ni + NYMIN], d[ni + NXMAX] - d[ni + NXMIN], d[ni + NYMAX] - d[ni + NYMIN]);
+      g.rect(
+        d[ni + NXMIN],
+        d[ni + NYMIN],
+        d[ni + NXMAX] - d[ni + NXMIN],
+        d[ni + NYMAX] - d[ni + NYMIN]
+      );
       g.strokeStyle = "orange";
       g.fillStyle = "rgba(255, 150, 50, 0.25)";
       g.stroke();

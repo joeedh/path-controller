@@ -110,10 +110,12 @@ window.eventDebugModule = (function (): EventDebugModule {
       this._removeEventListener = EventTarget.prototype.removeEventListener;
       this._dispatchEvent = EventTarget.prototype.dispatchEvent;
 
-      EventTarget.prototype.addEventListener = this.onadd as unknown as typeof EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = this
+        .onadd as unknown as typeof EventTarget.prototype.addEventListener;
       EventTarget.prototype.removeEventListener = this
         .onrem as unknown as typeof EventTarget.prototype.removeEventListener;
-      EventTarget.prototype.dispatchEvent = this.ondispatch as unknown as typeof EventTarget.prototype.dispatchEvent;
+      EventTarget.prototype.dispatchEvent = this
+        .ondispatch as unknown as typeof EventTarget.prototype.dispatchEvent;
     },
 
     add(type: string, data: EventDebugData) {
@@ -151,7 +153,10 @@ window.eventDebugModule = (function (): EventDebugModule {
         ownerpath: args[7],
       });
 
-      mod._addEventListener.apply(this, args as unknown as Parameters<typeof EventTarget.prototype.addEventListener>);
+      mod._addEventListener.apply(
+        this,
+        args as unknown as Parameters<typeof EventTarget.prototype.addEventListener>
+      );
     },
 
     pruneConnected() {
@@ -200,7 +205,8 @@ if (typeof _debug_event_listeners !== "undefined" && _debug_event_listeners) {
 /* ── Disable all listeners (debug mode) ────────────────────── */
 if (window._disable_all_listeners) {
   console.warn("Disabling all event listeners");
-  EventTarget.prototype.addEventListener = (() => {}) as unknown as typeof EventTarget.prototype.addEventListener;
+  EventTarget.prototype.addEventListener =
+    (() => {}) as unknown as typeof EventTarget.prototype.addEventListener;
 }
 
 /* ── VisualViewport polyfill ──────────────────────────────── */
@@ -294,7 +300,10 @@ if (Array.prototype.set === undefined) {
 
 /* ── Array.prototype.reject polyfill ──────────────────────── */
 if (Array.prototype.reject === undefined) {
-  Array.prototype.reject = function reject(this: unknown[], func: (item: unknown) => boolean): unknown[] {
+  Array.prototype.reject = function reject(
+    this: unknown[],
+    func: (item: unknown) => boolean
+  ): unknown[] {
     return this.filter((item) => !func(item));
   };
 
@@ -345,7 +354,11 @@ if (Array.prototype.pop_i === undefined) {
 
 /* ── Array.prototype.remove polyfill ─────────────────────── */
 if (Array.prototype.remove === undefined) {
-  Array.prototype.remove = function (this: unknown[], item: unknown, suppressError?: boolean): void {
+  Array.prototype.remove = function (
+    this: unknown[],
+    item: unknown,
+    suppressError?: boolean
+  ): void {
     const i = this.indexOf(item);
 
     if (i < 0) {
@@ -368,13 +381,18 @@ if (Array.prototype.remove === undefined) {
 
 /* ── String.prototype.contains polyfill ──────────────────── */
 if ((String.prototype as unknown as Record<string, unknown>).contains === undefined) {
-  (String.prototype as unknown as Record<string, unknown>).contains = function (this: string, substr: string): boolean {
+  (String.prototype as unknown as Record<string, unknown>).contains = function (
+    this: string,
+    substr: string
+  ): boolean {
     return this.search(substr) >= 0;
   };
 }
 
 /* ── Symbol.keystr implementations on built-in prototypes ── */
-(String.prototype as unknown as Record<symbol, () => string>)[Symbol.keystr] = function (this: string): string {
+(String.prototype as unknown as Record<symbol, () => string>)[Symbol.keystr] = function (
+  this: string
+): string {
   return this;
 };
 
@@ -384,7 +402,9 @@ if ((String.prototype as unknown as Record<string, unknown>).contains === undefi
   return "" + this;
 };
 
-(Array.prototype as unknown as Record<symbol, () => string>)[Symbol.keystr] = function (this: unknown[]): string {
+(Array.prototype as unknown as Record<symbol, () => string>)[Symbol.keystr] = function (
+  this: unknown[]
+): string {
   let key = "";
   for (const item of this) {
     key += (item as Record<symbol, () => string>)[Symbol.keystr]() + ":";

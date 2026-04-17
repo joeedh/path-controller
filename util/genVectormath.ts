@@ -339,7 +339,12 @@ function getBaseVector(parent) {
 let _v3nd_n1_normalizedDot, _v3nd_n2_normalizedDot;
 let _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4;
 
-export function makeVector3(BaseVector, structName = "vec3", structType = "float", customConstructorCode = undefined) {
+export function makeVector3(
+  BaseVector,
+  structName = "vec3",
+  structType = "float",
+  customConstructorCode = undefined
+) {
   var Vector3;
   var bundlehelper = [nstructjs];
 

@@ -16,7 +16,14 @@ export class Curve1DProperty extends ToolProperty<Curve1D, PropTypes["CURVE"]> {
   );
   data: Curve1D;
 
-  constructor(curve?: Curve1D, apiname?: string, uiname?: string, description?: string, flag?: number, icon?: number) {
+  constructor(
+    curve?: Curve1D,
+    apiname?: string,
+    uiname?: string,
+    description?: string,
+    flag?: number,
+    icon?: number
+  ) {
     super(PropTypes.CURVE, undefined, apiname, uiname, description, flag, icon);
 
     this.data = new Curve1D();

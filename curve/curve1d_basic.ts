@@ -11,7 +11,10 @@ function feq(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.00001;
 }
 
-export class EquationCurve extends CurveTypeData<"EquationCurve", BaseUiData & { textbox?: TextBox }> {
+export class EquationCurve extends CurveTypeData<
+  "EquationCurve",
+  BaseUiData & { textbox?: TextBox }
+> {
   declare parent:
     | {
         xRange: InstanceType<typeof Vector2>;
@@ -283,7 +286,11 @@ export class EquationCurve extends CurveTypeData<"EquationCurve", BaseUiData & {
 
   destroy(): void {}
 
-  draw(_canvas: HTMLCanvasElement, g: CanvasRenderingContext2D, _draw_transform: [number, [number, number]]): void {
+  draw(
+    _canvas: HTMLCanvasElement,
+    g: CanvasRenderingContext2D,
+    _draw_transform: [number, [number, number]]
+  ): void {
     g.save();
     if (this._haserror) {
       g.fillStyle = g.strokeStyle = "rgba(255, 50, 0, 0.25)";
@@ -439,7 +446,9 @@ export class GuassianCurve extends CurveTypeData<
   }
 
   evaluate(s: number): number {
-    const r = this.height * Math.exp(-((s - this.offset) * (s - this.offset)) / (2 * this.deviation * this.deviation));
+    const r =
+      this.height *
+      Math.exp(-((s - this.offset) * (s - this.offset)) / (2 * this.deviation * this.deviation));
     return r;
   }
 

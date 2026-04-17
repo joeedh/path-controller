@@ -15,7 +15,10 @@ export function saveFile(
 }
 
 //returns a promise
-export function loadFile(_filename: string = "unnamed", exts: string[] = []): Promise<string | ArrayBuffer | null> {
+export function loadFile(
+  _filename: string = "unnamed",
+  exts: string[] = []
+): Promise<string | ArrayBuffer | null> {
   const input = document.createElement("input");
   input.type = "file";
 
@@ -49,6 +52,8 @@ window._testLoadFile = function (exts: string[] = ["*.*"]): void {
 };
 
 window._testSaveFile = function (): void {
-  const buf = (window as unknown as Record<string, { createFile(): BlobPart }>)._appstate.createFile();
+  const buf = (
+    window as unknown as Record<string, { createFile(): BlobPart }>
+  )._appstate.createFile();
   saveFile(buf, "unnamed.w3d", [".w3d"]);
 };
