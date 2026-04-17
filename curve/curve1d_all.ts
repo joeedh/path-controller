@@ -1,10 +1,10 @@
-import { BounceCurve, EaseCurve, ElasticCurve, RandCurve } from "./curve1d_anim.js";
-import { EquationCurve, GuassianCurve } from "./curve1d_basic.js";
-import { BSplineCurve } from "./curve1d_bspline.js";
+import { BounceCurve, EaseCurve, ElasticCurve, RandCurve } from "./curve1d_anim";
+import { EquationCurve, GuassianCurve } from "./curve1d_basic";
+import { BSplineCurve } from "./curve1d_bspline";
 
-export * from "./curve1d_basic.js";
-export * from "./curve1d_bspline.js";
-export * from "./curve1d_anim.js";
+export * from "./curve1d_basic";
+export * from "./curve1d_bspline";
+export * from "./curve1d_anim";
 
 export type AllCurveTypes =
   | BounceCurve

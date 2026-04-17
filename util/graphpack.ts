@@ -1,10 +1,10 @@
 "use strict";
 
-import { Vector2 } from "./vectormath.js";
-import * as math from "./math.js";
-import * as util from "./util.js";
+import { Vector2 } from "./vectormath";
+import * as math from "./math";
+import * as util from "./util";
 
-import { Constraint, Solver } from "./solver.js";
+import { Constraint, Solver } from "./solver";
 
 let idgen = 0;
 

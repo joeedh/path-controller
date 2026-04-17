@@ -1,9 +1,9 @@
-import * as util from "../util/util.js";
-import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath.js";
-import { ToolPropertyIF, PropTypes, PropFlags } from "./toolprop_abstract.js";
-import nstructjs from "../util/struct.js";
-import type { StructReader } from "../util/nstructjs.js";
-import type { JSONAny } from "../controller.js";
+import * as util from "../util/util";
+import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath";
+import { ToolPropertyIF, PropTypes, PropFlags } from "./toolprop_abstract";
+import nstructjs from "../util/struct";
+import type { StructReader } from "../util/nstructjs";
+import type { JSONAny } from "../controller";
 
 declare global {
   interface SymbolConstructor {
@@ -17,7 +17,7 @@ export type IconMap = Record<string, number>;
 export type DescriptionMap = Record<string, string>;
 export type UINameMap = Record<string, string>;
 
-export { PropTypes, PropFlags } from "./toolprop_abstract.js";
+export { PropTypes, PropFlags } from "./toolprop_abstract";
 
 export type NumberConstraintBase =
   | "range"
@@ -836,7 +836,7 @@ let num_res = [
 //num_re = /([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+)/
 */
 
-export { isNumber } from "../../core/units.js";
+export { isNumber } from "../../core/units";
 /*
 export function isNumber(f) {
   if (f === "NaN" || (typeof f == "number" && isNaN(f))) {

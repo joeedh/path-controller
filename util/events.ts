@@ -1,8 +1,8 @@
 "use strict";
 
-import * as simple_events from "./simple_events.js";
+import * as simple_events from "./simple_events";
 
-export { keymap, reverse_keymap, keymap_latin_1 } from "./simple_events.js";
+export { keymap, reverse_keymap, keymap_latin_1 } from "./simple_events";
 
 type EventCallback = (data: { stopPropagation(): void; data: unknown }) => void;
 

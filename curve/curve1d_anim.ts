@@ -1,8 +1,8 @@
-import nstructjs from "../util/struct.js";
-import { CurveConstructors, CurveTypeData } from "./curve1d_base.js";
-import Ease from "./ease.js";
-import * as util from "../util/util.js";
-import type { StructReader } from "../util/nstructjs.js";
+import nstructjs from "../util/struct";
+import { CurveConstructors, CurveTypeData } from "./curve1d_base";
+import Ease from "./ease";
+import * as util from "../util/util";
+import type { StructReader } from "../util/nstructjs";
 
 function bez3(a: number, b: number, c: number, t: number): number {
   var r1 = a + (b - a) * t;

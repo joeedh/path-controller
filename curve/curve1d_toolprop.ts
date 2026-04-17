@@ -1,8 +1,8 @@
-import { Curve1D } from "./curve1d.js";
-import { ToolProperty, PropTypes, PropFlags } from "../toolsys/toolprop.js";
-import * as nstructjs from "../util/nstructjs.js";
+import { Curve1D } from "./curve1d";
+import { ToolProperty, PropTypes, PropFlags } from "../toolsys/toolprop";
+import * as nstructjs from "../util/nstructjs";
 
-import "./curve1d_all.js";
+import "./curve1d_all";
 
 export class Curve1DProperty extends ToolProperty<Curve1D, PropTypes["CURVE"]> {
   static PROP_TYPE_ID = PropTypes.CURVE;

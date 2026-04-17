@@ -41,15 +41,15 @@
  }
  </pre>
  */
-import * as toolprop from "../toolsys/toolprop.js";
-import * as parseutil from "../util/parseutil.js";
-import { print_stack } from "../util/util.js";
-import { ToolOp } from "../toolsys/toolsys.js";
-import { PropTypes, PropFlags } from "../toolsys/toolprop.js";
-import * as util from "../util/util.js";
-import { DataPathSetOp } from "./controller_ops.js";
-import { Curve1DProperty } from "../curve/curve1d_toolprop.js";
-import { KeyMap } from "../controller.js";
+import * as toolprop from "../toolsys/toolprop";
+import * as parseutil from "../util/parseutil";
+import { print_stack } from "../util/util";
+import { ToolOp } from "../toolsys/toolsys";
+import { PropTypes, PropFlags } from "../toolsys/toolprop";
+import * as util from "../util/util";
+import { DataPathSetOp } from "./controller_ops";
+import { Curve1DProperty } from "../curve/curve1d_toolprop";
+import { KeyMap } from "../controller";
 import { isVecProperty, ToolPropertyTypes } from "../toolsys";
 
 import {
@@ -62,7 +62,7 @@ import {
   ListFuncs,
   DataList,
   DataPathToolProperty,
-} from "./controller_base.js";
+} from "./controller_base";
 
 declare global {
   interface SymbolConstructor {
@@ -70,10 +70,10 @@ declare global {
   }
 }
 
-export * from "./controller_base.js";
+export * from "./controller_base";
 const PUTLParseError = parseutil.PUTLParseError;
 
-import type { TokFunc } from "../util/parseutil.js";
+import type { TokFunc } from "../util/parseutil";
 
 const tk = (name: string, re: RegExp, func?: TokFunc) => new parseutil.tokdef(name, re, func);
 const tokens = [
@@ -115,14 +115,14 @@ for (let i = 0; i < parserStack.length; i++) {
 }
 let parserStackCur = 0;
 
-import { setImplementationClass } from "./controller_base.js";
-import { initToolPaths, parseToolPath } from "../toolsys/toolpath.js";
-import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract.js";
+import { setImplementationClass } from "./controller_base";
+import { initToolPaths, parseToolPath } from "../toolsys/toolpath";
+import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract";
 
-export { DataPathError, DataFlags } from "./controller_base.js";
+export { DataPathError, DataFlags } from "./controller_base";
 
-import { ToolClasses } from "../toolsys/toolsys.js";
-import { ToolProperty, IntProperty } from "../toolsys/toolprop.js";
+import { ToolClasses } from "../toolsys/toolsys";
+import { ToolProperty, IntProperty } from "../toolsys/toolprop";
 
 const tool_classes = ToolClasses;
 

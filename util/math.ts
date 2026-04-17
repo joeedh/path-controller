@@ -20,7 +20,7 @@ import {
   Number4,
   Number2,
   Number3,
-} from "./vectormath.js";
+} from "./vectormath";
 
 type Vec2Like = Vector2Like;
 type Vec3Like = Vector3Like;

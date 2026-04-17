@@ -1,6 +1,6 @@
-import { ToolClasses, ToolOp } from "./toolsys.js";
-import { tokdef, lexer, parser, PUTLParseError } from "../util/parseutil.js";
-import { DataPathError } from "../controller/controller_base.js";
+import { ToolClasses, ToolOp } from "./toolsys";
+import { tokdef, lexer, parser, PUTLParseError } from "../util/parseutil";
+import { DataPathError } from "../controller/controller_base";
 
 export const ToolPaths: Record<string, typeof ToolOp> = {};
 

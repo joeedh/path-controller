@@ -1,12 +1,12 @@
-import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract.js";
-import { Quat, Vector2, Vector3, Vector4 } from "../util/vectormath.js";
-import * as toolprop_abstract from "../toolsys/toolprop_abstract.js";
-import * as toolprop from "../toolsys/toolprop.js";
-import { cachering } from "../util/util.js";
-import { ToolProperty } from "../toolsys/toolprop.js";
-import type { DataAPI, DataStruct } from "./controller.js";
-import type { ContextLike, ModelInterface } from "./controller_abstract.js";
-import { ToolPropertyTypes } from "../toolsys/allprops.js";
+import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract";
+import { Quat, Vector2, Vector3, Vector4 } from "../util/vectormath";
+import * as toolprop_abstract from "../toolsys/toolprop_abstract";
+import * as toolprop from "../toolsys/toolprop";
+import { cachering } from "../util/util";
+import { ToolProperty } from "../toolsys/toolprop";
+import type { DataAPI, DataStruct } from "./controller";
+import type { ContextLike, ModelInterface } from "./controller_abstract";
+import { ToolPropertyTypes } from "../toolsys/allprops";
 
 declare global {
   interface PathUXDebug {

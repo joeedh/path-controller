@@ -1,5 +1,5 @@
-import { ToolOp, ToolFlags } from "../toolsys/toolsys.js";
-import type { FlagProperty, ToolProperty } from "../toolsys/toolprop.js";
+import { ToolOp, ToolFlags } from "../toolsys/toolsys";
+import type { FlagProperty, ToolProperty } from "../toolsys/toolprop";
 import {
   PropTypes,
   PropFlags,
@@ -8,10 +8,10 @@ import {
   FloatProperty,
   EnumProperty,
   StringProperty,
-} from "../toolsys/toolprop.js";
+} from "../toolsys/toolprop";
 
-import * as util from "../util/util.js";
-import { ContextLike } from "./controller_abstract.js";
+import * as util from "../util/util";
+import { ContextLike } from "./controller_abstract";
 
 type DataPathSetInputs = {
   dataPath: StringProperty;

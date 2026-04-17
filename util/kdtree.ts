@@ -1,7 +1,7 @@
 "use strict";
 
-import * as util from "./util.js";
-import { Number3, Vector3 } from "./vectormath.js";
+import * as util from "./util";
+import { Number3, Vector3 } from "./vectormath";
 
 //'ni' is shorthand for 'nodeindex', a point into the typed array data structure
 

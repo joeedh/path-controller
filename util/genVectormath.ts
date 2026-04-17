@@ -558,9 +558,9 @@ export function makeVector3(BaseVector, structName = "vec3", structType = "float
 }
 
 import fs from "fs";
-import { Matrix4 } from "./matrix4.js";
-import { IndexRange } from "./indexRange.js";
-import { Matrix4Code } from "./matrix4Code.js";
+import { Matrix4 } from "./matrix4";
+import { IndexRange } from "./indexRange";
+import { Matrix4Code } from "./matrix4Code";
 
 function basicDotFuncs(vecsize: number, VArg: string) {
   let s = "";

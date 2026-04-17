@@ -1,5 +1,5 @@
-import * as util from "../util/util.js";
-import { Vector3, Vector4 } from "../util/vectormath.js";
+import * as util from "../util/util";
+import { Vector3, Vector4 } from "../util/vectormath";
 
 const rgb_to_hsv_rets = new util.cachering(() => [0, 0, 0], 64);
 

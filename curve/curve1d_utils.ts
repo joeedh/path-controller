@@ -1,5 +1,5 @@
-import { CurveConstructors } from "./curve1d_base.js";
-import { EnumProperty } from "../toolsys/toolprop.js";
+import { CurveConstructors } from "./curve1d_base";
+import { EnumProperty } from "../toolsys/toolprop";
 
 export function makeGenEnum(): EnumProperty {
   let enumdef: Record<string, string> = {};

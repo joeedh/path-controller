@@ -1,7 +1,7 @@
-import * as util from "./util.js";
-import cconst from "../config/config.js";
-import { Vector2 } from "./vectormath.js";
-import { ContextLike } from "../controller.js";
+import * as util from "./util";
+import cconst from "../config/config";
+import { Vector2 } from "./vectormath";
+import { ContextLike } from "../controller";
 
 declare global {
   // @ts-ignore XXX

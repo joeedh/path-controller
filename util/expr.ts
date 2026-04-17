@@ -1,5 +1,5 @@
-import * as vectormath from "./vectormath.js";
-import { lexer, tokdef, token, parser, PUTLParseError, TokFunc } from "./parseutil.js";
+import * as vectormath from "./vectormath";
+import { lexer, tokdef, token, parser, PUTLParseError, TokFunc } from "./parseutil";
 
 let tk = (n: string, r?: RegExp, f?: TokFunc): tokdef => new tokdef(n, r, f);
 

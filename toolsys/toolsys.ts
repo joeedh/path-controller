@@ -1,5 +1,5 @@
 "use strict";
-import nstructjs from "../util/struct.js";
+import nstructjs from "../util/struct";
 
 /**
 
@@ -70,14 +70,14 @@ import nstructjs from "../util/struct.js";
  </pre>
  */
 
-import * as events from "../util/events.js";
-import { keymap } from "../util/simple_events.js";
-import { PropFlags, PropTypes, ToolProperty } from "./toolprop.js";
-import { DataPath } from "../controller/controller_base.js";
-import * as util from "../util/util.js";
-import { Context } from "../controller/context.js";
-import { ContextLike, DataAPI, DataStruct, ToolOpAny } from "../controller.js";
-import { StructableClass, StructReader } from "../util/nstructjs.js";
+import * as events from "../util/events";
+import { keymap } from "../util/simple_events";
+import { PropFlags, PropTypes, ToolProperty } from "./toolprop";
+import { DataPath } from "../controller/controller_base";
+import * as util from "../util/util";
+import { Context } from "../controller/context";
+import { ContextLike, DataAPI, DataStruct, ToolOpAny } from "../controller";
+import { StructableClass, StructReader } from "../util/nstructjs";
 
 // Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
 

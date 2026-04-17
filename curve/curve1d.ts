@@ -1,14 +1,14 @@
-import nstructjs from "../util/struct.js";
+import nstructjs from "../util/struct";
 
-import * as util from "../util/util.js";
+import * as util from "../util/util";
 //import * as ui_base from './ui_base.js';
-import { Vector2, Vector3, Vector4, Matrix4 } from "../util/vectormath.js";
-import { EventDispatcher } from "../util/events.js";
-import type { StructReader } from "../util/nstructjs.js";
+import { Vector2, Vector3, Vector4, Matrix4 } from "../util/vectormath";
+import { EventDispatcher } from "../util/events";
+import type { StructReader } from "../util/nstructjs";
 
-export { getCurve } from "./curve1d_base.js";
-export { SplineTemplates, SplineTemplateIcons } from "./curve1d_bspline.js";
-import type { AllCurveTypes } from "./curve1d_all.js";
+export { getCurve } from "./curve1d_base";
+export { SplineTemplates, SplineTemplateIcons } from "./curve1d_bspline";
+import type { AllCurveTypes } from "./curve1d_all";
 
 export function mySafeJSONStringify(obj: { toJSON(): Record<string, unknown> }): string {
   return JSON.stringify(obj.toJSON(), function (key) {
@@ -30,8 +30,8 @@ export function mySafeJSONParse(buf: string): unknown {
   return JSON.parse(buf, (_key, _val) => {});
 }
 
-export { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base.js";
-import { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base.js";
+export { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base";
+import { CurveConstructors, CURVE_VERSION, CurveTypeData } from "./curve1d_base";
 
 type Vec2 = InstanceType<typeof Vector2>;
 
