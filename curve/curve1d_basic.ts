@@ -155,39 +155,40 @@ export class EquationCurve extends CurveTypeData<"EquationCurve"> {
   #makeFunc(): void {
     this._func = undefined;
 
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    var sin = Math.sin,
-      cos = Math.cos,
-      pi = Math.PI,
-      PI = Math.PI,
-      e = Math.E,
-      E = Math.E,
-      tan = Math.tan,
-      abs = Math.abs,
-      floor = Math.floor,
-      ceil = Math.ceil,
-      acos = Math.acos,
-      asin = Math.asin,
-      atan = Math.atan,
-      cosh = Math.cos,
-      sinh = Math.sinh,
-      log = Math.log,
-      pow = Math.pow,
-      exp = Math.exp,
-      sqrt = Math.sqrt,
-      cbrt = Math.cbrt,
-      min = Math.min,
-      max = Math.max;
-    /* eslint-enable @typescript-eslint/no-unused-vars */
-
+    // eslint-disable-next-line no-var, no-unassigned-vars
     var func: ((x: number) => number) | undefined;
-    let code = `
-    func = function(x) {
-      return ${this.equation};
-    }
+    const code = `
+    (function() {
+      const sin = Math.sin,
+        cos = Math.cos,
+        pi = Math.PI,
+        PI = Math.PI,
+        e = Math.E,
+        E = Math.E,
+        tan = Math.tan,
+        abs = Math.abs,
+        floor = Math.floor,
+        ceil = Math.ceil,
+        acos = Math.acos,
+        asin = Math.asin,
+        atan = Math.atan,
+        cosh = Math.cos,
+        sinh = Math.sinh,
+        log = Math.log,
+        pow = Math.pow,
+        exp = Math.exp,
+        sqrt = Math.sqrt,
+        cbrt = Math.cbrt,
+        min = Math.min,
+        max = Math.max;
+      return function(x) {
+        return ${this.equation};
+      }
+    })();
     `;
     try {
-      eval(code);
+      // bundler friendly form
+      func = (0, eval)(code);
 
       this._haserror = false;
     } catch (error) {

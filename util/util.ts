@@ -1,7 +1,6 @@
-import "./polyfill.js";
-import "./struct.js";
-import MobileDetect from "./mobile-detect.js";
-import nstructjs from "./struct.js";
+import "./polyfill";
+import MobileDetect from "./mobile-detect";
+import nstructjs from "./struct";
 
 const f64tmp = new Float64Array(1);
 const u16tmp = new Uint16Array(f64tmp.buffer);

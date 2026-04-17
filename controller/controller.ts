@@ -771,8 +771,14 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
           return false;
         }
       } else {
-        const $ = obj;
-        return eval(filter);
+        const code = `
+        function filter($) {
+          return ${filter};
+        }
+        `;
+        //bundler friendly form
+        const func = (0, eval)(code)
+        return func(obj);
       }
     }
 
