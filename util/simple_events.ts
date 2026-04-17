@@ -694,7 +694,10 @@ export function pushModalLight(
     const handler: EventHandler = make_handler(k, key);
     ret.handlers[k] = handler;
 
-    const settings: AddEventListenerOptions = (handler.settings = { passive: false, capture: true });
+    const settings: AddEventListenerOptions = (handler.settings = {
+      passive: false,
+      capture: true,
+    });
     window.addEventListener(k, handler, settings);
   }
 
@@ -704,7 +707,10 @@ export function pushModalLight(
 
       ret.handlers[k] = make_default_touchhandler(k, ret);
 
-      const settings: AddEventListenerOptions = (ret.handlers[k].settings = { passive: false, capture: true });
+      const settings: AddEventListenerOptions = (ret.handlers[k].settings = {
+        passive: false,
+        capture: true,
+      });
       window.addEventListener(k, ret.handlers[k], settings);
     }
   }

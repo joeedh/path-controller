@@ -215,7 +215,9 @@ class CurvePointList extends Array<Curve1DPoint> {
 interface BSplineUIData {
   start_mpos: Vector2;
   transpoints: Curve1DPoint[];
-  dom: { ctx: { api: { execTool(ctx: unknown, tool: unknown, args?: Record<string, unknown>): void } } };
+  dom: {
+    ctx: { api: { execTool(ctx: unknown, tool: unknown, args?: Record<string, unknown>): void } };
+  };
   canvas: HTMLCanvasElement;
   g: CanvasRenderingContext2D;
   transforming: boolean;
@@ -1810,7 +1812,9 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
     row.iconbutton(icon, "Delete Point", () => {
       if (dpath) {
         const r = row as {
-          ctx: { api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void } };
+          ctx: {
+            api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void };
+          };
         };
         r.ctx.api.execTool(r.ctx, "curve1d.bspline_delete_point", {
           dataPath: dpath,
@@ -1826,7 +1830,9 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
     row.button("Reset", () => {
       if (dpath) {
         const r = row as {
-          ctx: { api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void } };
+          ctx: {
+            api: { execTool(ctx: unknown, tool: string, args: Record<string, unknown>): void };
+          };
         };
         r.ctx.api.execTool(r.ctx, "curve1d.reset_bspline", {
           dataPath: dpath,

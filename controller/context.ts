@@ -63,7 +63,9 @@ interface ContextDefinition {
 type OverlayParent = { new (appstate: unknown): Record<string, unknown> };
 
 export function makeDerivedOverlay(parent: OverlayParent) {
-  return class ContextOverlay extends (parent as { new (...args: unknown[]): Record<string, unknown> }) {
+  return class ContextOverlay extends (parent as {
+    new (...args: unknown[]): Record<string, unknown>;
+  }) {
     ctx: Context | undefined;
     _state: unknown;
     __allKeys: Set<string | symbol> | undefined;

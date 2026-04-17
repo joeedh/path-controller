@@ -285,6 +285,10 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     this.callbacks = {};
   }
 
+  getUIName() {
+    return this.uiname ?? ToolProperty.makeUIName(this.apiname ?? "error");
+  }
+
   /** Get a data api execution context stack ( for use with the using keyword) */
   execWithContext() {
     return execScopeUsingStack.withScope(this);

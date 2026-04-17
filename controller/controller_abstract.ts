@@ -7,6 +7,7 @@ import type { Screen } from "../../screen/FrameManager";
 
 export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
+// this interface exists to avoid circular type references, bleh
 export interface IToolStack {
   head?: ToolOpAny;
   [k: number]: ToolOpAny;

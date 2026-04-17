@@ -599,7 +599,12 @@ function test_parser(): void {
     }
   }
 
-  function p_Field(p: parser): { name: string; type: unknown; set: string | undefined; get: string | undefined } {
+  function p_Field(p: parser): {
+    name: string;
+    type: unknown;
+    set: string | undefined;
+    get: string | undefined;
+  } {
     const field: { name: string; type: unknown; set: string | undefined; get: string | undefined } = {
       name: "",
       type: undefined,

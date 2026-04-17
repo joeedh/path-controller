@@ -25,6 +25,9 @@ import {
 type Vec2Like = Vector2Like;
 type Vec3Like = Vector3Like;
 type Vec4Like = Vector4Like;
+type Vec2Arr = Vec2Like | number[];
+type Vec3Arr = Vec3Like | number[];
+type Vec4Arr = Vec4Like | number[];
 
 const dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 const quad_co_rets2 = util.cachering.fromConstructor(Vector2, 512);
@@ -1040,15 +1043,21 @@ const aabb_intersect_rets = new util.cachering(() => {
  * @param {*} pos2
  * @param {*} size2
  */ export function aabb_intersect_2d(
-  pos1: Vec2Like,
-  size1: Vec2Like,
-  pos2: Vec2Like,
-  size2: Vec2Like
+  pos1: Vec2Arr,
+  size1: Vec2Arr,
+  pos2: Vec2Arr,
+  size2: Vec2Arr
 ): { pos: Vector2; size: Vector2 } | undefined {
   const v1 = aabb_intersect_vs.next().load(pos1);
-  const v2 = aabb_intersect_vs.next().load(pos1).add(size1);
+  const v2 = aabb_intersect_vs
+    .next()
+    .load(pos1)
+    .add(size1 as unknown as Vec2Like);
   const v3 = aabb_intersect_vs.next().load(pos2);
-  const v4 = aabb_intersect_vs.next().load(pos2).add(size2);
+  const v4 = aabb_intersect_vs
+    .next()
+    .load(pos2)
+    .add(size2 as unknown as Vec2Like);
   const min = aabb_intersect_vs.next().zero();
   const max = aabb_intersect_vs.next().zero();
   let tot = 0;
