@@ -133,6 +133,7 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
     return this;
   }
 
+  /** enable arbitrary code expressions in mass set path */
   evalMassSetFilter(): this {
     this.flag |= DataFlags.USE_EVAL_MASS_SET_PATHS;
     return this;

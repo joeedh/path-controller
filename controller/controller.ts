@@ -710,6 +710,13 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
   }
 
+  /** 
+   * 
+   * Mass set paths take the form list[{$.prop}]`, where the filter is inside of the list.
+   * Note: `$.prop` cannot be an expression unless you enable eval with `struct.list().evalMassSetFilter()`.
+   * An example of a more complicated expression might be: 
+   * `canvas.paths[{$.id % 2 === 0}].material.color`
+   */
   resolveMassSetPaths(ctx: CTX, massSetPath: string): string[] {
     if (massSetPath.startsWith("/")) {
       massSetPath = massSetPath.slice(1, massSetPath.length);
@@ -719,6 +726,13 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     const end = massSetPath.search("}");
 
     if (start < 0 || end < 0) {
+      console.log(
+        `
+Mass set paths take the form \`list[{$.prop}]\`, where the filter is inside of the list.
+Note: \`$.prop\` cannot be an expression unless you enable eval with \`struct.list().evalMassSetFilter()\`.
+An example of a more complicated expression might be: 
+\`canvas.paths[{$.id % 2 === 0}].material.color\``.trim()
+      );
       throw new DataPathError("Invalid mass set datapath: " + massSetPath);
     }
 
@@ -742,7 +756,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     const paths = [];
 
     const list = rdef.prop;
-    const api = ctx.api;
+    const api = ctx.api ?? this;
 
     function applyFilter(obj: any) {
       const forceEval = rdef.dpath.flag & DataFlags.USE_EVAL_MASS_SET_PATHS;
@@ -772,12 +786,12 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
         }
       } else {
         const code = `
-        function filter($) {
+        (function filter($) {
           return ${filter};
-        }
+        })
         `;
         //bundler friendly form
-        const func = (0, eval)(code)
+        const func = (0, eval)(code);
         return func(obj);
       }
     }

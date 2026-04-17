@@ -2359,9 +2359,12 @@ export function initSplineTemplates() {
   console.log("Loaded 1d spline templates");
 }
 
-//delay to ensure config is fully loaded
-window.setTimeout(() => {
-  if (config.autoLoadSplineTemplates) {
-    initSplineTemplates();
-  }
-}, 0);
+//don't run in nodejs
+if (0 && !util.insideNodeJS()) {
+  //delay to ensure config is fully loaded
+  window.setTimeout(() => {
+    if (config.autoLoadSplineTemplates) {
+      initSplineTemplates();
+    }
+  }, 0);
+}

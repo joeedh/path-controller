@@ -2,6 +2,15 @@ import "./polyfill";
 import MobileDetect from "./mobile-detect";
 import nstructjs from "./struct";
 
+export function insideNodeJS() {
+  const globalAny = globalThis as any;
+  return typeof globalAny.process?.version !== "undefined";
+}
+
+export function insideJest() {
+  const globalAny = globalThis as any;
+  return globalAny.INSIDE_JEST_TEST === true
+}
 const f64tmp = new Float64Array(1);
 const u16tmp = new Uint16Array(f64tmp.buffer);
 
@@ -2669,27 +2678,29 @@ export class TimeoutPromise<T = unknown> {
   }
 }
 
-window.setInterval(() => {
-  const bad: TimeoutPromise[] = [];
+if (!insideJest()) {
+  window.setInterval(() => {
+    const bad: TimeoutPromise[] = [];
 
-  for (const promise of PendingTimeoutPromises) {
-    if (promise.bad) {
-      bad.push(promise);
+    for (const promise of PendingTimeoutPromises) {
+      if (promise.bad) {
+        bad.push(promise);
+      }
     }
-  }
 
-  for (const promise of bad) {
-    PendingTimeoutPromises.delete(promise);
-  }
-
-  for (const promise of bad) {
-    try {
-      promise._reject(new Error("Timeout"));
-    } catch (error) {
-      print_stack(error as Error);
+    for (const promise of bad) {
+      PendingTimeoutPromises.delete(promise);
     }
-  }
-}, 250);
+
+    for (const promise of bad) {
+      try {
+        promise._reject(new Error("Timeout"));
+      } catch (error) {
+        print_stack(error as Error);
+      }
+    }
+  }, 250);
+}
 
 import lzstring from "../extern/lz-string/lz-string";
 import { StructReader } from "./nstructjs";
