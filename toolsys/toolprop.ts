@@ -3,7 +3,7 @@ import { Vector2, Vector3, Vector4, Quat, Matrix4 } from "../util/vectormath";
 import { ToolPropertyIF, PropTypes, PropFlags } from "./toolprop_abstract";
 import nstructjs from "../util/struct";
 import type { StructReader } from "../util/nstructjs";
-import type { JSONAny } from "../controller";
+import type { JSONAny, Vector2Like, Vector3Like, Vector4Like } from "../controller";
 
 declare global {
   interface SymbolConstructor {
@@ -1827,7 +1827,12 @@ export class Vec2Property extends VecPropertyBase<Vector2, PropTypes["VEC2"]> {
   static PROP_TYPE_ID = PropTypes.VEC2;
   static STRUCT: string;
 
-  constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
+  constructor(
+    data?: Vector2Like | number[],
+    apiname?: string,
+    uiname?: string,
+    description?: string
+  ) {
     super(PropTypes.VEC2, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC2;
@@ -1867,7 +1872,7 @@ export class Vec3Property extends VecPropertyBase<Vector3, PropTypes["VEC3"]> {
   static PROP_TYPE_ID = PropTypes.VEC3;
   static STRUCT: string;
 
-  constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
+  constructor(data?: Vector3Like | number[], apiname?: string, uiname?: string, description?: string) {
     super(PropTypes.VEC3, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC3;
@@ -1904,7 +1909,7 @@ export class Vec4Property extends VecPropertyBase<Vector4, PropTypes["VEC4"]> {
   static PROP_TYPE_ID = PropTypes.VEC4;
   static STRUCT: string;
 
-  constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
+  constructor(data?: Vector4Like | number[], apiname?: string, uiname?: string, description?: string) {
     super(PropTypes.VEC4, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC4;
@@ -1958,7 +1963,7 @@ export class QuatProperty extends ToolProperty<Quat, PropTypes["QUAT"]> {
   static PROP_TYPE_ID = PropTypes.QUAT;
   static STRUCT: string;
 
-  constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
+  constructor(data?: Vector4Like | Quat | number[], apiname?: string, uiname?: string, description?: string) {
     super(PropTypes.QUAT, undefined, apiname, uiname, description);
     this.data = new Quat(data as number[] | undefined);
   }

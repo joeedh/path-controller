@@ -867,82 +867,108 @@ export function haveModal(): boolean {
 
 window._haveModal = haveModal; //for debugging console
 
-export var keymap_latin_1: Record<string, number> = {
-  Space : 32,
-  Escape: 27,
-  Enter : 13,
-  Return: 13,
-  Up    : 38,
-  Down  : 40,
-  Left  : 37,
-  Right : 39,
-
-  Num0     : 96,
-  Num1     : 97,
-  Num2     : 98,
-  Num3     : 99,
-  Num4     : 100,
-  Num5     : 101,
-  Num6     : 102,
-  Num7     : 103,
-  Num8     : 104,
-  Num9     : 105,
-  Home     : 36,
-  End      : 35,
-  Delete   : 46,
-  Backspace: 8,
-  Insert   : 45,
-  PageUp   : 33,
-  PageDown : 34,
-  Tab      : 9,
-  "-"      : 189,
-  "="      : 187,
-  "."      : 190,
-  "/"      : 191,
-  ","      : 188,
-  ";"      : 186,
-  "'"      : 222,
-  "["      : 219,
-  "]"      : 221,
-  NumPlus  : 107,
-  NumMinus : 109,
-  Shift    : 16,
-  Ctrl     : 17,
-  Control  : 17,
-  Alt      : 18,
-};
-
-for (var i = 0; i < 26; i++) {
-  keymap_latin_1[String.fromCharCode(i + 65)] = i + 65;
-}
-for (var i = 0; i < 10; i++) {
-  keymap_latin_1[String.fromCharCode(i + 48)] = i + 48;
-}
-
-for (var k in keymap_latin_1) {
-  if (!(k in keymap_latin_1)) {
-    keymap_latin_1[keymap_latin_1[k]] = k as unknown as number;
-  }
+export enum keymap_latin_1 {
+  Space = 32,
+  Escape = 27,
+  Enter = 13,
+  Return = 13,
+  Up = 38,
+  Down = 40,
+  Left = 37,
+  Right = 39,
+  Num0 = 96,
+  Num1 = 97,
+  Num2 = 98,
+  Num3 = 99,
+  Num4 = 100,
+  Num5 = 101,
+  Num6 = 102,
+  Num7 = 103,
+  Num8 = 104,
+  Num9 = 105,
+  Home = 36,
+  End = 35,
+  Delete = 46,
+  Backspace = 8,
+  Insert = 45,
+  PageUp = 33,
+  PageDown = 34,
+  Tab = 9,
+  "-" = 189,
+  "=" = 187,
+  "." = 190,
+  "/" = 191,
+  "," = 188,
+  ";" = 186,
+  "'" = 222,
+  "[" = 219,
+  "]" = 221,
+  NumPlus = 107,
+  NumMinus = 109,
+  Shift = 16,
+  Ctrl = 17,
+  Control = 17,
+  Alt = 18,
+  A = 65,
+  B = 66,
+  C = 67,
+  D = 68,
+  E = 69,
+  F = 70,
+  G = 71,
+  H = 72,
+  I = 73,
+  J = 74,
+  K = 75,
+  L = 76,
+  M = 77,
+  N = 78,
+  O = 79,
+  P = 80,
+  Q = 81,
+  R = 82,
+  S = 83,
+  T = 84,
+  U = 85,
+  V = 86,
+  W = 87,
+  X = 88,
+  Y = 89,
+  Z = 90,
+  Key0 = 48,
+  Key1 = 49,
+  Key2 = 50,
+  Key3 = 51,
+  Key4 = 52,
+  Key5 = 53,
+  Key6 = 54,
+  Key7 = 55,
+  Key8 = 56,
+  Key9 = 57,
 }
 
 const keymap_latin_1_rev: Record<number, string> = {};
-for (var k in keymap_latin_1) {
-  keymap_latin_1_rev[keymap_latin_1[k]] = k;
+for (const k in keymap_latin_1) {
+  if (typeof k === "string") {
+    keymap_latin_1_rev[keymap_latin_1[k as keyof typeof keymap_latin_1] as number] = k;
+  }
 }
 
-export var keymap: Record<string, number> = keymap_latin_1;
-export var reverse_keymap: Record<number, string> = keymap_latin_1_rev;
+export const keymap = keymap_latin_1;
+export const reverse_keymap = keymap_latin_1_rev;
+
+export type KeyModifiers = "ctrl" | "shift" | "alt" | "meta";
 
 export class HotKey {
   action: string | ((ctx: ContextLike) => void);
-  mods: string[];
+  mods: KeyModifiers[];
   key: number;
   uiname: string | undefined;
 
   /**action can be a callback or a toolpath string*/
   constructor(
-    key: string,
-    modifiers: string[],
+    key: keyof typeof keymap,
+    modifiers: KeyModifiers[],
     action: string | ((ctx: ContextLike) => void),
     uiname?: string
   ) {
@@ -1021,7 +1047,7 @@ export class KeyMap<CTX extends ContextLike = ContextLike> extends Array<HotKey>
 
       let count = 0;
       for (let m of hk.mods) {
-        m = m.toLowerCase().trim();
+        m = m.toLowerCase().trim() as KeyModifiers;
 
         if (!mods.has(m)) {
           ok = false;

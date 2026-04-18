@@ -777,8 +777,11 @@ export class ToolOp<
     return ret;
   }
 
-  //toolop is an optional instance of this class, may be undefined
-  static canRun<CTX extends ContextLike>(_ctx: CTX, _toolop?: ToolOp | undefined): boolean {
+  /** 
+   * note: you can use a derivation of ContextLike if you like for ctx
+   * @param toolop: an optional instance of this class, may be undefined
+   */
+  static canRun(ctx: ContextLike, toolop?: ToolOp | undefined): boolean {
     return true;
   }
 
@@ -1232,8 +1235,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
   }
 
   //toolop is an optional instance of this class, may be undefined
-  static override canRun<CTX extends ContextLike = ContextLike>(
-    _ctx: CTX,
+  static override canRun(
+    _ctx: ContextLike,
     _toolop?: ToolOp | undefined
   ): boolean {
     return true;
