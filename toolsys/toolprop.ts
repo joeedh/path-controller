@@ -1872,7 +1872,12 @@ export class Vec3Property extends VecPropertyBase<Vector3, PropTypes["VEC3"]> {
   static PROP_TYPE_ID = PropTypes.VEC3;
   static STRUCT: string;
 
-  constructor(data?: Vector3Like | number[], apiname?: string, uiname?: string, description?: string) {
+  constructor(
+    data?: Vector3Like | number[],
+    apiname?: string,
+    uiname?: string,
+    description?: string
+  ) {
     super(PropTypes.VEC3, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC3;
@@ -1909,7 +1914,12 @@ export class Vec4Property extends VecPropertyBase<Vector4, PropTypes["VEC4"]> {
   static PROP_TYPE_ID = PropTypes.VEC4;
   static STRUCT: string;
 
-  constructor(data?: Vector4Like | number[], apiname?: string, uiname?: string, description?: string) {
+  constructor(
+    data?: Vector4Like | number[],
+    apiname?: string,
+    uiname?: string,
+    description?: string
+  ) {
     super(PropTypes.VEC4, undefined, apiname, uiname, description);
 
     this.type = PropTypes.VEC4;
@@ -1963,7 +1973,12 @@ export class QuatProperty extends ToolProperty<Quat, PropTypes["QUAT"]> {
   static PROP_TYPE_ID = PropTypes.QUAT;
   static STRUCT: string;
 
-  constructor(data?: Vector4Like | Quat | number[], apiname?: string, uiname?: string, description?: string) {
+  constructor(
+    data?: Vector4Like | Quat | number[],
+    apiname?: string,
+    uiname?: string,
+    description?: string
+  ) {
     super(PropTypes.QUAT, undefined, apiname, uiname, description);
     this.data = new Quat(data as number[] | undefined);
   }
