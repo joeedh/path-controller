@@ -62,6 +62,7 @@ import {
   ListFuncs,
   DataList,
   DataPathToolProperty,
+  suggestPropertyKeys,
 } from "./controller_base";
 
 declare global {
@@ -601,6 +602,8 @@ const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
   structs: DataStruct[] = [];
+  /** Message from the most recent failed resolvePath (incl. "did you mean" hints). */
+  lastResolveError: string | undefined = undefined;
 
   constructor() {
     super();
@@ -859,11 +862,15 @@ An example of a more complicated expression might be:
       inpath = inpath.slice(1, inpath.length).trim();
     }
 
+    this.lastResolveError = undefined;
+
     try {
       ret = this.resolvePath_intern(ctx, inpath, ignoreExistence, parser, dstruct);
     } catch (error) {
       //throw new DataPathError("bad path " + path);
-      if (!(error instanceof DataPathError)) {
+      if (error instanceof DataPathError) {
+        this.lastResolveError = error.message;
+      } else {
         util.print_stack(error as Error);
         report("error while evaluating path " + inpath);
       }
@@ -1012,7 +1019,10 @@ An example of a more complicated expression might be:
 
           continue;
         } else {
-          throw new DataPathError(inpath + ": unknown property " + key);
+          throw new DataPathError(
+            `${inpath}: unknown property "${key}"` +
+              suggestPropertyKeys(key, Object.keys(dstruct!.pathmap))
+          );
         }
       }
 

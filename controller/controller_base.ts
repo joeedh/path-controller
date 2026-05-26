@@ -74,6 +74,54 @@ export function getTempProp<P extends ToolProperty | ToolPropertyTypes>(type: nu
 
 export class DataPathError extends Error {}
 
+function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  let prev = new Array<number>(n + 1);
+  let cur = new Array<number>(n + 1);
+  for (let j = 0; j <= n; j++) {
+    prev[j] = j;
+  }
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    [prev, cur] = [cur, prev];
+  }
+  return prev[n];
+}
+
+/**
+ * Build a human/agent-friendly suffix for an "unknown property" error: the
+ * closest matching keys (by edit distance) plus the full list of valid keys at
+ * the failing path segment, so a wrong path string can be self-corrected.
+ */
+export function suggestPropertyKeys(key: string, available: string[]): string {
+  if (available.length === 0) {
+    return " (no properties are defined on this struct)";
+  }
+
+  const ranked = available
+    .map((k) => ({ k, d: editDistance(key.toLowerCase(), k.toLowerCase()) }))
+    .sort((a, b) => a.d - b.d);
+
+  const near = ranked
+    .filter((r) => r.d <= Math.max(2, Math.ceil(key.length / 2)))
+    .slice(0, 3)
+    .map((r) => r.k);
+
+  let msg = "";
+  if (near.length) {
+    msg += ` (did you mean ${near.map((k) => `"${k}"`).join(", ")}?)`;
+  }
+  const all = available.slice().sort();
+  const shown = all.slice(0, 30);
+  msg += ` available: ${shown.join(", ")}${all.length > shown.length ? ", …" : ""}`;
+  return msg;
+}
+
 export function getVecClass(
   proptype: number
 ): typeof Vector2 | typeof Vector3 | typeof Vector4 | typeof Quat {
