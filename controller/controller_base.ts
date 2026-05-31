@@ -508,6 +508,16 @@ export interface ListIFace<
   getIter?(api: DataAPIType, list: ListType): Iterable<ValType>;
   filter?(api: DataAPIType, list: ListType, filter: number | string): Iterable<ValType>;
   getLength(api: DataAPIType, list: ListType): number;
+
+  /**
+   * Optional change-detection hook. Return an integer that increments whenever
+   * the list mutates structurally (items added/removed/reordered) OR the active
+   * element changes. Consumers (e.g. the ListBox widget) read this O(1) each
+   * frame and only rebuild when it changes. Lists that don't implement it are
+   * change-detected by a slower O(n) key diff instead, so this is purely an
+   * opt-in optimization.
+   */
+  getVersion?(api: DataAPIType, list: ListType): number | undefined;
 }
 
 //second form of list interface
@@ -629,6 +639,10 @@ export class DataList<
   getKey(api: DataAPIType, list: ListType, value: ValType): string | number | undefined {
     this._check("getKey");
     return this.cb.getKey(api, list, value);
+  }
+
+  getVersion(api: DataAPIType, list: ListType): number | undefined {
+    return this.cb.getVersion !== undefined ? this.cb.getVersion(api, list) : undefined;
   }
 
   getStruct(api: DataAPIType, list: ListType, key: KeyType): DataStruct | undefined {
