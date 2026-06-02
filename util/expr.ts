@@ -1,12 +1,12 @@
 import * as vectormath from "./vectormath";
 import { lexer, tokdef, token, parser, PUTLParseError, TokFunc } from "./parseutil";
 
-let tk = (n: string, r?: RegExp, f?: TokFunc): tokdef => new tokdef(n, r, f);
+const tk = <T=string>(n: string, r?: RegExp, f?: TokFunc<T>): tokdef<T> => new tokdef<T>(n, r, f);
 
-let count = (str: string, match: string | RegExp): number => {
+const count = (str: string, match: string | RegExp): number => {
   let c = 0;
   do {
-    let i = str.search(match);
+    const i = str.search(match);
     if (i < 0) {
       break;
     }
@@ -19,18 +19,18 @@ let count = (str: string, match: string | RegExp): number => {
   return c;
 };
 
-let tokens: tokdef[] = [
+const tokens = [
   tk("ID", /[a-zA-Z$_]+[a-zA-Z0-9$_]*/),
   tk("NUM", /[0-9]+(\.[0-9]*)?/),
   tk("LPAREN", /\(/),
   tk("RPAREN", /\)/),
-  tk("STRLIT", /"[^"]*"/, (t: token) => {
+  tk("STRLIT", /"[^"]*"/, (t) => {
     // /".*(?<!\\)"/ <- not working outside of Chrome
-    let v = t.value;
+    const v = t.value;
     t.lexer.lineno += count(t.value, "\n");
     return t;
   }),
-  tk("WS", /[ \t\n\r]/, (t: token) => {
+  tk("WS", /[ \t\n\r]/, (t) => {
     t.lexer.lineno += count(t.value, "\n");
     //drop token by not returning it
   }),
@@ -60,14 +60,14 @@ let tokens: tokdef[] = [
   tk("BITINV", /\~/),
 ];
 
-let lex = new lexer(tokens, (_t: lexer) => {
+const lex = new lexer(tokens, (_t: lexer) => {
   console.log("Token error");
   return true;
 });
 
-let parse = new parser(lex);
+const parse = new parser(lex);
 
-let binops = new Set([
+const binops = new Set([
   ".",
   "/",
   "*",
@@ -92,7 +92,7 @@ let binops = new Set([
 let precedence: Record<string, number>;
 
 if (1) {
-  let table = [
+  const table = [
     ["**"],
     ["*", "/"],
     ["+", "-"],
@@ -104,9 +104,9 @@ if (1) {
     //    ["("]
   ];
 
-  let pr: Record<string, number> = {};
+  const pr: Record<string, number> = {};
   for (let i = 0; i < table.length; i++) {
-    for (let c of table[i]) {
+    for (const c of table[i]) {
       pr[c] = i;
     }
   }
@@ -191,7 +191,7 @@ export class Node extends Array<Node> {
   }
 
   toString(t: number = 0): string {
-    let tab = indent(t, "-");
+    const tab = indent(t, "-");
 
     let typestr = this.type;
 
@@ -202,7 +202,7 @@ export class Node extends Array<Node> {
     }
 
     let s = tab + typestr + " {\n";
-    for (let c of this) {
+    for (const c of this) {
       s += c.toString(t + 1);
     }
     s += tab + "}\n";
@@ -212,18 +212,18 @@ export class Node extends Array<Node> {
 }
 
 interface BinNextResult {
-  value: token | undefined;
+  value: token<string> | undefined;
   op: string;
   prec: number;
 }
 
 export function parseExpr(s: string): unknown {
-  let p = parse;
+  const p = parse;
 
   function Value(): Node | undefined {
     let t = p.next();
 
-    if (t && t.value === "(") {
+    if (t?.value === "(") {
       t = p.next();
     }
 
@@ -232,8 +232,8 @@ export function parseExpr(s: string): unknown {
       return;
     }
 
-    let n = new Node();
-    n.value = t.value;
+    const n = new Node();
+    n.value = t.value as string;
 
     if (t.type === "ID") {
       n.type = "Ident";
@@ -242,19 +242,19 @@ export function parseExpr(s: string): unknown {
     } else if (t.type === "STRLIT") {
       n.type = "StrLit";
     } else if (t.type === "MINUS") {
-      let t2 = p.peek_i(0);
-      if (t2 && t2.type === "NUM") {
+      const t2 = p.peek_i(0);
+      if (t2?.type === "NUM") {
         p.next();
         n.type = "Number";
-        n.value = -parseFloat(t2.value);
-      } else if (t2 && t2.type === "ID") {
+        n.value = -parseFloat(t2.value as string);
+      } else if (t2?.type === "ID") {
         p.next();
         n.type = "Negate";
 
-        let n2 = new Node();
+        const n2 = new Node();
 
         n2.type = "Ident";
-        n2.value = t2.value;
+        n2.value = t2.value as string;
         n.push(n2);
       } else {
         p.error(t, "Expected a value, not '" + t.value + "'");
@@ -267,15 +267,15 @@ export function parseExpr(s: string): unknown {
   }
 
   function bin_next(depth: number = 0): Node | BinNextResult | undefined {
-    let a = p.peek_i(0);
-    let b = p.peek_i(1);
+    const a = p.peek_i(0) as token<string>;
+    const b = p.peek_i(1) as token<string>;
 
     if (b && a && b.value === ")") {
       b.type = a.type;
       b.value = a.value;
       p.next();
 
-      let c = p.peek_i(2);
+      const c = p.peek_i(2) as token<string>;
       if (c && binops.has(c.value)) {
         return {
           value: b,
@@ -297,18 +297,18 @@ export function parseExpr(s: string): unknown {
 
   function BinOp(left: Node, depth: number = 0): Node {
     console.log(indent(depth) + "BinOp", left.toString());
-    let op = p.next()!;
+    const op = p.next()! as token<string>;
     let right: Node | undefined;
 
     let n: Node | undefined;
-    let prec = precedence[op.value];
+    const prec = precedence[op.value];
 
-    let r = bin_next(depth + 1);
+    const r = bin_next(depth + 1);
 
     if (r instanceof Node) {
       right = r;
     } else {
-      let br = r as BinNextResult;
+      const br = r as BinNextResult;
       if (br.prec > prec) {
         if (!n) {
           n = new Node("BinOp");
@@ -341,7 +341,7 @@ export function parseExpr(s: string): unknown {
     let ret = Value()!;
 
     while (!p.at_end()) {
-      let t = p.peek_i(0);
+      const t = p.peek_i(0) as token<string>;
       //let n = p.peek_i(1);
 
       if (t === undefined) {
@@ -355,15 +355,15 @@ export function parseExpr(s: string): unknown {
         console.log("binary op!");
         ret = BinOp(ret);
       } else if (t.value === ",") {
-        let n = new Node();
+        const n = new Node();
         n.type = "ExprList";
 
         p.next();
 
         n.push(ret);
-        let n2 = Start();
+        const n2 = Start();
         if (n2.type === "ExprList") {
-          for (let c of n2) {
+          for (const c of n2) {
             n.push(c);
           }
         } else {
@@ -372,7 +372,7 @@ export function parseExpr(s: string): unknown {
 
         return n;
       } else if (t.value === "(") {
-        let n = new Node("FuncCall");
+        const n = new Node("FuncCall");
         n.push(ret);
         n.push(Start());
         p.expect("RPAREN");
@@ -391,7 +391,7 @@ export function parseExpr(s: string): unknown {
   }
 
   function Run(): Node[] {
-    let ret: Node[] = [];
+    const ret: Node[] = [];
 
     while (!p.at_end()) {
       ret.push(Start());
