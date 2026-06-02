@@ -415,19 +415,19 @@ export class GuassianCurve extends CurveTypeData<
       dslider   : container.slider(undefined, "STD Deviation", this.deviation, -10, 10, 0.05),
     };
 
-    this.uidata.hslider.onchange = () => {
+    this.uidata.hslider.on_change = () => {
       this.height = this.uidata!.hslider.value;
       this.redraw();
       this.update();
     };
 
-    this.uidata.oslider.onchange = () => {
+    this.uidata.oslider.on_change = () => {
       this.offset = this.uidata!.oslider.value;
       this.redraw();
       this.update();
     };
 
-    this.uidata.dslider.onchange = () => {
+    this.uidata.dslider.on_change = () => {
       this.deviation = this.uidata!.dslider.value;
       this.redraw();
       this.update();

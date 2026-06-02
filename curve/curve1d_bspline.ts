@@ -1892,7 +1892,7 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
     const check = row.check(undefined, "Interpolating");
     check.checked = this.interpolating;
 
-    check.onchange = () => {
+    check.on_change = () => {
       this.interpolating = check.value;
       fullUpdate();
     };

@@ -1,10 +1,10 @@
-export type TokFunc = (t: token) => token | undefined | void;
+export type TokFunc<T> = (t: token<T>) => token<T> | undefined | void;
 export type LexerErrFunc = (ctx: lexer) => boolean;
-export type ParserErrFunc = (tok: token | undefined) => boolean;
+export type ParserErrFunc = (tok: token<unknown> | undefined) => boolean;
 
-export class token {
+export class token<T> {
   type: string;
-  value: string;
+  value: T;
   lexpos: number;
   lexlen: number;
   lineno: number;
@@ -21,7 +21,8 @@ export class token {
     parser: parser | undefined
   ) {
     this.type = type;
-    this.value = val;
+    // tokdef callback will parse the value into its final form
+    this.value = val as unknown as T;
     this.lexpos = lexpos;
     this.lexlen = lexlen;
     this.lineno = lineno;
@@ -29,7 +30,7 @@ export class token {
     this.parser = parser;
   }
 
-  setValue(val: string): this {
+  setValue(val: T): this {
     this.value = val;
     return this;
   }
@@ -46,12 +47,12 @@ export class token {
 //a) returns the token, or b) returns
 //undefined, in which case the token
 //should be ignored by the lexer
-export class tokdef {
+export class tokdef<T> {
   name: string;
   re: RegExp | undefined;
-  func: TokFunc | undefined;
+  func: TokFunc<T> | undefined;
 
-  constructor(name: string, regexpr?: RegExp, func?: TokFunc) {
+  constructor(name: string, regexpr?: RegExp, func?: TokFunc<T>) {
     this.name = name;
     this.re = regexpr;
     this.func = func;
@@ -60,7 +61,7 @@ export class tokdef {
 
 export class PUTLParseError extends Error {}
 
-type LexerState = [tokdef[], LexerErrFunc | undefined];
+type LexerState = [tokdef<unknown>[], LexerErrFunc | undefined];
 
 /**
  * `errfunc` is optional.  It requires
@@ -70,8 +71,8 @@ type LexerState = [tokdef[], LexerErrFunc | undefined];
  * has happened
  */
 export class lexer {
-  tokdef: tokdef[];
-  tokens: token[];
+  tokdef: tokdef<unknown>[];
+  tokens: token<unknown>[];
   lexpos: number;
   lexdata: string;
   lineno: number;
@@ -82,9 +83,9 @@ export class lexer {
   statestack: [string, number][];
   states: Record<string, LexerState>;
   statedata: number;
-  peeked_tokens: token[];
+  peeked_tokens: token<unknown>[];
 
-  constructor(tokdef: tokdef[], errfunc?: LexerErrFunc) {
+  constructor(tokdef: tokdef<any>[], errfunc?: LexerErrFunc) {
     this.tokdef = tokdef;
     this.tokens = [];
     this.lexpos = 0;
@@ -121,7 +122,7 @@ export class lexer {
   }
 
   //errfunc is optional, defines state-specific error function
-  add_state(name: string, tokdef: tokdef[], errfunc?: LexerErrFunc): void {
+  add_state(name: string, tokdef: tokdef<unknown>[], errfunc?: LexerErrFunc): void {
     if (errfunc === undefined) {
       errfunc = function (_lexer: lexer) {
         return true;
@@ -178,7 +179,7 @@ export class lexer {
     throw new PUTLParseError("Parse error");
   }
 
-  peek(): token | undefined {
+  peek(): token<unknown> | undefined {
     const tok = this.next(true);
 
     if (tok === undefined) return undefined;
@@ -187,7 +188,7 @@ export class lexer {
     return tok;
   }
 
-  peek_i(i: number): token | undefined {
+  peek_i(i: number): token<unknown> | undefined {
     while (this.peeked_tokens.length <= i) {
       const t = this.peek();
       if (t === undefined) return undefined;
@@ -200,7 +201,7 @@ export class lexer {
     return this.lexpos >= this.lexdata.length && this.peeked_tokens.length === 0;
   }
 
-  next(ignore_peek?: boolean): token | undefined {
+  next(ignore_peek?: boolean): token<unknown> | undefined {
     if (ignore_peek !== true && this.peeked_tokens.length > 0) {
       const tok = this.peeked_tokens[0];
 
@@ -224,7 +225,7 @@ export class lexer {
 
     const lexdata = this.lexdata.slice(this.lexpos, this.lexdata.length);
 
-    const results: [tokdef, RegExpExecArray][] = [];
+    const results: [tokdef<unknown>, RegExpExecArray][] = [];
 
     for (let i = 0; i < tlen; i++) {
       const t = ts[i];
@@ -239,7 +240,7 @@ export class lexer {
     }
 
     let max_res = 0;
-    let theres: [tokdef, RegExpExecArray] | undefined = undefined;
+    let theres: [tokdef<unknown>, RegExpExecArray] | undefined = undefined;
     for (let i = 0; i < results.length; i++) {
       const res = results[i];
 
@@ -370,7 +371,7 @@ export class parser {
     this.lexer.input(data);
   }
 
-  error(tok: token | undefined, msg?: string): void {
+  error(tok: token<unknown> | undefined, msg?: string): void {
     if (msg === undefined) msg = "";
 
     let estr: string;
@@ -403,25 +404,25 @@ export class parser {
     throw new PUTLParseError(estr);
   }
 
-  peek(): token | undefined {
+  peek(): token<unknown> | undefined {
     const tok = this.lexer.peek();
     if (tok !== undefined) tok.parser = this;
 
     return tok;
   }
 
-  peek_i(i: number): token | undefined {
+  peek_i(i: number): token<unknown> | undefined {
     const tok = this.lexer.peek_i(i);
     if (tok !== undefined) tok.parser = this;
 
     return tok;
   }
 
-  peeknext(): token | undefined {
+  peeknext(): token<unknown> | undefined {
     return this.peek_i(0);
   }
 
-  next(): token | undefined {
+  next(): token<unknown> | undefined {
     const tok = this.lexer.next();
 
     if (tok !== undefined) tok.parser = this;
@@ -445,7 +446,7 @@ export class parser {
     return this.lexer.at_end();
   }
 
-  expect(type: string, msg?: string): string {
+  expect<T = string>(type: string, msg?: string): T {
     const tok = this.next();
 
     if (msg === undefined) msg = type;
@@ -454,7 +455,7 @@ export class parser {
       this.error(tok, "Expected " + msg + ", not " + (tok ? tok.type : "end of input"));
     }
 
-    return tok!.value;
+    return tok!.value as T;
   }
 }
 
@@ -474,12 +475,12 @@ function test_parser(): void {
     "array",
   ]);
 
-  function tk(name: string, re?: RegExp, func?: TokFunc): tokdef {
+  function tk<T = string>(name: string, re?: RegExp, func?: TokFunc<T>): tokdef<T> {
     return new tokdef(name, re, func);
   }
 
-  const tokens: tokdef[] = [
-    tk("ID", /[a-zA-Z]+[a-zA-Z0-9_]*/, function (t: token) {
+  const tokens: tokdef<string>[] = [
+    tk("ID", /[a-zA-Z]+[a-zA-Z0-9_]*/, function (t) {
       if (reserved_tokens.has(t.value)) {
         t.type = t.value.toUpperCase();
       }
@@ -489,7 +490,7 @@ function test_parser(): void {
     tk("OPEN", /\{/),
     tk("CLOSE", /}/),
     tk("COLON", /:/),
-    tk("JSCRIPT", /\|/, function (t: token) {
+    tk("JSCRIPT", /\|/, function (t) {
       let js = "";
       const lex = t.lexer;
       while (lex.lexpos < lex.lexdata.length) {
@@ -514,10 +515,10 @@ function test_parser(): void {
     tk("COMMA", /,/),
     tk("NUM", /[0-9]/),
     tk("SEMI", /;/),
-    tk("NEWLINE", /\n/, function (t: token) {
+    tk("NEWLINE", /\n/, function (t) {
       t.lexer.lineno += 1;
     }),
-    tk("SPACE", / |\t/, function (_t: token) {
+    tk("SPACE", / |\t/, function (_t) {
       //throw out non-newline whitespace tokens
     }),
   ];
@@ -554,7 +555,7 @@ function test_parser(): void {
 
   lex.input(a);
 
-  let tok: token | undefined;
+  let tok: token<unknown> | undefined;
   while ((tok = lex.next())) {
     console.log(tok.toString());
   }
@@ -625,13 +626,13 @@ function test_parser(): void {
 
     let tok = p.peek();
     if (tok?.type === "JSCRIPT") {
-      field.get = tok.value;
+      field.get = tok.value as string;
       p.next();
     }
 
     tok = p.peek();
     if (tok?.type === "JSCRIPT") {
-      field.set = tok.value;
+      field.set = tok.value as string;
       p.next();
     }
 

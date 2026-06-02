@@ -131,7 +131,7 @@ export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTyp
         elemKeyMap.set(check, k);
 
         const this2 = this;
-        check.onchange = function (this: IconCheck | Check) {
+        check.on_change = function (this: IconCheck | Check) {
           this2.params[elemKeyMap.get(this)! as string] = this.checked ? 1 : 0;
           this2.update();
           this2.redraw();
@@ -147,7 +147,7 @@ export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTyp
         elemKeyMap.set(slider, k)!;
 
         const this2 = this;
-        slider.onchange = function (this: IconCheck | Check) {
+        slider.on_change = function (this: IconCheck | Check) {
           this2.params[elemKeyMap.get(this)! as string] = Number(this.value);
           this2.update();
           this2.redraw();

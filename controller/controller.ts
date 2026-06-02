@@ -76,15 +76,16 @@ const PUTLParseError = parseutil.PUTLParseError;
 
 import type { TokFunc } from "../util/parseutil";
 
-const tk = (name: string, re: RegExp, func?: TokFunc) => new parseutil.tokdef(name, re, func);
+const tk = <T = string>(name: string, re: RegExp, func?: TokFunc<T>) =>
+  new parseutil.tokdef<T>(name, re, func);
 const tokens = [
   tk("ID", /[a-zA-Z_$]+[a-zA-Z_$0-9]*/),
-  tk("NUM", /-?[0-9]+/, (t) => {
-    t.value = "" + parseInt(t.value);
+  tk<number>("NUM", /-?[0-9]+/, (t) => {
+    t.value = parseInt(t.value as unknown as string);
     return t;
   }),
-  tk("NUMBER", /-?[0-9]+\.[0-9]*/, (t) => {
-    t.value = "" + parseFloat(t.value);
+  tk<number>("NUMBER", /-?[0-9]+\.[0-9]*/, (t) => {
+    t.value = parseFloat(t.value as unknown as string);
     return t;
   }),
   tk("STRLIT", /'.*?'/, (t) => {
@@ -952,7 +953,7 @@ An example of a more complicated expression might be:
       const t = p.peeknext()!;
       if (t.type === "NUM" || t.type === "STRLIT") {
         p.next();
-        return t.value;
+        return t.value as string | number;
       } else {
         throw new PUTLParseError("Expected list key");
       }
