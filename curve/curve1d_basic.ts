@@ -15,6 +15,12 @@ export class EquationCurve extends CurveTypeData<
   "EquationCurve",
   BaseUiData & { textbox?: TextBox }
 > {
+  static STRUCT = nstructjs.inlineRegister(this, `
+curve1d.EquationCurve {
+  equation : string;
+}
+`);
+
   declare parent:
     | {
         xRange: InstanceType<typeof Vector2>;
@@ -313,17 +319,8 @@ export class EquationCurve extends CurveTypeData<
 
     g.restore();
   }
-
-  static STRUCT: string;
 }
 
-EquationCurve.STRUCT =
-  nstructjs.inherit(EquationCurve, CurveTypeData) +
-  `
-  equation : string;
-}
-`;
-nstructjs.register(EquationCurve);
 CurveTypeData.register(EquationCurve);
 
 export class GuassianCurve extends CurveTypeData<
@@ -334,6 +331,14 @@ export class GuassianCurve extends CurveTypeData<
     dslider: ReturnType<Container["slider"]>;
   }
 > {
+  static STRUCT = nstructjs.inlineRegister(this, `
+curve1d.GuassianCurve {
+  height    : float;
+  offset    : float;
+  deviation : float;
+}
+`);
+
   height: number;
   offset: number;
   deviation: number;
@@ -511,17 +516,6 @@ export class GuassianCurve extends CurveTypeData<
 
     return ret === undefined ? 0.0 : ret;
   }
-
-  static STRUCT: string;
 }
 
-GuassianCurve.STRUCT =
-  nstructjs.inherit(GuassianCurve, CurveTypeData) +
-  `
-  height    : float;
-  offset    : float;
-  deviation : float;
-}
-`;
-nstructjs.register(GuassianCurve);
 CurveTypeData.register(GuassianCurve);

@@ -856,7 +856,15 @@ const splineCache = new BSplineCache();
 let _idgen = 1;
 
 export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(this, `
+curve1d.BSplineCurve {
+  points         : array(Curve1DPoint);
+  highlightPoint : int | this.points.highlight ? this.points.highlight.eid : -1;
+  deg            : int;
+  eidgen         : IDGen;
+  interpolating  : bool;
+}
+`);
 
   _bid: number;
   _degOffset: number;
@@ -2281,17 +2289,6 @@ export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
   }
 }
 
-BSplineCurve.STRUCT =
-  nstructjs.inherit(BSplineCurve, CurveTypeData) +
-  `
-  points         : array(Curve1DPoint);
-  highlightPoint : int | this.points.highlight ? this.points.highlight.eid : -1;
-  deg            : int;
-  eidgen         : IDGen;
-  interpolating  : bool;
-}
-`;
-nstructjs.register(BSplineCurve);
 CurveTypeData.register(BSplineCurve);
 
 function makeSplineTemplateIcons(size: number = 64) {

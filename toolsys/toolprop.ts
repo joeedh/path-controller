@@ -700,8 +700,11 @@ ToolProperty {
 nstructjs.register(ToolProperty);
 
 export class FloatArrayProperty extends ToolProperty<number[], PropTypes["FLOAT_ARRAY"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.FloatArrayProperty {
+  value : array(float);
+}`);
   static PROP_TYPE_ID = PropTypes.FLOAT_ARRAY;
-  static STRUCT: string;
 
   value: number[];
 
@@ -762,13 +765,6 @@ export class FloatArrayProperty extends ToolProperty<number[], PropTypes["FLOAT_
     return this;
   }
 }
-
-FloatArrayProperty.STRUCT =
-  nstructjs.inherit(FloatArrayProperty, ToolProperty) +
-  `
-  value : array(float);
-}`;
-nstructjs.register(FloatArrayProperty);
 
 export class StringPropertyBase<TYPE extends number> extends ToolProperty<string, TYPE> {
   static STRUCT = nstructjs.inlineRegister(
@@ -881,7 +877,12 @@ export function isNumber(f) {
 //window.isNumber = isNumber;
 
 export class NumProperty<TYPE extends number = number> extends ToolProperty<number, TYPE> {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.NumProperty {
+  range : array(float);
+  data  : float;
+}
+`);
 
   declare range: [number, number];
 
@@ -909,19 +910,20 @@ export class NumProperty<TYPE extends number = number> extends ToolProperty<numb
     super.loadSTRUCT(reader);
   }
 }
-NumProperty.STRUCT =
-  nstructjs.inherit(NumProperty, ToolProperty) +
-  `
-  range : array(float);
-  data  : float;
-}
-`;
-
 export class _NumberPropertyBase<T = number, TYPE extends number = number> extends ToolProperty<
   T,
   TYPE
 > {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop._NumberPropertyBase {
+  range            : array(float);
+  expRate          : float;
+  data             : float;
+  step             : float;
+  slideSpeed       : float;
+  sliderDisplayExp : float;
+}
+`);
 
   /** Display simple sliders with exponent divisions, don't
    * confuse with expRate which affects roller
@@ -1068,22 +1070,12 @@ export class _NumberPropertyBase<T = number, TYPE extends number = number> exten
     return this;
   }
 }
-_NumberPropertyBase.STRUCT =
-  nstructjs.inherit(_NumberPropertyBase, ToolProperty) +
-  `
-  range            : array(float);
-  expRate          : float;
-  data             : float;
-  step             : float;
-  slideSpeed       : float;
-  sliderDisplayExp : float;
-}
-`;
-nstructjs.register(_NumberPropertyBase);
-
 export class IntProperty extends _NumberPropertyBase<number, PropTypes["INT"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.IntProperty {
+  data : int;
+}`);
   static PROP_TYPE_ID = PropTypes.INT;
-  static STRUCT: string;
 
   declare radix: number;
 
@@ -1141,13 +1133,6 @@ export class IntProperty extends _NumberPropertyBase<number, PropTypes["INT"]> {
   }
 }
 
-IntProperty.STRUCT =
-  nstructjs.inherit(IntProperty, _NumberPropertyBase) +
-  `
-  data : int;
-}`;
-nstructjs.register(IntProperty);
-
 ToolProperty.internalRegister(IntProperty);
 
 export class ReportProperty extends StringPropertyBase<PropTypes["REPORT"]> {
@@ -1169,8 +1154,12 @@ export class ReportProperty extends StringPropertyBase<PropTypes["REPORT"]> {
 ToolProperty.internalRegister(ReportProperty);
 
 export class BoolProperty extends ToolProperty<boolean, PropTypes["BOOL"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.BoolProperty {
+  data : bool;
+}
+`);
   static PROP_TYPE_ID = PropTypes.BOOL;
-  static STRUCT: string;
 
   constructor(
     value?: boolean | unknown,
@@ -1217,13 +1206,6 @@ export class BoolProperty extends ToolProperty<boolean, PropTypes["BOOL"]> {
 }
 
 ToolProperty.internalRegister(BoolProperty);
-BoolProperty.STRUCT =
-  nstructjs.inherit(BoolProperty, ToolProperty) +
-  `
-  data : bool;
-}
-`;
-nstructjs.register(BoolProperty);
 
 class FloatPropertyBase<T = number, TYPE extends number = number> extends _NumberPropertyBase<
   T,
@@ -1824,8 +1806,12 @@ export class VecPropertyBase<
 }
 
 export class Vec2Property extends VecPropertyBase<Vector2, PropTypes["VEC2"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.Vec2Property {
+  data : vec2;
+}
+`);
   static PROP_TYPE_ID = PropTypes.VEC2;
-  static STRUCT: string;
 
   constructor(
     data?: Vector2Like | number[],
@@ -1859,18 +1845,15 @@ export class Vec2Property extends VecPropertyBase<Vector2, PropTypes["VEC2"]> {
   }
 }
 
-Vec2Property.STRUCT =
-  nstructjs.inherit(Vec2Property, VecPropertyBase) +
-  `
-  data : vec2;
-}
-`;
-nstructjs.register(Vec2Property);
 ToolProperty.internalRegister(Vec2Property);
 
 export class Vec3Property extends VecPropertyBase<Vector3, PropTypes["VEC3"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.Vec3Property {
+  data : vec3;
+}
+`);
   static PROP_TYPE_ID = PropTypes.VEC3;
-  static STRUCT: string;
 
   constructor(
     data?: Vector3Like | number[],
@@ -1901,18 +1884,15 @@ export class Vec3Property extends VecPropertyBase<Vector3, PropTypes["VEC3"]> {
   }
 }
 
-Vec3Property.STRUCT =
-  nstructjs.inherit(Vec3Property, VecPropertyBase) +
-  `
-  data : vec3;
-}
-`;
-nstructjs.register(Vec3Property);
 ToolProperty.internalRegister(Vec3Property);
 
 export class Vec4Property extends VecPropertyBase<Vector4, PropTypes["VEC4"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.Vec4Property {
+  data : vec4;
+}
+`);
   static PROP_TYPE_ID = PropTypes.VEC4;
-  static STRUCT: string;
 
   constructor(
     data?: Vector4Like | number[],
@@ -1960,18 +1940,15 @@ export class Vec4Property extends VecPropertyBase<Vector4, PropTypes["VEC4"]> {
   }
 }
 
-Vec4Property.STRUCT =
-  nstructjs.inherit(Vec4Property, VecPropertyBase) +
-  `
-  data : vec4;
-}
-`;
-nstructjs.register(Vec4Property);
 ToolProperty.internalRegister(Vec4Property);
 
 export class QuatProperty extends ToolProperty<Quat, PropTypes["QUAT"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.QuatProperty {
+  data : vec4;
+}
+`);
   static PROP_TYPE_ID = PropTypes.QUAT;
-  static STRUCT: string;
 
   constructor(
     data?: Vector4Like | Quat | number[],
@@ -2006,19 +1983,15 @@ export class QuatProperty extends ToolProperty<Quat, PropTypes["QUAT"]> {
   }
 }
 
-QuatProperty.STRUCT =
-  nstructjs.inherit(QuatProperty, VecPropertyBase) +
-  `
-  data : vec4;
-}
-`;
-nstructjs.register(QuatProperty);
-
 ToolProperty.internalRegister(QuatProperty);
 
 export class Mat4Property extends ToolProperty<Matrix4, PropTypes["MATRIX4"]> {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.Mat4Property {
+  data           : mat4;
+}
+`);
   static PROP_TYPE_ID = PropTypes.MATRIX4;
-  static STRUCT: string;
 
   constructor(data?: unknown, apiname?: string, uiname?: string, description?: string) {
     super(PropTypes.MATRIX4, undefined, apiname, uiname, description);
@@ -2068,13 +2041,6 @@ export class Mat4Property extends ToolProperty<Matrix4, PropTypes["MATRIX4"]> {
   }
 }
 
-Mat4Property.STRUCT =
-  nstructjs.inherit(Mat4Property, FloatPropertyBase) +
-  `
-  data           : mat4;
-}
-`;
-nstructjs.register(Mat4Property);
 ToolProperty.internalRegister(Mat4Property);
 
 /**
@@ -2083,8 +2049,12 @@ ToolProperty.internalRegister(Mat4Property);
 export class ListProperty<ToolPropType extends ToolProperty = ToolProperty> //
   extends ToolProperty<ToolPropType[], PropTypes["PROPLIST"]>
 {
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.ListProperty {
+  prop  : abstract(ToolProperty);
+  value : array(abstract(ToolProperty));
+}`);
   static PROP_TYPE_ID = PropTypes.PROPLIST;
-  static STRUCT: string;
 
   prop: ToolPropType;
   value: ToolPropType[];
@@ -2266,19 +2236,15 @@ export class ListProperty<ToolPropType extends ToolProperty = ToolProperty> //
   }
 }
 
-ListProperty.STRUCT =
-  nstructjs.inherit(ListProperty, ToolProperty) +
-  `
-  prop  : abstract(ToolProperty);
-  value : array(abstract(ToolProperty));
-}`;
-nstructjs.register(ListProperty);
-
 ToolProperty.internalRegister(ListProperty);
 
 //like FlagsProperty but uses strings
 export class StringSetProperty extends ToolProperty<UtilStringSet, PropTypes["STRSET"]> {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(this, `
+toolprop.StringSetProperty {
+  value  : iter(string);
+  values : iterkeys(string);
+}`);
   static PROP_TYPE_ID = PropTypes.STRSET;
 
   value: UtilStringSet;
@@ -2509,13 +2475,5 @@ export class StringSetProperty extends ToolProperty<UtilStringSet, PropTypes["ST
     this.value = new util.set(this.value as any) as UtilStringSet;
   }
 }
-
-StringSetProperty.STRUCT =
-  nstructjs.inherit(StringSetProperty, ToolProperty) +
-  `
-  value  : iter(string);
-  values : iterkeys(string);
-}`;
-nstructjs.register(StringSetProperty);
 
 ToolProperty.internalRegister(StringSetProperty);
