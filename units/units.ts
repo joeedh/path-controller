@@ -13,6 +13,8 @@
  * Units:
  * # none           No unit
  * # meter          Meter       (distance)
+ * # centimeter     Centimeter  (distance)
+ * # millimeter     Millimeter  (distance)
  * # inch           Inch        (distance)
  * # foot           Foot        (distance)
  * # square_foot    Square Feet (area)
@@ -215,6 +217,76 @@ export class InchUnit extends Unit {
 }
 
 Unit.register(InchUnit);
+
+export class CentimeterUnit extends Unit {
+  static unitDefine(): UnitDefinition {
+    return {
+      name   : "centimeter",
+      uiname : "Centimeter",
+      type   : "distance",
+      icon   : -1,
+      pattern: /-?\d+(\.\d*)?cm$/,
+    };
+  }
+
+  static parse(string: string): number {
+    string = normString(string);
+    if (string.endsWith("cm")) {
+      string = string.slice(0, string.length - 2);
+    }
+
+    return parseFloat(string);
+  }
+
+  static toInternal(value: number): number {
+    return value * 0.01;
+  }
+
+  static fromInternal(value: number): number {
+    return value / 0.01;
+  }
+
+  static buildString(value: number, decimals: number = 2): string {
+    return "" + myToFixed(value, decimals) + "cm";
+  }
+}
+
+Unit.register(CentimeterUnit);
+
+export class MillimeterUnit extends Unit {
+  static unitDefine(): UnitDefinition {
+    return {
+      name   : "millimeter",
+      uiname : "Millimeter",
+      type   : "distance",
+      icon   : -1,
+      pattern: /-?\d+(\.\d*)?mm$/,
+    };
+  }
+
+  static parse(string: string): number {
+    string = normString(string);
+    if (string.endsWith("mm")) {
+      string = string.slice(0, string.length - 2);
+    }
+
+    return parseFloat(string);
+  }
+
+  static toInternal(value: number): number {
+    return value * 0.001;
+  }
+
+  static fromInternal(value: number): number {
+    return value / 0.001;
+  }
+
+  static buildString(value: number, decimals: number = 2): string {
+    return "" + myToFixed(value, decimals) + "mm";
+  }
+}
+
+Unit.register(MillimeterUnit);
 
 const foot_re = /((-?\d+(\.\d*)?ft)(-?\d+(\.\d*)?(in|inch))?)|(-?\d+(\.\d*)?(in|inch))$/;
 
