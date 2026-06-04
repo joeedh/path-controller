@@ -593,12 +593,35 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
 
 let _map_struct_idgen = 1;
 const _map_structs = {} as { [k: string]: DataStruct };
+/** Reverse index: stable (mangle-proof) struct name → DataStruct. See `resolveStructName`. */
+const _map_structs_by_name = {} as { [k: string]: DataStruct };
 
 const _dummypath = new DataPath();
 
 const DummyIntProperty = new IntProperty();
 const CLS_API_KEY = Symbol("dp_map_id");
 const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
+
+/**
+ * Resolve the most stable name available for `cls`, in priority order:
+ *
+ *   1. an explicit name passed to `mapStruct`/`mapStructCustom`/`inheritStruct`;
+ *   2. the nstructjs registered name (`cls.structName`) — a string literal that
+ *      bundlers can't mangle, the same name used for serialization;
+ *   3. `cls.name` — the JS constructor name, which production bundlers mangle, so
+ *      it's only a last resort for classes nobody looks up by name.
+ */
+function resolveStructName(cls: any, explicit?: string): string {
+  if (explicit !== undefined) {
+    return explicit;
+  }
+
+  if (cls.hasOwnProperty("structName") && typeof cls.structName === "string") {
+    return cls.structName;
+  }
+
+  return cls.name;
+}
 
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
@@ -647,13 +670,24 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return this.mapStruct(cls, false);
   }
 
+  /**
+   * Look up a struct definition by its stable name (see `resolveStructName`):
+   * an explicit name passed to `mapStruct`, else the nstructjs registered name
+   * (`cls.structName`), else `cls.name`. Unlike `getStruct(cls)` this does not
+   * need a class reference, so it survives bundler name-mangling as long as the
+   * struct was registered with an nstructjs/explicit name.
+   */
+  getStructByName(name: string): DataStruct | undefined {
+    return _map_structs_by_name[name];
+  }
+
   mergeStructs(dest: DataStruct<CTX>, src: DataStruct<CTX>) {
     for (const m of src.members) {
       dest.add(m.copy());
     }
   }
 
-  inheritStruct(cls: any, parent: any, auto_create_parent = false) {
+  inheritStruct(cls: any, parent: any, auto_create_parent = false, name?: string) {
     let st = this.mapStruct(parent, auto_create_parent);
 
     if (st === undefined) {
@@ -661,9 +695,8 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     st = st.copy();
-    st.name = cls.name;
 
-    this._addClass(cls, st);
+    this._addClass(cls, st, name);
     return st;
   }
 
@@ -675,24 +708,36 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    * @returns {IterableIterator<*>}
    */
 
-  _addClass(cls: any, dstruct: DataStruct) {
+  _addClass(cls: any, dstruct: DataStruct, name?: string) {
     const key = _map_struct_idgen++;
     cls[CLS_API_KEY] = key;
 
-    this.structs.push(dstruct);
+    const stableName = resolveStructName(cls, name);
+    dstruct.name = stableName;
 
+    this.structs.push(dstruct);
     _map_structs[key] = dstruct;
+
+    const existing = _map_structs_by_name[stableName];
+    if (existing !== undefined && existing !== dstruct) {
+      console.warn(
+        `mapStruct: duplicate struct name "${stableName}"; keeping the first registration. ` +
+          `Pass an explicit name to mapStruct/inheritStruct to disambiguate.`
+      );
+    } else {
+      _map_structs_by_name[stableName] = dstruct;
+    }
   }
 
   /* Associate cls with a DataStruct
    * via callback, which will be called
    * with an instance of cls as its argument*/
-  mapStructCustom(cls: any, callback: (instance: any) => void) {
-    this.mapStruct(cls, true);
+  mapStructCustom(cls: any, callback: (instance: any) => void, name?: string) {
+    this.mapStruct(cls, true, name);
     cls[CLS_API_KEY_CUSTOM] = callback;
   }
 
-  mapStruct(cls: any, auto_create = true, name = cls.name as string) {
+  mapStruct(cls: any, auto_create = true, name?: string) {
     let key;
 
     if (!cls.hasOwnProperty(CLS_API_KEY)) {
@@ -702,11 +747,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     if (key === undefined && auto_create) {
-      const dstruct = new DataStruct(undefined, name);
-      this._addClass(cls, dstruct);
+      const dstruct = new DataStruct(undefined, resolveStructName(cls, name));
+      this._addClass(cls, dstruct, name);
       return dstruct;
     } else if (key === undefined) {
-      throw new Error("class does not have a struct definition: " + name);
+      throw new Error("class does not have a struct definition: " + resolveStructName(cls, name));
     }
 
     return _map_structs[key];
