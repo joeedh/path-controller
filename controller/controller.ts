@@ -820,6 +820,7 @@ An example of a more complicated expression might be:
     // thus this hack
     const rdef = rdef1!;
 
+    // TODO: see if we can use rdef.dpath instead
     if (!(rdef.prop instanceof DataList)) {
       throw new DataPathError(
         "massSetPath expected a path resolving to a DataList: " + massSetPath
@@ -1076,8 +1077,12 @@ An example of a more complicated expression might be:
 
       if (dpath.type === DataTypes.STRUCT) {
         dstruct = dpath.data as DataStruct;
+        // reset current prop
+        prop = undefined;
       } else if (dpath.type === DataTypes.DYNAMIC_STRUCT) {
         let ok = false;
+        // reset current prop
+        prop = undefined;
 
         if (obj !== undefined) {
           let obj2;
@@ -1333,6 +1338,7 @@ An example of a more complicated expression might be:
         lastkey = p_key();
         p.expect("RSBRACKET");
 
+        // TODO: test if we can use lastdpath instead
         if (!(prop instanceof DataList)) {
           throw new DataPathError("bad property, not a list");
         }
