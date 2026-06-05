@@ -62,11 +62,14 @@ export class SimpleCurveBase<TYPE extends string, UIDATA = any> extends CurveTyp
   TYPE,
   UIDATA
 > {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.SimpleCurveBase {
   params : array(ParamKey) | obj._saveParams();
 }
-`);
+`
+  );
 
   declare ["constructor"]: SimpleCurveConstructor;
 
@@ -248,14 +251,15 @@ curve1d.SimpleCurveBase {
       }
     }
   }
-
 }
 
 export class BounceCurve extends SimpleCurveBase<"BounceCurve"> {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.BounceCurve {
-}`);
-
+}`
+  );
 
   static define(): CurveDefineResult {
     return {
@@ -298,10 +302,12 @@ curve1d.BounceCurve {
 CurveTypeData.register(BounceCurve);
 
 export class ElasticCurve extends SimpleCurveBase<"ElasticCurve"> {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.ElasticCurve {
-}`);
-
+}`
+  );
 
   _func: ((t: number) => number) | undefined;
   _last_hash: number | undefined;
@@ -349,9 +355,12 @@ curve1d.ElasticCurve {
 CurveTypeData.register(ElasticCurve);
 
 export class EaseCurve extends SimpleCurveBase<"EaseCurve"> {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.EaseCurve {
-}`);
+}`
+  );
 
   constructor() {
     super();
@@ -382,9 +391,12 @@ curve1d.EaseCurve {
 CurveTypeData.register(EaseCurve);
 
 export class RandCurve extends SimpleCurveBase<"RandCurve"> {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.RandCurve {
-}`);
+}`
+  );
 
   random: util.MersenneRandom;
   _seed: number;

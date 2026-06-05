@@ -15,11 +15,14 @@ export class EquationCurve extends CurveTypeData<
   "EquationCurve",
   BaseUiData & { textbox?: TextBox }
 > {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.EquationCurve {
   equation : string;
 }
-`);
+`
+  );
 
   declare parent:
     | {
@@ -331,13 +334,16 @@ export class GuassianCurve extends CurveTypeData<
     dslider: ReturnType<Container["slider"]>;
   }
 > {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.GuassianCurve {
   height    : float;
   offset    : float;
   deviation : float;
 }
-`);
+`
+  );
 
   height: number;
   offset: number;

@@ -1,7 +1,7 @@
 import * as vectormath from "./vectormath";
 import { lexer, tokdef, token, parser, PUTLParseError, TokFunc } from "./parseutil";
 
-const tk = <T=string>(n: string, r?: RegExp, f?: TokFunc<T>): tokdef<T> => new tokdef<T>(n, r, f);
+const tk = <T = string>(n: string, r?: RegExp, f?: TokFunc<T>): tokdef<T> => new tokdef<T>(n, r, f);
 
 const count = (str: string, match: string | RegExp): number => {
   let c = 0;

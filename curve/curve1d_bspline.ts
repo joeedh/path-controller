@@ -856,7 +856,9 @@ const splineCache = new BSplineCache();
 let _idgen = 1;
 
 export class BSplineCurve extends CurveTypeData<"BSplineCurve", BSplineUIData> {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 curve1d.BSplineCurve {
   points         : array(Curve1DPoint);
   highlightPoint : int | this.points.highlight ? this.points.highlight.eid : -1;
@@ -864,7 +866,8 @@ curve1d.BSplineCurve {
   eidgen         : IDGen;
   interpolating  : bool;
 }
-`);
+`
+  );
 
   _bid: number;
   _degOffset: number;
