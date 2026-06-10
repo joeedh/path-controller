@@ -65,7 +65,7 @@ export const PropSubTypes: Record<string, number> = {
   COLOR: 1,
 };
 
-type CallbackFn = (this: ToolProperty<unknown>, arg1?: unknown, arg2?: unknown) => void;
+export type CallbackFn = (this: ToolProperty<unknown>, arg1?: unknown, arg2?: unknown) => void;
 
 /* String satisfies KeystrObject via global.d.ts augmentation of String,
    but TypeScript's structural check on primitives doesn't see it. We

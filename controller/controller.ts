@@ -49,8 +49,10 @@ import { PropTypes, PropFlags } from "../toolsys/toolprop";
 import * as util from "../util/util";
 import { DataPathSetOp } from "./controller_ops";
 import { Curve1DProperty } from "../curve/curve1d_toolprop";
-import { KeyMap } from "../controller";
+import type { KeyMap } from "../util/simple_events";
+import type { Vector2Like, Vector3Like, Vector4Like } from "../util/vectormath";
 import { isVecProperty, ToolPropertyTypes } from "../toolsys";
+import type { Curve1D } from "../curve/curve1d";
 
 import {
   DataPath,
@@ -167,7 +169,9 @@ export function popReportName() {
   reportstack.pop();
 }
 
-export class DataStruct<CTX extends ContextLike = ContextLike> {
+export type DataStructAny<CTX extends ContextLike = ContextLike> = DataStruct<CTX, any>;
+
+export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown> {
   members: DataPath[];
   name: string;
   pathmap: Record<string, DataPath>;
@@ -230,13 +234,13 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
    * @param default_struct : default struct if one can't be looked up
    * @returns {*}
    */
-  dynamicStruct(
+  dynamicStruct<DS extends DataStruct = DataStruct>(
     path: string,
     apiname: string,
     uiname: string,
-    default_struct?: DataStruct
+    default_struct?: DS
   ): DataStruct {
-    const ret = default_struct ? default_struct : new DataStruct();
+    const ret = default_struct ? default_struct : (new DataStruct() as DS);
 
     const dpath = new DataPath(
       path,
@@ -252,8 +256,13 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     return ret;
   }
 
-  struct(path: string, apiname: string, uiname: string, existing_struct?: DataStruct): DataStruct {
-    const ret = existing_struct ? existing_struct : new DataStruct();
+  struct<DS extends DataStruct = DataStruct<CTX, unknown>>(
+    path: string,
+    apiname: string,
+    uiname: string,
+    existing_struct?: DS
+  ): DS {
+    const ret = existing_struct ? existing_struct : (new DataStruct() as DS);
 
     const dpath = new DataPath(path, apiname, ret as unknown as ToolProperty, DataTypes.STRUCT);
     ret.inheritFlag |= this.inheritFlag;
@@ -416,7 +425,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   bool(path: string, apiname: string, uiname?: string, description?: string) {
     const prop = new toolprop.BoolProperty(undefined, apiname, uiname, description);
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, boolean, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -424,7 +433,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   vec2(path: string, apiname: string, uiname?: string, description?: string) {
     const prop = new toolprop.Vec2Property(undefined, apiname, uiname, description);
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, Vector2Like, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -433,7 +442,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     const prop = new toolprop.Vec3Property(undefined, apiname, uiname, description);
     //prop.uiname = uiname;
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, Vector3Like, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -442,7 +451,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     const prop = new toolprop.Vec4Property(undefined, apiname, uiname, description);
     //prop.uiname = uiname;
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, Vector4Like, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -450,7 +459,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   float(path: string, apiname: string, uiname?: string, description?: string) {
     const prop = new toolprop.FloatProperty(0, apiname, uiname, description);
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, number, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -459,7 +468,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     const prop = new toolprop.StringProperty(undefined, apiname, uiname, description);
     prop.multiLine = true;
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, string, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -467,7 +476,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   report(path: string, apiname: string, uiname?: string, description?: string) {
     const prop = new toolprop.ReportProperty(undefined, apiname, uiname, description);
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, string, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -475,7 +484,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
   string(path: string, apiname: string, uiname?: string, description?: string) {
     const prop = new toolprop.StringProperty(undefined, apiname, uiname, description);
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, string, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -485,7 +494,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
       prop = new toolprop.IntProperty(0, apiname, uiname, description);
     }
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, number, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -497,7 +506,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     prop.uiname = uiname;
     prop.description = description;
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, Curve1D, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -511,7 +520,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
       prop = new toolprop.EnumProperty(undefined, enumdef, apiname, uiname, description);
     }
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, number, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -524,7 +533,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
       | ListFuncs<DataAPI, ListType, KeyType, ObjType, CTX>
   ) {
     const array = new DataList<DataAPI, ListType, KeyType, ObjType, CTX>(funcs);
-    const dpath = new DataPath(path, apiname, array);
+    const dpath = new DataPath<CTX, ListType, STRUCT>(path, apiname, array);
     dpath.type = DataTypes.ARRAY;
 
     this.add(dpath);
@@ -540,7 +549,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
       prop = enumdef;
     }
 
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, number, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -558,12 +567,12 @@ export class DataStruct<CTX extends ContextLike = ContextLike> {
     this.members.remove(m);
   }
 
-  fromToolProp(
+  fromToolProp<P extends ToolProperty, T = P["type"]>(
     path: string,
-    prop: ToolProperty,
+    prop: P,
     apiname = prop.apiname?.length ? prop.apiname : path
   ) {
-    const dpath = new DataPath(path, apiname, prop);
+    const dpath = new DataPath<CTX, T, STRUCT>(path, apiname, prop);
     this.add(dpath);
     return dpath;
   }
@@ -622,6 +631,8 @@ function resolveStructName(cls: any, explicit?: string): string {
 
   return cls.name;
 }
+
+export type BoundConstructor = (abstract new (...args: any[]) => any) & { [CLS_API_KEY]?: string };
 
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
@@ -732,12 +743,16 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   /* Associate cls with a DataStruct
    * via callback, which will be called
    * with an instance of cls as its argument*/
-  mapStructCustom(cls: any, callback: (instance: any) => void, name?: string) {
-    this.mapStruct(cls, true, name);
+  mapStructCustom<
+    CLS extends BoundConstructor & {
+      [CLS_API_KEY_CUSTOM]?: (instance: any) => void;
+    },
+  >(cls: CLS, callback: (instance: any) => void, name?: string) {
+    this.mapStruct<CLS>(cls, true, name);
     cls[CLS_API_KEY_CUSTOM] = callback;
   }
 
-  mapStruct(cls: any, auto_create = true, name?: string) {
+  mapStruct<CLS extends BoundConstructor>(cls: CLS, auto_create = true, name?: string) {
     let key;
 
     if (!cls.hasOwnProperty(CLS_API_KEY)) {
@@ -747,7 +762,10 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     if (key === undefined && auto_create) {
-      const dstruct = new DataStruct(undefined, resolveStructName(cls, name));
+      const dstruct = new DataStruct<CTX, InstanceType<CLS>>(
+        undefined,
+        resolveStructName(cls, name)
+      );
       this._addClass(cls, dstruct, name);
       return dstruct;
     } else if (key === undefined) {

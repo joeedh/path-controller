@@ -30,6 +30,11 @@ export const DataTypes = {
 } as const;
 
 type DataTypeValue = (typeof DataTypes)[keyof typeof DataTypes];
+export type CallbackThis<
+  DATAREF,
+  CTX extends ContextLike = ContextLike,
+  T = unknown,
+> = ToolProperty<T> & { dataref: DATAREF; datactx: CTX; datapath: string };
 
 /**
  * Extended ToolProperty interface covering methods on various subclasses
@@ -147,7 +152,7 @@ interface DataPathGetSet {
   ctx: unknown;
 }
 
-export class DataPath<CTX extends ContextLike = ContextLike> {
+export class DataPath<CTX extends ContextLike = ContextLike, T = unknown, OWNER_TYPE = unknown> {
   type: DataTypeValue;
   data: DataPathToolProperty | DataList | DataStruct<CTX>;
   apiname: string;
@@ -261,9 +266,9 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
    * Referencing object lives in 'this.dataref'; calling context in 'this.ctx';
    * and the datapath is 'this.datapath'
    **/
-  customGetSet<DATAREF = unknown>(
-    get: ((this: ToolProperty & { dataref: DATAREF }) => unknown) | undefined,
-    set: ((this: ToolProperty & { dataref: DATAREF }, val: unknown) => void) | undefined
+  customGetSet<DATAREF = OWNER_TYPE>(
+    get: ((this: CallbackThis<DATAREF, CTX, T>) => T) | undefined,
+    set: ((this: CallbackThis<DATAREF, CTX, T>, val: T) => void) | undefined
   ): this {
     this.flag |= DataFlags.USE_CUSTOM_GETSET;
 
@@ -290,12 +295,16 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
     return this;
   }
 
-  customSet(set: ((this: ToolProperty, val: unknown) => void) | undefined): this {
+  customSet<DATAREF = OWNER_TYPE>(
+    set: ((this: CallbackThis<DATAREF, CTX, T>, val: T) => void) | undefined
+  ): this {
     this.customGetSet(undefined, set);
     return this;
   }
 
-  customGet(get: ((this: ToolProperty) => unknown) | undefined): this {
+  customGet<DATAREF = OWNER_TYPE>(
+    get: ((this: CallbackThis<DATAREF, CTX, T>) => T) | undefined
+  ): this {
     this.customGetSet(get, undefined);
     return this;
   }
@@ -305,9 +314,12 @@ export class DataPath<CTX extends ContextLike = ContextLike> {
 
    main event is 'change'
    */
-  on(type: string, cb: (...args: unknown[]) => void): this {
+  on<DATAREF = OWNER_TYPE>(
+    type: string,
+    cb: (this: CallbackThis<DATAREF, CTX, T>, ...args: unknown[]) => void
+  ): this {
     if (this.type == DataTypes.PROP) {
-      (this.data as DataPathToolProperty).on(type, cb);
+      (this.data as DataPathToolProperty).on(type, cb as toolprop.CallbackFn);
     } else {
       throw new Error("invalid call to DataPath.on");
     }
