@@ -1941,9 +1941,10 @@ export class ToolStack<
    */
   replay(
     cb?: (ctx: ContextCls) => unknown,
-    onStep?: () => unknown | Promise<unknown>
+    onStep?: () => unknown | Promise<unknown>,
+    rewind: () => void = () => this.rewind()
   ): Promise<unknown> {
-    this.rewind();
+    rewind();
 
     let last = this.cur;
 
@@ -1958,27 +1959,33 @@ export class ToolStack<
           return;
         }
 
-        if (this.cur < this.length) {
+        if (this.cur < this.length - 1) {
           this.cur++;
-          this.rerun(this[this.cur]);
+
+          const tool = this[this.cur];
+          if (!tool.execCtx) {
+            tool.execCtx = this.ctx;
+          }
+          tool.undoPre(tool.execCtx);
+          tool.execPre(tool.execCtx);
+          tool.exec(tool.execCtx);
+          tool.execPost(tool.execCtx);
         }
 
         if (last === this.cur) {
           console.warn("time:", (util.time_ms() - start) / 1000.0);
           accept(this);
         } else {
-          if (onStep) {
-            const ret = onStep();
+          const ret = onStep ? onStep() : true;
 
-            if (ret && ret instanceof Promise) {
-              ret.then(() => {
-                next();
-              });
-            } else {
-              window.setTimeout(() => {
-                next();
-              });
-            }
+          if (ret && ret instanceof Promise) {
+            ret.then(() => {
+              next();
+            });
+          } else {
+            window.setTimeout(() => {
+              next();
+            });
           }
         }
       };

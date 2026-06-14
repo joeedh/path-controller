@@ -304,7 +304,7 @@ export class FootUnit extends Unit {
   static parse(string: string): number {
     string = normString(string);
     const i = string.search("ft");
-    let parts: string[] = [];
+    let parts: string[];
     let vft = 0.0;
     let vin = 0.0;
 

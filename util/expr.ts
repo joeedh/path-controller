@@ -329,7 +329,6 @@ export function parseExpr(s: string): unknown {
     n.push(left);
 
     console.log("\n\n", n.toString(), "\n\n");
-    left = n;
 
     console.log(n.toString());
 

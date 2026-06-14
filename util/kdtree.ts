@@ -181,7 +181,7 @@ export class KDTree {
         data[i++] = x;
         data[i++] = y;
         data[i++] = z;
-        data[i++] = id!;
+        data[i] = id!;
 
         data[ni + NTOTPOINT]++;
       }

@@ -703,7 +703,6 @@ export function dist_to_tri_v3_old(
     w = Math.min(Math.max(w, 0.0), 1.0);
     let sum = uv[0] + uv[1] + w;
     sum = sum !== 0.0 ? 1.0 / sum : 0.0;
-    w *= sum;
     uv[0] *= sum;
     uv[1] *= sum;
     pp.zero();
@@ -903,7 +902,6 @@ export function dist_to_tri_v3_sqr(
       lx = x1 - bx;
       ly = y1 - by;
       lz = z1 - bz;
-      dis = lx * lx + ly * ly;
       return lx * lx + ly * ly + lz * lz;
     case 2:
       div = (bx - cx) ** 2 + (by - cy) ** 2;
@@ -1999,7 +1997,6 @@ export function normal_tri(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like): Vector3 {
   let x1 = v2[0] - v1[0];
   let y1 = v2[1] - v1[1];
   let z1 = v2[2] - v1[2];
-  let x2 = v3[0] - v1[0];
   let y2 = v3[1] - v1[1];
   let z2 = v3[2] - v1[2];
   if (!isNum(x1 + y1 + z1 + z2 + y2 + z2)) {
@@ -2011,7 +2008,7 @@ export function normal_tri(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like): Vector3 {
   x1 = v2[0] - v1[0];
   y1 = v2[1] - v1[1];
   z1 = v2[2] - v1[2];
-  x2 = v3[0] - v1[0];
+  const x2 = v3[0] - v1[0];
   y2 = v3[1] - v1[1];
   z2 = v3[2] - v1[2];
   x3 = y1 * z2 - z1 * y2;
@@ -2112,7 +2109,7 @@ export function dist_to_line_2d(
   v2: Vec2Like,
   clip = true,
   closest_co_out?: Vec2Like,
-  t_out?: number
+  t_out?: number[]
 ): number {
   const lv1 = dt2l_v4.load(v1);
   const lv2 = dt2l_v5.load(v2);
@@ -2130,7 +2127,7 @@ export function dist_to_line_2d(
     closest_co_out[1] = n[1];
   }
   if (t_out !== undefined) {
-    t_out = t;
+    t_out[0] = t;
   }
   return n.vectorDistance(p);
 }

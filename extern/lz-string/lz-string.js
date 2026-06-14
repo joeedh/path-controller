@@ -169,8 +169,8 @@ export default {
     let value;
     let context_dictionary = {};
     let context_dictionaryToCreate = {};
-    let context_c = "";
-    let context_wc = "";
+    let context_c;
+    let context_wc;
     let context_w = "";
     let context_enlargeIn = 2; // Compensate for the first entry which should not count
     let context_dictSize = 3;
@@ -346,7 +346,6 @@ export default {
       }
       context_enlargeIn--;
       if (context_enlargeIn === 0) {
-        context_enlargeIn = Math.pow(2, context_numBits);
         context_numBits++;
       }
     }
@@ -392,7 +391,7 @@ export default {
     let enlargeIn = 4;
     let dictSize = 4;
     let numBits = 3;
-    let entry = "";
+    let entry;
     let result = [];
     let i;
     let w;

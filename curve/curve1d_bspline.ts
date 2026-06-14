@@ -1273,7 +1273,7 @@ curve1d.BSplineCurve {
       //*/
     };
 
-    let err = 0.0;
+    let err;
     const g = new Vector2();
 
     for (let step = 0; step < 25; step++) {

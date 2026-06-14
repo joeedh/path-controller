@@ -365,7 +365,7 @@ export function graphPack(
       }
     }
 
-    let err = 1e17;
+    let err;
 
     for (const n of nodes) {
       n.oldpos.load!(n.pos);
@@ -382,7 +382,7 @@ export function graphPack(
 
     for (let j = 0; j < 10; j++) {
       solver = solveStep1();
-      err = solver.solve(10, gk * speed);
+      solver.solve(10, gk * speed);
     }
 
     for (const n of nodes) {

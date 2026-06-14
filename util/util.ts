@@ -2481,7 +2481,7 @@ export class DivLogger {
   }
 
   toString(obj: unknown, depth: number = 0): string {
-    let s = "";
+    let s;
 
     let tab = "";
     for (let i = 0; i < depth; i++) {

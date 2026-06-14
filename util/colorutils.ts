@@ -4,9 +4,7 @@ import { Vector3, Vector4 } from "../util/vectormath";
 const rgb_to_hsv_rets = new util.cachering(() => [0, 0, 0], 64);
 
 export function rgb_to_hsv(r: number, g: number, b: number): number[] {
-  let computedH = 0;
-  let computedS = 0;
-  let computedV = 0;
+  let computedV;
 
   if (r == null || g == null || b == null || isNaN(r) || isNaN(g) || isNaN(b)) {
     throw new Error(`Please enter numeric RGB values! r: ${r} g: ${g} b: ${b}`);
@@ -28,8 +26,8 @@ export function rgb_to_hsv(r: number, g: number, b: number): number[] {
   const d = r === minRGB ? g - b : b === minRGB ? r - g : b - r;
   const h = r === minRGB ? 3 : b === minRGB ? 1 : 5;
 
-  computedH = (60 * (h - d / (maxRGB - minRGB))) / 360.0;
-  computedS = (maxRGB - minRGB) / maxRGB;
+  const computedH = (60 * (h - d / (maxRGB - minRGB))) / 360.0;
+  const computedS = (maxRGB - minRGB) / maxRGB;
   computedV = maxRGB;
 
   const ret = rgb_to_hsv_rets.next();
@@ -40,17 +38,14 @@ export function rgb_to_hsv(r: number, g: number, b: number): number[] {
 const hsv_to_rgb_rets = new util.cachering(() => [0, 0, 0], 64);
 
 export function hsv_to_rgb(h: number, s: number, v: number): number[] {
-  let c = 0;
-  let m = 0;
-  let x = 0;
   const ret = hsv_to_rgb_rets.next();
 
   ret[0] = ret[1] = ret[2] = 0.0;
   h *= 360.0;
 
-  c = v * s;
-  x = c * (1.0 - Math.abs(((h / 60.0) % 2) - 1.0));
-  m = v - c;
+  const c = v * s;
+  const x = c * (1.0 - Math.abs(((h / 60.0) % 2) - 1.0));
+  const m = v - c;
   let color: number[];
 
   function RgbF_Create(r: number, g: number, b: number): number[] {

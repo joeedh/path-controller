@@ -580,11 +580,10 @@ export function pushModalLight(
 
   const mpos = [0, 0];
 
-  let screen = findScreen();
+  const screen = findScreen();
   if (screen) {
     mpos[0] = (screen.mpos as number[])[0];
     mpos[1] = (screen.mpos as number[])[1];
-    screen = undefined;
   }
 
   function handleAreaContext(): void {

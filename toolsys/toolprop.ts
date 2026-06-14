@@ -330,11 +330,10 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     };
 
     for (let i = 0; i < name.length; i++) {
-      let c = name[i];
+      const c = name[i];
 
       if (c === "_" || c === "-" || c === "$") {
         lastc = c;
-        c = " ";
         parts.push("");
         continue;
       }

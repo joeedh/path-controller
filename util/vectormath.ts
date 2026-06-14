@@ -1672,7 +1672,7 @@ export class Quat extends Vector4 {
     mat.$matrix.m32 = r3[1];
     mat.$matrix.m33 = r3[2];
     const tr = 0.25 * (1.0 + mat.$matrix.m11 + mat.$matrix.m22 + mat.$matrix.m33);
-    let s = 0;
+    let s;
     if (tr > FLT_EPSILON) {
       s = Math.sqrt(tr);
       this[0] = s;
@@ -2543,7 +2543,7 @@ export class Matrix4 {
   }
 
   toString() {
-    let s = "";
+    let s;
     const m = this.$matrix;
 
     function dec(d: number) {
@@ -2687,7 +2687,7 @@ export class Matrix4 {
       v3[1],
       v3[2],
       v3[3],
-      
+
       v4[0],
       v4[1],
       v4[2],

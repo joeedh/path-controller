@@ -368,7 +368,6 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
         type = toolprop.Vec2Property;
         break;
       case 3:
-        type = toolprop.Vec3Property;
       case 4:
         type = toolprop.Vec4Property;
     }
@@ -913,7 +912,7 @@ An example of a more complicated expression might be:
     dstruct?: DataStruct
   ): ResolvePathResult | undefined {
     const parser = parserStack[parserStackCur++];
-    let ret = undefined;
+    let ret;
 
     if (inpath[0] === "/") {
       inpath = inpath.slice(1, inpath.length).trim();
@@ -1025,7 +1024,6 @@ An example of a more complicated expression might be:
       if (dpath === undefined) {
         if (key === "length" && prop !== undefined && prop instanceof DataList) {
           prop.getLength(this, obj);
-          key = "length";
 
           prop = DummyIntProperty;
 
