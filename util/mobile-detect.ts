@@ -77,7 +77,7 @@ interface MobileDetectConstructor {
   version: string;
 }
 
-let impl: MobileDetectImpl = {} as MobileDetectImpl;
+const impl: MobileDetectImpl = {} as MobileDetectImpl;
 
 impl.mobileDetectRules = {
   "phones": {
@@ -406,8 +406,8 @@ impl.detectMobileBrowsers = {
   tabletPattern: /android|ipad|playbook|silk/i,
 };
 
-var hasOwnProp = Object.prototype.hasOwnProperty,
-  isArray;
+const hasOwnProp = Object.prototype.hasOwnProperty;
+let isArray;
 
 impl.FALLBACK_PHONE = "UnknownPhone";
 impl.FALLBACK_TABLET = "UnknownTablet";
@@ -421,13 +421,13 @@ isArray =
       };
 
 function equalIC(a: string | null, b: string | null): boolean {
-  return a != null && b != null && a.toLowerCase() === b.toLowerCase();
+  return a != null && a.toLowerCase() === b?.toLowerCase();
 }
 
 function containsIC(array: string[], value: string): boolean {
-  var valueLC: string,
-    i: number,
-    len = array.length;
+  let valueLC: string;
+  let i: number;
+  const len = array.length;
   if (!len || !value) {
     return false;
   }
@@ -441,7 +441,7 @@ function containsIC(array: string[], value: string): boolean {
 }
 
 function convertPropsToRegExp(object: Record<string, string | RegExp>): void {
-  for (var key in object) {
+  for (const key in object) {
     if (hasOwnProp.call(object, key)) {
       object[key] = new RegExp(object[key] as string, "i");
     }
@@ -453,16 +453,16 @@ function prepareUserAgent(userAgent: string): string {
 }
 
 (function init() {
-  var key: string,
-    values: (string | RegExp)[],
-    value: string,
-    i: number,
-    len: number,
-    verPos: number,
-    mobileDetectRules = impl.mobileDetectRules;
+  let key: string;
+  let values: (string | RegExp)[];
+  let value: string;
+  let i: number;
+  let len: number;
+  let verPos: number;
+  const mobileDetectRules = impl.mobileDetectRules;
   for (key in mobileDetectRules.props) {
     if (hasOwnProp.call(mobileDetectRules.props, key)) {
-      let rawValues = mobileDetectRules.props[key];
+      const rawValues = mobileDetectRules.props[key];
       if (!isArray(rawValues)) {
         values = [rawValues as string];
       } else {
@@ -504,7 +504,7 @@ impl.findMatch = function (
   rules: Record<string, string | RegExp>,
   userAgent: string
 ): string | null {
-  for (var key in rules) {
+  for (const key in rules) {
     if (hasOwnProp.call(rules, key)) {
       if ((rules[key] as RegExp).test(userAgent)) {
         return key;
@@ -522,8 +522,8 @@ impl.findMatch = function (
  * @private
  */
 impl.findMatches = function (rules: Record<string, string | RegExp>, userAgent: string): string[] {
-  var result: string[] = [];
-  for (var key in rules) {
+  const result: string[] = [];
+  for (const key in rules) {
     if (hasOwnProp.call(rules, key)) {
       if ((rules[key] as RegExp).test(userAgent)) {
         result.push(key);
@@ -542,11 +542,11 @@ impl.findMatches = function (rules: Record<string, string | RegExp>, userAgent: 
  * @private
  */
 impl.getVersionStr = function (propertyName: string, userAgent: string): string | null {
-  var props = impl.mobileDetectRules.props,
-    patterns: RegExp[],
-    i: number,
-    len: number,
-    match: RegExpExecArray | null;
+  const props = impl.mobileDetectRules.props;
+  let patterns: RegExp[];
+  let i: number;
+  let len: number;
+  let match: RegExpExecArray | null;
   if (hasOwnProp.call(props, propertyName)) {
     patterns = props[propertyName] as RegExp[];
     len = patterns.length;
@@ -570,7 +570,7 @@ impl.getVersionStr = function (propertyName: string, userAgent: string): string 
  * @private
  */
 impl.getVersion = function (propertyName, userAgent) {
-  var version = impl.getVersionStr(propertyName, userAgent);
+  const version = impl.getVersionStr(propertyName, userAgent);
   return version ? impl.prepareVersionNo(version) : NaN;
 };
 
@@ -582,7 +582,7 @@ impl.getVersion = function (propertyName, userAgent) {
  * @private
  */
 impl.prepareVersionNo = function (version) {
-  var numbers;
+  let numbers;
 
   numbers = version.split(/[a-z._ \/\-]/i);
   if (numbers.length === 1) {
@@ -611,7 +611,9 @@ impl.prepareDetectionCache = function (cache, userAgent, maxPhoneWidth) {
   if (cache.mobile !== undefined) {
     return;
   }
-  var phone, tablet, phoneSized;
+  let phone;
+  let tablet;
+  let phoneSized;
 
   // first check for stronger tablet rules, then phone (see issue#5)
   tablet = impl.findMatch(impl.mobileDetectRules.tablets, userAgent);
@@ -660,7 +662,7 @@ impl.mobileGrade = function (t) {
   //     , self::VERSION_TYPE_FLOAT / (nothing)
   //     isIOS() / os('iOS')
   //     [reg] / (nothing)   <-- jsdelivr complaining about unescaped unicode character U+00AE
-  var $isMobile = t.mobile() !== null;
+  const $isMobile = t.mobile() !== null;
 
   if (
     // Apple iOS 3.2-5.1 - Tested on the original iPad (4.3 / 5.0), iPad 2 (4.3), iPad 3 (5.1), original iPhone (3.1), iPhone 3 (3.2), 3GS (4.3), 4 (4.3 / 5.0), and 4S (5.1)

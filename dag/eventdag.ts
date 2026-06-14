@@ -88,7 +88,7 @@ export class EventSocket {
     if (this.type === SocketTypes.INPUT) {
       this.node.flagUpdate();
     } else {
-      for (let sockb of this.edges) {
+      for (const sockb of this.edges) {
         sockb.flag |= SocketFlags.UPDATE;
         sockb.node!.flagUpdate();
       }
@@ -112,7 +112,7 @@ export class EventSocket {
   }
 
   hasNode(node: EventNode | NodeCapable): boolean {
-    for (let sockb of this.edges) {
+    for (const sockb of this.edges) {
       if (sockb.node === node || sockb.node!.owner === node) {
         return true;
       }
@@ -122,15 +122,15 @@ export class EventSocket {
   }
 
   has(sockb: EventSocket): boolean {
-    return this.edges.indexOf(sockb) >= 0;
+    return this.edges.includes(sockb);
   }
 
-  disconnect(sockb: EventSocket | undefined = undefined): this {
+  disconnect(sockb?: EventSocket | undefined): this {
     this.flagResort();
 
     if (sockb === undefined) {
       /* Disconnect all. */
-      for (let sock of this.edges) {
+      for (const sock of this.edges) {
         sock.flagUpdate();
         sock.edges.remove(this);
       }
@@ -201,18 +201,18 @@ export class EventNode {
   constructor(owner: NodeCapable) {
     this.owner = owner;
 
-    let cls = owner.constructor as unknown as Record<string, unknown>;
+    const cls = owner.constructor as unknown as Record<string, unknown>;
 
-    let getSockets = (key: SocketType): Record<string, EventSocket> => {
-      let socks: Record<string, EventSocket> = {};
+    const getSockets = (key: SocketType): Record<string, EventSocket> => {
+      const socks: Record<string, EventSocket> = {};
 
       let p = cls as Record<string, unknown> | null;
       while (p) {
         if (p.graphNodeDef) {
-          let graphNodeDef = p.graphNodeDef as GraphNodeDef;
-          let socksDef = graphNodeDef[key] || {};
+          const graphNodeDef = p.graphNodeDef as GraphNodeDef;
+          const socksDef = graphNodeDef[key] || {};
 
-          for (let k in socksDef) {
+          for (const k in socksDef) {
             if (!(k in socks)) {
               socks[k] = socksDef[k].copy();
               socks[k].name = k;
@@ -268,7 +268,7 @@ export class EventGraph {
   constructor() {}
 
   add(node: EventNode | NodeCapable): void {
-    let eventNode = this.eventNode(node);
+    const eventNode = this.eventNode(node);
 
     eventNode.graph = this;
     this.nodeIdMap.set(eventNode.id, eventNode);
@@ -279,7 +279,7 @@ export class EventGraph {
   }
 
   has(node: EventNode | NodeCapable): boolean {
-    let eventNode = this.eventNode(node);
+    const eventNode = this.eventNode(node);
     return this.nodeIdMap.has(eventNode.id);
   }
 
@@ -297,7 +297,7 @@ export class EventGraph {
   }
 
   remove(node: EventNode | NodeCapable): void {
-    let eventNode = this.eventNode(node);
+    const eventNode = this.eventNode(node);
 
     if (eventNode === undefined) {
       throw new Error("EventGraph.prototype.remove(): node was undefined");
@@ -309,7 +309,7 @@ export class EventGraph {
 
     this.nodeIdMap.delete(eventNode.id);
 
-    for (let sock of Array.from(eventNode.allsockets)) {
+    for (const sock of Array.from(eventNode.allsockets)) {
       this.sockIdMap.delete(sock.id);
 
       try {
@@ -352,14 +352,14 @@ export class EventGraph {
 
     this.flag &= ~RecalcFlags.RESORT;
 
-    for (let n of this.nodes) {
+    for (const n of this.nodes) {
       n.flag &= ~(NodeFlags.SORT_TAG1 | NodeFlags.SORT_TAG2);
     }
 
-    let sortlist = this.sortlist;
+    const sortlist = this.sortlist;
     this.sortlist.length = 0;
 
-    let dosort = (n: EventNode): void => {
+    const dosort = (n: EventNode): void => {
       if (n.flag & NodeFlags.SORT_TAG2) {
         console.error("Cycle in event dag!", n);
         return;
@@ -367,9 +367,9 @@ export class EventGraph {
 
       n.flag |= NodeFlags.SORT_TAG2;
 
-      for (let [k, socka] of Object.entries(n.inputs)) {
-        for (let sockb of socka.edges) {
-          let n2 = sockb.node!;
+      for (const [k, socka] of Object.entries(n.inputs)) {
+        for (const sockb of socka.edges) {
+          const n2 = sockb.node!;
           if (!(n2.flag & NodeFlags.SORT_TAG1)) {
             dosort(n2);
           }
@@ -381,9 +381,9 @@ export class EventGraph {
       n.sortIndex = sortlist.length;
       sortlist.push(n);
 
-      for (let [k, socka] of Object.entries(n.outputs)) {
-        for (let sockb of socka.edges) {
-          let n2 = sockb.node!;
+      for (const [k, socka] of Object.entries(n.outputs)) {
+        for (const sockb of socka.edges) {
+          const n2 = sockb.node!;
 
           if (!(n2.flag & NodeFlags.SORT_TAG1)) {
             dosort(n2);
@@ -392,7 +392,7 @@ export class EventGraph {
       }
     };
 
-    for (let n of this.nodes) {
+    for (const n of this.nodes) {
       if (!(n.flag & NodeFlags.SORT_TAG1)) {
         dosort(n);
       }
@@ -426,8 +426,8 @@ export class EventGraph {
 
     this.#skipQueueExec++;
 
-    let sortlist = this.sortlist;
-    for (let n of sortlist) {
+    const sortlist = this.sortlist;
+    for (const n of sortlist) {
       if (!(n.flag & NodeFlags.UPDATE)) {
         continue;
       }
@@ -441,16 +441,16 @@ export class EventGraph {
 
       n.flag &= ~NodeFlags.UPDATE;
 
-      for (let k in n.inputs) {
-        let sock = n.inputs[k];
+      for (const k in n.inputs) {
+        const sock = n.inputs[k];
         sock.flag &= ~SocketFlags.UPDATE;
       }
 
-      for (let k in n.outputs) {
-        let sock = n.outputs[k];
+      for (const k in n.outputs) {
+        const sock = n.outputs[k];
 
         if (sock.flag & SocketFlags.UPDATE) {
-          for (let sockb of sock.edges) {
+          for (const sockb of sock.edges) {
             sockb.flag |= SocketFlags.UPDATE;
             sockb.node!.flag |= NodeFlags.UPDATE;
           }
@@ -554,14 +554,14 @@ export class PropertySocket<T = any> extends EventSocket {
   }
 
   get value(): T | undefined {
-    let bind = this.#binding;
+    const bind = this.#binding;
     return bind.obj ? bind.obj[bind.key] : undefined;
   }
 
   set value(v: T) {
-    let old = this.value;
+    const old = this.value;
     if (this.#callbacks.length > 0) {
-      for (let cb of this.#callbacks) {
+      for (const cb of this.#callbacks) {
         v = cb(v, old);
       }
     }
@@ -572,13 +572,13 @@ export class PropertySocket<T = any> extends EventSocket {
     ) {
       v = !v as unknown as T;
     } else if (this.#invert && typeof v === "string") {
-      let s = v.toLowerCase().trim();
+      const s = v.toLowerCase().trim();
       if (s in strBoolMap) {
         v = strBoolMap[s] as unknown as T;
       }
     }
 
-    let bind = this.#binding;
+    const bind = this.#binding;
     if (bind.obj) {
       bind.obj[bind.key] = v;
     } else {

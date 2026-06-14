@@ -50,7 +50,7 @@ export class EventDispatcher {
     }
 
     const stack = this._cbs[type];
-    if (stack.indexOf(cb) < 0) {
+    if (!stack.includes(cb)) {
       console.warn("event handler not in list", type, cb);
       return this;
     }

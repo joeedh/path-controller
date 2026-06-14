@@ -842,15 +842,18 @@ ToolProperty.internalRegister(StringProperty);
 export class ArrayBufferProperty extends ToolProperty<ArrayBuffer, PropTypes["ARRAY_BUFFER"]> {
   data: ArrayBuffer = new ArrayBuffer(0);
 
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
     toolprop.ArrayBufferProperty {
       data : arraybuffer(byte);
     }
-  `);
+  `
+  );
 
   constructor(buffer?: ArrayBuffer) {
     super(PropTypes.ARRAY_BUFFER);
-    this.data = buffer ?? this.data
+    this.data = buffer ?? this.data;
   }
 
   setValue(buffer: ArrayBuffer) {

@@ -165,20 +165,20 @@ export default {
     uncompressed = getInput(uncompressed);
 
     if (uncompressed === null) return "";
-    let i,
-      value,
-      context_dictionary = {},
-      context_dictionaryToCreate = {},
-      context_c = "",
-      context_wc = "",
-      context_w = "",
-      context_enlargeIn = 2, // Compensate for the first entry which should not count
-      context_dictSize = 3,
-      context_numBits = 2,
-      context_data = [],
-      context_data_val = 0,
-      context_data_position = 0,
-      ii;
+    let i;
+    let value;
+    let context_dictionary = {};
+    let context_dictionaryToCreate = {};
+    let context_c = "";
+    let context_wc = "";
+    let context_w = "";
+    let context_enlargeIn = 2; // Compensate for the first entry which should not count
+    let context_dictSize = 3;
+    let context_numBits = 2;
+    let context_data = [];
+    let context_data_val = 0;
+    let context_data_position = 0;
+    let ii;
 
     for (ii = 0; ii < uncompressed.length; ii += 1) {
       context_c = uncompressed.charAt(ii);
@@ -388,21 +388,21 @@ export default {
   },
 
   _decompress: function (length, resetValue, getNextValue) {
-    let dictionary = [],
-      next,
-      enlargeIn = 4,
-      dictSize = 4,
-      numBits = 3,
-      entry = "",
-      result = [],
-      i,
-      w,
-      bits,
-      resb,
-      maxpower,
-      power,
-      c,
-      data = { val: getNextValue(0), position: resetValue, index: 1 };
+    let dictionary = [];
+    let next;
+    let enlargeIn = 4;
+    let dictSize = 4;
+    let numBits = 3;
+    let entry = "";
+    let result = [];
+    let i;
+    let w;
+    let bits;
+    let resb;
+    let maxpower;
+    let power;
+    let c;
+    let data = { val: getNextValue(0), position: resetValue, index: 1 };
 
     for (i = 0; i < 3; i += 1) {
       dictionary[i] = i;

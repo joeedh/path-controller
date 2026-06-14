@@ -124,8 +124,8 @@ export class Solver {
       let totgs = 0.0;
 
       for (let i = 0; i < con.klst.length; i++) {
-        const ks = con.klst[i],
-          gs = con.glst[i];
+        const ks = con.klst[i];
+        const gs = con.glst[i];
         for (let j = 0; j < ks.length; j++) {
           totgs += gs[j] * gs[j];
         }
@@ -138,9 +138,9 @@ export class Solver {
       r1 /= totgs;
 
       for (let i = 0; i < con.klst.length; i++) {
-        const ks = con.klst[i],
-          gs = con.glst[i],
-          ws = con.wlst[i];
+        const ks = con.klst[i];
+        const gs = con.glst[i];
+        const ws = con.wlst[i];
         for (let j = 0; j < ks.length; j++) {
           ks[j] += -r1 * gs[j] * con.k * gk * ws[j];
         }
@@ -172,8 +172,8 @@ export class Solver {
       let totgs = 0.0;
 
       for (let i = 0; i < con.klst.length; i++) {
-        const ks = con.klst[i],
-          gs = con.glst[i];
+        const ks = con.klst[i];
+        const gs = con.glst[i];
         for (let j = 0; j < ks.length; j++) {
           totgs += gs[j] * gs[j];
         }
@@ -186,9 +186,9 @@ export class Solver {
       totgs = 0.0001 / Math.sqrt(totgs);
 
       for (let i = 0; i < con.klst.length; i++) {
-        const ks = con.klst[i],
-          gs = con.glst[i],
-          ws = con.wlst[i];
+        const ks = con.klst[i];
+        const gs = con.glst[i];
+        const ws = con.wlst[i];
         for (let j = 0; j < ks.length; j++) {
           ks[j] += -totgs * gs[j] * con.k * gk * ws[j];
         }

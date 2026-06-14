@@ -1647,7 +1647,7 @@ export class ToolStack<
     this._undo_branch = undefined; //used to save undo branch in case of tool cancel
   }
 
-  prepend(tool : this[number]) {
+  prepend(tool: this[number]) {
     this.splice(0, 0, tool);
   }
 

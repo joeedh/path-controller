@@ -1153,7 +1153,7 @@ export function aabb_intersect_3d(
 ): boolean {
   let tot = 0;
   for (let _i = 0; _i < 2; _i++) {
-    let i = _i as Number2;
+    const i = _i as Number2;
     if (max1[i] >= min2[i] && min1[i] <= max2[i]) {
       tot++;
     }
@@ -1333,7 +1333,7 @@ export function simple_tri_aabb_isect(
   $vs_simple_tri_aabb_isect[1] = v2;
   $vs_simple_tri_aabb_isect[2] = v3;
   for (let _i = 0; _i < 3; _i++) {
-    let i = _i as Number3;
+    const i = _i as Number3;
     let isect = true;
     for (let j = 0; j < 3; j++) {
       if ($vs_simple_tri_aabb_isect[j][i] < min[i] || $vs_simple_tri_aabb_isect[j][i] >= max[i])
@@ -1597,7 +1597,7 @@ export function colinear(
   const carr = c;
   const axes = a.length;
   for (let _i = 0; _i < axes; _i++) {
-    let i = _i as Number2;
+    const i = _i as Number2;
     t1arr[i] = barr[i] - aarr[i];
     t2arr[i] = carr[i] - aarr[i];
   }
@@ -1916,7 +1916,7 @@ export function aabb_sphere_isect(
   const lminarr = lmin;
   const lmaxarr = lmax;
   for (let _i = 0; _i < 3; _i++) {
-    let i = _i as Number3;
+    const i = _i as Number3;
     p2.load(lp);
     const i2 = ((i + 1) % 3) as Number3;
     const i3 = ((i + 2) % 3) as Number3;
@@ -2443,13 +2443,13 @@ export function get_tri_circ(a: Vec3Like, b: Vec3Like, c: Vec3Like): [Vector3, n
   const v1arr = v1;
   const v2arr = v2;
   for (let _i = 0; _i < 3; _i++) {
-    let i = _i as Number3;
+    const i = _i as Number3;
     e1arr[i] = barr[i] - aarr[i];
     e2arr[i] = carr[i] - barr[i];
     e3arr[i] = aarr[i] - carr[i];
   }
   for (let _i = 0; _i < 3; _i++) {
-    let i = _i as Number3;
+    const i = _i as Number3;
     p1arr[i] = (aarr[i] + barr[i]) * 0.5;
     p2arr[i] = (carr[i] + barr[i]) * 0.5;
   }
@@ -2467,7 +2467,7 @@ export function get_tri_circ(a: Vec3Like, b: Vec3Like, c: Vec3Like): [Vector3, n
   const p12arr = _gtc_p12;
   const p22arr = _gtc_p22;
   for (let _i = 0; _i < 3; _i++) {
-    let i = _i as Number3;
+    const i = _i as Number3;
     p12arr[i] = p1[i] + v1[i];
     p22arr[i] = p2[i] + v2[i];
   }
@@ -2532,7 +2532,7 @@ export function minmax_verts(verts: any[]): [Vector3, Vector3] {
   const max = new Vector3([-1000000000000.0, -1000000000000.0, -1000000000000.0]);
   for (const v of verts) {
     for (let _i = 0; _i < 3; _i++) {
-      let i = _i as Number3;
+      const i = _i as Number3;
       min[i] = Math.min(min[i], v.co[i]);
       max[i] = Math.max(max[i], v.co[i]);
     }
@@ -2936,7 +2936,7 @@ export function point_in_hex(
   if (!boxfacecents) {
     boxfacecents = boxfaces_tmp;
     for (let i = 0; i < 6; i++) {
-      let [a, b, c, d] = boxfaces_table[i];
+      const [a, b, c, d] = boxfaces_table[i];
       const v1 = boxverts[a];
       const v2 = boxverts[b];
       const v3 = boxverts[c];
@@ -2947,7 +2947,7 @@ export function point_in_hex(
   if (!boxfacenormals) {
     boxfacenormals = boxfacenormals_tmp;
     for (let i = 0; i < 6; i++) {
-      let [a, b, c, d] = boxfaces_table[i];
+      const [a, b, c, d] = boxfaces_table[i];
       const v1 = boxverts[a];
       const v2 = boxverts[b];
       const v3 = boxverts[c];
@@ -3083,7 +3083,7 @@ export function trilinear_co2(p: Vec3Like, boxverts: Vec3Like[], uvw: Vec3Like):
     let totg = 0;
     for (let _i = 0; _i < 3; _i++) {
       let axis_error = 0.0;
-      let i = _i as Number3;
+      const i = _i as Number3;
       if (uvwarr[i] < 0) {
         axis_error = -uvwarr[i];
       } else if (uvwarr[i] > 1.0) {

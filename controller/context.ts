@@ -119,7 +119,7 @@ export function makeDerivedOverlay(parent: OverlayParent) {
         ];
       }
 
-      let def2: Record<string, unknown> = {};
+      const def2: Record<string, unknown> = {};
       (Symbol as unknown as Record<string | symbol, unknown>).CachedDef = {};
 
       let def = this.contextDefine() as Record<string, unknown>;
@@ -128,7 +128,7 @@ export function makeDerivedOverlay(parent: OverlayParent) {
         def = {};
       }
 
-      for (let k in def) {
+      for (const k in def) {
         def2[k] = def[k];
       }
 
@@ -136,7 +136,7 @@ export function makeDerivedOverlay(parent: OverlayParent) {
         def2.flag = Context.inherit(0);
       }
 
-      let parents: Function[] = [];
+      const parents: Function[] = [];
       let p = util.getClassParent(this);
 
       while (p && p !== ContextOverlay) {
@@ -146,8 +146,8 @@ export function makeDerivedOverlay(parent: OverlayParent) {
 
       if (def2.flag instanceof InheritFlag) {
         let flag = def2.flag.data;
-        for (let parent of parents) {
-          let pdef = (parent as unknown as typeof ContextOverlay).contextDefine() as Record<
+        for (const parent of parents) {
+          const pdef = (parent as unknown as typeof ContextOverlay).contextDefine() as Record<
             string,
             unknown
           >;
@@ -244,11 +244,11 @@ export class LockedContext {
     );
   }
   progressBar(...args: unknown[]): unknown {
-    let ctxRec = this.ctx as unknown as Record<string, Function | undefined>;
+    const ctxRec = this.ctx as unknown as Record<string, Function | undefined>;
     return ctxRec.progbar !== undefined ? ctxRec.progbar!(...args) : ctxRec.progressBar!(...args);
   }
   load(ctx: Context): void {
-    let keys = (ctx as unknown as { _props: Set<string> })._props;
+    const keys = (ctx as unknown as { _props: Set<string> })._props;
 
     function wrapget(name: string) {
       return function (ctx2: unknown, data: unknown): unknown {
@@ -256,7 +256,7 @@ export class LockedContext {
       };
     }
 
-    for (let k of keys) {
+    for (const k of keys) {
       let v: unknown;
       if (k === "state" || k === "toolstack" || k === "api") {
         continue;
@@ -275,8 +275,9 @@ export class LockedContext {
         continue;
       }
 
-      let data: unknown, getter: ((ctx2: unknown, data: unknown) => unknown) | undefined;
-      let overlay = ctx.getOwningOverlay(k);
+      let data: unknown;
+      let getter: ((ctx2: unknown, data: unknown) => unknown) | undefined;
+      const overlay = ctx.getOwningOverlay(k);
 
       if (overlay === undefined) {
         //property must no longer be used?
@@ -284,7 +285,7 @@ export class LockedContext {
       }
 
       try {
-        let oRec = overlay as Record<string, unknown>;
+        const oRec = overlay as Record<string, unknown>;
         if (typeof k === "string" && oRec[k + "_save"] && oRec[k + "_load"]) {
           data = (oRec[k + "_save"] as Function)();
           getter = oRec[k + "_load"] as (ctx2: unknown, data: unknown) => unknown;
@@ -303,16 +304,16 @@ export class LockedContext {
       };
     }
 
-    let defineProp = (name: string): void => {
+    const defineProp = (name: string): void => {
       Object.defineProperty(this, name, {
         get: function (this: LockedContext) {
-          let def = this.props[name];
+          const def = this.props[name];
           return def.get(this.ctx, def.data);
         },
       });
     };
 
-    for (let k in this.props) {
+    for (const k in this.props) {
       if (k !== "ctx") {
         defineProp(k);
       }
@@ -330,7 +331,7 @@ export class LockedContext {
   }
 }
 
-let next_key = {};
+const next_key = {};
 let idgen = 1;
 
 export class Context<Overlays extends ContextLike = ContextLike> {
@@ -371,46 +372,46 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   error(message: string, timeout: number = 1500): unknown {
-    let state = this.state as Record<string, unknown> | undefined;
+    const state = this.state as Record<string, unknown> | undefined;
 
     console.warn(message);
 
-    if (state && state.screen) {
+    if (state?.screen) {
       return notifier!.error(state.screen, message, timeout);
     }
   }
 
   warning(message: string, timeout: number = 1500): unknown {
-    let state = this.state as Record<string, unknown> | undefined;
+    const state = this.state as Record<string, unknown> | undefined;
 
     console.warn(message);
 
-    if (state && state.screen) {
+    if (state?.screen) {
       return notifier!.warning(state.screen, message, timeout);
     }
   }
 
   message(msg: string, timeout: number = 1500): unknown {
-    let state = this.state as Record<string, unknown> | undefined;
+    const state = this.state as Record<string, unknown> | undefined;
 
     console.warn(msg);
 
-    if (state && state.screen) {
+    if (state?.screen) {
       return notifier!.message(state.screen, msg, timeout);
     }
   }
 
   progbar(msg: string, perc: number = 0.0, timeout: number = 1500, id: string = msg): unknown {
-    let state = this.state as Record<string, unknown> | undefined;
+    const state = this.state as Record<string, unknown> | undefined;
 
-    if (state && state.screen) {
+    if (state?.screen) {
       return notifier!.progbarNote(state.screen, msg, perc, "green", timeout, id);
     }
   }
 
   validateOverlays(): void {
-    let stack = this._stack;
-    let stack2: OverlayInstance[] = [];
+    const stack = this._stack;
+    const stack2: OverlayInstance[] = [];
 
     for (let i = 0; i < stack.length; i++) {
       if (stack[i].validate()) {
@@ -426,7 +427,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   getOverlay(cls: Function): OverlayInstance | undefined {
-    for (let overlay of this._stack) {
+    for (const overlay of this._stack) {
       if (overlay.constructor === cls) {
         return overlay;
       }
@@ -434,7 +435,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   clear(have_new_file: boolean = false): void {
-    for (let overlay of this._stack) {
+    for (const overlay of this._stack) {
       overlay.onRemove(have_new_file);
     }
 
@@ -452,15 +453,15 @@ export class Context<Overlays extends ContextLike = ContextLike> {
       };
     }
 
-    let ctx = this.copy();
+    const ctx = this.copy();
     ctx.pushOverlay(overrides as unknown as OverlayInstance);
     return ctx;
   }
 
   copy(): Context {
-    let ret = new (this.constructor as typeof Context)(this.state);
+    const ret = new (this.constructor as typeof Context)(this.state);
 
-    for (let item of this._stack) {
+    for (const item of this._stack) {
       ret.pushOverlay(item.copy());
     }
 
@@ -480,15 +481,15 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   getOwningOverlay(name: string, _val_out?: [unknown]): OverlayInstance | undefined {
-    let inside_map = this._inside_map;
-    let stack = this._stack;
+    const inside_map = this._inside_map;
+    const stack = this._stack;
 
     if ((cconst.DEBUG as Record<string, boolean>).contextSystem) {
       console.log(name, inside_map);
     }
 
     for (let i = stack.length - 1; i >= 0; i--) {
-      let overlay = stack[i];
+      const overlay = stack[i];
       let ret: unknown = next_key;
 
       if (
@@ -497,7 +498,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
         throw new Error("context corruption");
       }
 
-      let ikey = (overlay as unknown as Record<string | symbol, unknown>)[
+      const ikey = (overlay as unknown as Record<string | symbol, unknown>)[
         Symbol.ContextID
       ] as number;
 
@@ -509,7 +510,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
         continue;
       }
 
-      if (overlay.__allKeys && overlay.__allKeys.has(name)) {
+      if (overlay.__allKeys?.has(name)) {
         if ((cconst.DEBUG as Record<string, boolean>).contextSystem) {
           console.log("getting value");
         }
@@ -550,7 +551,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
 
     Object.defineProperty(this, name, {
       get: function (this: Context) {
-        let ret = _ret_tmp;
+        const ret = _ret_tmp;
         _ret_tmp[0] = undefined;
 
         this.getOwningOverlay(name, ret);
@@ -573,8 +574,8 @@ export class Context<Overlays extends ContextLike = ContextLike> {
       (overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] = idgen++;
     }
 
-    let keys = new Set<string | symbol>();
-    for (let key of util.getAllKeys(overlay)) {
+    const keys = new Set<string | symbol>();
+    for (const key of util.getAllKeys(overlay)) {
       if (!excludedKeys.has(key as string) && !(typeof key === "string" && key[0] === "_")) {
         keys.add(key);
       }
@@ -586,7 +587,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
       overlay.__allKeys = keys;
     }
 
-    for (let k of keys) {
+    for (const k of keys) {
       let bad = typeof k === "symbol" || excludedKeys.has(k as string);
       bad = bad || (typeof k === "string" && k[0] === "_");
       bad = bad || (typeof k === "string" && k.endsWith("_save"));
@@ -599,7 +600,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
       this.ensureProperty(k as string);
     }
 
-    if (this._stack.indexOf(overlay) >= 0) {
+    if (this._stack.includes(overlay)) {
       console.warn("Overlay already added once");
       if (this._stack[this._stack.length - 1] === overlay) {
         console.warn("  Definitely an error, overlay is already at top of stack");
@@ -621,7 +622,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   removeOverlay(overlay: OverlayInstance): void {
-    if (this._stack.indexOf(overlay) < 0) {
+    if (!this._stack.includes(overlay)) {
       console.warn("Context.removeOverlay called in error", overlay);
       return;
     }

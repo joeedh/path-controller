@@ -84,7 +84,7 @@ type IBaseBase<LEN extends 2 | 3 | 4> = {
  * }
  * ```
  */
-export type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = Array<number>> = IBaseBase<LEN> & {
+export type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = number[]> = IBaseBase<LEN> & {
   length: number;
 
   // for indices above LEN, type to number | undefined
@@ -226,8 +226,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     ) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
-      let dx2 = v4[0] - v3[0];
-      let dy2 = v4[1] - v3[1];
+      const dx2 = v4[0] - v3[0];
+      const dy2 = v4[1] - v3[1];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
@@ -246,8 +246,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     static normalizedDot3(v1: IBaseVector<2>, center: IBaseVector<2>, v2: IBaseVector<2>) {
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
-      let dx2 = v2[0] - center[0];
-      let dy2 = v2[1] - center[1];
+      const dx2 = v2[0] - center[0];
+      const dy2 = v2[1] - center[1];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
@@ -455,8 +455,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       return Math.sqrt(this.dot(this));
     }
     rot2d(A: number, axis: number = 0) {
-      let x = this[0];
-      let y = this[1];
+      const x = this[0];
+      const y = this[1];
 
       if (axis === 1) {
         this[0] = x * Math.cos(A) + y * Math.sin(A);
@@ -494,8 +494,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** somewhat crappy spherical interpolation */
     sinterp(v2: IBaseVector<2>, t: number) {
-      let l1 = this.vectorLength();
-      let l2 = v2.vectorLength();
+      const l1 = this.vectorLength();
+      const l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
       return this.interp(v2, t)
@@ -505,7 +505,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** perpendicular swap */
     perpSwap(axis1: 0 | 1 = 0, axis2: 0 | 1 = 1, sign = 1) {
-      let tmp = this[axis1];
+      const tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
       return this;
@@ -528,7 +528,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       this[1] = w * matrix.$matrix.m42 + x * matrix.$matrix.m12 + y * matrix.$matrix.m22;
 
       if (!ignore_w && matrix.isPersp) {
-        let w2 = w * matrix.$matrix.m44 + x * matrix.$matrix.m14 + y * matrix.$matrix.m24;
+        const w2 = w * matrix.$matrix.m44 + x * matrix.$matrix.m14 + y * matrix.$matrix.m24;
 
         if (w2 !== 0.0) {
           this[0] /= w2;
@@ -540,11 +540,11 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     mulVecQuat(q: IQuat) {
-      let t0 = -q[1] * this[0] - q[2] * this[1];
+      const t0 = -q[1] * this[0] - q[2] * this[1];
       let t1 = q[0] * this[0] - q[3] * this[1];
       let t2 = q[0] * this[1] + q[3] * this[0];
 
-      let z = q[1] * this[1] - q[2] * this[0];
+      const z = q[1] * this[1] - q[2] * this[0];
       this[0] = t1;
       this[1] = t2;
 
@@ -558,7 +558,7 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     preNormalizedAngle(v2: IBaseVector<2>) {
-      let th = this.dot(v2) * 0.99999;
+      const th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
 
@@ -607,9 +607,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
-      let dx2 = v4[0] - v3[0];
-      let dy2 = v4[1] - v3[1];
-      let dz2 = v4[2] - v3[2];
+      const dx2 = v4[0] - v3[0];
+      const dy2 = v4[1] - v3[1];
+      const dz2 = v4[2] - v3[2];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
@@ -631,9 +631,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
-      let dx2 = v2[0] - center[0];
-      let dy2 = v2[1] - center[1];
-      let dz2 = v2[2] - center[2];
+      const dx2 = v2[0] - center[0];
+      const dy2 = v2[1] - center[1];
+      const dz2 = v2[2] - center[2];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
@@ -878,8 +878,8 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return Math.sqrt(this.dot(this));
     }
     rot2d(A: number, axis: number = 0) {
-      let x = this[0];
-      let y = this[1];
+      const x = this[0];
+      const y = this[1];
 
       if (axis === 1) {
         this[0] = x * Math.cos(A) + y * Math.sin(A);
@@ -923,8 +923,8 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** somewhat crappy spherical interpolation */
     sinterp(v2: IBaseVector<3>, t: number) {
-      let l1 = this.vectorLength();
-      let l2 = v2.vectorLength();
+      const l1 = this.vectorLength();
+      const l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
       return this.interp(v2, t)
@@ -934,7 +934,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** perpendicular swap */
     perpSwap(axis1: 0 | 1 | 2 = 0, axis2: 0 | 1 | 2 = 1, sign = 1) {
-      let tmp = this[axis1];
+      const tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
       return this;
@@ -952,9 +952,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       if (ignore_w === undefined) {
         ignore_w = false;
       }
-      let x = this[0];
-      let y = this[1];
-      let z = this[2];
+      const x = this[0];
+      const y = this[1];
+      const z = this[2];
       this[0] =
         matrix.$matrix.m41 +
         x * matrix.$matrix.m11 +
@@ -970,7 +970,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
         x * matrix.$matrix.m13 +
         y * matrix.$matrix.m23 +
         z * matrix.$matrix.m33;
-      let w =
+      const w =
         matrix.$matrix.m44 +
         x * matrix.$matrix.m14 +
         y * matrix.$matrix.m24 +
@@ -984,7 +984,7 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       return w;
     }
     mulVecQuat(q: IQuat) {
-      let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
+      const t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
       let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
       let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
 
@@ -1015,14 +1015,14 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     preNormalizedAngle(v2: IBaseVector<3>) {
-      let th = this.dot(v2) * 0.99999;
+      const th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
 
     toCSS() {
-      let r = ~~(this[0] * 255);
-      let g = ~~(this[1] * 255);
-      let b = ~~(this[2] * 255);
+      const r = ~~(this[0] * 255);
+      const g = ~~(this[1] * 255);
+      const b = ~~(this[2] * 255);
       return `rgb(${r},${g},${b})`;
     }
 
@@ -1074,10 +1074,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
       let dw1 = v2[3] - v1[3];
-      let dx2 = v4[0] - v3[0];
-      let dy2 = v4[1] - v3[1];
-      let dz2 = v4[2] - v3[2];
-      let dw2 = v4[3] - v3[3];
+      const dx2 = v4[0] - v3[0];
+      const dy2 = v4[1] - v3[1];
+      const dz2 = v4[2] - v3[2];
+      const dw2 = v4[3] - v3[3];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
@@ -1102,10 +1102,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
       let dw1 = v1[3] - center[3];
-      let dx2 = v2[0] - center[0];
-      let dy2 = v2[1] - center[1];
-      let dz2 = v2[2] - center[2];
-      let dw2 = v2[3] - center[3];
+      const dx2 = v2[0] - center[0];
+      const dy2 = v2[1] - center[1];
+      const dz2 = v2[2] - center[2];
+      const dw2 = v2[3] - center[3];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
@@ -1388,8 +1388,8 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       return Math.sqrt(this.dot(this));
     }
     rot2d(A: number, axis: number = 0) {
-      let x = this[0];
-      let y = this[1];
+      const x = this[0];
+      const y = this[1];
 
       if (axis === 1) {
         this[0] = x * Math.cos(A) + y * Math.sin(A);
@@ -1440,8 +1440,8 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** somewhat crappy spherical interpolation */
     sinterp(v2: IBaseVector<4>, t: number) {
-      let l1 = this.vectorLength();
-      let l2 = v2.vectorLength();
+      const l1 = this.vectorLength();
+      const l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
       return this.interp(v2, t)
@@ -1451,7 +1451,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
 
     /** perpendicular swap */
     perpSwap(axis1: 0 | 1 | 2 | 3 = 0, axis2: 0 | 1 | 2 | 3 = 1, sign = 1) {
-      let tmp = this[axis1];
+      const tmp = this[axis1];
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
       return this;
@@ -1466,10 +1466,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
     /** Returns w value. */
     multVecMatrix(matrix: Matrix4): number {
-      let x = this[0];
-      let y = this[1];
-      let z = this[2];
-      let w = this[3];
+      const x = this[0];
+      const y = this[1];
+      const z = this[2];
+      const w = this[3];
 
       this[0] =
         w * matrix.$matrix.m41 +
@@ -1496,7 +1496,7 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     mulVecQuat(q: IQuat) {
-      let t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
+      const t0 = -q[1] * this[0] - q[2] * this[1] - q[3] * this[2];
       let t1 = q[0] * this[0] + q[2] * this[2] - q[3] * this[1];
       let t2 = q[0] * this[1] + q[3] * this[0] - q[1] * this[2];
 
@@ -1527,14 +1527,14 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
     }
 
     preNormalizedAngle(v2: IBaseVector<4>) {
-      let th = this.dot(v2) * 0.99999;
+      const th = this.dot(v2) * 0.99999;
       return Math.acos(th);
     }
 
     toCSS() {
-      let r = ~~(this[0] * 255);
-      let g = ~~(this[1] * 255);
-      let b = ~~(this[2] * 255);
+      const r = ~~(this[0] * 255);
+      const g = ~~(this[1] * 255);
+      const b = ~~(this[2] * 255);
       return `rgb(${r},${g},${b},${this[3]})`;
     }
 
@@ -1565,9 +1565,9 @@ export class Quat extends Vector4 {
   }
 
   mulQuat(qt: this) {
-    let a = this[0] * qt[0] - this[1] * qt[1] - this[2] * qt[2] - this[3] * qt[3];
-    let b = this[0] * qt[1] + this[1] * qt[0] + this[2] * qt[3] - this[3] * qt[2];
-    let c = this[0] * qt[2] + this[2] * qt[0] + this[3] * qt[1] - this[1] * qt[3];
+    const a = this[0] * qt[0] - this[1] * qt[1] - this[2] * qt[2] - this[3] * qt[3];
+    const b = this[0] * qt[1] + this[1] * qt[0] + this[2] * qt[3] - this[3] * qt[2];
+    const c = this[0] * qt[2] + this[2] * qt[0] + this[3] * qt[1] - this[1] * qt[3];
     this[3] = this[0] * qt[3] + this[3] * qt[0] + this[1] * qt[2] - this[2] * qt[1];
     this[0] = a;
     this[1] = b;
@@ -1591,7 +1591,7 @@ export class Quat extends Vector4 {
   }
 
   invert(): this {
-    let f = this.dot(this);
+    const f = this.dot(this);
     if (f === 0.0) return this;
 
     this.mulScalar(1.0 / f);
@@ -1599,7 +1599,7 @@ export class Quat extends Vector4 {
   }
 
   sub(q2: this): this {
-    let nq2 = new Quat();
+    const nq2 = new Quat();
 
     nq2[0] = -q2[0];
     nq2[1] = q2[1];
@@ -1616,19 +1616,19 @@ export class Quat extends Vector4 {
       m = new Matrix4();
     }
 
-    let q0 = M_SQRT2 * this[0];
-    let q1 = M_SQRT2 * this[1];
-    let q2 = M_SQRT2 * this[2];
-    let q3 = M_SQRT2 * this[3];
-    let qda = q0 * q1;
-    let qdb = q0 * q2;
-    let qdc = q0 * q3;
-    let qaa = q1 * q1;
-    let qab = q1 * q2;
-    let qac = q1 * q3;
-    let qbb = q2 * q2;
-    let qbc = q2 * q3;
-    let qcc = q3 * q3;
+    const q0 = M_SQRT2 * this[0];
+    const q1 = M_SQRT2 * this[1];
+    const q2 = M_SQRT2 * this[2];
+    const q3 = M_SQRT2 * this[3];
+    const qda = q0 * q1;
+    const qdb = q0 * q2;
+    const qdc = q0 * q3;
+    const qaa = q1 * q1;
+    const qab = q1 * q2;
+    const qac = q1 * q3;
+    const qbb = q2 * q2;
+    const qbc = q2 * q3;
+    const qcc = q3 * q3;
     m.$matrix.m11 = 1.0 - qbb - qcc;
     m.$matrix.m12 = qdc + qab;
     m.$matrix.m13 = -qdb + qac;
@@ -1648,15 +1648,15 @@ export class Quat extends Vector4 {
   }
 
   matrixToQuat(wmat: Matrix4): this {
-    let mat = vec_temp_mats.next();
+    const mat = vec_temp_mats.next();
     mat.load(wmat);
 
     mat.$matrix.m41 = mat.$matrix.m42 = mat.$matrix.m43 = 0;
     mat.$matrix.m44 = 1.0;
 
-    let r1 = new Vector3([mat.$matrix.m11, mat.$matrix.m12, mat.$matrix.m13]);
-    let r2 = new Vector3([mat.$matrix.m21, mat.$matrix.m22, mat.$matrix.m23]);
-    let r3 = new Vector3([mat.$matrix.m31, mat.$matrix.m32, mat.$matrix.m33]);
+    const r1 = new Vector3([mat.$matrix.m11, mat.$matrix.m12, mat.$matrix.m13]);
+    const r2 = new Vector3([mat.$matrix.m21, mat.$matrix.m22, mat.$matrix.m23]);
+    const r3 = new Vector3([mat.$matrix.m31, mat.$matrix.m32, mat.$matrix.m33]);
 
     r1.normalize();
     r2.normalize();
@@ -1671,7 +1671,7 @@ export class Quat extends Vector4 {
     mat.$matrix.m31 = r3[0];
     mat.$matrix.m32 = r3[1];
     mat.$matrix.m33 = r3[2];
-    let tr = 0.25 * (1.0 + mat.$matrix.m11 + mat.$matrix.m22 + mat.$matrix.m33);
+    const tr = 0.25 * (1.0 + mat.$matrix.m11 + mat.$matrix.m22 + mat.$matrix.m33);
     let s = 0;
     if (tr > FLT_EPSILON) {
       s = Math.sqrt(tr);
@@ -1709,7 +1709,7 @@ export class Quat extends Vector4 {
   }
 
   normalize() {
-    let len = Math.sqrt(this.dot(this));
+    const len = Math.sqrt(this.dot(this));
 
     if (len !== 0.0) {
       this.mulScalar(1.0 / len);
@@ -1721,12 +1721,12 @@ export class Quat extends Vector4 {
   }
 
   axisAngleToQuat(axis: IBaseVector<3>, angle: number) {
-    let nor = _quat_vs3_temps.next().load(axis);
+    const nor = _quat_vs3_temps.next().load(axis);
     nor.normalize();
 
     if (nor.dot(nor) !== 0.0) {
-      let phi = angle / 2.0;
-      let si = Math.sin(phi);
+      const phi = angle / 2.0;
+      const si = Math.sin(phi);
       this[0] = Math.cos(phi);
       this[1] = nor[0] * si;
       this[2] = nor[1] * si;
@@ -1749,17 +1749,17 @@ export class Quat extends Vector4 {
       return this;
     }
 
-    let axis = new Vector3(v1);
+    const axis = new Vector3(v1);
     axis.cross(v2);
 
-    let angle = v1.preNormalizedAngle(v2) * fac;
+    const angle = v1.preNormalizedAngle(v2) * fac;
     this.axisAngleToQuat(axis, angle);
 
     return this;
   }
 
   quatInterp(quat2: this, t: number) {
-    let quat = new Quat();
+    const quat = new Quat();
     let cosom = this[0] * quat2[0] + this[1] * quat2[1] + this[2] * quat2[2] + this[3] * quat2[3];
     if (cosom < 0.0) {
       cosom = -cosom;
@@ -1774,7 +1774,10 @@ export class Quat extends Vector4 {
       quat[3] = this[3];
     }
 
-    let omega, sinom, sc1, sc2;
+    let omega;
+    let sinom;
+    let sc1;
+    let sc2;
     if (1.0 - cosom > 0.0001) {
       omega = Math.acos(cosom);
       sinom = Math.sin(omega);
@@ -1809,7 +1812,7 @@ export const EulerOrders = {
 };
 export type EulerOrders = (typeof EulerOrders)[keyof typeof EulerOrders];
 
-var lookat_cache_vs3: util.cachering<Vector3>;
+let lookat_cache_vs3: util.cachering<Vector3>;
 let lookat_cache_vs4: util.cachering<Vector4>;
 let lookat_cache_ms: util.cachering<Matrix4>;
 let euler_rotate_mats: util.cachering<Matrix4>;
@@ -1889,7 +1892,7 @@ export class Matrix4 {
   }
 
   static fromJSON(json: any) {
-    let mat = new Matrix4();
+    const mat = new Matrix4();
     mat.load(json.items);
     mat.isPersp = json.isPersp;
     return mat;
@@ -1904,7 +1907,7 @@ export class Matrix4 {
   }
 
   addToHashDigest(hash: util.HashDigest) {
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     hash.add(m.m11);
     hash.add(m.m12);
@@ -1930,8 +1933,8 @@ export class Matrix4 {
   }
 
   equals(m: this) {
-    let m1 = this.$matrix;
-    let m2 = m.$matrix;
+    const m1 = this.$matrix;
+    const m2 = m.$matrix;
 
     let ok = true;
 
@@ -1959,8 +1962,8 @@ export class Matrix4 {
   }
 
   loadColumn(i: number, vec: IVector4 | number[]) {
-    let m = this.$matrix;
-    let have4 = vec.length > 3;
+    const m = this.$matrix;
+    const have4 = vec.length > 3;
 
     switch (i) {
       case 0:
@@ -2001,8 +2004,8 @@ export class Matrix4 {
   }
 
   copyColumnTo(i: number, vec: IVector4 | number[]) {
-    let m = this.$matrix;
-    let have4 = vec.length > 3;
+    const m = this.$matrix;
+    const have4 = vec.length > 3;
 
     switch (i) {
       case 0:
@@ -2209,7 +2212,7 @@ export class Matrix4 {
   }
 
   invert() {
-    let det = this._determinant4x4();
+    const det = this._determinant4x4();
 
     if (Math.abs(det) < 1e-8) return null;
 
@@ -2237,7 +2240,7 @@ export class Matrix4 {
 
   translate(x: number, y: number, z: number) {
     if (typeof x === "object" && "length" in x) {
-      let t = x;
+      const t = x;
 
       x = t[0];
       y = t[1];
@@ -2248,7 +2251,7 @@ export class Matrix4 {
     y = y === undefined ? 0 : y;
     z = z === undefined ? 0 : z;
 
-    let matrix = temp_mats.next().makeIdentity();
+    const matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m41 = x;
     matrix.$matrix.m42 = y;
@@ -2260,7 +2263,7 @@ export class Matrix4 {
 
   preTranslate(x: number, y: number, z: number) {
     if (typeof x === "object" && "length" in x) {
-      let t = x;
+      const t = x;
 
       x = t[0];
       y = t[1];
@@ -2271,7 +2274,7 @@ export class Matrix4 {
     y = y === undefined ? 0 : y;
     z = z === undefined ? 0 : z;
 
-    let matrix = temp_mats.next().makeIdentity();
+    const matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m41 = x;
     matrix.$matrix.m42 = y;
@@ -2283,7 +2286,7 @@ export class Matrix4 {
 
   scale(x: number | any, y: number, z: number, w = 1.0) {
     if (typeof x === "object" && "length" in x) {
-      let t = x;
+      const t = x;
       x = t[0];
       y = t[1];
       z = t[2];
@@ -2302,7 +2305,7 @@ export class Matrix4 {
       }
     }
 
-    let matrix = temp_mats.next().makeIdentity();
+    const matrix = temp_mats.next().makeIdentity();
     matrix.$matrix.m11 = x;
     matrix.$matrix.m22 = y;
     matrix.$matrix.m33 = z;
@@ -2312,7 +2315,7 @@ export class Matrix4 {
   }
 
   preScale(x: number, y: number, z: number, w = 1.0) {
-    let mat = temp_mats.next().makeIdentity();
+    const mat = temp_mats.next().makeIdentity();
     mat.scale(x, y, z, w);
 
     this.preMultiply(mat);
@@ -2413,19 +2416,19 @@ export class Matrix4 {
     y = -y;
     z = -z;
 
-    let xmat = euler_rotate_mats.next().makeIdentity();
+    const xmat = euler_rotate_mats.next().makeIdentity();
 
     let m = xmat.$matrix;
 
-    let c = Math.cos(x),
-      s = Math.sin(x);
+    let c = Math.cos(x);
+    let s = Math.sin(x);
 
     m.m22 = c;
     m.m23 = s;
     m.m32 = -s;
     m.m33 = c;
 
-    let ymat = euler_rotate_mats.next().makeIdentity();
+    const ymat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(y);
     s = Math.sin(y);
     m = ymat.$matrix;
@@ -2435,7 +2438,7 @@ export class Matrix4 {
     m.m31 = s;
     m.m33 = c;
 
-    let zmat = euler_rotate_mats.next().makeIdentity();
+    const zmat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(z);
     s = Math.sin(z);
     m = zmat.$matrix;
@@ -2445,7 +2448,9 @@ export class Matrix4 {
     m.m21 = -s;
     m.m22 = c;
 
-    let a: Matrix4 | undefined, b: Matrix4 | undefined, cmat: Matrix4 | undefined;
+    let a: Matrix4 | undefined;
+    let b: Matrix4 | undefined;
+    let cmat: Matrix4 | undefined;
 
     switch (order) {
       case EulerOrders.XYZ:
@@ -2495,18 +2500,18 @@ export class Matrix4 {
       z = 0.0;
     }
 
-    let xmat = euler_rotate_mats.next().makeIdentity();
+    const xmat = euler_rotate_mats.next().makeIdentity();
     let m = xmat.$matrix;
 
-    let c = Math.cos(x),
-      s = Math.sin(x);
+    let c = Math.cos(x);
+    let s = Math.sin(x);
 
     m.m22 = c;
     m.m23 = s;
     m.m32 = -s;
     m.m33 = c;
 
-    let ymat = euler_rotate_mats.next().makeIdentity();
+    const ymat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(y);
     s = Math.sin(y);
     m = ymat.$matrix;
@@ -2518,7 +2523,7 @@ export class Matrix4 {
 
     ymat.multiply(xmat);
 
-    let zmat = euler_rotate_mats.next().makeIdentity();
+    const zmat = euler_rotate_mats.next().makeIdentity();
     c = Math.cos(z);
     s = Math.sin(z);
     m = zmat.$matrix;
@@ -2539,7 +2544,7 @@ export class Matrix4 {
 
   toString() {
     let s = "";
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     function dec(d: number) {
       let ret = d.toFixed(3);
@@ -2560,7 +2565,7 @@ export class Matrix4 {
 
   rotate(angle: number, x: number | any, y: number, z: number) {
     if (typeof x === "object" && "length" in x) {
-      let t = x;
+      const t = x;
       x = t[0];
       y = t[1];
       z = t[2];
@@ -2577,10 +2582,10 @@ export class Matrix4 {
     }
 
     angle /= 2;
-    let sinA = Math.sin(angle);
-    let cosA = Math.cos(angle);
-    let sinA2 = sinA * sinA;
-    let len = Math.sqrt(x * x + y * y + z * z);
+    const sinA = Math.sin(angle);
+    const cosA = Math.cos(angle);
+    const sinA2 = sinA * sinA;
+    const len = Math.sqrt(x * x + y * y + z * z);
 
     if (len === 0) {
       x = 0;
@@ -2592,7 +2597,7 @@ export class Matrix4 {
       z /= len;
     }
 
-    let mat = temp_mats.next().makeIdentity();
+    const mat = temp_mats.next().makeIdentity();
 
     if (x === 1 && y === 0 && z === 0) {
       mat.$matrix.m11 = 1;
@@ -2634,9 +2639,9 @@ export class Matrix4 {
       mat.$matrix.m41 = mat.$matrix.m42 = mat.$matrix.m43 = 0;
       mat.$matrix.m44 = 1;
     } else {
-      let x2 = x * x;
-      let y2 = y * y;
-      let z2 = z * z;
+      const x2 = x * x;
+      const y2 = y * y;
+      const z2 = z * z;
       mat.$matrix.m11 = 1 - 2 * (y2 + z2) * sinA2;
       mat.$matrix.m12 = 2 * (x * y * sinA2 + z * sinA * cosA);
       mat.$matrix.m13 = 2 * (x * z * sinA2 - y * sinA * cosA);
@@ -2656,25 +2661,25 @@ export class Matrix4 {
   }
 
   normalize() {
-    let m = this.$matrix;
+    const m = this.$matrix;
 
-    let v1 = new Vector4([m.m11, m.m12, m.m13, m.m14]);
-    let v2 = new Vector4([m.m21, m.m22, m.m23, m.m24]);
-    let v3 = new Vector4([m.m31, m.m32, m.m33, m.m34]);
-    let v4 = new Vector4([m.m41, m.m42, m.m43, m.m44]);
+    const v1 = new Vector4([m.m11, m.m12, m.m13, m.m14]);
+    const v2 = new Vector4([m.m21, m.m22, m.m23, m.m24]);
+    const v3 = new Vector4([m.m31, m.m32, m.m33, m.m34]);
+    const v4 = new Vector4([m.m41, m.m42, m.m43, m.m44]);
 
     v1.normalize();
     v2.normalize();
     v3.normalize();
 
-    let flat = new Array().concat(v1).concat(v2).concat(v3).concat(v4);
+    const flat = [].concat(v1).concat(v2).concat(v3).concat(v4);
     this.load(flat);
 
     return this;
   }
 
   clearTranslation(set_w_to_one = false) {
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     m.m41 = m.m42 = m.m43 = 0.0;
 
@@ -2692,7 +2697,7 @@ export class Matrix4 {
       x = x[0];
     }
 
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     m.m41 = x;
     m.m42 = y;
@@ -2711,7 +2716,7 @@ export class Matrix4 {
       throw new Error("normal cannot be undefined");
     }
 
-    let n = makenormalcache.next().load(normal).normalize();
+    const n = makenormalcache.next().load(normal).normalize();
 
     if (up === undefined) {
       up = makenormalcache.next().zero();
@@ -2736,15 +2741,15 @@ export class Matrix4 {
       return this;
     }
 
-    let x = makenormalcache.next();
-    let y = makenormalcache.next();
+    const x = makenormalcache.next();
+    const y = makenormalcache.next();
 
     x.load(n).cross(up).normalize();
     y.load(x).cross(n).normalize();
     //y.negate();
 
     this.makeIdentity();
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     m.m11 = x[0];
     m.m12 = x[1];
@@ -2772,25 +2777,25 @@ export class Matrix4 {
   }
 
   multiply(mat: this | Matrix4) {
-    let mm = this.$matrix;
-    let mm2 = mat.$matrix;
+    const mm = this.$matrix;
+    const mm2 = mat.$matrix;
 
-    let m11 = mm2.m11 * mm.m11 + mm2.m12 * mm.m21 + mm2.m13 * mm.m31 + mm2.m14 * mm.m41;
-    let m12 = mm2.m11 * mm.m12 + mm2.m12 * mm.m22 + mm2.m13 * mm.m32 + mm2.m14 * mm.m42;
-    let m13 = mm2.m11 * mm.m13 + mm2.m12 * mm.m23 + mm2.m13 * mm.m33 + mm2.m14 * mm.m43;
-    let m14 = mm2.m11 * mm.m14 + mm2.m12 * mm.m24 + mm2.m13 * mm.m34 + mm2.m14 * mm.m44;
-    let m21 = mm2.m21 * mm.m11 + mm2.m22 * mm.m21 + mm2.m23 * mm.m31 + mm2.m24 * mm.m41;
-    let m22 = mm2.m21 * mm.m12 + mm2.m22 * mm.m22 + mm2.m23 * mm.m32 + mm2.m24 * mm.m42;
-    let m23 = mm2.m21 * mm.m13 + mm2.m22 * mm.m23 + mm2.m23 * mm.m33 + mm2.m24 * mm.m43;
-    let m24 = mm2.m21 * mm.m14 + mm2.m22 * mm.m24 + mm2.m23 * mm.m34 + mm2.m24 * mm.m44;
-    let m31 = mm2.m31 * mm.m11 + mm2.m32 * mm.m21 + mm2.m33 * mm.m31 + mm2.m34 * mm.m41;
-    let m32 = mm2.m31 * mm.m12 + mm2.m32 * mm.m22 + mm2.m33 * mm.m32 + mm2.m34 * mm.m42;
-    let m33 = mm2.m31 * mm.m13 + mm2.m32 * mm.m23 + mm2.m33 * mm.m33 + mm2.m34 * mm.m43;
-    let m34 = mm2.m31 * mm.m14 + mm2.m32 * mm.m24 + mm2.m33 * mm.m34 + mm2.m34 * mm.m44;
-    let m41 = mm2.m41 * mm.m11 + mm2.m42 * mm.m21 + mm2.m43 * mm.m31 + mm2.m44 * mm.m41;
-    let m42 = mm2.m41 * mm.m12 + mm2.m42 * mm.m22 + mm2.m43 * mm.m32 + mm2.m44 * mm.m42;
-    let m43 = mm2.m41 * mm.m13 + mm2.m42 * mm.m23 + mm2.m43 * mm.m33 + mm2.m44 * mm.m43;
-    let m44 = mm2.m41 * mm.m14 + mm2.m42 * mm.m24 + mm2.m43 * mm.m34 + mm2.m44 * mm.m44;
+    const m11 = mm2.m11 * mm.m11 + mm2.m12 * mm.m21 + mm2.m13 * mm.m31 + mm2.m14 * mm.m41;
+    const m12 = mm2.m11 * mm.m12 + mm2.m12 * mm.m22 + mm2.m13 * mm.m32 + mm2.m14 * mm.m42;
+    const m13 = mm2.m11 * mm.m13 + mm2.m12 * mm.m23 + mm2.m13 * mm.m33 + mm2.m14 * mm.m43;
+    const m14 = mm2.m11 * mm.m14 + mm2.m12 * mm.m24 + mm2.m13 * mm.m34 + mm2.m14 * mm.m44;
+    const m21 = mm2.m21 * mm.m11 + mm2.m22 * mm.m21 + mm2.m23 * mm.m31 + mm2.m24 * mm.m41;
+    const m22 = mm2.m21 * mm.m12 + mm2.m22 * mm.m22 + mm2.m23 * mm.m32 + mm2.m24 * mm.m42;
+    const m23 = mm2.m21 * mm.m13 + mm2.m22 * mm.m23 + mm2.m23 * mm.m33 + mm2.m24 * mm.m43;
+    const m24 = mm2.m21 * mm.m14 + mm2.m22 * mm.m24 + mm2.m23 * mm.m34 + mm2.m24 * mm.m44;
+    const m31 = mm2.m31 * mm.m11 + mm2.m32 * mm.m21 + mm2.m33 * mm.m31 + mm2.m34 * mm.m41;
+    const m32 = mm2.m31 * mm.m12 + mm2.m32 * mm.m22 + mm2.m33 * mm.m32 + mm2.m34 * mm.m42;
+    const m33 = mm2.m31 * mm.m13 + mm2.m32 * mm.m23 + mm2.m33 * mm.m33 + mm2.m34 * mm.m43;
+    const m34 = mm2.m31 * mm.m14 + mm2.m32 * mm.m24 + mm2.m33 * mm.m34 + mm2.m34 * mm.m44;
+    const m41 = mm2.m41 * mm.m11 + mm2.m42 * mm.m21 + mm2.m43 * mm.m31 + mm2.m44 * mm.m41;
+    const m42 = mm2.m41 * mm.m12 + mm2.m42 * mm.m22 + mm2.m43 * mm.m32 + mm2.m44 * mm.m42;
+    const m43 = mm2.m41 * mm.m13 + mm2.m42 * mm.m23 + mm2.m43 * mm.m33 + mm2.m44 * mm.m43;
+    const m44 = mm2.m41 * mm.m14 + mm2.m42 * mm.m24 + mm2.m43 * mm.m34 + mm2.m44 * mm.m44;
 
     mm.m11 = m11;
     mm.m12 = m12;
@@ -2836,10 +2841,10 @@ export class Matrix4 {
   ortho(left: number, right: number, bottom: number, top: number, near: number, far: number) {
     console.warn("Matrix4.ortho() is deprecated, use .orthographic() instead");
 
-    let tx = (left + right) / (left - right);
-    let ty = (top + bottom) / (top - bottom);
-    let tz = (far + near) / (far - near);
-    let matrix = temp_mats.next().makeIdentity();
+    const tx = (left + right) / (left - right);
+    const ty = (top + bottom) / (top - bottom);
+    const tz = (far + near) / (far - near);
+    const matrix = temp_mats.next().makeIdentity();
 
     matrix.$matrix.m11 = 2 / (left - right);
     matrix.$matrix.m12 = 0;
@@ -2864,12 +2869,12 @@ export class Matrix4 {
   }
 
   frustum(left: number, right: number, bottom: number, top: number, near: number, far: number) {
-    let matrix = temp_mats.next().makeIdentity();
+    const matrix = temp_mats.next().makeIdentity();
 
-    let A = (right + left) / (right - left);
-    let B = (top + bottom) / (top - bottom);
-    let C = -(far + near) / (far - near);
-    let D = -(2 * far * near) / (far - near);
+    const A = (right + left) / (right - left);
+    const B = (top + bottom) / (top - bottom);
+    const C = -(far + near) / (far - near);
+    const D = -(2 * far * near) / (far - near);
 
     matrix.$matrix.m11 = (2 * near) / (right - left);
     matrix.$matrix.m12 = 0;
@@ -2895,9 +2900,9 @@ export class Matrix4 {
   }
 
   orthographic(scale: number, aspect: number, near: number, far: number) {
-    let mat = temp_mats.next().makeIdentity();
+    const mat = temp_mats.next().makeIdentity();
 
-    let zscale = far - near;
+    const zscale = far - near;
 
     mat.scale(2.0 / aspect, 2.0, -1.0 / scale / zscale, 1.0 / scale);
     mat.translate(0.0, 0.0, 0.5 * zscale - near);
@@ -2909,10 +2914,10 @@ export class Matrix4 {
   }
 
   perspective(fovy: number, aspect: number, zNear: number, zFar: number) {
-    let top = Math.tan((fovy * Math.PI) / 360) * zNear;
-    let bottom = -top;
-    let left = aspect * bottom;
-    let right = aspect * top;
+    const top = Math.tan((fovy * Math.PI) / 360) * zNear;
+    const bottom = -top;
+    const left = aspect * bottom;
+    const right = aspect * top;
 
     this.frustum(left, right, bottom, top, zNear, zFar);
 
@@ -2920,18 +2925,18 @@ export class Matrix4 {
   }
 
   lookat(pos: Vector3, target: Vector3, up: Vector3) {
-    let matrix = lookat_cache_ms.next();
+    const matrix = lookat_cache_ms.next();
     matrix.makeIdentity();
 
-    let vec = lookat_cache_vs3.next().load(pos).sub(target);
-    let len = vec.vectorLength();
+    const vec = lookat_cache_vs3.next().load(pos).sub(target);
+    const len = vec.vectorLength();
     vec.normalize();
 
-    let zvec = vec;
-    let yvec = lookat_cache_vs3.next().load(up).normalize();
-    let xvec = lookat_cache_vs3.next().load(yvec).cross(zvec).normalize();
+    const zvec = vec;
+    const yvec = lookat_cache_vs3.next().load(up).normalize();
+    const xvec = lookat_cache_vs3.next().load(yvec).cross(zvec).normalize();
 
-    let mm = matrix.$matrix;
+    const mm = matrix.$matrix;
 
     mm.m11 = xvec[0];
     mm.m12 = yvec[0];
@@ -2970,14 +2975,14 @@ export class Matrix4 {
   }
 
   makeRotationOnly() {
-    let m = this.$matrix;
+    const m = this.$matrix;
 
     m.m41 = m.m42 = m.m43 = 0.0;
     m.m44 = 1.0;
 
-    let l1 = Math.sqrt(m.m11 * m.m11 + m.m12 * m.m12 + m.m13 * m.m13);
-    let l2 = Math.sqrt(m.m21 * m.m21 + m.m22 * m.m22 + m.m23 * m.m23);
-    let l3 = Math.sqrt(m.m31 * m.m31 + m.m32 * m.m32 + m.m33 * m.m33);
+    const l1 = Math.sqrt(m.m11 * m.m11 + m.m12 * m.m12 + m.m13 * m.m13);
+    const l2 = Math.sqrt(m.m21 * m.m21 + m.m22 * m.m22 + m.m23 * m.m23);
+    const l3 = Math.sqrt(m.m31 * m.m31 + m.m32 * m.m32 + m.m33 * m.m33);
 
     if (l1) {
       m.m11 /= l1;
@@ -3030,7 +3035,7 @@ export class Matrix4 {
   }
 
   loadFromVecs(vecs: Vector4[]) {
-    let m = this.$matrix;
+    const m = this.$matrix;
     m.m11 = vecs[0][0];
     m.m12 = vecs[0][1];
     m.m13 = vecs[0][2];
@@ -3057,22 +3062,22 @@ export class Matrix4 {
     const vec = new Vector4().load3(vec_);
     vec.normalize();
 
-    let mat = this;
-    let m = mat.$matrix;
+    const mat = this;
+    const m = mat.$matrix;
 
-    let mat2 = new Matrix4(mat);
-    let loc = new Vector3(),
-      scale = new Vector3(),
-      rot = new Vector3();
+    const mat2 = new Matrix4(mat);
+    const loc = new Vector3();
+    const scale = new Vector3();
+    const rot = new Vector3();
 
     //we don't use rot
     mat2.decompose(loc, rot, scale);
     mat2.makeRotationOnly();
 
-    let axes = mat2.getAsVecs();
+    const axes = mat2.getAsVecs();
 
-    let axis2 = (axis + 1) % 3;
-    let axis3 = (axis + 2) % 3;
+    const axis2 = (axis + 1) % 3;
+    const axis3 = (axis + 2) % 3;
 
     axes[axis].load(vec);
     axes[axis2].cross(axes[axis]).cross(axes[axis]);
@@ -3106,21 +3111,21 @@ export class Matrix4 {
   ) {
     if (this.$matrix.m44 === 0) return false;
 
-    let mat = temp_mats.next().load(this);
+    const mat = temp_mats.next().load(this);
     let m = mat.$matrix;
 
-    let t = _translate,
-      r = _rotate,
-      s = _scale;
+    const t = _translate;
+    const r = _rotate;
+    const s = _scale;
     if (t) {
       t[0] = m.m41;
       t[1] = m.m42;
       t[2] = m.m43;
     }
 
-    let l1 = Math.sqrt(m.m11 * m.m11 + m.m12 * m.m12 + m.m13 * m.m13);
-    let l2 = Math.sqrt(m.m21 * m.m21 + m.m22 * m.m22 + m.m23 * m.m23);
-    let l3 = Math.sqrt(m.m31 * m.m31 + m.m32 * m.m32 + m.m33 * m.m33);
+    const l1 = Math.sqrt(m.m11 * m.m11 + m.m12 * m.m12 + m.m13 * m.m13);
+    const l2 = Math.sqrt(m.m21 * m.m21 + m.m22 * m.m22 + m.m23 * m.m23);
+    const l3 = Math.sqrt(m.m31 * m.m31 + m.m32 * m.m32 + m.m33 * m.m33);
 
     if (l1) {
       m.m11 /= l1;
@@ -3146,27 +3151,27 @@ export class Matrix4 {
 
     if (r) {
       //THREE.js code
-      let clamp = myclamp;
+      const clamp = myclamp;
 
-      let rmat = temp_mats.next().load(this);
+      const rmat = temp_mats.next().load(this);
       rmat.normalize();
 
       m = rmat.$matrix;
 
       // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
-      let m11 = m.m11,
-        m12 = m.m12,
-        m13 = m.m13,
-        m14 = m.m14;
-      let m21 = m.m21,
-        m22 = m.m22,
-        m23 = m.m23,
-        m24 = m.m24;
-      let m31 = m.m31,
-        m32 = m.m32,
-        m33 = m.m33,
-        m34 = m.m34;
+      const m11 = m.m11;
+      const m12 = m.m12;
+      const m13 = m.m13;
+      const m14 = m.m14;
+      const m21 = m.m21;
+      const m22 = m.m22;
+      const m23 = m.m23;
+      const m24 = m.m24;
+      const m31 = m.m31;
+      const m32 = m.m32;
+      const m33 = m.m33;
+      const m34 = m.m34;
       //let m41 = m.m41, m42 = m.m42, m43 = m.m43, m44 = m.m44;
 
       if (order === EulerOrders.XYZ) {
@@ -3261,22 +3266,22 @@ export class Matrix4 {
   }
 
   _determinant4x4() {
-    let a1 = this.$matrix.m11;
-    let b1 = this.$matrix.m12;
-    let c1 = this.$matrix.m13;
-    let d1 = this.$matrix.m14;
-    let a2 = this.$matrix.m21;
-    let b2 = this.$matrix.m22;
-    let c2 = this.$matrix.m23;
-    let d2 = this.$matrix.m24;
-    let a3 = this.$matrix.m31;
-    let b3 = this.$matrix.m32;
-    let c3 = this.$matrix.m33;
-    let d3 = this.$matrix.m34;
-    let a4 = this.$matrix.m41;
-    let b4 = this.$matrix.m42;
-    let c4 = this.$matrix.m43;
-    let d4 = this.$matrix.m44;
+    const a1 = this.$matrix.m11;
+    const b1 = this.$matrix.m12;
+    const c1 = this.$matrix.m13;
+    const d1 = this.$matrix.m14;
+    const a2 = this.$matrix.m21;
+    const b2 = this.$matrix.m22;
+    const c2 = this.$matrix.m23;
+    const d2 = this.$matrix.m24;
+    const a3 = this.$matrix.m31;
+    const b3 = this.$matrix.m32;
+    const c3 = this.$matrix.m33;
+    const d3 = this.$matrix.m34;
+    const a4 = this.$matrix.m41;
+    const b4 = this.$matrix.m42;
+    const c4 = this.$matrix.m43;
+    const d4 = this.$matrix.m44;
     return (
       a1 * this._determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
       b1 * this._determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
@@ -3286,22 +3291,22 @@ export class Matrix4 {
   }
 
   _makeAdjoint() {
-    let a1 = this.$matrix.m11;
-    let b1 = this.$matrix.m12;
-    let c1 = this.$matrix.m13;
-    let d1 = this.$matrix.m14;
-    let a2 = this.$matrix.m21;
-    let b2 = this.$matrix.m22;
-    let c2 = this.$matrix.m23;
-    let d2 = this.$matrix.m24;
-    let a3 = this.$matrix.m31;
-    let b3 = this.$matrix.m32;
-    let c3 = this.$matrix.m33;
-    let d3 = this.$matrix.m34;
-    let a4 = this.$matrix.m41;
-    let b4 = this.$matrix.m42;
-    let c4 = this.$matrix.m43;
-    let d4 = this.$matrix.m44;
+    const a1 = this.$matrix.m11;
+    const b1 = this.$matrix.m12;
+    const c1 = this.$matrix.m13;
+    const d1 = this.$matrix.m14;
+    const a2 = this.$matrix.m21;
+    const b2 = this.$matrix.m22;
+    const c2 = this.$matrix.m23;
+    const d2 = this.$matrix.m24;
+    const a3 = this.$matrix.m31;
+    const b3 = this.$matrix.m32;
+    const c3 = this.$matrix.m33;
+    const d3 = this.$matrix.m34;
+    const a4 = this.$matrix.m41;
+    const b4 = this.$matrix.m42;
+    const c4 = this.$matrix.m43;
+    const d4 = this.$matrix.m44;
 
     this.$matrix.m11 = this._determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
     this.$matrix.m21 = -this._determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);

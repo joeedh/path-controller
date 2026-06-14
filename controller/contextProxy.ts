@@ -28,8 +28,8 @@ class ContextLocker<OVERLAYS extends {}> {
    * Needed for consistent undo/redo.
    **/
   lock(ctx: any, saveProperty?: PropertySaver, loadProperty?: PropertyLoader) {
-    let keys = [] as (string | symbol)[];
-    let props = {} as any;
+    const keys = [] as (string | symbol)[];
+    const props = {} as any;
 
     for (const overlay of this.overlays) {
       const keys2 = new Set(

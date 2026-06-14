@@ -63,7 +63,7 @@ export interface DataPathToolProperty extends ToolProperty {
   _setValue?: (val: unknown) => void;
 }
 
-let propCacheRings: Record<number, cachering<ToolProperty>> = {};
+const propCacheRings: Record<number, cachering<ToolProperty>> = {};
 
 export function getTempProp<P extends ToolProperty | ToolPropertyTypes>(type: number): P {
   if (!(type in propCacheRings)) {
@@ -200,7 +200,7 @@ export class DataPath<CTX extends ContextLike = ContextLike, T = unknown, OWNER_
   }
 
   copy(): DataPath {
-    let ret = new DataPath();
+    const ret = new DataPath();
 
     ret.flag = this.flag;
     ret.type = this.type;
@@ -544,7 +544,6 @@ export type ListFuncs<
   | ((api: ModelInterface<CTX>, list: ListType, key: KeyType, val: ObjType) => void)
 )[];
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type ListCallback = (...args: any[]) => any;
 type ListCallbackMap = Record<string, ListCallback>;
 
@@ -567,16 +566,16 @@ export class DataList<
     this.cb = {};
 
     if (typeof callbacks === "object" && !Array.isArray(callbacks)) {
-      for (let k in callbacks) {
+      for (const k in callbacks) {
         this.cb[k] = callbacks[k];
       }
     } else {
-      for (let cb of callbacks) {
+      for (const cb of callbacks) {
         this.cb[cb.name] = cb;
       }
     }
 
-    let check = (key: string) => {
+    const check = (key: string) => {
       if (!(key in this.cb)) {
         throw new DataPathError(`Missing ${key} callback in DataList`);
       }
@@ -598,9 +597,9 @@ export class DataList<
    * */
 
   copy(): DataList {
-    let ret = new DataList([this.cb.get]);
+    const ret = new DataList([this.cb.get]);
 
-    for (let k in this.cb) {
+    for (const k in this.cb) {
       ret.cb[k] = this.cb[k];
     }
 
@@ -662,7 +661,7 @@ export class DataList<
       return this.cb.getStruct(api, list, key);
     }
 
-    let obj = this.get(api, list, key) as any | undefined;
+    const obj = this.get(api, list, key) as any | undefined;
     if (obj === undefined) return undefined;
 
     return (api as unknown as DataAPI<CTX>).getStruct(obj.constructor);

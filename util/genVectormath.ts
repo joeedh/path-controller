@@ -99,11 +99,11 @@ const matrixVecMults = {
 `,
 };
 
-let DOT_NORM_SNAP_LIMIT = 0.00000000001;
-let M_SQRT2 = Math.sqrt(2.0);
-let FLT_EPSILON = 2.22e-16;
+const DOT_NORM_SNAP_LIMIT = 0.00000000001;
+const M_SQRT2 = Math.sqrt(2.0);
+const FLT_EPSILON = 2.22e-16;
 
-let basic_funcs = {
+const basic_funcs = {
   equals   : [["vb"], "this[X] === b[X]", "&&"],
   /*dot is made manually so it's safe for acos
   dot     : [["b"], "this[X]*b[X]", "+"],
@@ -139,11 +139,11 @@ function bounded_acos(fac) {
 }
 
 function make_norm_safe_dot(cls) {
-  let _dot = cls.prototype.dot;
+  const _dot = cls.prototype.dot;
 
   cls.prototype._dot = _dot;
   cls.prototype.dot = function (b) {
-    let ret = _dot.call(this, b);
+    const ret = _dot.call(this, b);
 
     if (ret >= 1.0 - DOT_NORM_SNAP_LIMIT && ret <= 1.0 + DOT_NORM_SNAP_LIMIT) return 1.0;
     if (ret >= -1.0 - DOT_NORM_SNAP_LIMIT && ret <= -1.0 + DOT_NORM_SNAP_LIMIT) return -1.0;
@@ -213,9 +213,9 @@ function getBaseVector(parent) {
       vectorDistanceSqr += "};";
       cls.prototype.vectorDistanceSqr = eval(vectorDistanceSqr);
 
-      for (let k in basic_funcs) {
-        let func = basic_funcs[k];
-        let args = func[0];
+      for (const k in basic_funcs) {
+        const func = basic_funcs[k];
+        const args = func[0];
         let line = func[1];
         var f;
 
@@ -240,7 +240,7 @@ function getBaseVector(parent) {
           code += ";\n";
         } else {
           for (let i = 0; i < vectorsize; i++) {
-            let line2 = line.replace(/X/g, "" + i);
+            const line2 = line.replace(/X/g, "" + i);
             code += "  this[" + i + "] = " + line2 + ";\n";
           }
           code += "  return this;\n";
@@ -265,11 +265,11 @@ function getBaseVector(parent) {
     }
 
     init_swizzle(size) {
-      let ret = {};
-      let cls = size === 4 ? Vector4 : size === 3 ? Vector3 : Vector2;
+      const ret = {};
+      const cls = size === 4 ? Vector4 : size === 3 ? Vector3 : Vector2;
 
-      for (let k in cls.prototype) {
-        let v = cls.prototype[k];
+      for (const k in cls.prototype) {
+        const v = cls.prototype[k];
         if (typeof v !== "function" && !(v instanceof Function)) continue;
 
         ret[k] = v.bind(this);
@@ -283,7 +283,7 @@ function getBaseVector(parent) {
     }
 
     swapAxes(axis1, axis2) {
-      let t = this[axis1];
+      const t = this[axis1];
       this[axis1] = this[axis2];
       this[axis2] = t;
 
@@ -291,8 +291,8 @@ function getBaseVector(parent) {
     }
 
     sinterp(v2, t) {
-      let l1 = this.vectorLength();
-      let l2 = v2.vectorLength();
+      const l1 = this.vectorLength();
+      const l2 = v2.vectorLength();
 
       //XXX this seems horribly incorrect.
       return this.interp(v2, t)
@@ -301,7 +301,7 @@ function getBaseVector(parent) {
     }
 
     perpSwap(axis1 = 0, axis2 = 1, sign = 1) {
-      let tmp = this[axis1];
+      const tmp = this[axis1];
 
       this[axis1] = this[axis2] * sign;
       this[axis2] = -tmp * sign;
@@ -319,7 +319,7 @@ function getBaseVector(parent) {
       }
       //*/
 
-      let l = this.vectorLength();
+      const l = this.vectorLength();
 
       /*
       if (util.isDenormal(l)) {
@@ -336,17 +336,19 @@ function getBaseVector(parent) {
   };
 }
 
-let _v3nd_n1_normalizedDot, _v3nd_n2_normalizedDot;
-let _v3nd4_n1_normalizedDot4, _v3nd4_n2_normalizedDot4;
+let _v3nd_n1_normalizedDot;
+let _v3nd_n2_normalizedDot;
+let _v3nd4_n1_normalizedDot4;
+let _v3nd4_n2_normalizedDot4;
 
 export function makeVector3(
   BaseVector,
   structName = "vec3",
   structType = "float",
-  customConstructorCode = undefined
+  customConstructorCode
 ) {
-  var Vector3;
-  var bundlehelper = [nstructjs];
+  let Vector3;
+  const bundlehelper = [nstructjs];
 
   const constructorCode =
     customConstructorCode ??
@@ -620,7 +622,7 @@ function genBase(name: string, vecsize: number) {
 
   function unroll(s: string, char = "\n", offset = 0, count = vecsize) {
     let s1 = "";
-    let axes = "xyzw";
+    const axes = "xyzw";
     for (let i = 0; i < count; i++) {
       s1 +=
         s
@@ -633,8 +635,8 @@ function genBase(name: string, vecsize: number) {
   }
 
   function unrollJoin(s: string, char = "\n", count = vecsize) {
-    let arr = [] as string[];
-    let axes = "xyzw";
+    const arr = [] as string[];
+    const axes = "xyzw";
     for (let i = 0; i < count; i++) {
       arr.push(s.replace(/\$\$/g, "" + i).replace(/\$X/g, axes[i]));
     }
@@ -642,21 +644,21 @@ function genBase(name: string, vecsize: number) {
   }
 
   // method level indent
-  let mTab = "      ";
+  const mTab = "      ";
   // class level indent
-  let cTab = "    ";
+  const cTab = "    ";
 
   let basicFuncs = "";
-  for (let k in basic_funcs) {
-    let func = basic_funcs[k];
-    let args = func[0];
+  for (const k in basic_funcs) {
+    const func = basic_funcs[k];
+    const args = func[0];
     let line = func[1];
     var f;
 
     let code = `    ${k}(`;
     for (let i = 0; i < args.length; i++) {
       let arg = args[i];
-      let type = arg === "vb" ? `${VArg}` : "number";
+      const type = arg === "vb" ? `${VArg}` : "number";
       arg = (arg === "vb" ? "b" : arg).toLowerCase();
 
       if (i > 0) code += ", ";
@@ -678,7 +680,7 @@ function genBase(name: string, vecsize: number) {
       code += ";\n";
     } else {
       for (let i = 0; i < vecsize; i++) {
-        let line2 = line.replace(/X/g, "" + i);
+        const line2 = line.replace(/X/g, "" + i);
         code += mTab + "this[" + i + "] = " + line2 + ";\n";
       }
       code += `${mTab}return this;\n`;
@@ -809,7 +811,7 @@ ${basicFuncs}${basicDotFuncs(vecsize, VArg)}
 ${Array.from(IndexRange(vecsize) as Iterable<number>)
   .map((i) => {
     let s2 = "";
-    let axes = "XYZW";
+    const axes = "XYZW";
     s2 += `    load${axes.slice(0, i + 1)}`;
     s2 += "(";
     s2 += Array.from(axes)

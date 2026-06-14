@@ -40,9 +40,9 @@ export function rgb_to_hsv(r: number, g: number, b: number): number[] {
 const hsv_to_rgb_rets = new util.cachering(() => [0, 0, 0], 64);
 
 export function hsv_to_rgb(h: number, s: number, v: number): number[] {
-  let c = 0,
-    m = 0,
-    x = 0;
+  let c = 0;
+  let m = 0;
+  let x = 0;
   const ret = hsv_to_rgb_rets.next();
 
   ret[0] = ret[1] = ret[2] = 0.0;

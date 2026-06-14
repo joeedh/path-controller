@@ -27,7 +27,7 @@ export function loadFile(
   input.setAttribute("accept", acceptStr);
   return new Promise((accept, reject) => {
     input.onchange = function () {
-      if (input.files === null || input.files.length !== 1) {
+      if (input.files?.length !== 1) {
         reject("file load error");
         return;
       }
