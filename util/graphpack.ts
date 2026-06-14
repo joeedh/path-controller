@@ -248,7 +248,6 @@ export function graphPack(
     return math.aabb_overlap_area(p1, s1, p2, s2);
   }
 
-  let lasterr: number | undefined;
   let besterr: number | undefined;
   let best: PackNode[] | undefined;
 
@@ -402,8 +401,6 @@ export function graphPack(
 
     disableEdges = false;
     disableArea = false;
-
-    lasterr = err;
 
     const add = Math.random() * (besterr ?? 0) * Math.exp(-i * 0.1);
 

@@ -151,7 +151,6 @@ export const ClosestModes = {
   ENDPOINTS: 3,
   ALL      : 4,
 };
-const advs = util.cachering.fromConstructor(Vector4, 128);
 /** @deprecated */
 export class AbstractCurve {
   evaluate(t: number) {
@@ -179,10 +178,9 @@ export class ClosestCurveRets {
   const steps = 5;
   let s = 0;
   const ds = 1.0 / steps;
-  const ri = 0;
   for (let i = 0; i < steps; i++, s += ds) {
-    const c1 = curve.evaluate(s);
-    const c2 = curve.evaluate(s + ds);
+    curve.evaluate(s);
+    curve.evaluate(s + ds);
   }
 }
 const poly_normal_tmps = util.cachering.fromConstructor(Vector3, 64);
@@ -474,9 +472,6 @@ const closest_p_tri_rets = new util.cachering(() => {
 const cpt_v1 = new Vector3();
 const cpt_v2 = new Vector3();
 const cpt_v3 = new Vector3();
-const cpt_v4 = new Vector3();
-const cpt_v5 = new Vector3();
-const cpt_v6 = new Vector3();
 const cpt_p = new Vector3();
 const cpt_n = new Vector3();
 const cpt_mat = new Matrix4();
@@ -544,19 +539,15 @@ export function closest_point_on_tri(
     ret.uv.zero();
     return ret;
   }
-  let ax3: Number3;
   if (ax >= ay && ax >= az) {
     ax1 = 1;
     ax2 = 2;
-    ax3 = 0;
   } else if (ay >= ax && ay >= az) {
     ax1 = 0;
     ax2 = 2;
-    ax3 = 1;
   } else {
     ax1 = 0;
     ax2 = 1;
-    ax3 = 2;
   }
   const mat = cpt_mat;
   const mat2 = cpt_mat2;
@@ -827,17 +818,12 @@ export function dist_to_tri_v3_sqr(
   const cz = v3arr[axis3] - az;
   const bx2 = bx * bx;
   const by2 = by * by;
-  const bz2 = bz * bz;
   const cx2 = cx * cx;
   const cy2 = cy * cy;
-  const cz2 = cz * cz;
   const x1 = parr[axis1] - ax;
   const y1 = parr[axis2] - ay;
   const z1 = parr[axis3] - az;
   const testf = 0.0;
-  const l1 = Math.sqrt(bx ** 2 + by ** 2);
-  const l2 = Math.sqrt((cx - bx) ** 2 + (cy - by) ** 2);
-  const l3 = Math.sqrt(cx ** 2 + cy ** 2);
   let s1 = x1 * by - y1 * bx < testf;
   let s2 = (x1 - bx) * (cy - by) - (y1 - by) * (cx - bx) < testf;
   let s3 = x1 * -cy + y1 * cx < testf;
@@ -1013,7 +999,6 @@ export function dist_to_tri_v3_sqr(
 
   */ return dis * mul + planedis * planedis;
 }
-const tri_area_temps = util.cachering.fromConstructor(Vector3, 64);
 export function tri_area(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like): number {
   const l1 = v1.vectorDistance(v2);
   const l2 = v2.vectorDistance(v3);
@@ -1217,7 +1202,6 @@ function inherit(cls: any, parent: any, proto: any): any {
   }
   return cls.prototype;
 }
-const set = util.set;
 //everything below here was compiled from es6 code
 //variables starting with $ are function static local vars,
 //like in C.  don't use them outside their owning functions.
@@ -1766,10 +1750,6 @@ export function line_line_cross(a: Vec2Like, b: Vec2Like, c: Vec2Like, d: Vec2Li
   const w4 = winding(c, b, d);
   return w1 === w2 && w3 === w4 && w1 !== w3;
 }
-const _asi_v1 = new Vector3();
-const _asi_v2 = new Vector3();
-const _asi_v3 = new Vector3();
-const _asi_v4 = new Vector3();
 const _asi_v5 = new Vector3();
 const _asi_v6 = new Vector3();
 export function point_in_aabb_2d(p: Vec2Like, min: Vec2Like, max: Vec2Like): boolean {
@@ -1779,7 +1759,6 @@ const _asi2d_v1 = new Vector2();
 const _asi2d_v2 = new Vector2();
 const _asi2d_v3 = new Vector2();
 const _asi2d_v4 = new Vector2();
-const _asi2d_v5 = new Vector2();
 const _asi2d_v6 = new Vector2();
 export function aabb_sphere_isect_2d(
   p: Vec2Like,
@@ -1791,7 +1770,6 @@ export function aabb_sphere_isect_2d(
   const v2 = _asi2d_v2;
   const v3 = _asi2d_v3;
   const mvec = _asi2d_v4;
-  const v4 = _asi2d_v5;
   const lp = _asi2d_v6.load(p);
   v1.load(lp);
   v2.load(lp);
@@ -1912,7 +1890,6 @@ export function aabb_sphere_isect(
   }
   const p2 = aabb_sphere_isect_vs.next().load(lp);
   const p2arr = p2;
-  const lparr = lp;
   const lminarr = lmin;
   const lmaxarr = lmax;
   for (let _i = 0; _i < 3; _i++) {
@@ -1981,7 +1958,6 @@ export function aabb_sphere_dist(
   }
   const p2 = aabb_sphere_isect_vs.next().load(lp);
   const p2arr = p2;
-  const lparr = lp;
   const lminarr = lmin;
   const lmaxarr = lmax;
   for (let i = 0; i < 3; i++) {
@@ -2013,9 +1989,6 @@ export function point_in_tri(p: Vec2Like, v1: Vec2Like, v2: Vec2Like, v3: Vec2Li
 export function quadIsConvex(v1: Vec2Like, v2: Vec2Like, v3: Vec2Like, v4: Vec2Like): boolean {
   return line_line_cross(v1, v3, v2, v4);
 }
-const $e1_normal_tri = new Vector3();
-const $e3_normal_tri = new Vector3();
-const $e2_normal_tri = new Vector3();
 export function isNum(f: any): boolean {
   let ok = typeof f === "number";
   ok = ok && !isNaN(f) && isFinite(f);
@@ -2061,7 +2034,6 @@ export function normal_tri(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like): Vector3 {
 const $n2_normal_quad = new Vector3();
 const _q1 = new Vector3();
 const _q2 = new Vector3();
-const _q3 = new Vector3();
 export function normal_quad(v1: Vec3Like, v2: Vec3Like, v3: Vec3Like, v4: Vec3Like): Vector3 {
   _q1.load(normal_tri(v1, v2, v3));
   _q2.load(normal_tri(v2, v3, v4));
@@ -2131,7 +2103,6 @@ export function line_isect<CALCT extends true | false | undefined>(
   return [vi, LINECROSS] as CALCT extends true ? [Vector3, number, number] : [Vector3, number];
 }
 const dt2l_v1 = new Vector2();
-const dt2l_v2 = new Vector2();
 const dt2l_v3 = new Vector2();
 const dt2l_v4 = new Vector2();
 const dt2l_v5 = new Vector2();
@@ -2163,11 +2134,6 @@ export function dist_to_line_2d(
   }
   return n.vectorDistance(p);
 }
-const dt3l_v1 = new Vector3();
-const dt3l_v2 = new Vector3();
-const dt3l_v3 = new Vector3();
-const dt3l_v4 = new Vector3();
-const dt3l_v5 = new Vector3();
 export function dist_to_line_sqr(p: Vec2Like, v1: Vec2Like, v2: Vec2Like, clip = true): number {
   const px = p[0] - v1[0];
   const py = p[1] - v1[1];
@@ -2203,8 +2169,6 @@ export function dist_to_line(
 }
 //p cam be 2d, 3d, or 4d point, v1/v2 however must be full homogenous coordinates
 const _cplw_vs4 = util.cachering.fromConstructor(Vector4, 64);
-const _cplw_vs3 = util.cachering.fromConstructor(Vector3, 64);
-const _cplw_vs2 = util.cachering.fromConstructor(Vector2, 64);
 function wclip(x1: number, x2: number, w1: number, w2: number, near: number): number {
   const r1 = near * w1 - x1;
   const r2 = (w1 - w2) * near - (x1 - x2);
@@ -2473,7 +2437,6 @@ export function get_tri_circ(a: Vec3Like, b: Vec3Like, c: Vec3Like): [Vector3, n
   }
   const isect = line_isect(p1, _gtc_p12, p2, _gtc_p22);
   cent = isect[0];
-  type = isect[1];
   e1.load(a);
   e2.load(b);
   e3.load(c);
@@ -2551,10 +2514,6 @@ export function project(vec: Vec3Like, pers: Matrix4, view: Matrix4): Vector3 {
   newvec.multVecMatrix(view);
   return newvec;
 }
-const _sh_minv = new Vector3();
-const _sh_maxv = new Vector3();
-const _sh_start = [];
-const _sh_end = [];
 const static_cent_gbw = new Vector3();
 export function get_boundary_winding(points: Vec3Like[]): boolean {
   const cent = static_cent_gbw.zero();
@@ -2580,7 +2539,6 @@ export class PlaneOps {
   axis: [Number3, Number3, Number3];
 
   constructor(normal: Vec3Like) {
-    const no = normal;
     this.axis = [0, 1, 2];
     this.reset_axis(normal);
   }
@@ -2627,7 +2585,6 @@ export class PlaneOps {
     v3 = new Vector3([v3[ax[0]], v3[ax[1]], v3[ax[2]]]);
     v4 = new Vector3([v4[ax[0]], v4[ax[1]], v4[ax[2]]]);
     const ret = line_isect(v1, v2, v3, v4, true);
-    const vi = ret[0];
     if (ret[1] === LINECROSS) {
       ret[0].load(orig2).sub(orig1).mulScalar(ret[2]).add(orig1);
     }
@@ -2661,7 +2618,6 @@ export class PlaneOps {
     return colinear(v1, v2, v3);
   }
   get_boundary_winding(points: Vec3Like[]): boolean {
-    const ax = this.axis;
     const cent = new Vector3();
     if (points.length === 0) return false;
     for (let i = 0; i < points.length; i++) {
@@ -2725,7 +2681,6 @@ export function _old_isect_ray_plane(
   const n = planenormal;
   const r = rayorigin;
   const v = raynormal;
-  const d = p.vectorLength();
   const t = -(r.dot(n) - p.dot(n)) / v.dot(n);
   _isrp_ret.load(v);
   _isrp_ret.mulScalar(t);
@@ -2967,7 +2922,6 @@ export function point_in_hex(
   for (let i = 0; i < 6; i++) {
     t1.load(p).sub(boxfacecents[i]);
     t2.load(cent).sub(boxfacecents[i]);
-    const n = boxfacenormals[i];
     if (1) {
       t1.normalize();
       t2.normalize();
@@ -2991,7 +2945,6 @@ export function trilinear_co(p: Vec3Like, boxverts: Vec3Like[]): Vector3 {
   u.loadXYZ(0.0, 0.5, 1.0);
   v.loadXYZ(0.0, 0.5, 1.0);
   w.loadXYZ(0.0, 0.5, 1.0);
-  const uvw2 = tril_co_tmps.next();
   for (let step = 0; step < 4; step++) {
     uvw.loadXYZ(u[1], v[1], w[1]);
     let mini = undefined;
@@ -3068,7 +3021,6 @@ export function trilinear_co(p: Vec3Like, boxverts: Vec3Like[]): Vector3 {
 export function trilinear_co2(p: Vec3Like, boxverts: Vec3Like[], uvw: Vec3Like): Vector3 {
   //let uvw = tril_co_rets.next();
   const grad = tril_co_tmps.next();
-  const parr = p;
   const uvwarr = uvw;
   const gradarr = grad;
   //uvw[0] = uvw[1] = uvw[2] = 0.5;

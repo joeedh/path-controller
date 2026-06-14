@@ -17,7 +17,6 @@ class ContextLocker<OVERLAYS extends {}> {
     if (ctx === undefined) {
       throw new Error("ctx was undefined! in ContextLocker.lock()!");
     }
-    const keys = [] as (string | symbol)[];
     const props = {} as any;
 
     function getAllKeys(obj: any) {

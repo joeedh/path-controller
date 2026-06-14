@@ -571,8 +571,6 @@ export function parseValueIntern(
   }
 
   for (const unit of Units) {
-    const def = unit.unitDefine();
-
     if (unit.validate(string)) {
       console.log(unit);
       let value = unit.parse(string);
@@ -617,8 +615,6 @@ export function isNumber(string: string): boolean {
   }
 
   for (const unit of Units) {
-    const def = unit.unitDefine();
-
     if (unit.validate(string)) {
       return true;
     }

@@ -389,7 +389,6 @@ export default {
 
   _decompress: function (length, resetValue, getNextValue) {
     let dictionary = [];
-    let next;
     let enlargeIn = 4;
     let dictSize = 4;
     let numBits = 3;
@@ -422,7 +421,7 @@ export default {
       power <<= 1;
     }
 
-    switch ((next = bits)) {
+    switch (bits) {
       case 0:
         bits = 0;
         maxpower = Math.pow(2, 8);

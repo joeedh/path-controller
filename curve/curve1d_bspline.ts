@@ -1223,11 +1223,9 @@ curve1d.BSplineCurve {
     let lastf3: number = 0;
 
     for (let j = 0; j < steps; j++, t += dt) {
-      const f1 = this._evaluate(t - eps * 2);
       const f2 = this._evaluate(t - eps);
       const f3 = this._evaluate(t);
       const f4 = this._evaluate(t + eps);
-      const f5 = this._evaluate(t + eps * 2);
 
       let dv1 = (f4 - f2) / (eps * 2);
       dv1 /= steps;
@@ -1252,8 +1250,6 @@ curve1d.BSplineCurve {
     for (const p of this._ps) {
       p.rco.load(p.co);
     }
-
-    const points = this.points.concat(this.points);
 
     this._evaluate2(0.5);
 
@@ -2209,8 +2205,6 @@ curve1d.BSplineCurve {
     ui.g = g;
     ui.draw_trans = draw_trans;
 
-    const _sz = draw_trans[0];
-    const _pan = draw_trans[1];
     g.lineWidth *= 1.5;
     const strokeStyle = g.strokeStyle;
 

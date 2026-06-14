@@ -31,10 +31,7 @@ const TOTN = 11 + MAXPOINTS * 4;
 
 const _insert_split_out = [0, 0];
 const _split_tmps = util.cachering.fromConstructor(Vector3, 1024);
-const _insert_tmps = util.cachering.fromConstructor(Vector3, 1024);
-const _split_tmps_2 = util.cachering.fromConstructor(Vector3, 1024);
 const _foreach_tmp = new Vector3();
-const _tmp = new Vector3();
 
 interface KDPoint {
   co: Vector3;
@@ -399,7 +396,6 @@ export class KDTree {
     let stop = false;
 
     const data = this.data;
-    const cachering = this._point_cachering;
     const co = this._search_cachering.next() as Vector3;
 
     const recurse = (ni: number): void => {
@@ -487,8 +483,6 @@ export class KDTree {
 
           const x = d[i2];
           const y = d[i2 + 1];
-          const z = d[i2 + 2];
-          const id = d[i2 + 3];
 
           g.moveTo(x, y);
           g.arc(x, y, r, -Math.PI, Math.PI);

@@ -574,12 +574,6 @@ export class DataList<
         this.cb[cb.name] = cb;
       }
     }
-
-    const check = (key: string) => {
-      if (!(key in this.cb)) {
-        throw new DataPathError(`Missing ${key} callback in DataList`);
-      }
-    };
   }
 
   /**

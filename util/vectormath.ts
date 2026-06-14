@@ -188,7 +188,6 @@ export declare interface IVectorConstructor<Type, LEN extends 2 | 3 | 4 = 3> {
 }
 
 const M_SQRT2 = Math.SQRT2;
-const PI = Math.PI;
 
 function createVector2(parent: typeof Array | typeof Float32Array, structName?: string) {
   return class Vector2 extends parent {
@@ -226,8 +225,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     ) {
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
-      const dx2 = v4[0] - v3[0];
-      const dy2 = v4[1] - v3[1];
+      let dx2 = v4[0] - v3[0];
+      let dy2 = v4[1] - v3[1];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
@@ -237,8 +236,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2;
     }
@@ -246,8 +245,9 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
     static normalizedDot3(v1: IBaseVector<2>, center: IBaseVector<2>, v2: IBaseVector<2>) {
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
-      const dx2 = v2[0] - center[0];
-      const dy2 = v2[1] - center[1];
+      let dx2 = v2[0] - center[0];
+      let dy2 = v2[1] - center[1];
+
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
@@ -257,8 +257,8 @@ function createVector2(parent: typeof Array | typeof Float32Array, structName?: 
       l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0;
       dx1 *= l1;
       dy1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2;
     }
@@ -607,9 +607,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dx1 = v2[0] - v1[0];
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
-      const dx2 = v4[0] - v3[0];
-      const dy2 = v4[1] - v3[1];
-      const dz2 = v4[2] - v3[2];
+      let dx2 = v4[0] - v3[0];
+      let dy2 = v4[1] - v3[1];
+      let dz2 = v4[2] - v3[2];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
@@ -620,9 +620,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
-      dz1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
+      dz2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2 + dz1 * dz2;
     }
@@ -631,9 +631,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       let dx1 = v1[0] - center[0];
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
-      const dx2 = v2[0] - center[0];
-      const dy2 = v2[1] - center[1];
-      const dz2 = v2[2] - center[2];
+      let dx2 = v2[0] - center[0];
+      let dy2 = v2[1] - center[1];
+      let dz2 = v2[2] - center[2];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
@@ -644,9 +644,9 @@ function createVector3(parent: typeof Array | typeof Float32Array, structName?: 
       dx1 *= l1;
       dy1 *= l1;
       dz1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
-      dz1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
+      dz2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2 + dz1 * dz2;
     }
@@ -1074,10 +1074,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dy1 = v2[1] - v1[1];
       let dz1 = v2[2] - v1[2];
       let dw1 = v2[3] - v1[3];
-      const dx2 = v4[0] - v3[0];
-      const dy2 = v4[1] - v3[1];
-      const dz2 = v4[2] - v3[2];
-      const dw2 = v4[3] - v3[3];
+      let dx2 = v4[0] - v3[0];
+      let dy2 = v4[1] - v3[1];
+      let dz2 = v4[2] - v3[2];
+      let dw2 = v4[3] - v3[3];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
@@ -1089,10 +1089,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       dy1 *= l1;
       dz1 *= l1;
       dw1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
-      dz1 *= l1;
-      dw1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
+      dz2 *= l2;
+      dw2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2 + dz1 * dz2 + dw1 * dw2;
     }
@@ -1102,10 +1102,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       let dy1 = v1[1] - center[1];
       let dz1 = v1[2] - center[2];
       let dw1 = v1[3] - center[3];
-      const dx2 = v2[0] - center[0];
-      const dy2 = v2[1] - center[1];
-      const dz2 = v2[2] - center[2];
-      const dw2 = v2[3] - center[3];
+      let dx2 = v2[0] - center[0];
+      let dy2 = v2[1] - center[1];
+      let dz2 = v2[2] - center[2];
+      let dw2 = v2[3] - center[3];
       // normalize
       let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1 + dw1 * dw1);
       let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2 + dw2 * dw2);
@@ -1117,10 +1117,10 @@ function createVector4(parent: typeof Array | typeof Float32Array, structName?: 
       dy1 *= l1;
       dz1 *= l1;
       dw1 *= l1;
-      dx1 *= l1;
-      dy1 *= l1;
-      dz1 *= l1;
-      dw1 *= l1;
+      dx2 *= l2;
+      dy2 *= l2;
+      dz2 *= l2;
+      dw2 *= l2;
 
       return dx1 * dx2 + dy1 * dy2 + dz1 * dz2 + dw1 * dw2;
     }
@@ -2672,7 +2672,27 @@ export class Matrix4 {
     v2.normalize();
     v3.normalize();
 
-    const flat = [].concat(v1).concat(v2).concat(v3).concat(v4);
+    const flat = [
+      v1[0],
+      v1[1],
+      v1[2],
+      v1[3],
+
+      v2[0],
+      v2[1],
+      v2[2],
+      v2[3],
+
+      v3[0],
+      v3[1],
+      v3[2],
+      v3[3],
+      
+      v4[0],
+      v4[1],
+      v4[2],
+      v4[3],
+    ];
     this.load(flat);
 
     return this;
@@ -2929,7 +2949,6 @@ export class Matrix4 {
     matrix.makeIdentity();
 
     const vec = lookat_cache_vs3.next().load(pos).sub(target);
-    const len = vec.vectorLength();
     vec.normalize();
 
     const zvec = vec;
@@ -3163,15 +3182,12 @@ export class Matrix4 {
       const m11 = m.m11;
       const m12 = m.m12;
       const m13 = m.m13;
-      const m14 = m.m14;
       const m21 = m.m21;
       const m22 = m.m22;
       const m23 = m.m23;
-      const m24 = m.m24;
       const m31 = m.m31;
       const m32 = m.m32;
       const m33 = m.m33;
-      const m34 = m.m34;
       //let m41 = m.m41, m42 = m.m42, m43 = m.m43, m44 = m.m44;
 
       if (order === EulerOrders.XYZ) {
@@ -3337,7 +3353,6 @@ export class Matrix4 {
 }
 
 lookat_cache_vs3 = util.cachering.fromConstructor(Vector3, 512);
-lookat_cache_vs4 = util.cachering.fromConstructor(Vector4, 512);
 lookat_cache_ms = util.cachering.fromConstructor(Matrix4, 512);
 euler_rotate_mats = util.cachering.fromConstructor(Matrix4, 512);
 makenormalcache = util.cachering.fromConstructor(Vector3, 512);

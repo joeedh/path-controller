@@ -100,8 +100,6 @@ const matrixVecMults = {
 };
 
 const DOT_NORM_SNAP_LIMIT = 0.00000000001;
-const M_SQRT2 = Math.sqrt(2.0);
-const FLT_EPSILON = 2.22e-16;
 
 const basic_funcs = {
   equals   : [["vb"], "this[X] === b[X]", "&&"],
@@ -348,7 +346,6 @@ export function makeVector3(
   customConstructorCode
 ) {
   let Vector3;
-  const bundlehelper = [nstructjs];
 
   const constructorCode =
     customConstructorCode ??
@@ -726,7 +723,7 @@ ${unroll(`      let d$X2 = v4[$$] - v3[$$];`)}
       l1 = l1 > 0.0000001 ? 1.0 / l1 : 0.0
       l2 = l2 > 0.0000001 ? 1.0 / l2 : 0.0
 ${unroll(`      d$X1 *= l1;`)}
-${unroll(`      d$X1 *= l1;`)}
+${unroll(`      d$X2 *= l2;`)}
   
       return ${unrollJoin(`d$X1*d$X2`, " + ")};
     }

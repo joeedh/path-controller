@@ -408,9 +408,7 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     tot += strlen(this.description);
 
     tot += 11 * 8; //assumed member pointers
-    for (const k in this.callbacks) {
-      tot += 24;
-    }
+    tot += Object.keys(this.callbacks).length * 24;
 
     return tot;
   }

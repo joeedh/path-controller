@@ -128,8 +128,6 @@ export { DataPathError, DataFlags } from "./controller_base";
 import { ToolClasses } from "../toolsys/toolsys";
 import { ToolProperty, IntProperty } from "../toolsys/toolprop";
 
-const tool_classes = ToolClasses;
-
 let tool_idgen = 1;
 Symbol.ToolID = Symbol("toolid");
 
@@ -142,10 +140,6 @@ function toolkey(cls: AnyClass): number {
 
   return cls[Symbol.ToolID] as number;
 }
-
-const lt = util.time_ms();
-const lastmsg: string | undefined = undefined;
-const lcount = 0;
 
 const reportstack = ["api"];
 
@@ -382,8 +376,6 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
     if (type === undefined) {
       throw new DataPathError("Invalid size for vectorList; expected 2 3 or 4");
     }
-
-    const prop = new type(undefined, apiname, uiname, description);
 
     const pstruct = new DataStruct(undefined, "Vector");
     pstruct.vec3("", "co", "Coords", "Coordinates");
@@ -1449,7 +1441,7 @@ An example of a more complicated expression might be:
   }
 
   getToolPathHotkey(ctx: CTX, toolpath: string) {
-    const { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
+    const { path, hotkey } = this._parsePathOverrides(toolpath);
 
     if (hotkey) {
       return hotkey;

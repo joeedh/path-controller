@@ -121,13 +121,11 @@ export function termPrint(...args: unknown[]): string {
 
   let s2 = s;
 
-  const i = 0;
   const tokens: Token[] = [];
 
   while (s2.length > 0) {
     let ok = false;
 
-    let mintk: [RegExp, string] | undefined = undefined;
     let mini: number | undefined = undefined;
     let minslice: string | undefined = undefined;
     let mintype: string | undefined = undefined;
@@ -139,7 +137,6 @@ export function termPrint(...args: unknown[]): string {
         minslice = s2.slice(idx, s2.length).match(tk[0])![0];
         mini = idx;
         mintype = tk[1];
-        mintk = tk;
         ok = true;
       }
     }
@@ -542,6 +539,7 @@ export function count<T>(iterable: Iterable<T>, searchItem?: T): number {
       }
     }
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _item of iterable) {
       count++;
     }
@@ -1831,7 +1829,7 @@ export class map<K extends KeystrObject, V> {
   keys(): Generator<K> {
     const this2 = this;
     return (function* () {
-      for (const [key, _val] of this2) {
+      for (const [key] of this2) {
         yield key;
       }
     })();
@@ -1840,7 +1838,7 @@ export class map<K extends KeystrObject, V> {
   values(): Generator<V> {
     const this2 = this;
     return (function* () {
-      for (const [_key, val] of this2) {
+      for (const [, val] of this2) {
         yield val;
       }
     })();
@@ -2067,8 +2065,6 @@ export class IDMap<T> extends Array<T | object | undefined> {
   return idmap;
 };
 
-const HW = 0;
-const HELEM = 1;
 const HTOT = 2;
 
 function heaplog(..._args: unknown[]): void {

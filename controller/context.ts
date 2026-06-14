@@ -257,7 +257,6 @@ export class LockedContext {
     }
 
     for (const k of keys) {
-      let v: unknown;
       if (k === "state" || k === "toolstack" || k === "api") {
         continue;
       }
@@ -267,7 +266,7 @@ export class LockedContext {
       }
 
       try {
-        v = (ctx as Record<string, unknown>)[k];
+        (ctx as Record<string, unknown>)[k];
       } catch (_error) {
         if ((cconst.DEBUG as Record<string, boolean>).contextSystem) {
           console.warn("failed to look up property in context: ", k);

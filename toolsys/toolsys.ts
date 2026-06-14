@@ -642,7 +642,6 @@ export class ToolOp<
 
    */
   static invoke(_ctx: any, args: Record<string, unknown>): ToolOpAny {
-    const ctx = _ctx as ContextLike;
     const tool = new (this as unknown as new () => ToolOp)();
     const inputs = tool.inputs as any;
 

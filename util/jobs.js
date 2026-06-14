@@ -1,5 +1,3 @@
-var _jobs = undefined;
-
 define(["scripts/util/util"], function (util) {
   "use strict";
 
@@ -11,9 +9,7 @@ define(["scripts/util/util"], function (util) {
    *
    * */
 
-  var exports = (_jobs = {});
-
-  var JobFlags = {};
+  var exports = {};
 
   var JobStatus = (exports.JobStatus = class JobStatus {
     constructor() {
@@ -59,7 +55,7 @@ define(["scripts/util/util"], function (util) {
     }
   });
 
-  var JobManager = (exports.JobManager = class JobManager {
+  exports.JobManager = class JobManager {
     constructor() {
       this.jobs = [];
       this.job_tagmap = {};
@@ -109,7 +105,7 @@ define(["scripts/util/util"], function (util) {
 
       this.thenqueue.length = 0;
     }
-  });
+  };
 
   return exports;
 });

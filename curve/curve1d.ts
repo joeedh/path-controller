@@ -452,13 +452,7 @@ export class Curve1D {
     g: CanvasRenderingContext2D,
     draw_transform: [number, [number, number]]
   ): this {
-    let w = canvas.width;
-    const h = canvas.height;
-
     g.save();
-
-    const sz = draw_transform[0];
-    const pan = draw_transform[1];
 
     g.beginPath();
     g.moveTo(-1, 0);
@@ -475,9 +469,6 @@ export class Curve1D {
     let f = this.xRange[0];
     const steps = 64;
     const df = (this.xRange[1] - this.xRange[0]) / (steps - 1);
-    w = 6.0 / sz;
-
-    const curve = this.generators.active;
 
     g.beginPath();
     for (let i = 0; i < steps; i++, f += df) {

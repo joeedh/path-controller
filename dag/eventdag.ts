@@ -367,7 +367,7 @@ export class EventGraph {
 
       n.flag |= NodeFlags.SORT_TAG2;
 
-      for (const [k, socka] of Object.entries(n.inputs)) {
+      for (const socka of Object.values(n.inputs)) {
         for (const sockb of socka.edges) {
           const n2 = sockb.node!;
           if (!(n2.flag & NodeFlags.SORT_TAG1)) {
@@ -381,7 +381,7 @@ export class EventGraph {
       n.sortIndex = sortlist.length;
       sortlist.push(n);
 
-      for (const [k, socka] of Object.entries(n.outputs)) {
+      for (const socka of Object.values(n.outputs)) {
         for (const sockb of socka.edges) {
           const n2 = sockb.node!;
 

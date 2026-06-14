@@ -26,7 +26,6 @@ const tokens = [
   tk("RPAREN", /\)/),
   tk("STRLIT", /"[^"]*"/, (t) => {
     // /".*(?<!\\)"/ <- not working outside of Chrome
-    const v = t.value;
     t.lexer.lineno += count(t.value, "\n");
     return t;
   }),
