@@ -839,6 +839,40 @@ export class StringProperty extends StringPropertyBase<PropTypes["STRING"]> {
 }
 ToolProperty.internalRegister(StringProperty);
 
+export class ArrayBufferProperty extends ToolProperty<ArrayBuffer, PropTypes["ARRAY_BUFFER"]> {
+  data: ArrayBuffer = new ArrayBuffer(0);
+
+  static STRUCT = nstructjs.inlineRegister(this, `
+    toolprop.ArrayBufferProperty {
+      data : arraybuffer(byte);
+    }
+  `);
+
+  constructor(buffer?: ArrayBuffer) {
+    super(PropTypes.ARRAY_BUFFER);
+    this.data = buffer ?? this.data
+  }
+
+  setValue(buffer: ArrayBuffer) {
+    super.setValue();
+    this.data = buffer;
+  }
+
+  getValue(): ArrayBuffer {
+    return this.data;
+  }
+
+  copyTo(b: this): void {
+    super.copyTo(b);
+    // how do you copy arraybuffers properly?
+    b.data = new Uint8Array(Array.from(new Uint8Array(this.data))).buffer;
+  }
+
+  calcMemSize(): number {
+    return super.calcMemSize() + this.data.byteLength;
+  }
+}
+
 /*
 let num_res = [
   /([0-9]+)/,

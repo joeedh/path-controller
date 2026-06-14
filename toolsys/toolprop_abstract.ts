@@ -26,6 +26,7 @@ export const PropTypes = {
   CURVE      : 16384,
   FLOAT_ARRAY: 32768,
   REPORT     : 65536,
+  ARRAY_BUFFER     : 65536<<1,
   //ITER : 8192<<1
 } as const;
 export type PropTypes = typeof PropTypes;
