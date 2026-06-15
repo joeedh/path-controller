@@ -1199,8 +1199,6 @@ curve1d.BSplineCurve {
 
   regen_hermite(steps?: number) {
     if (splineCache.has(this)) {
-      console.log("loading spline approx from cached bspline data");
-
       this.hermite = splineCache.get(this).hermite;
       return;
     }
@@ -1325,8 +1323,6 @@ curve1d.BSplineCurve {
 
   regen_basis() {
     if (splineCache.has(this)) {
-      console.log("loading from cached bspline data");
-
       this.basis_tables = splineCache.get(this).basis_tables;
       return;
     }
@@ -1754,13 +1750,6 @@ curve1d.BSplineCurve {
     const dpath = datapath;
     const srcUpdate = onSourceUpdate;
 
-    console.warn(
-      this._bid,
-      "makeGUI",
-      this.uidata,
-      this.uidata ? this.uidata.start_mpos : undefined
-    );
-
     let start_mpos: Vector2 | undefined;
     if (this.uidata) {
       start_mpos = (this.uidata as unknown as BSplineUIData).start_mpos;
@@ -1777,8 +1766,6 @@ curve1d.BSplineCurve {
       draw_trans  : drawTrans,
       datapath    : dpath,
     };
-
-    console.warn("Building gui");
 
     cvs.addEventListener("touchstart", this.on_touchstart);
     cvs.addEventListener("touchmove", this.on_touchmove);
@@ -1833,7 +1820,6 @@ curve1d.BSplineCurve {
 
     const icon = Icons.LARGE_X !== undefined ? Icons.LARGE_X : Icons.TINY_X;
     if (Icons.LARGE_X === undefined) {
-      console.log(Icons);
       console.error("Curve widget expects Icons.LARGE_X icon for delete button.");
     }
 
@@ -1886,7 +1872,6 @@ curve1d.BSplineCurve {
     let last_deg = this.deg;
     slider.updateAfter(() => {
       if (last_deg !== this.deg) {
-        console.log("degree update", this.deg);
         last_deg = this.deg;
         slider.setValue(this.deg);
       }
