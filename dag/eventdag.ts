@@ -289,7 +289,7 @@ export class EventGraph {
     }
 
     if (node === undefined) {
-      console.warn("Not an event node:", arguments[0]);
+      console.warn("Not an event node:", node);
       throw new Error("Not an event node");
     }
 
@@ -348,7 +348,7 @@ export class EventGraph {
   }
 
   sort(): void {
-    console.warn("Sorting Graph");
+    //console.warn("Sorting Graph");
 
     this.flag &= ~RecalcFlags.RESORT;
 
@@ -359,9 +359,12 @@ export class EventGraph {
     const sortlist = this.sortlist;
     this.sortlist.length = 0;
 
-    const dosort = (n: EventNode): void => {
+    const checkparent = (n: EventNode, path: (EventSocket | string)[] = []): void => {
       if (n.flag & NodeFlags.SORT_TAG2) {
-        console.error("Cycle in event dag!", n);
+        const spath = path.map((s) =>
+          typeof s === "string" ? s : `${s.name}:${s.type![0]}:n${s.node!.id}`
+        );
+        console.error("Cycle in event dag!", n, path, spath);
         return;
       }
 
@@ -371,7 +374,7 @@ export class EventGraph {
         for (const sockb of socka.edges) {
           const n2 = sockb.node!;
           if (!(n2.flag & NodeFlags.SORT_TAG1)) {
-            dosort(n2);
+            checkparent(n2, path.concat(["1", sockb, socka]));
           }
         }
       }
@@ -380,13 +383,17 @@ export class EventGraph {
       n.flag |= NodeFlags.SORT_TAG1;
       n.sortIndex = sortlist.length;
       sortlist.push(n);
+    };
+
+    const dosort = (n: EventNode, path: (EventSocket | string)[] = []): void => {
+      checkparent(n, path);
 
       for (const socka of Object.values(n.outputs)) {
         for (const sockb of socka.edges) {
           const n2 = sockb.node!;
 
           if (!(n2.flag & NodeFlags.SORT_TAG1)) {
-            dosort(n2);
+            dosort(n2, path.concat(["2", socka, sockb]));
           }
         }
       }
@@ -394,14 +401,12 @@ export class EventGraph {
 
     for (const n of this.nodes) {
       if (!(n.flag & NodeFlags.SORT_TAG1)) {
-        dosort(n);
+        dosort(n, ["3"]);
       }
     }
   }
 
   queueExec(): void {
-    console.warn("queueExec", this.queueReq);
-
     this.flag |= RecalcFlags.RUN;
 
     if (this.queueReq !== undefined) {
@@ -421,8 +426,6 @@ export class EventGraph {
     if (this.flag & RecalcFlags.RESORT) {
       this.sort();
     }
-
-    console.warn("Executing Graph");
 
     this.#skipQueueExec++;
 
