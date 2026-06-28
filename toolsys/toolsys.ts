@@ -72,7 +72,7 @@ import nstructjs from "../util/struct";
 
 import * as events from "../util/events";
 import { keymap } from "../util/simple_events";
-import { PropFlags, PropTypes, ToolProperty } from "./toolprop";
+import { EnumProperty, PropFlags, PropTypes, ToolProperty } from "./toolprop";
 import { DataPath } from "../controller/controller_base";
 import * as util from "../util/util";
 import { Context } from "../controller/context";
@@ -123,6 +123,7 @@ export interface IToolOpConstructor {
   tooldef(): ToolDef;
   _getFinalToolDef(): ResolvedToolDef;
   _regWithNstructjs(cls: IToolOpConstructor, structName?: string): void;
+  parseArgs(args: Record<string, unknown>): Record<string, unknown>;
   canRun<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     ctx: CTX,
     toolop?: ToolOp<any, any, CTX, ModalCTX>
@@ -586,6 +587,25 @@ export class ToolOp<
     return {};
   }
 
+  /**
+   * Goes through each argument, ensures an input exists for it then
+   * then passes the arg through the input property's parseArg method
+   */
+  static parseArgs(args: Record<string, unknown>): Record<string, unknown> {
+    const def = this._getFinalToolDef();
+    const inputs = def.inputs;
+
+    for (const k in args) {
+      if (!(k in inputs)) {
+        console.warn(`unknown argument ${k} in tool ${this}`);
+        throw new Error(`unknown argument ${k}`);
+      }
+      const prop = inputs[k];
+      args[k] = prop.parseArg(args[k]);
+    }
+    return args;
+  }
+
   /** Returns a map of input property values,
    *  e.g. `let {prop1, prop2} = this.getInputs()` */
   getInputs(): { [k in keyof InputSlots]: SlotType<InputSlots[k]> } {
@@ -642,6 +662,8 @@ export class ToolOp<
 
    */
   static invoke(_ctx: any, args: Record<string, unknown>): ToolOpAny {
+    args = this.parseArgs(args);
+
     const tool = new (this as unknown as new () => ToolOp)();
     const inputs = tool.inputs as any;
 
@@ -651,19 +673,8 @@ export class ToolOp<
         continue;
       }
 
-      const prop = inputs[k];
-      let val = args[k];
-
-      if (typeof val === "string" && prop.type & (PropTypes.ENUM | PropTypes.FLAG)) {
-        if (val in prop.values) {
-          val = prop.values[val];
-        } else {
-          console.warn("Possible invalid enum/flag:", val);
-          continue;
-        }
-      }
-
-      inputs[k].setValue(val);
+      // parseArgs now handles validation
+      inputs[k].setValue(args[k]);
     }
 
     return tool;

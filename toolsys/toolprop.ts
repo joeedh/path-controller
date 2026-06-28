@@ -289,6 +289,15 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     this.callbacks = {};
   }
 
+  /**
+   * Validates and optionally transforms arg, see parseArgs in ToolOp.
+   * This is used for e.g. enum/flag property parsing.
+   */
+  parseArg(arg: unknown): unknown {
+    // base class
+    return arg;
+  }
+
   getUIName() {
     return this.uiname ?? ToolProperty.makeUIName(this.apiname ?? "error");
   }
@@ -1018,6 +1027,13 @@ toolprop._NumberPropertyBase {
     }
   }
 
+  parseArg(arg: unknown) {
+    if (typeof arg !== "number") {
+      throw new Error("expected a number for a number property");
+    }
+    return arg;
+  }
+
   get ui_range(): [number, number] | undefined {
     this.report("NumberProperty.ui_range is deprecated");
     return this.uiRange;
@@ -1504,6 +1520,16 @@ export class EnumPropertyBase<
     }
 
     this.wasSet = false;
+  }
+
+  parseArg(arg: unknown): unknown {
+    if (typeof arg === "string") {
+      if (!(arg in this.values)) {
+        throw new Error(`unknown key ${arg}`);
+      }
+      arg = this.values[arg];
+    }
+    return arg;
   }
 
   /**

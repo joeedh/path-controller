@@ -98,10 +98,10 @@ export function parseToolPath(str: string, check_tool_exists: boolean = true): P
 
   const i1 = str.search(/\(/);
   const i2 = str.search(/\)/);
-  let args = "";
+  let argsStr = "";
 
   if (i1 >= 0 && i2 >= 0) {
-    args = str.slice(i1 + 1, i2).trim();
+    argsStr = str.slice(i1 + 1, i2).trim();
     str = str.slice(0, i1).trim();
   }
 
@@ -109,18 +109,26 @@ export function parseToolPath(str: string, check_tool_exists: boolean = true): P
     throw new DataPathError("unknown tool " + str);
   }
 
-  let ret: Record<string, unknown>;
+  let args: Record<string, unknown>;
 
   try {
-    ret = Parser.parse(args) as Record<string, unknown>;
+    args = Parser.parse(argsStr) as Record<string, unknown>;
   } catch (error) {
     console.log(error);
     throw new DataPathError(`"${startstr}"\n  ${(error as Error).message}`);
   }
 
+  const toolclass = ToolPaths[str];
+
+  if (toolclass !== undefined) {
+    // note: we parse args here for validation,
+    // args are also parsed in the invoke static method.
+    args = toolclass.parseArgs(args);
+  }
+
   return {
-    toolclass: ToolPaths[str],
-    args     : ret,
+    toolclass,
+    args,
   };
 }
 
