@@ -54,6 +54,7 @@ export function buildParser(): InstanceType<typeof parser> {
     STRLIT: 1,
     NUMBER: 1,
     BOOL  : 1,
+    ID    : 1,
   };
 
   function p_Start(p: InstanceType<typeof parser>): Record<string, unknown> {
