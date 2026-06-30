@@ -260,7 +260,6 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
 
     const dpath = new DataPath(path, apiname, ret as unknown as ToolProperty, DataTypes.STRUCT);
     ret.inheritFlag |= this.inheritFlag;
-
     ret.dpath = dpath;
 
     this.add(dpath);
@@ -753,10 +752,13 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     if (key === undefined && auto_create) {
-      const dstruct = new DataStruct<CTX, InstanceType<CLS>>(
-        undefined,
-        resolveStructName(cls, name)
-      );
+      let dstruct: DataStruct<CTX, InstanceType<CLS>>;
+
+      if (name !== undefined && _map_structs_by_name[name] !== undefined) {
+        dstruct = _map_structs_by_name[name];
+      } else {
+        dstruct = new DataStruct<CTX, InstanceType<CLS>>(undefined, resolveStructName(cls, name));
+      }
       this._addClass(cls, dstruct, name);
       return dstruct;
     } else if (key === undefined) {

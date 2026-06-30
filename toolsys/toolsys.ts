@@ -688,6 +688,7 @@ export class ToolOp<
     }
 
     ToolClasses.push(cls);
+    updateToolDefaults(cls);
   }
 
   static _regWithNstructjs(cls: IToolOpConstructor, structName: string = cls.name): void {
@@ -2108,6 +2109,45 @@ export function buildToolOpAPI(api: DataAPI, cls: IToolOpConstructor): unknown {
   return st;
 }
 
+export function updateToolDefaults(
+  cls: IToolOpConstructor,
+  api?: DataAPI,
+  datastruct?: DataStruct
+): void {
+  const def = cls._getFinalToolDef();
+
+  if (datastruct === undefined) {
+    datastruct = SavedToolDefaults.dstruct;
+  }
+  if (api === undefined) {
+    api = SavedToolDefaults.api;
+  }
+
+  if (datastruct === undefined || api === undefined) {
+    // not api yet for SavedToolDefaults
+    return;
+  }
+
+  buildToolOpAPI(api, cls);
+
+  for (const k in def.inputs) {
+    const prop = def.inputs[k];
+
+    if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
+      SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
+    }
+  }
+}
+
+export function updateToolSysAPI(api: DataAPI): void {
+  const datastruct = api.mapStruct(ToolPropertyCache, true);
+  datastruct.clear();
+
+  for (const cls of ToolClasses) {
+    updateToolDefaults(cls, api, datastruct);
+  }
+}
+
 /**
  * Call this to build the tool property cache data binding API.
  *
@@ -2122,21 +2162,7 @@ export function buildToolSysAPI(
   rootCtxClass?: (new (arg: any) => ContextLike) | undefined,
   insertToolDefaultsIntoContext: boolean = true
 ): void {
-  const datastruct = api.mapStruct(ToolPropertyCache, true);
-
-  for (const cls of ToolClasses) {
-    const def = cls._getFinalToolDef();
-
-    buildToolOpAPI(api, cls);
-
-    for (const k in def.inputs) {
-      const prop = def.inputs[k];
-
-      if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
-        SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
-      }
-    }
-  }
+  updateToolSysAPI(api);
 
   if (rootCtxStruct) {
     rootCtxStruct.struct(
