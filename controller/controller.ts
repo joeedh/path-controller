@@ -624,6 +624,42 @@ function resolveStructName(cls: any, explicit?: string): string {
 
 export type BoundConstructor = (abstract new (...args: any[]) => any) & { [CLS_API_KEY]?: string };
 
+/**
+ * Augmentable seam mapping a wrapped model *type* to the datapaths that may be
+ * used to signal updates on it. Empty in the standalone library (so it builds
+ * without an app); the app's generated catalog fills it via declaration merging
+ * — mirrors {@link DataPathRegistry} and the theme `ThemeKeyRegistry` seam.
+ *
+ * Each entry, keyed by an internal struct name (never seen at call sites):
+ *   - `self`:    the model instance type — the join key, matched *structurally*
+ *                so `updateFrom<Vertex>()` finds this entry regardless of the key
+ *   - `members`: union of that struct's DataStruct member apinames
+ *   - `paths`:   union of root datapaths whose endpoint resolves to this type
+ *
+ * Regenerate with `pnpm run gen:paths` (emits generated/struct-catalog.ts).
+ */
+export interface StructCatalog {}
+
+type _StructSelf<E> = E extends { self: infer S } ? S : never;
+
+/**
+ * Find the {@link StructCatalog} entry whose `self` type is *mutually
+ * assignable* with `T` (a nominal-ish match, so structurally-identical structs
+ * are the one caveat — brand them to disambiguate).
+ */
+export type StructEntryFor<T> = {
+  [K in keyof StructCatalog]: [T] extends [_StructSelf<StructCatalog[K]>]
+    ? [_StructSelf<StructCatalog[K]>] extends [T]
+      ? StructCatalog[K]
+      : never
+    : never;
+}[keyof StructCatalog];
+
+/** Datapaths that resolve to an instance of `T` (empty seam ⇒ `never`). */
+export type StructUpdatePath<T> = StructEntryFor<T> extends { paths: infer P } ? P : never;
+/** Member apinames of `T`'s DataStruct (empty seam ⇒ `never`). */
+export type StructUpdateMember<T> = StructEntryFor<T> extends { members: infer M } ? M : never;
+
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
   structs: DataStruct[] = [];
@@ -669,6 +705,49 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
   getStruct(cls: any) {
     return this.mapStruct(cls, false);
+  }
+
+  /**
+   * Signal that `prop` changed on the model reached by `path`. Strongly typed:
+   * pass the model type as the type argument, and `path` is restricted to the
+   * datapaths that resolve to that type while `prop` is restricted to that
+   * struct's members — both checked at compile time against the generated
+   * {@link StructCatalog}.
+   *
+   * ```ts
+   * api.updateFrom<BrushSettings>("workspace.brush", "size"); // ok
+   * api.updateFrom<BrushSettings>("workspace.brush", "nope"); // ✗ not a member
+   * api.updateFrom<BrushSettings>("canvas", "size");          // ✗ not a BrushSettings path
+   * ```
+   *
+   * (With the empty standalone seam both params are `never`, so this is only
+   * callable once the app's generated catalog is included — same opt-in model as
+   * the typed `getDefault`/`prop` paths.)
+   */
+  updateFrom<T>(path: StructUpdatePath<T>, prop: StructUpdateMember<T>): void {
+    this.notifyChange(`${path as unknown as string}.${prop as unknown as string}`);
+  }
+
+  /**
+   * Coarser sibling of {@link updateFrom}: some instance of `T` had `prop`
+   * change, without a known root path (e.g. raw model mutation that holds an
+   * instance but not its path). Wakes every subscription whose endpoint resolves
+   * to `(T, prop)`.
+   */
+  updateChanged<T>(prop: StructUpdateMember<T>): void {
+    this.notifyChange(undefined, prop as unknown as string);
+  }
+
+  /**
+   * Low-level change signal. Prototype stub — the real implementation marks the
+   * subscription trie dirty and coalesces notifications onto an animation frame
+   * (see design notes). For now it only surfaces the change when datapath
+   * debugging is on.
+   */
+  notifyChange(path?: string, prop?: string): void {
+    if (typeof window !== "undefined" && window.DEBUG?.datapaths) {
+      console.log("[datapath] notifyChange", { path, prop });
+    }
   }
 
   /**
