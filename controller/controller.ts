@@ -66,6 +66,12 @@ import {
   DataPathToolProperty,
   suggestPropertyKeys,
 } from "./controller_base";
+import {
+  DataPathWatcher,
+  DataPathWatcherOpts,
+  PathWatchCallback,
+  notifyPathChange,
+} from "./pathwatch";
 
 declare global {
   interface SymbolConstructor {
@@ -74,6 +80,7 @@ declare global {
 }
 
 export * from "./controller_base";
+export * from "./pathwatch";
 const PUTLParseError = parseutil.PUTLParseError;
 
 import type { TokFunc } from "../util/parseutil";
@@ -739,15 +746,52 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   /**
-   * Low-level change signal. Prototype stub — the real implementation marks the
-   * subscription trie dirty and coalesces notifications onto an animation frame
-   * (see design notes). For now it only surfaces the change when datapath
-   * debugging is on.
+   * Low-level change signal: marks matching subscriptions dirty and coalesces
+   * their callbacks onto the next animation frame (see {@link notifyPathChange}).
+   *
+   *  - `notifyChange(path)` wakes watchers on `path` and its subtree/ancestors;
+   *  - `notifyChange(undefined, prop)` is the type-scoped wake used by
+   *    {@link updateChanged};
+   *  - `notifyChange()` bumps the structural epoch and wakes every watcher —
+   *    use it for tree-shape changes (active-object switch, list
+   *    insert/remove, context swap) that invalidate resolved paths.
    */
   notifyChange(path?: string, prop?: string): void {
     if (typeof window !== "undefined" && window.DEBUG?.datapaths) {
       console.log("[datapath] notifyChange", { path, prop });
     }
+
+    notifyPathChange(path, prop);
+  }
+
+  /**
+   * Subscribe to changes on `path`: creates a {@link DataPathWatcher} that
+   * owns change detection (read + snapshot + prop-aware compare) and invokes
+   * `cb` when the value changes — pushed via {@link notifyChange} (rAF
+   * coalesced) or polled via `watcher.tick()`.
+   *
+   * `ctx` may be a getter so long-lived watchers always see the current
+   * context. The caller must hold the returned watcher and call
+   * `watcher.remove()` (or {@link unsubscribe}) when done; the registry only
+   * holds a weak ref.
+   */
+  watch(
+    ctx: CTX | (() => CTX | undefined),
+    path: string,
+    cb: PathWatchCallback,
+    opts?: DataPathWatcherOpts
+  ): DataPathWatcher<CTX> {
+    return new DataPathWatcher<CTX>(this, ctx, path, cb, opts).subscribe();
+  }
+
+  /** Register an unsubscribed {@link DataPathWatcher} (see {@link watch}). */
+  subscribe(watcher: DataPathWatcher<CTX>): DataPathWatcher<CTX> {
+    return watcher.subscribe();
+  }
+
+  /** Unsubscribe a watcher created with {@link watch}; alias of `watcher.remove()`. */
+  unsubscribe(watcher: DataPathWatcher<CTX>): void {
+    watcher.remove();
   }
 
   /**

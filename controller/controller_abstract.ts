@@ -9,6 +9,7 @@ import {
   ToolProperty,
 } from "../toolsys";
 import { DataList, DataPath, DataPathError } from "./controller_base";
+import { notifyPathChange } from "./pathwatch";
 import type { DataAPI, DataStruct } from "./controller";
 import type { Screen } from "../../screen/FrameManager";
 
@@ -231,6 +232,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
       // @ts-expect-error TS is resolving the type union'd
       // ToolPropertyTypes.setValue's argument to `never`
       prop.setValue(val);
+      notifyPathChange(path);
       return;
     }
 
@@ -304,6 +306,8 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
 
       prop._fire("change", res.obj[res.key], old);
     }
+
+    notifyPathChange(path);
   }
 
   getDescription(ctx: CTX, path: string): string {
