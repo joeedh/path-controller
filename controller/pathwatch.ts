@@ -356,6 +356,17 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
     return this.poll();
   }
 
+  /**
+   * Drop the snapshot and re-deliver the current value unconditionally.
+   * For widgets that gate {@link PathWatchCallback} reactions (e.g. a textbox
+   * ignoring updates while focused): call `refresh()` when the gate lifts to
+   * catch anything delivered-but-ignored in between.
+   */
+  refresh(): boolean {
+    this.hasSnapshot = false;
+    return this.check("push", true);
+  }
+
   /** Push side: if dirty, re-read + diff + fire (debounced). */
   flush(): boolean {
     if (this.removed || !this.dirtyFlag) {
