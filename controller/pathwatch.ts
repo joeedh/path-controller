@@ -17,6 +17,8 @@
  */
 import type { ContextLike, ModelInterface } from "./controller_abstract";
 import type { ToolPropertyTypes } from "../toolsys";
+import { print_stack } from "../util/util";
+import { Matrix4 } from "../util/vectormath";
 
 /**
  * How a watcher schedules its change callback:
@@ -27,6 +29,8 @@ import type { ToolPropertyTypes } from "../toolsys";
  *    colorpicker); the timer restarts on every new notification.
  */
 export type PathDebounce = "raf" | "immediate" | { trailing: number };
+
+export const CreateSnapshot = Symbol('create snapshot')
 
 export interface DataPathWatcherOpts {
   debounce?: PathDebounce;
@@ -55,6 +59,20 @@ type AnyWatcher = DataPathWatcher<any>;
  */
 const pathSubs = new Map<string, Set<WeakRef<AnyWatcher>>>();
 const propSubs = new Map<string, Set<WeakRef<AnyWatcher>>>();
+
+const warnedNoSnapshotPaths = new Set<string>();
+
+function warnNoSnapshot(path: string): void {
+  if (warnedNoSnapshotPaths.has(path)) {
+    return;
+  }
+
+  warnedNoSnapshotPaths.add(path);
+  console.warn(
+    `warning for ${path}: object does not have a [pathux.CreateSnapshot]() method, ` +
+      `the automatic path watching will not be able to detect changes`
+  );
+}
 
 /** Watchers awaiting the next flush. Strong refs, but only transiently. */
 const dirty = new Set<AnyWatcher>();
@@ -245,6 +263,7 @@ export function clearPathWatchers(): void {
   pathSubs.clear();
   propSubs.clear();
   dirty.clear();
+  warnedNoSnapshotPaths.clear();
 }
 
 /**
@@ -479,12 +498,13 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
       return;
     }
 
-    const cp = (v as { copy?: () => unknown }).copy;
-    if (typeof cp === "function") {
+    const cp = v as { [CreateSnapshot]?: () => unknown };
+    if (cp[CreateSnapshot]) {
       try {
-        this.snapshot = cp.call(v);
+        this.snapshot = cp[CreateSnapshot]();
         return;
-      } catch {
+      } catch (error) {
+        print_stack(error as Error);
         /* fall through to the array / identity cases */
       }
     }
@@ -494,8 +514,14 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
       return;
     }
 
+    if (v instanceof Matrix4) {
+      this.snapshot = v.copy();
+      return;
+    }
+
     this.snapshot = v;
     this.snapshotReliable = false;
+    warnNoSnapshot(this.path);
   }
 
   private check(source: "push" | "poll", fireOnUnreliable: boolean): boolean {
