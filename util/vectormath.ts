@@ -2563,22 +2563,41 @@ export class Matrix4 {
     return s;
   }
 
-  rotate(angle: number, x: number | any, y: number, z: number) {
-    if (typeof x === "object" && "length" in x) {
-      const t = x;
-      x = t[0];
-      y = t[1];
-      z = t[2];
+  /**
+   * Four call shapes, told apart by `arguments.length`: `rotate(angle)` turns
+   * about +Z, `rotate(x, y, z)` reads its arguments as euler angles,
+   * `rotate(angle, axis)` takes the axis as one vector, and
+   * `rotate(angle, x, y, z)` takes it as three components.
+   */
+  rotate(angle: number): this;
+  rotate(x: number, y: number, z: number): void;
+  rotate(angle: number, axis: IBaseVector<3> | number[]): this;
+  rotate(angle: number, x: number, y: number, z: number): this;
+  rotate(
+    angle: number,
+    _x?: number | IBaseVector<3> | number[],
+    _y?: number,
+    _z?: number
+  ): this | undefined {
+    let x = 0,
+      y = 0,
+      z = 0;
+
+    if (typeof _x === "object" && _x !== null && "length" in _x) {
+      x = _x[0] ?? 0;
+      y = _x[1] ?? 0;
+      z = _x[2] ?? 0;
+    } else if (arguments.length === 1) {
+      z = 1;
+    } else if (arguments.length === 3) {
+      this.rotate(angle, 1, 0, 0);
+      this.rotate(typeof _x === "number" ? _x : 0, 0, 1, 0);
+      this.rotate(_y ?? 0, 0, 0, 1);
+      return;
     } else {
-      if (arguments.length === 1) {
-        x = y = 0;
-        z = 1;
-      } else if (arguments.length === 3) {
-        this.rotate(angle, 1, 0, 0);
-        this.rotate(x, 0, 1, 0);
-        this.rotate(y, 0, 0, 1);
-        return;
-      }
+      x = typeof _x === "number" ? _x : 0;
+      y = _y ?? 0;
+      z = _z ?? 0;
     }
 
     angle /= 2;
