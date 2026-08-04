@@ -956,10 +956,23 @@ for (const k in keymap_latin_1) {
 export const keymap = keymap_latin_1;
 export const reverse_keymap = keymap_latin_1_rev;
 
-export type KeyModifiers = "ctrl" | "shift" | "alt" | "meta";
+/* handle() lowercases every modifier before matching, so the uppercase
+   spellings are equally valid at the call site. */
+export type KeyModifiers =
+  | "ctrl" | "shift" | "alt" | "meta"
+  | "CTRL" | "SHIFT" | "ALT" | "META";
+
+/**
+ * A hotkey callback. Declared method-style so the parameter is bivariant:
+ * an app binds callbacks typed to its own context subclass, and exec()
+ * only ever hands one of those back.
+ */
+export type HotKeyCallback = {
+  cb(ctx: ContextLike): void;
+}["cb"];
 
 export class HotKey {
-  action: string | ((ctx: ContextLike) => void);
+  action: string | HotKeyCallback;
   mods: KeyModifiers[];
   key: number;
   uiname: string | undefined;
@@ -968,7 +981,7 @@ export class HotKey {
   constructor(
     key: keyof typeof keymap,
     modifiers: KeyModifiers[],
-    action: string | ((ctx: ContextLike) => void),
+    action: string | HotKeyCallback,
     uiname?: string
   ) {
     this.action = action;
@@ -1009,7 +1022,11 @@ export class HotKey {
   }
 }
 
-export class KeyMap<CTX extends ContextLike = ContextLike> extends Array<HotKey> {
+/** HK lets an app keep its own HotKey subclass as the element type. */
+export class KeyMap<
+  CTX extends ContextLike = ContextLike,
+  HK extends HotKey = HotKey,
+> extends Array<HK> {
   pathid: string;
 
   /**
@@ -1018,7 +1035,7 @@ export class KeyMap<CTX extends ContextLike = ContextLike> extends Array<HotKey>
    * @param pathid Id of keymap, used when patching hotkeys, when
    *                       that is implemented
    * */
-  constructor(hotkeys: HotKey[] = [], pathid: string = "undefined") {
+  constructor(hotkeys: HK[] = [], pathid: string = "undefined") {
     super();
 
     this.pathid = pathid;
@@ -1074,11 +1091,11 @@ export class KeyMap<CTX extends ContextLike = ContextLike> extends Array<HotKey>
     return false;
   }
 
-  add(hk: HotKey): void {
+  add(hk: HK): void {
     this.push(hk);
   }
 
-  push(hk: HotKey): number {
+  push(hk: HK): number {
     return super.push(hk);
   }
 }
