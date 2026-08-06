@@ -1294,11 +1294,14 @@ function get_callstack(err: Error): string[] {
   return ("" + err.stack).split("\n");
 }
 
-export function print_stack(err?: Error): void {
+export function print_stack(err?: unknown): void {
   if (!err) {
     window.console.trace();
-  } else {
+  } else if (err instanceof Error) {
     window.console.log(err.stack);
+  } else {
+    /* A non-Error was thrown, so there is no stack to print. */
+    window.console.log(err);
   }
 }
 
@@ -2728,7 +2731,7 @@ if (!insideJest()) {
       try {
         promise._reject(new Error("Timeout"));
       } catch (error) {
-        print_stack(error as Error);
+        print_stack(error);
       }
     }
   }, 250);

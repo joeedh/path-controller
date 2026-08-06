@@ -54,8 +54,15 @@ export const PropFlags: Record<string, number> = {
   NO_DEFAULT            : 1 << 17,
 };
 
-export class ToolPropertyIF<TYPE extends number = number> {
+/* Declared on a merged interface rather than in the class body: this
+   tsconfig leaves useDefineForClassFields at its ES2022 default of true, so a
+   bare field here emits an own `data = undefined` that shadows the get/set
+   data accessors subclasses define.  See ToolProperty. */
+export interface ToolPropertyIF<TYPE extends number = number> {
   data: unknown;
+}
+
+export class ToolPropertyIF<TYPE extends number = number> {
   declare type: TYPE;
   subtype: number | undefined;
   apiname: string | undefined;

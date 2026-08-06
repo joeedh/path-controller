@@ -288,7 +288,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
     return this;
   }
 
-  color3(path: string, apiname: string, uiname: string, description: string = uiname): DataPath {
+  color3(path: string, apiname: string, uiname: string, description: string = uiname) {
     const ret = this.vec3(path, apiname, uiname, description);
 
     (ret.data as ToolProperty).subtype = toolprop.PropSubTypes.COLOR;
@@ -300,7 +300,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
     return ret;
   }
 
-  color4(path: string, apiname: string, uiname: string, description = uiname): DataPath {
+  color4(path: string, apiname: string, uiname: string, description = uiname) {
     const ret = this.vec4(path, apiname, uiname, description);
 
     (ret.data as ToolProperty).subtype = toolprop.PropSubTypes.COLOR;

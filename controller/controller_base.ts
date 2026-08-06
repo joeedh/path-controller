@@ -34,7 +34,7 @@ export type CallbackThis<
   DATAREF,
   CTX extends ContextLike = ContextLike,
   T = unknown,
-> = ToolProperty<T> & { dataref: DATAREF; datactx: CTX; datapath: string };
+> = ToolProperty<T> & { dataref: DATAREF; ctx: CTX; datactx: CTX; datapath: string };
 
 /**
  * Extended ToolProperty interface covering methods on various subclasses
@@ -316,7 +316,7 @@ export class DataPath<CTX extends ContextLike = ContextLike, T = unknown, OWNER_
    */
   on<DATAREF = OWNER_TYPE>(
     type: string,
-    cb: (this: CallbackThis<DATAREF, CTX, T>, ...args: unknown[]) => void
+    cb: (this: CallbackThis<DATAREF, CTX, T>, val?: T, arg2?: unknown) => void
   ): this {
     if (this.type == DataTypes.PROP) {
       (this.data as DataPathToolProperty).on(type, cb as toolprop.CallbackFn);

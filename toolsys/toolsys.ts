@@ -89,6 +89,9 @@ import { StructableClass, StructReader } from "../util/nstructjs";
 export interface ToolDef<InputSlots = PropertySlots, OutputSlots = PropertySlots> {
   uiname?: string;
   toolpath?: string;
+  /* A stable name for saved per-tool settings, so renaming the toolpath does
+     not orphan them. */
+  apiname?: string;
   icon?: number;
   description?: string;
   is_modal?: boolean;
@@ -136,7 +139,7 @@ export interface IToolOpConstructor {
   invoke(ctx: unknown, args: Record<string, unknown>): ToolOp;
   inherit<Slots>(slots: Slots): InheritFlag<Slots>;
   Equals(a: ToolOp | undefined | null, b: ToolOp | undefined | null): boolean;
-  prototype: ToolOp & { __proto__: { constructor: IToolOpConstructor } };
+  prototype: ToolOp & { __proto__?: { constructor: IToolOpConstructor } };
 }
 
 /** Runtime-generated macro class shape */
@@ -424,6 +427,10 @@ export class ToolOp<
 
   static STRUCT: string;
 
+  /* Typed Function by default, which loses the statics every
+     tool.constructor.tooldef() call needs. */
+  declare ["constructor"]: typeof ToolOp;
+
   _pointerId: number | undefined;
   _overdraw:
     | (HTMLElement & {
@@ -443,6 +450,15 @@ export class ToolOp<
   inputs!: InputSlots;
   outputs!: OutputSlots;
   drawlines!: unknown[];
+  /* Copied onto the instance from tooldef() by the constructor below, along
+     with everything else the definition carries.  Optional because tooldef()
+     may leave any of them out, and `declare` so the emitted class does not
+     gain own properties the runtime never had. */
+  declare uiname?: string;
+  declare toolpath?: string;
+  declare icon?: number;
+  declare description?: string;
+  declare hotkey?: unknown;
   is_modal!: boolean;
   modal_ctx?: ModalCTX;
   modalRunning!: boolean;
@@ -650,7 +666,7 @@ export class ToolOp<
   }
 
   /** @deprecated inheritance is now forced */
-  static inherit<Slots>(slots: Slots): InheritFlag<Slots> {
+  static inherit<Slots = Record<string, ToolProperty>>(slots?: Slots): InheritFlag<Slots> {
     return new InheritFlag<Slots>(slots);
   }
 
@@ -1039,7 +1055,7 @@ export class ToolOp<
   */
   toolCancel(): void {}
 
-  modalEnd(was_cancelled: boolean): void {
+  modalEnd(was_cancelled?: boolean): void {
     if (this._modalstate) {
       modalstack.pop();
     }
@@ -1628,7 +1644,13 @@ nstructjs.register(ToolMacro as unknown as StructableClass);
 export class ToolStack<
   ContextCls extends ContextLike = ContextLike,
   ModalContextCls extends ContextCls = ContextCls,
-> extends Array<ToolOp<any, any, ContextCls, ModalContextCls>> {
+  Op extends ToolOp<any, any, ContextCls, ModalContextCls> = ToolOp<
+    any,
+    any,
+    ContextCls,
+    ModalContextCls
+  >,
+> extends Array<Op> {
   static STRUCT: string;
 
   memLimit!: number;

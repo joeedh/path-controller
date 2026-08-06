@@ -211,6 +211,16 @@ class ExecScopeUsingStack extends Array<ExecScopeUsing> {
 // eslint-disable-next-line no-var
 var execScopeUsingStack = new ExecScopeUsingStack(512);
 
+/* Both are declared on a merged interface rather than in the class body; see
+   ToolPropertyIF.  A bare `ctx?: unknown` field emits an own `ctx = undefined`
+   under this tsconfig, which shadowed the get/set ctx accessors on
+   subclasses. */
+export interface ToolProperty<T = unknown, TYPE extends number = number> {
+  data: T;
+
+  ctx?: unknown;
+}
+
 export class ToolProperty<T = unknown, TYPE extends number = number>
   extends ToolPropertyIF<TYPE>
   implements DataAPIExecScope
@@ -218,7 +228,6 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   static STRUCT: string;
   static PROP_TYPE_ID: number;
 
-  declare data: T;
   declare subtype: number | undefined;
   wasSet: boolean;
   declare apiname: string | undefined;
@@ -247,7 +256,6 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   api_update?: Function;
 
   // these fields are used by the data api system
-  ctx?: unknown;
   dataref?: unknown;
   datapath?: string;
 
@@ -562,7 +570,7 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     this._fire("change", val);
   }
 
-  copyTo(b: this): void {
+  copyTo(b: ToolProperty<T, TYPE>): void {
     b.apiname = this.apiname;
 
     b.uiname = this.uiname;
@@ -581,7 +589,7 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     }
   }
 
-  copy(): this {
+  copy(): ToolProperty<T, TYPE> {
     //default copy method
     const ret = new (this.constructor as any)();
 
