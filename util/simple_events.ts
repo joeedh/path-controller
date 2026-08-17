@@ -992,7 +992,13 @@ export class HotKey {
 
   exec(ctx: ContextLike): void {
     if (typeof this.action == "string") {
-      ctx.api.execTool(ctx, this.action);
+      // A toolpath naming a tool that isn't registered (its provider is absent or
+      // disabled) rejects asynchronously, past KeyMap.handle's try/catch. Log and
+      // skip: an unbound hotkey is a no-op, not an unhandled rejection.
+      const action = this.action;
+      Promise.resolve(ctx.api.execTool(ctx, action)).catch((error) => {
+        console.warn(`hotkey: could not run "${action}"`, error);
+      });
     } else {
       this.action(ctx);
     }
