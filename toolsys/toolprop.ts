@@ -1799,6 +1799,27 @@ export class FlagProperty extends EnumPropertyBase<PropTypes["FLAG"], number> {
     //do not trigger EnumProperty's setValue
     ToolProperty.prototype.setValue.call(this, bitmask as number);
   }
+
+  /** A flag argument may name several bits at once, e.g. `"VERTEX|HANDLE"`. */
+  parseArg(arg: unknown): unknown {
+    if (typeof arg === "string" && arg.indexOf("|") >= 0) {
+      let mask = 0;
+
+      for (const part of arg.split("|")) {
+        const key = part.trim();
+
+        if (!(key in this.values)) {
+          throw new Error(`unknown key ${key}`);
+        }
+
+        mask |= this.values[key] as number;
+      }
+
+      return mask;
+    }
+
+    return super.parseArg(arg);
+  }
 }
 
 ToolProperty.internalRegister(FlagProperty);
