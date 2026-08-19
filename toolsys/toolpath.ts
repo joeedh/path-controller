@@ -106,6 +106,12 @@ export function parseToolPath(str: string, check_tool_exists: boolean = true): P
     str = str.slice(0, i1).trim();
   }
 
+  // The scan above runs once, so an addon enabled later registers its ToolOps
+  // behind it: a miss means the map may be stale, not that the tool is absent.
+  if (!(str in ToolPaths)) {
+    initToolPaths();
+  }
+
   if (!(str in ToolPaths) && check_tool_exists) {
     throw new DataPathError("unknown tool " + str);
   }
