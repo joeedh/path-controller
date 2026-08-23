@@ -958,9 +958,7 @@ export const reverse_keymap = keymap_latin_1_rev;
 
 /* handle() lowercases every modifier before matching, so the uppercase
    spellings are equally valid at the call site. */
-export type KeyModifiers =
-  | "ctrl" | "shift" | "alt" | "meta"
-  | "CTRL" | "SHIFT" | "ALT" | "META";
+export type KeyModifiers = "ctrl" | "shift" | "alt" | "meta" | "CTRL" | "SHIFT" | "ALT" | "META";
 
 /**
  * A hotkey callback. Declared method-style so the parameter is bivariant:

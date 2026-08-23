@@ -30,7 +30,7 @@ import { Matrix4 } from "../util/vectormath";
  */
 export type PathDebounce = "raf" | "immediate" | { trailing: number };
 
-export const CreateSnapshot = Symbol('create snapshot')
+export const CreateSnapshot = Symbol("create snapshot");
 
 export interface DataPathWatcherOpts {
   debounce?: PathDebounce;
