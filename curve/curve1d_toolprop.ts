@@ -40,8 +40,14 @@ export class Curve1DProperty extends ToolProperty<Curve1D, PropTypes["CURVE"]> {
     return 1024;
   }
 
-  override equals(_b: ToolProperty): boolean {
-    return false;
+  /** Compares the curves' authored state through JSON mode, which writes only STRUCT fields. Each side passes through a load round trip first, because loadSTRUCT canonicalizes derived ordering (the bspline point sort) that a freshly edited curve has not applied yet. */
+  override equals(b: this): boolean {
+    const authored = (c: Curve1D) => {
+      const settled = nstructjs.readJSON(nstructjs.writeJSON(c), Curve1D);
+      return JSON.stringify(nstructjs.writeJSON(settled));
+    };
+
+    return authored(this.data) === authored(b.data);
   }
 
   getValue(): Curve1D {

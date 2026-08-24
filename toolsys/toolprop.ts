@@ -777,6 +777,20 @@ toolprop.FloatArrayProperty {
     return this.value;
   }
 
+  equals(b: this): boolean {
+    if (this.value.length !== b.value.length) {
+      return false;
+    }
+
+    for (let i = 0; i < this.value.length; i++) {
+      if (this.value[i] !== b.value[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   clear(): this {
     this.value.length = 0;
     return this;
@@ -877,6 +891,23 @@ export class ArrayBufferProperty extends ToolProperty<ArrayBuffer, PropTypes["AR
 
   getValue(): ArrayBuffer {
     return this.data;
+  }
+
+  equals(b: this): boolean {
+    if (this.data.byteLength !== b.data.byteLength) {
+      return false;
+    }
+
+    const va = new Uint8Array(this.data);
+    const vb = new Uint8Array(b.data);
+
+    for (let i = 0; i < va.length; i++) {
+      if (va[i] !== vb[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   copyTo(b: this): void {
