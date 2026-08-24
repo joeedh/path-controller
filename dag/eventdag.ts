@@ -1,3 +1,8 @@
+/**
+ * Event-propagation DAG for UIBase's update loop. The general-purpose node graph
+ * lives at scripts/graph/ in path.ux; this module keeps the execution queue the
+ * node graph deliberately does not own.
+ */
 import * as util from "../util/util";
 
 export const SocketFlags = {
