@@ -2714,7 +2714,7 @@ export class TimeoutPromise<T = unknown> {
 }
 
 if (!insideJest()) {
-  window.setInterval(() => {
+  const sweep = window.setInterval(() => {
     const bad: TimeoutPromise[] = [];
 
     for (const promise of PendingTimeoutPromises) {
@@ -2735,6 +2735,10 @@ if (!insideJest()) {
       }
     }
   }, 250);
+
+  // Node holds its event loop open for a pending interval, so a headless host that imports
+  // path.ux would never exit. `unref` is absent in a browser, where a timer id is a number.
+  (sweep as unknown as { unref?: () => void }).unref?.();
 }
 
 import lzstring from "../extern/lz-string/lz-string";

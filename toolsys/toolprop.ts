@@ -689,12 +689,14 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   }
 }
 
+// subtype is optional on the class but an int in the file, so it is written as 0 when
+// unset; validateJSON rejects the undefined a plain field reference would produce.
 ToolProperty.STRUCT = `
 ToolProperty {
   apiname        : string | ""+this.apiname;
   type           : int;
   flag           : int;
-  subtype        : int;
+  subtype        : int | this.subtype ? this.subtype : 0;
   icon           : int;
   icon2          : int;
   baseUnit       : string | ""+this.baseUnit;
