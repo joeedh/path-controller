@@ -686,6 +686,16 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     if (this.displayUnit === "undefined") {
       this.displayUnit = undefined;
     }
+
+    // An unset name is written through ""+, so it arrives as the string "undefined". A widget
+    // labelling itself from uiname would print that word.
+    if (this.apiname === "undefined") {
+      this.apiname = undefined;
+    }
+
+    if (this.uiname === "undefined") {
+      this.uiname = undefined;
+    }
   }
 }
 
