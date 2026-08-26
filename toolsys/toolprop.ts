@@ -561,13 +561,15 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     return this.data as T;
   }
 
+  /** Marks the property set and fires `change`. Every subclass stores the value before
+   * chaining here, so the argument a listener receives is read back through `getValue`. */
   setValue(val?: T): void {
     if (this.constructor === ToolProperty) {
       throw new Error("implement me!");
     }
 
     this.wasSet = true;
-    this._fire("change", val);
+    this._fire("change", this.getValue());
   }
 
   copyTo(b: ToolProperty<T, TYPE>): void {
@@ -759,8 +761,6 @@ toolprop.FloatArrayProperty {
   }
 
   setValue(value?: Iterable<number | boolean>): void {
-    super.setValue();
-
     if (value === undefined) {
       throw new Error("value was undefined in FloatArrayProperty's setValue method");
     }
@@ -775,6 +775,8 @@ toolprop.FloatArrayProperty {
 
       this.value.push(item as number);
     }
+
+    super.setValue(this.value);
   }
 
   push(item: number | boolean): void {
@@ -856,9 +858,8 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
   }
 
   setValue(val: string): void {
-    //fire events
-    super.setValue(val);
     this.data = val;
+    super.setValue(val);
   }
 }
 
@@ -897,8 +898,8 @@ export class ArrayBufferProperty extends ToolProperty<ArrayBuffer, PropTypes["AR
   }
 
   setValue(buffer: ArrayBuffer) {
-    super.setValue();
     this.data = buffer;
+    super.setValue(buffer);
   }
 
   getValue(): ArrayBuffer {
@@ -2067,15 +2068,15 @@ toolprop.Vec4Property {
     const d = this.data as Vector4;
     d.load(vec);
 
-    //do not trigger parent classes's setValue
-    ToolProperty.prototype.setValue.call(this, v as Vector4);
-
     if (vec.length < 3) {
       d[2] = 0.0;
     }
     if (vec.length < 4) {
       d[3] = w;
     }
+
+    //do not trigger parent classes's setValue
+    ToolProperty.prototype.setValue.call(this, d);
   }
 
   isColor(): this {
@@ -2551,7 +2552,7 @@ toolprop.StringSetProperty {
       }
     }
 
-    super.setValue();
+    super.setValue(this.value);
   }
 
   getValue(): UtilStringSet {
