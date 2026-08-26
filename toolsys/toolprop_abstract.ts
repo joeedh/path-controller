@@ -52,6 +52,9 @@ export const PropFlags: Record<string, number> = {
   USE_CUSTOM_PROP_GETTER: 1 << 15, //hrm, not sure I need this
   FORCE_ENUM_CHECKBOXES : 1 << 16 /* Use a strip of checkboxes, also applies to flag properties. */,
   NO_DEFAULT            : 1 << 17,
+  // ux widgets should not update the prop in real time during e.g.
+  // sliding, text editing, etc.  Currently untested.
+  NO_REALTIME           : 1 << 18,
 };
 
 /* Declared on a merged interface rather than in the class body: this
