@@ -36,7 +36,7 @@ export const PropSubTypes: Record<string, number> = {
 };
 
 //flags
-export const PropFlags: Record<string, number> = {
+export const PropFlags = {
   SELECT                : 1,
   PRIVATE               : 2,
   LABEL                 : 4,
@@ -55,7 +55,9 @@ export const PropFlags: Record<string, number> = {
   // ux widgets should not update the prop in real time during e.g.
   // sliding, text editing, etc.  Currently untested.
   NO_REALTIME           : 1 << 18,
-};
+  MULTILINE_STRING      : 1 << 19,
+  RICH_TEXT_STRING      : 1 << 20,
+} as const;
 
 /* Declared on a merged interface rather than in the class body: this
    tsconfig leaves useDefineForClassFields at its ES2022 default of true, so a

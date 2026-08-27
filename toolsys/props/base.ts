@@ -402,6 +402,12 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
     throw new Error("implement me");
   }
 
+  setReadOnly() {
+    this.flag |= PropFlags.READ_ONLY;
+    this.flag &= ~PropFlags.SAVE_LAST_VALUE;
+    return this;
+  }
+
   private(): this {
     this.flag |= PropFlags.PRIVATE;
     this.flag &= ~PropFlags.SAVE_LAST_VALUE;
@@ -640,6 +646,16 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   setIcon2(icon: number): this {
     this.icon2 = icon;
 
+    return this;
+  }
+
+  /** Sets whether sliders/textboxes/etc send updates in real time or wait for editing to stop. */
+  setRealtime(realtime: boolean): this {
+    if (!realtime) {
+      this.flag |= PropFlags.NO_REALTIME;
+    } else {
+      this.flag &= ~PropFlags.NO_REALTIME;
+    }
     return this;
   }
 

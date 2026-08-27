@@ -1494,7 +1494,7 @@ An example of a more complicated expression might be:
       }
     }
 
-    if (prop && (prop as ToolProperty).type & (PropTypes.ENUM | PropFlags.FLAG)) {
+    if (prop && (prop as ToolProperty).type & (PropTypes.ENUM | PropTypes.FLAG)) {
       (prop as toolprop.EnumProperty).checkMeta();
     }
 

@@ -562,8 +562,9 @@ export class Context<Overlays extends ContextLike = ContextLike> {
     });
   }
 
-  toLocked(): LockedContext {
-    return new LockedContext(this);
+  toLocked() {
+    const locked = new LockedContext(this);
+    return locked as unknown as this & LockedContext;
   }
 
   pushOverlay(overlay: OverlayInstance): void {

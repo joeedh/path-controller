@@ -1,5 +1,5 @@
 import nstructjs from "../../util/struct";
-import { PropTypes } from "../toolprop_abstract";
+import { PropFlags, PropTypes } from "../toolprop_abstract";
 import { ToolProperty } from "./base";
 
 export class StringPropertyBase<TYPE extends number> extends ToolProperty<string, TYPE> {
@@ -7,13 +7,17 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
     this,
     `
     StringPropertyBase {
-      data           : string;
-      multiLine      : bool;
+      data                  : string;
+      multiLineIdleTimeout ?: int;
     }
   `
   );
 
-  multiLine: boolean = false;
+  /**
+   * Idle timeout for multiline textboxes (that aren't in realtime mode).
+   * Uses a default value if undefined.  In miliseconds.
+   */
+  multiLineIdleTimeout?: number;
 
   constructor(
     type?: TYPE,
@@ -26,7 +30,6 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
   ) {
     super(type, undefined, apiname, uiname, description, flag, icon);
 
-    this.multiLine = false;
     this.setValue(value ?? "");
   }
 
@@ -40,8 +43,8 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
 
   copyTo(b: this): void {
     super.copyTo(b);
-    (b as StringPropertyBase<TYPE>).data = this.data;
-    (b as StringPropertyBase<TYPE>).multiLine = this.multiLine;
+    b.multiLineIdleTimeout = this.multiLineIdleTimeout;
+    b.data = this.data;
   }
 
   getValue(): string {
@@ -51,6 +54,42 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
   setValue(val: string): void {
     this.data = val;
     super.setValue(val);
+  }
+
+  setIdleTimeout(timeout: number) {
+    this.multiLineIdleTimeout = timeout;
+    return this;
+  }
+
+  /** Should a textarea be used to edit this property? */
+  setMultiline(multiline: boolean): this {
+    if (multiline) {
+      this.flag |= PropFlags.MULTILINE_STRING;
+    } else {
+      this.flag &= ~PropFlags.MULTILINE_STRING;
+    }
+    return this;
+  }
+
+  setRichText(state: boolean) {
+    if (state) {
+      this.flag |= PropFlags.RICH_TEXT_STRING;
+    } else {
+      this.flag &= ~PropFlags.RICH_TEXT_STRING;
+    }
+  }
+
+  /** Should a textarea be used to edit this property? */
+  get multiLine(): boolean {
+    return (this.flag & PropFlags.MULTILINE_STRING) !== 0;
+  }
+
+  set multiLine(multiline: boolean) {
+    if (multiline) {
+      this.flag |= PropFlags.MULTILINE_STRING;
+    } else {
+      this.flag &= ~PropFlags.MULTILINE_STRING;
+    }
   }
 }
 
