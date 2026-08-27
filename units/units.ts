@@ -506,7 +506,6 @@ export function setBaseUnit(unit: string): void {
   Unit.baseUnit = unit;
 }
 
-
 export function setMetric(val: boolean): void {
   Unit.isMetric = val;
 }
