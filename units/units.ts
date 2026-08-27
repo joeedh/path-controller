@@ -506,7 +506,6 @@ export function setBaseUnit(unit: string): void {
   Unit.baseUnit = unit;
 }
 
-(window as unknown as Record<string, unknown>)._getBaseUnit = () => Unit.baseUnit;
 
 export function setMetric(val: boolean): void {
   Unit.isMetric = val;
@@ -718,8 +717,6 @@ export function convert(
   }
 }
 
-(window as unknown as Record<string, unknown>).unitConvert = convert;
-
 /**
  *
  * @param value Value (note: is not converted to internal unit)
@@ -749,6 +746,3 @@ export function buildString(
     return myToFixed(value, decimalPlaces);
   }
 }
-
-(window as unknown as Record<string, unknown>)._parseValueTest = parseValue;
-(window as unknown as Record<string, unknown>)._buildStringTest = buildString;
