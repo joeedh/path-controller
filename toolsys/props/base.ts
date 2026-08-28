@@ -4,6 +4,8 @@ import nstructjs from "../../util/struct";
 import type { StructReader } from "../../util/nstructjs";
 import type { JSONAny } from "../../controller";
 
+export const TOOLPROP_SCHEMA_VERSION = 2
+
 declare global {
   interface SymbolConstructor {
     readonly dispose: symbol;
@@ -194,7 +196,29 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   extends ToolPropertyIF<TYPE>
   implements DataAPIExecScope
 {
-  static STRUCT: string;
+  static STRUCT = nstructjs.inlineRegister(this, `
+ToolProperty {
+  apiname        : string | ""+this.apiname;
+  type           : int;
+  flag           : int;
+  subtype       ?: int | this.subtype ? this.subtype : 0;
+  icon           : int;
+  icon2          : int;
+  baseUnit       : string | ""+this.baseUnit;
+  displayUnit    : string | ""+this.displayUnit;
+  range          : array(float) | this.range ? this.range : [-1e17, 1e17];
+  uiRange        : array(float) | this.uiRange ? this.uiRange : [-1e17, 1e17];
+  description    : string;
+  stepIsRelative : bool;
+  step           : float;
+  expRate        : float;
+  radix          : float;
+  decimalPlaces  : int;
+  uiname         : string | this.uiname || this.apiname || "";
+  wasSet         : bool;
+  schemaVersion  : int;        
+}`);
+
   static PROP_TYPE_ID: number;
 
   declare subtype: number | undefined;
@@ -205,6 +229,8 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   declare flag: number;
   declare icon: number;
   icon2: number;
+
+  schemaVersion = TOOLPROP_SCHEMA_VERSION
 
   decimalPlaces: number;
   radix: number;
@@ -660,6 +686,9 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   }
 
   loadSTRUCT(reader: StructReader<this>): void {
+    // catch old files without a schemaVersion
+    // (this can bite on binary files).
+    this.schemaVersion = 0;
     reader(this);
 
     if (this.uiRange?.[0] === -1e17 && this.uiRange[1] === 1e17) {
@@ -684,30 +713,15 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
       this.uiname = undefined;
     }
   }
-}
 
-// subtype is optional on the class but an int in the file, so it is written as 0 when
-// unset; validateJSON rejects the undefined a plain field reference would produce.
-ToolProperty.STRUCT = `
-ToolProperty {
-  apiname        : string | ""+this.apiname;
-  type           : int;
-  flag           : int;
-  subtype        : int | this.subtype ? this.subtype : 0;
-  icon           : int;
-  icon2          : int;
-  baseUnit       : string | ""+this.baseUnit;
-  displayUnit    : string | ""+this.displayUnit;
-  range          : array(float) | this.range ? this.range : [-1e17, 1e17];
-  uiRange        : array(float) | this.uiRange ? this.uiRange : [-1e17, 1e17];
-  description    : string;
-  stepIsRelative : bool;
-  step           : float;
-  expRate        : float;
-  radix          : float;
-  decimalPlaces  : int;
-  uiname         : string | this.uiname || this.apiname || "";
-  wasSet         : bool;
+  static getVersionSTRUCT(jsonOrProp: JSONAny): number {
+    return (jsonOrProp.schemaVersion as number) ?? 0;
+  }
+  static migrateSTRUCT(schemaVersion: number, jsonOrProp: JSONAny, migrate: nstructjs.StructMigrateFinisher) {
+    if (!jsonOrProp.schemaVersion) {
+      jsonOrProp.schemaVersion = schemaVersion;
+    }
+    migrate();
+    jsonOrProp.schemaVersion = TOOLPROP_SCHEMA_VERSION;
+  }
 }
-`;
-nstructjs.register(ToolProperty);

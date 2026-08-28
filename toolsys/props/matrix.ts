@@ -1,7 +1,6 @@
 import { Matrix4 } from "../../util/vectormath";
 import { PropTypes } from "../toolprop_abstract";
 import nstructjs from "../../util/struct";
-import type { StructReader } from "../../util/nstructjs";
 import { ToolProperty } from "./base";
 
 export class Mat4Property extends ToolProperty<Matrix4, PropTypes["MATRIX4"]> {
@@ -55,11 +54,6 @@ toolprop.Mat4Property {
     super.copyTo(b);
     b.data = data;
     (b.data as Matrix4).load(this.data as Matrix4);
-  }
-
-  loadSTRUCT(reader: StructReader<this>): void {
-    reader(this);
-    super.loadSTRUCT(reader as StructReader<this>);
   }
 }
 

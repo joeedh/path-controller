@@ -389,7 +389,6 @@ export class EnumPropertyBase<
   _saveMap = EnumKeyPair.saveMap;
 
   loadSTRUCT(reader: StructReader<this>): void {
-    reader(this);
     super.loadSTRUCT(reader);
 
     this.keys = EnumKeyPair.loadMap<VALUE, string>(this._keys);

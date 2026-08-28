@@ -1,6 +1,5 @@
 import { PropTypes } from "../toolprop_abstract";
 import nstructjs from "../../util/struct";
-import type { StructReader } from "../../util/nstructjs";
 import type { JSONAny } from "../../controller";
 import { ToolProperty } from "./base";
 
@@ -34,11 +33,6 @@ toolprop.NumProperty {
 
   equals(b: this): boolean {
     return this.data == b.data;
-  }
-
-  loadSTRUCT(reader: StructReader<this>): void {
-    reader(this);
-    super.loadSTRUCT(reader);
   }
 }
 export class _NumberPropertyBase<T = number, TYPE extends number = number> extends ToolProperty<
@@ -270,11 +264,6 @@ toolprop.IntProperty {
 
     return this;
   }
-
-  loadSTRUCT(reader: StructReader<this>): void {
-    reader(this);
-    super.loadSTRUCT(reader);
-  }
 }
 
 ToolProperty.internalRegister(IntProperty);
@@ -345,11 +334,6 @@ export class FloatPropertyBase<
     this.decimalPlaces = (obj.decimalPlaces as number) || this.decimalPlaces;
 
     return this;
-  }
-
-  loadSTRUCT(reader: StructReader<this>): void {
-    reader(this);
-    super.loadSTRUCT(reader);
   }
 }
 

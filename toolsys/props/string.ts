@@ -1,6 +1,7 @@
+import { JSONAny } from "../../controller";
 import nstructjs from "../../util/struct";
 import { PropFlags, PropTypes } from "../toolprop_abstract";
-import { ToolProperty } from "./base";
+import { TOOLPROP_SCHEMA_VERSION, ToolProperty } from "./base";
 
 export class StringPropertyBase<TYPE extends number> extends ToolProperty<string, TYPE> {
   static STRUCT = nstructjs.inlineRegister(
@@ -90,6 +91,22 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
     } else {
       this.flag &= ~PropFlags.MULTILINE_STRING;
     }
+  }
+
+  // getVersionSTRUCT is provided by ToolProperty
+  static migrateSTRUCT(schemaVersion: number, jsonOrProp: JSONAny, migrate: nstructjs.StructMigrateFinisher): void 
+  {
+    if (schemaVersion < 2) {
+      if (jsonOrProp.multiLine) {
+        jsonOrProp.flag |= PropFlags.MULTILINE_STRING;
+      }
+      delete jsonOrProp.multiLine;
+      jsonOrProp.multiLineIdleTimeout = new StringProperty().multiLineIdleTimeout;
+    }
+    
+    // if we needed to exclude a field we could wrap migrate in a closure,
+    // e.g. () => migrate(['field'])
+    super.migrateSTRUCT(schemaVersion, jsonOrProp, migrate);
   }
 }
 
