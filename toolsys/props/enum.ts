@@ -460,7 +460,7 @@ export class FlagProperty extends EnumPropertyBase<PropTypes["FLAG"], number> {
 
   /** A flag argument may name several bits at once, e.g. `"VERTEX|HANDLE"`. */
   parseArg(arg: unknown): unknown {
-    if (typeof arg === "string" && arg.indexOf("|") >= 0) {
+    if (typeof arg === "string" && arg.includes("|")) {
       let mask = 0;
 
       for (const part of arg.split("|")) {

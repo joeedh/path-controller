@@ -4,7 +4,7 @@ import nstructjs from "../../util/struct";
 import type { StructReader } from "../../util/nstructjs";
 import type { JSONAny } from "../../controller";
 
-export const TOOLPROP_SCHEMA_VERSION = 2
+export const TOOLPROP_SCHEMA_VERSION = 2;
 
 declare global {
   interface SymbolConstructor {
@@ -196,7 +196,9 @@ export class ToolProperty<T = unknown, TYPE extends number = number>
   extends ToolPropertyIF<TYPE>
   implements DataAPIExecScope
 {
-  static STRUCT = nstructjs.inlineRegister(this, `
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
 ToolProperty {
   apiname        : string | ""+this.apiname;
   type           : int;
@@ -217,7 +219,8 @@ ToolProperty {
   uiname         : string | this.uiname || this.apiname || "";
   wasSet         : bool;
   schemaVersion  : int;        
-}`);
+}`
+  );
 
   static PROP_TYPE_ID: number;
 
@@ -230,7 +233,7 @@ ToolProperty {
   declare icon: number;
   icon2: number;
 
-  schemaVersion = TOOLPROP_SCHEMA_VERSION
+  schemaVersion = TOOLPROP_SCHEMA_VERSION;
 
   decimalPlaces: number;
   radix: number;
@@ -717,7 +720,11 @@ ToolProperty {
   static getVersionSTRUCT(jsonOrProp: JSONAny): number {
     return (jsonOrProp.schemaVersion as number) ?? 0;
   }
-  static migrateSTRUCT(schemaVersion: number, jsonOrProp: JSONAny, migrate: nstructjs.StructMigrateFinisher) {
+  static migrateSTRUCT(
+    schemaVersion: number,
+    jsonOrProp: JSONAny,
+    migrate: nstructjs.StructMigrateFinisher
+  ) {
     if (!jsonOrProp.schemaVersion) {
       jsonOrProp.schemaVersion = schemaVersion;
     }

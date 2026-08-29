@@ -94,8 +94,11 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
   }
 
   // getVersionSTRUCT is provided by ToolProperty
-  static migrateSTRUCT(schemaVersion: number, jsonOrProp: JSONAny, migrate: nstructjs.StructMigrateFinisher): void 
-  {
+  static migrateSTRUCT(
+    schemaVersion: number,
+    jsonOrProp: JSONAny,
+    migrate: nstructjs.StructMigrateFinisher
+  ): void {
     if (schemaVersion < 2) {
       if (jsonOrProp.multiLine) {
         jsonOrProp.flag |= PropFlags.MULTILINE_STRING;
@@ -103,7 +106,7 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
       delete jsonOrProp.multiLine;
       jsonOrProp.multiLineIdleTimeout = new StringProperty().multiLineIdleTimeout;
     }
-    
+
     // if we needed to exclude a field we could wrap migrate in a closure,
     // e.g. () => migrate(['field'])
     super.migrateSTRUCT(schemaVersion, jsonOrProp, migrate);
