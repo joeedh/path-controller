@@ -2580,8 +2580,8 @@ export class Matrix4 {
     _z?: number
   ): this | undefined {
     let x = 0;
-      let y = 0;
-      let z = 0;
+    let y = 0;
+    let z = 0;
 
     if (typeof _x === "object" && _x !== null && "length" in _x) {
       x = _x[0] ?? 0;
