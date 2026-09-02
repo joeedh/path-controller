@@ -239,7 +239,8 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
     path: string,
     apiname: string,
     uiname: string,
-    default_struct?: DS
+    default_struct?: DS,
+    validStructs?: DataStruct[] // empty for unlimited
   ): DataStruct {
     const ret = default_struct ? default_struct : (new DataStruct() as DS);
 
@@ -249,6 +250,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
       ret as unknown as ToolProperty,
       DataTypes.DYNAMIC_STRUCT
     );
+    dpath.validStructs = validStructs ?? [];
     ret.inheritFlag |= this.inheritFlag;
 
     ret.dpath = dpath;
@@ -696,6 +698,14 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     //if (!(key in tool_classes)) {
     //  tool_classes[key] = cls;
     //}
+  }
+
+  getStructsForList(dpath: DataPath): DataStruct[] {
+    return dpath.validStructs;
+  }
+
+  getStructsForStruct(dpath: DataPath): DataStruct[] {
+    return this.getStructsForList(dpath);
   }
 
   getStructs() {

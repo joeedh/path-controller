@@ -163,6 +163,9 @@ export class DataPath<CTX extends ContextLike = ContextLike, T = unknown, OWNER_
   propGetter?: (prop: ToolProperty) => void;
   getSet?: DataPathGetSet;
   ui_name_get?: (this: ToolProperty) => string;
+  // used by dynamicStruct and lists to check if a given struct is valid
+  // if empty all structs are considered valid
+  validStructs: DataStruct<CTX>[] = [];
 
   constructor(
     path?: string,
@@ -202,6 +205,7 @@ export class DataPath<CTX extends ContextLike = ContextLike, T = unknown, OWNER_
   copy(): DataPath {
     const ret = new DataPath();
 
+    ret.validStructs = this.validStructs.slice(0);
     ret.flag = this.flag;
     ret.type = this.type;
     ret.data = this.data;
