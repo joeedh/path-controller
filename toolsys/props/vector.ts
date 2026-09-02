@@ -218,6 +218,8 @@ toolprop.Vec4Property {
     ToolProperty.prototype.setValue.call(this, d);
   }
 
+  // set subtype to isColor and return this,
+  // used for chain.
   isColor(): this {
     this.subtype = PropSubTypes.COLOR;
     return this;

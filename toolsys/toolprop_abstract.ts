@@ -57,6 +57,7 @@ export const PropFlags = {
   NO_REALTIME           : 1 << 18,
   MULTILINE_STRING      : 1 << 19,
   RICH_TEXT_STRING      : 1 << 20,
+  OPTIONAL              : 1 << 21,
 } as const;
 
 /* Declared on a merged interface rather than in the class body: this

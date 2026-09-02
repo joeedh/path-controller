@@ -688,6 +688,15 @@ ToolProperty {
     return this;
   }
 
+  setOptional(state = true): this {
+    if (state) {
+      this.flag |= PropFlags.OPTIONAL;
+    } else {
+      this.flag &= ~PropFlags.OPTIONAL;
+    }
+    return this;
+  }
+
   loadSTRUCT(reader: StructReader<this>): void {
     // catch old files without a schemaVersion
     // (this can bite on binary files).

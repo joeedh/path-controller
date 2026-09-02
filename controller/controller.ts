@@ -829,10 +829,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    *
    * @param cls: the class
    * @param auto_create: If true, automatically create definition if not already existing.
+   * @param useGlobalRegistry: add to the global resolveStructName registry, defaults true
    * @returns {IterableIterator<*>}
    */
 
-  _addClass(cls: any, dstruct: DataStruct, name?: string) {
+  _addClass(cls: any, dstruct: DataStruct, name?: string, useGlobalRegistry = true) {
     const key = _map_struct_idgen++;
     cls[CLS_API_KEY] = key;
 
@@ -840,8 +841,12 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     dstruct.name = stableName;
 
     this.structs.push(dstruct);
-    _map_structs[key] = dstruct;
 
+    if (!useGlobalRegistry) {
+      return;
+    }
+
+    _map_structs[key] = dstruct;
     const existing = _map_structs_by_name[stableName];
     if (existing !== undefined && existing !== dstruct) {
       console.warn(
