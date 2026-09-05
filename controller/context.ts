@@ -5,9 +5,7 @@
 import * as util from "../util/util";
 
 import cconst from "../config/config";
-import type { DataAPI } from "./controller";
-import type { ContextLike, IToolStack, ToolStack } from "../controller";
-import type { Screen } from "../../screen/FrameManager";
+import type { ContextLike } from "../controller";
 
 declare global {
   interface SymbolConstructor {

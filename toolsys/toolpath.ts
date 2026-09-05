@@ -1,4 +1,4 @@
-import { ToolClasses, ToolOp } from "./toolsys";
+import { ToolClasses, ToolOp } from "./toolop";
 import { tokdef, lexer, parser, PUTLParseError } from "../util/parseutil";
 import { DataPathError } from "../controller/controller_base";
 

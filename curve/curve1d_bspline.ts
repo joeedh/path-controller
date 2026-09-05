@@ -16,7 +16,7 @@
  **/
 import nstructjs from "../util/struct";
 import config from "../config/config";
-import { ToolOp, PropertySlots } from "../toolsys/toolsys";
+import { ToolOp, PropertySlots } from "../toolsys/toolop";
 
 import * as util from "../util/util";
 import { Vector2 } from "../util/vectormath";

@@ -5,9 +5,7 @@ export * from "./controller/controller_abstract";
 export * from "./controller/controller_ops";
 export * from "./controller/controller_abstract";
 export * from "./controller/controller_base";
-export * from "./toolsys/toolsys";
-export * from "./toolsys/toolprop";
-export * from "./toolsys/toolpath";
+export * from "./toolsys";
 export * from "./util/jsonUtils";
 
 export * from "./curve/curve1d_all";

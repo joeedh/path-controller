@@ -1,4 +1,4 @@
-import { ToolOp, ToolFlags } from "../toolsys/toolsys";
+import { ToolOp, ToolFlags } from "../toolsys/toolop";
 import type { FlagProperty, ToolProperty } from "../toolsys/toolprop";
 import {
   PropTypes,

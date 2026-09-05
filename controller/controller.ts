@@ -44,7 +44,7 @@
 import * as toolprop from "../toolsys/toolprop";
 import * as parseutil from "../util/parseutil";
 import { print_stack } from "../util/util";
-import { ToolOp } from "../toolsys/toolsys";
+import { ToolOp, ToolDef } from "../toolsys/toolop";
 import { PropTypes, PropFlags } from "../toolsys/toolprop";
 import * as util from "../util/util";
 import { DataPathSetOp } from "./controller_ops";
@@ -132,7 +132,6 @@ import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abs
 
 export { DataPathError, DataFlags } from "./controller_base";
 
-import { ToolClasses } from "../toolsys/toolsys";
 import { ToolProperty, IntProperty } from "../toolsys/toolprop";
 
 let tool_idgen = 1;
@@ -1561,7 +1560,7 @@ An example of a more complicated expression might be:
   /** Get tooldef for path, applying any modifications, e.g.:
    *  "app.some_tool()|Label::CustomHotkeyString"
    * */
-  getToolDef(toolpath: string) {
+  getToolDef(toolpath: string): ToolDef {
     const { path, uiname, hotkey } = this._parsePathOverrides(toolpath);
 
     const cls = this.parseToolPath(path);
