@@ -1,15 +1,12 @@
 "use strict";
 import nstructjs from "../util/struct";
-
-import * as events from "../util/events";
-import { keymap } from "../util/simple_events";
-import { EnumProperty, PropFlags, PropTypes, ToolProperty } from "./toolprop";
-import { DataPath } from "../controller/controller_base";
 import * as util from "../util/util";
-import { Context } from "../controller/context";
-import { ContextLike, DataAPI, DataStruct, ToolOpAny } from "../controller";
-import { StructableClass, StructReader } from "../util/nstructjs";
-import { IToolOpConstructor, ToolOp, UndoFlags } from "../toolsys";
+import { StructReader } from "../util/nstructjs";
+import { toolopCanRunAsync, UndoFlags } from "./toolop";
+import { IToolOpConstructor, ToolOp } from "./toolop";
+import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
+
+const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
 
 /* ------------------------------------------------------------------ */
 /*  ToolStack                                                         */
@@ -27,6 +24,7 @@ export class ToolStack<
     ModalContextCls
   >,
 > extends Array<Op> {
+  commandQueue: any[] = [];
   static STRUCT: string;
 
   memLimit!: number;
@@ -38,6 +36,22 @@ export class ToolStack<
   toolctx?: ContextCls;
   _undo_branch: ToolOp[] | undefined;
   _stack?: this[0][];
+
+  /**
+   * Milliseconds a queued toolstack operation may wait before it is reported
+   * as a probable deadlock. Zero disables the watchdog.
+   */
+  static lockWarnTimeoutMS = 5000;
+
+  /** Called instead of the default console report when the watchdog fires. */
+  onPossibleDeadlock?: (waiter: string, holder: string | undefined, ms: number) => void;
+
+  /** Resolves when the operation currently holding the lock releases it. */
+  private _lockTail: Promise<unknown> = Promise.resolve();
+  /** Label of the operation holding the lock, for deadlock reports. */
+  private _lockLabel?: string;
+  /** Operations waiting on the lock, not counting the holder. */
+  private _lockQueue = 0;
 
   constructor(ctx?: ContextCls) {
     // note: nstructjs requires constructors take no required arguments
@@ -52,6 +66,7 @@ export class ToolStack<
     this.ctx = ctx!;
 
     this.modalRunning = 0;
+    this.modal_running = false;
 
     this._undo_branch = undefined; //used to save undo branch in case of tool cancel
   }
@@ -121,8 +136,88 @@ export class ToolStack<
     }
 
     this.modalRunning = 0;
+    this.modal_running = false;
     this.cur = -1;
     this.length = 0;
+  }
+
+  /** True while an operation holds the lock. */
+  get locked(): boolean {
+    return this._lockLabel !== undefined;
+  }
+
+  /** Operations waiting on the lock, not counting the one holding it. */
+  get lockQueueLength(): number {
+    return this._lockQueue;
+  }
+
+  /**
+   * Resolves once every operation queued so far has finished.
+   *
+   * Tools dispatched and not awaited — a gesture committing on release, a
+   * delegate running an op — land here.
+   */
+  async idle(): Promise<void> {
+    while (this.locked || this._lockQueue > 0) {
+      await this._lockTail;
+    }
+  }
+
+  /**
+   * Runs cb with exclusive use of the toolstack, queued behind whatever is
+   * already running so no two operations interleave their awaits.
+   *
+   * Never call this from inside another protected region — the lock is not
+   * reentrant, and the inner call would wait forever on its own caller. Every
+   * internal caller uses the unlocked `_`-prefixed implementation instead.
+   */
+  private async protect<T>(label: string, cb: () => Promise<T>): Promise<T> {
+    const prev = this._lockTail;
+
+    let release!: () => void;
+    // published before the first await, or two callers claim the same slot
+    this._lockTail = new Promise<void>((resolve) => (release = resolve));
+
+    this._lockQueue++;
+    const watchdog = this._startDeadlockWatchdog(label);
+
+    try {
+      await prev;
+    } finally {
+      this._lockQueue--;
+      watchdog();
+    }
+
+    this._lockLabel = label;
+    try {
+      return await cb();
+    } finally {
+      this._lockLabel = undefined;
+      release();
+    }
+  }
+
+  /** Arms the deadlock report, returning the function that disarms it. */
+  private _startDeadlockWatchdog(label: string): () => void {
+    const timeout = ToolStack.lockWarnTimeoutMS;
+    if (!timeout) {
+      return () => {};
+    }
+
+    const start = util.time_ms();
+    const timer = setTimeout(() => {
+      const ms = util.time_ms() - start;
+      if (this.onPossibleDeadlock) {
+        this.onPossibleDeadlock(label, this._lockLabel, ms);
+      } else {
+        console.error(
+          `ToolStack: possible deadlock, "${label}" has waited ${ms | 0}ms ` +
+            `for "${this._lockLabel ?? "(nothing)"}" to release the toolstack`
+        );
+      }
+    }, timeout);
+
+    return () => clearTimeout(timer);
   }
 
   /**
@@ -132,11 +227,19 @@ export class ToolStack<
    *
    * @param compareInputs : check if toolstack head has identical input values, defaults to false
    * */
-  execOrRedo(
+  async execOrRedo(
     ctx: ContextCls,
     tool: ToolOp<any, any, ContextCls, ModalContextCls>,
     compareInputs: boolean = false
-  ): boolean {
+  ): Promise<boolean> {
+    return this.protect("execOrRedo", () => this._execOrRedo(ctx, tool, compareInputs));
+  }
+
+  private async _execOrRedo(
+    ctx: ContextCls,
+    tool: ToolOp<any, any, ContextCls, ModalContextCls>,
+    compareInputs: boolean
+  ): Promise<boolean> {
     const head = this.head;
 
     const ok = compareInputs
@@ -148,51 +251,79 @@ export class ToolStack<
     if (ok) {
       //console.warn("Same tool detected");
 
-      this.undo();
-
-      //can inputs differ? in that case, execute new tool
-      if (!compareInputs) {
-        this.execTool(ctx, tool);
+      if (compareInputs) {
+        // inputs match, so the head can just run again; _rerun undoes it first
+        await this._rerun(head);
       } else {
-        this.rerun(this.head);
+        //inputs may differ, so drop the head and execute the new instance
+        await this._undo();
+        await this._pushTool(ctx, tool);
       }
 
       return false;
     } else {
-      this.execTool(ctx, tool);
+      await this._pushTool(ctx, tool);
       return true;
     }
   }
 
-  execTool(
-    ctx: ContextCls | ModalContextCls,
-    toolop: this[0] | ToolOpAny,
-    event?: PointerEvent
-  ): void {
-    if (this.enforceMemLimit) {
-      this.limitMemory(this.memLimit, ctx as ContextCls);
-    }
-
-    if (
-      !(toolop.constructor as unknown as IToolOpConstructor).canRun<ContextCls, ModalContextCls>(
-        ctx as ContextCls,
-        toolop as unknown as this[0]
-      )
-    ) {
-      console.log("toolop.constructor.canRun returned false");
-      return;
-    }
-
-    if (!("toLocked" in ctx)) {
-      console.warn("warning: context does not support locking, could lead to undo errors");
-    }
-    const tctx = ctx.toLocked ? ctx.toLocked() : ctx;
-
+  private getUndoFlag(toolop: ToolOpAny) {
     let undoflag = (toolop.constructor as unknown as IToolOpConstructor).tooldef().undoflag;
     if (toolop.undoflag !== undefined) {
       undoflag = toolop.undoflag;
     }
     undoflag = undoflag === undefined ? 0 : undoflag;
+    return undoflag;
+  }
+
+  /**
+   * Pushes a tool onto the toolstack and returns a promise that resolves when
+   * the tool finishes. A modal tool resolves once it has taken the modal
+   * stack, not when the gesture ends.
+   *
+   * The push waits for any operation already running, so tools queue rather
+   * than interleave.
+   **/
+  pushTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+    return this.protect("pushTool", () => this._pushTool(ctx, toolop, event));
+  }
+
+  private async _pushTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+    if (this.enforceMemLimit) {
+      this.limitMemory(this.memLimit, ctx as ContextCls);
+    }
+
+    const undoflag = this.getUndoFlag(toolop);
+    if (!(undoflag & UndoFlags.NO_UNDO)) {
+      this.cur++;
+
+      //save branch for if tool cancels
+      this._undo_branch = this.slice(this.cur + 1, this.length);
+
+      this[this.cur] = toolop as Op;
+
+      //truncate
+      this.length = this.cur + 1;
+    }
+
+    return await this._execToolTail(ctx, toolop, event);
+  }
+
+  async execTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+    return await this.pushTool(ctx, toolop, event);
+  }
+
+  private async _execToolTail(
+    ctx: ContextCls | ModalContextCls,
+    toolop: this[0] | ToolOpAny,
+    event?: PointerEvent
+  ): Promise<void> {
+    const undoflag = this.getUndoFlag(toolop);
+
+    if (!("toLocked" in ctx)) {
+      console.warn("warning: context does not support locking, could lead to undo errors");
+    }
+    const tctx = ctx.toLocked ? ctx.toLocked() : ctx;
 
     //if (!(undoflag & UndoFlags.IS_UNDO_ROOT) && !(undoflag & UndoFlags.NO_UNDO)) {
     //tctx = new SavedContext(ctx, ctx.datalib);
@@ -201,16 +332,7 @@ export class ToolStack<
     toolop.execCtx = tctx as ContextCls;
 
     if (!(undoflag & UndoFlags.NO_UNDO)) {
-      this.cur++;
-
-      //save branch for if tool cancel
-      this._undo_branch = this.slice(this.cur + 1, this.length);
-
-      //truncate
-      this.length = this.cur + 1;
-
-      this[this.cur] = toolop as this[0];
-      toolop.undoPre(tctx as unknown as ContextCls);
+      await asyncCheck(toolop.undoPre(tctx));
     }
 
     if (toolop.is_modal) {
@@ -219,27 +341,40 @@ export class ToolStack<
       this.modal_running = true;
 
       toolop._on_cancel = (tool: this[0]) => {
-        if (!(tool.undoflag & UndoFlags.NO_UNDO)) {
-          this[this.cur].undo(ctx);
+        if (tool.undoflag & UndoFlags.NO_UNDO) {
+          return;
+        }
+        // queued rather than awaited; modalEnd does not wait on this
+        void this.protect("modalCancel", async () => {
+          await asyncCheck(this[this.cur].undo(ctx as ContextCls));
           this.pop_i(this.cur);
           this.cur--;
-        }
+        });
       };
 
       if (event !== undefined) {
         toolop._pointerId = event.pointerId;
       }
-      //will handle calling .exec itself
-      toolop.modalStart(ctx as ModalContextCls);
+
+      // Releases the toolstack as soon as the op owns the modal stack. A
+      // gesture commits by running another tool before its modalEnd, which
+      // would deadlock against a lock held for the whole gesture.
+      const modal = toolop.modalStart(ctx as ModalContextCls);
+      const clear = () => (this.modal_running = false);
+      modal.then(clear, clear);
     } else {
-      toolop.execPre(tctx);
-      toolop.exec(tctx);
-      toolop.execPost(tctx);
+      await toolop.execPre(tctx);
+      await toolop.exec(tctx);
+      await toolop.execPost(tctx);
       toolop.saveDefaultInputs();
     }
   }
 
-  toolCancel(ctx: ContextCls, tool: ToolOp): void {
+  async toolCancel(ctx: ContextCls, tool: ToolOp): Promise<void> {
+    return this.protect("toolCancel", () => this._toolCancel(ctx, tool));
+  }
+
+  private async _toolCancel(ctx: ContextCls, tool: ToolOp): Promise<void> {
     if (tool._was_redo) {
       //also set by toolstack.redo
       //ignore tool cancel requests on redo
@@ -251,7 +386,7 @@ export class ToolStack<
       return;
     }
 
-    this.undo();
+    await this._undo();
     this.length = this.cur + 1;
 
     if (this._undo_branch !== undefined) {
@@ -261,7 +396,11 @@ export class ToolStack<
     }
   }
 
-  undo(): void {
+  async undo(): Promise<void> {
+    return this.protect("undo", () => this._undo());
+  }
+
+  private async _undo(): Promise<void> {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
@@ -269,14 +408,18 @@ export class ToolStack<
     if (this.cur >= 0 && !(this[this.cur].undoflag & UndoFlags.IS_UNDO_ROOT)) {
       const tool = this[this.cur];
 
-      tool.undo(tool.execCtx!);
+      await asyncCheck(tool.undo(tool.execCtx!));
 
       this.cur--;
     }
   }
 
   //reruns a tool if it's at the head of the stack
-  rerun(tool?: this[0]): void {
+  async rerun(tool?: this[0]): Promise<void> {
+    return this.protect("rerun", () => this._rerun(tool));
+  }
+
+  private async _rerun(tool?: this[0]): Promise<void> {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
@@ -288,20 +431,25 @@ export class ToolStack<
         tool.execCtx = this.ctx;
       }
 
-      tool.undo(tool.execCtx);
+      await asyncCheck(tool.undo(tool.execCtx));
 
       tool._was_redo = true; //also set by toolstack.redo
+      let p: unknown;
 
-      tool.undoPre(tool.execCtx);
-      tool.execPre(tool.execCtx);
-      tool.exec(tool.execCtx);
-      tool.execPost(tool.execCtx);
+      await asyncCheck(tool.undoPre(tool.execCtx));
+      await asyncCheck(tool.execPre(tool.execCtx));
+      await asyncCheck(tool.exec(tool.execCtx));
+      await asyncCheck(tool.execPost(tool.execCtx));
     } else {
       console.warn("Tool wasn't at head of stack", tool);
     }
   }
 
-  redo(): void {
+  async redo(): Promise<void> {
+    return this.protect("redo", () => this._redo());
+  }
+
+  private async _redo(): Promise<void> {
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
@@ -317,7 +465,7 @@ export class ToolStack<
       }
 
       tool._was_redo = true;
-      tool.redo(tool.execCtx);
+      await asyncCheck(tool.redo(tool.execCtx));
 
       tool.saveDefaultInputs();
     }
@@ -329,10 +477,14 @@ export class ToolStack<
     return data;
   }
 
-  rewind(): this {
+  async rewind(): Promise<this> {
+    return this.protect("rewind", () => this._rewind());
+  }
+
+  private async _rewind(): Promise<this> {
     while (this.cur >= 0) {
       const last = this.cur;
-      this.undo();
+      await this._undo();
 
       //prevent infinite loops
       if (last === this.cur) {
@@ -348,20 +500,31 @@ export class ToolStack<
 
    onstep is a callback, if it returns a promise that promise will be
    waited on, otherwise execution is queue with window.setTimeout().
+
+   Holds the toolstack for the whole playback, so neither callback may run
+   another toolstack operation.
    */
-  replay(
+  async replay(
     cb?: (ctx: ContextCls) => unknown,
     onStep?: () => unknown | Promise<unknown>,
-    rewind: () => void = () => this.rewind()
+    rewind?: () => Promise<this>
   ): Promise<unknown> {
-    rewind();
+    return this.protect("replay", () => this._replay(cb, onStep, rewind));
+  }
+
+  private async _replay(
+    cb?: (ctx: ContextCls) => unknown,
+    onStep?: () => unknown | Promise<unknown>,
+    rewind: () => Promise<this> = () => this._rewind()
+  ): Promise<unknown> {
+    await rewind();
 
     let last = this.cur;
 
     const start = util.time_ms();
 
     return new Promise((accept, reject) => {
-      const next = () => {
+      const next = async () => {
         last = this.cur;
 
         if (cb && cb(this.ctx) === false) {
@@ -376,10 +539,10 @@ export class ToolStack<
           if (!tool.execCtx) {
             tool.execCtx = this.ctx;
           }
-          tool.undoPre(tool.execCtx);
-          tool.execPre(tool.execCtx);
-          tool.exec(tool.execCtx);
-          tool.execPost(tool.execCtx);
+          await tool.undoPre(tool.execCtx);
+          await tool.execPre(tool.execCtx);
+          await tool.exec(tool.execCtx);
+          await tool.execPost(tool.execCtx);
         }
 
         if (last === this.cur) {
@@ -389,8 +552,8 @@ export class ToolStack<
           const ret = onStep ? onStep() : true;
 
           if (ret && ret instanceof Promise) {
-            ret.then(() => {
-              next();
+            ret.then(async () => {
+              await next();
             });
           } else {
             window.setTimeout(() => {

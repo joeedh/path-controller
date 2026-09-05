@@ -157,6 +157,6 @@ export function initToolPaths(): void {
     const def = (cls as unknown as { tooldef(): Record<string, unknown> }).tooldef();
     const path = def.toolpath as string;
 
-    ToolPaths[path] = cls as typeof ToolOp;
+    ToolPaths[path] = cls as unknown as typeof ToolOp;
   }
 }

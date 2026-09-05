@@ -25,14 +25,19 @@ export interface IToolStack {
   calcMemSize(ctx?: unknown): number;
   setRestrictedToolContext(ctx: unknown): void;
   reset(ctx?: unknown): void;
-  execOrRedo(ctx: unknown, tool: ToolOpAny, compareInputs?: boolean): boolean;
-  execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): void;
+  execOrRedo(ctx: unknown, tool: ToolOpAny, compareInputs?: boolean): Promise<boolean>;
+  execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): Promise<void>;
+  /**
+   * Immediately pushes a tool onto the toolstack
+   * and returns a promise that resolves when tool finishes
+   **/
+  pushTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): Promise<void>;
   toolCancel(ctx: unknown, toolop: ToolOpAny): void;
-  undo(ctx: unknown): void;
-  redo(ctx: unknown): void;
-  rerun(tool?: ToolOpAny): void;
+  undo(ctx: unknown): Promise<void>;
+  redo(ctx: unknown): Promise<void>;
+  rerun(tool?: ToolOpAny): Promise<void>;
   save(): number[];
-  rewind(): this;
+  rewind(): Promise<this>;
   replay(cb?: (ctx: unknown) => unknown, onStep?: () => unknown): Promise<unknown>;
 }
 
@@ -99,12 +104,40 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
+  execToolAsync<T extends ToolOpAny | unknown = unknown>(
+    ctx: CTX,
+    path: string | (T extends ToolOpAny ? T : ToolOpAny),
+    inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
+    unused?: unknown,
+    event?: PointerEvent | undefined
+  ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
+    return this.execToolImpl(ctx, path, inputs, unused, event, true);
+  }
+
+  /**
+   *  Unlike toolstack.execTool, this resolves before the tool is run
+   *  so the client can modify the class first.  Use execToolAsync
+   *  if you need to wait for the tool to execute.
+   *
+   *  Note: this will not wait for fully modal tools to complete.
+   */
   execTool<T extends ToolOpAny | unknown = unknown>(
     ctx: CTX,
     path: string | (T extends ToolOpAny ? T : ToolOpAny),
     inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
     unused?: unknown,
     event?: PointerEvent | undefined
+  ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
+    return this.execToolImpl(ctx, path, inputs, unused, event, false);
+  }
+
+  private execToolImpl<T extends ToolOpAny | unknown = unknown>(
+    ctx: CTX,
+    path: string | (T extends ToolOpAny ? T : ToolOpAny),
+    inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
+    unused?: unknown,
+    event?: PointerEvent | undefined,
+    resolveBeforeRun = true
   ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
     type Tool = T extends ToolOpAny ? T : ToolOpAny;
 
@@ -132,15 +165,26 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
         }
       }
 
-      //give client a chance to change tool instance directly
-      accept(tool);
+      if (resolveBeforeRun) {
+        //give client a chance to change tool instance directly
+        accept(tool);
+      }
 
       //execute
       try {
-        ctx.toolstack.execTool(ctx, tool, event);
+        if (!resolveBeforeRun) {
+          // have tool resolve after execution
+          ctx.toolstack
+            .execTool(ctx, tool, event)
+            .then(() => accept(tool))
+            .catch(reject);
+        } else {
+          ctx.toolstack.execTool(ctx, tool, event);
+        }
       } catch (error) {
         //for some reason chrome is suppressing errors
         print_stack(error as Error);
+        reject(error);
         throw error;
       }
     });

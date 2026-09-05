@@ -121,6 +121,18 @@ export function setDefaultUndoHandlers(
   defaultUndoHandlers.undo = undo;
 }
 
+export async function toolopCanRunAsync<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
+  ctx: CTX,
+  cls: IToolOpConstructor,
+  toolop?: ToolOp<any, any, CTX, ModalCTX>
+): Promise<boolean> {
+  const result = cls.canRun(ctx, toolop);
+  if (result instanceof Promise) {
+    return result;
+  }
+  return Promise.resolve(result);
+}
+
 /** The shape returned by ToolOp.tooldef() */
 export interface ToolDef<InputSlots = PropertySlots, OutputSlots = PropertySlots> {
   uiname?: string;
@@ -166,7 +178,7 @@ export interface IToolOpConstructor {
   canRun<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     ctx: CTX,
     toolop?: ToolOp<any, any, CTX, ModalCTX>
-  ): boolean;
+  ): boolean | Promise<boolean>;
   isRegistered(cls: IToolOpConstructor): boolean;
   register(cls: IToolOpConstructor): void;
   unregister(cls: IToolOpConstructor): void;
@@ -574,10 +586,10 @@ export class ToolOp<
     }
   }
 
-  static searchBoxOk<CTX extends ContextLike>(ctx: CTX): boolean {
+  static async searchBoxOk<CTX extends ContextLike>(ctx: CTX): Promise<boolean> {
     const flag = this.tooldef().flag;
     let ret = !(flag && flag & ToolFlags.PRIVATE);
-    ret = ret && this.canRun(ctx);
+    ret = ret && (await toolopCanRunAsync(ctx, this as unknown as IToolOpConstructor));
 
     return ret;
   }
@@ -725,16 +737,16 @@ export class ToolOp<
     return 0;
   }
 
-  undoPre(_ctx: CTX): void {
+  undoPre(_ctx: CTX): void | Promise<void> {
     throw new Error("implement me!");
   }
 
-  undo(_ctx: CTX): void {
+  undo(_ctx: CTX): void | Promise<void> {
     throw new Error("implement me!");
     //_appstate.loadUndoFile(this._undo);
   }
 
-  redo(ctx: CTX): void {
+  redo(ctx: CTX): void | Promise<void> {
     this._was_redo = true; //also set by toolstack.redo
 
     this.undoPre(ctx);
@@ -748,11 +760,11 @@ export class ToolOp<
     this.execPre(ctx);
   }
 
-  execPre(_ctx: CTX): void {}
+  execPre(_ctx: CTX): void | Promise<void> {}
 
-  exec(_ctx: CTX): void {}
+  exec(_ctx: CTX): void | Promise<void> {}
 
-  execPost(_ctx: CTX): void {}
+  execPost(_ctx: CTX): void | Promise<void> {}
 
   /**for use in modal mode only*/
   resetTempGeom(): void {
@@ -848,6 +860,9 @@ export class ToolOp<
         this._accept(this.modal_ctx, true);
       }
 
+      // note: we deliberately do not wait for this._on_cancel,
+      // in the belief that tools should always pop off the modal
+      // stack even if callbacks like this error
       this._on_cancel(this);
       this._on_cancel = undefined;
     }

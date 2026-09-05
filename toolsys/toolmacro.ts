@@ -8,6 +8,8 @@ import { IToolOpConstructor, ResolvedToolDef, ToolDef, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 export const MacroClasses: Record<string, MacroClassType> = {};
 
+const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
+
 /** Runtime-generated macro class shape */
 export type MacroClassType = (new () => ToolOp) & {
   __tooldef: Record<string, unknown>;
@@ -369,7 +371,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     return this.tools[0].constructor.canRun(ctx);
   }//*/
 
-  override modalStart(ctx: ModalCTX): Promise<unknown> {
+  /** Note: resolves when the modalEnd is called */
+  override async modalStart(ctx: ModalCTX): Promise<unknown> {
     //macros obviously can't call loadDefaults in the constructor
     //like normal tool ops can.
     this.loadDefaults(false);
@@ -386,29 +389,29 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     for (i = 0; i < this.tools.length; i++) {
       if (this.tools[i].is_modal) break;
 
-      this.tools[i].undoPre(ctx);
-      this.tools[i].execPre(ctx);
-      this.tools[i].exec(ctx);
-      this.tools[i].execPost(ctx);
+      await asyncCheck(this.tools[i].undoPre(ctx));
+      await asyncCheck(this.tools[i].execPre(ctx));
+      await asyncCheck(this.tools[i].exec(ctx));
+      await asyncCheck(this.tools[i].execPost(ctx));
       this._do_connections(this.tools[i]);
     }
 
-    const on_modal_end = () => {
+    const on_modal_end = async () => {
       this._do_connections(this.tools[this.curtool]);
       this.curtool++;
 
       while (this.curtool < this.tools.length && !this.tools[this.curtool].is_modal) {
-        this.tools[this.curtool].undoPre(ctx);
-        this.tools[this.curtool].execPre(ctx);
-        this.tools[this.curtool].exec(ctx);
-        this.tools[this.curtool].execPost(ctx);
+        await asyncCheck(this.tools[this.curtool].undoPre(ctx));
+        await asyncCheck(this.tools[this.curtool].execPre(ctx));
+        await asyncCheck(this.tools[this.curtool].exec(ctx));
+        await asyncCheck(this.tools[this.curtool].execPost(ctx));
         this._do_connections(this.tools[this.curtool]);
 
         this.curtool++;
       }
 
       if (this.curtool < this.tools.length) {
-        this.tools[this.curtool].undoPre(ctx);
+        await asyncCheck(this.tools[this.curtool].undoPre(ctx));
         this.tools[this.curtool].modalStart(ctx).then(on_modal_end);
       } else {
         this._accept!(this, false);
@@ -417,18 +420,18 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     if (i < this.tools.length) {
       this.curtool = i;
-      this.tools[this.curtool].undoPre(ctx);
+      await asyncCheck(this.tools[this.curtool].undoPre(ctx));
       this.tools[this.curtool].modalStart(ctx).then(on_modal_end);
     }
 
-    return this._promise;
+    return await this._promise;
   }
 
   override loadDefaults(force: boolean = true): this {
     return super.loadDefaults(force);
   }
 
-  override exec(ctx: CTX): void {
+  override async exec(ctx: CTX): Promise<void> {
     //macros obviously can't call loadDefaults in the constructor
     //like normal tool ops can.
     //note that this will detect if the user changes property values
@@ -436,10 +439,10 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     this.loadDefaults(false);
 
     for (let i = 0; i < this.tools.length; i++) {
-      this.tools[i].undoPre(ctx);
-      this.tools[i].execPre(ctx);
-      this.tools[i].exec(ctx);
-      this.tools[i].execPost(ctx);
+      await asyncCheck(this.tools[i].undoPre(ctx));
+      await asyncCheck(this.tools[i].execPre(ctx));
+      await asyncCheck(this.tools[i].exec(ctx));
+      await asyncCheck(this.tools[i].execPost(ctx));
       this._do_connections(this.tools[i]);
     }
   }
@@ -468,9 +471,9 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     return; //undoPre is handled in exec() or modalStart()
   }
 
-  override undo(ctx: CTX): void {
+  override async undo(ctx: CTX): Promise<void> {
     for (let i = this.tools.length - 1; i >= 0; i--) {
-      this.tools[i].undo(ctx);
+      await asyncCheck(this.tools[i].undo(ctx));
     }
   }
 }

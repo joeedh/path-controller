@@ -153,7 +153,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
         value = value2;
       }
     } else {
-      (tool.inputs as Record<string, unknown>).prop = (prop as { copy(): unknown }).copy();
+      (tool.inputs as Record<string, unknown>).prop = prop.copy();
     }
 
     tool.inputs.dataPath.setValue(datapath);
@@ -193,7 +193,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     );
   }
 
-  undoPre(ctx: CTX): void {
+  undoPre(ctx: CTX) {
     if (this.inputs.fullSaveUndo.getValue()) {
       return super.undoPre(ctx);
     }
@@ -223,7 +223,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     }
   }
 
-  undo(ctx: CTX): void {
+  undo(ctx: CTX) {
     if (this.__ctx) ctx = this.__ctx as CTX;
 
     if (this.inputs.fullSaveUndo.getValue()) {
