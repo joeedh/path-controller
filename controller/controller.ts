@@ -659,7 +659,15 @@ export type StructUpdateMember<T> = StructEntryFor<T> extends { members: infer M
 
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
+
+  /** The structs this api created, in creation order. Not what it can reach. */
   structs: DataStruct[] = [];
+
+  /**
+   * Structs mapped with `useGlobalRegistry: false`, which belong to this api alone. Weak so
+   * an opt-out cannot outlive the class it describes.
+   */
+  private readonly _localStructs = new WeakMap<object, DataStruct>();
   /** Message from the most recent failed resolvePath (incl. "did you mean" hints). */
   lastResolveError: string | undefined = undefined;
 
@@ -696,16 +704,13 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     return this.getStructsForList(dpath);
   }
 
-  getStructs() {
-    return this.structs;
-  }
-
   setRoot(sdef: DataStruct) {
     this.rootContextStruct = sdef;
   }
 
+  /** Whether `mapStruct(cls, false)` would answer here, globally or from this api's own store. */
   hasStruct(cls: any) {
-    return Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY);
+    return this._localStructs.has(cls) || Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY);
   }
 
   getStruct(cls: any) {
@@ -832,17 +837,20 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    */
 
   _addClass(cls: any, dstruct: DataStruct, name?: string, useGlobalRegistry = true) {
-    const key = _map_struct_idgen++;
-    cls[CLS_API_KEY] = key;
-
     const stableName = resolveStructName(cls, name);
     dstruct.name = stableName;
 
     this.structs.push(dstruct);
 
+    // Stamping first would leave the class a global id with no struct behind it, which every
+    // api then reports as mapped and none can resolve, auto-create included
     if (!useGlobalRegistry) {
+      this._localStructs.set(cls, dstruct);
       return;
     }
+
+    const key = _map_struct_idgen++;
+    cls[CLS_API_KEY] = key;
 
     _map_structs[key] = dstruct;
     const existing = _map_structs_by_name[stableName];
@@ -869,6 +877,12 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   mapStruct<CLS extends BoundConstructor>(cls: CLS, auto_create = true, name?: string) {
+    const local = this._localStructs.get(cls);
+
+    if (local !== undefined) {
+      return local as DataStruct<CTX, InstanceType<CLS>>;
+    }
+
     let key;
 
     if (!Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY)) {
