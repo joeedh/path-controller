@@ -78,6 +78,13 @@ import { updateToolDefaults } from "./toolsys";
 
 export const ToolClasses: IToolOpConstructor[] = [];
 
+/**
+ * Which step of a tool's lifecycle threw. An op's undo snapshot is only complete
+ * from `execPre` onward, so a handler deciding whether to reverse itself has to
+ * know which of these it is looking at.
+ */
+export type ToolExecPhase = "undoPre" | "execPre" | "exec" | "execPost" | "modalStart";
+
 export const ToolFlags: Record<string, number> = {
   PRIVATE: 1,
 };
@@ -740,6 +747,15 @@ export class ToolOp<
   undoPre(_ctx: CTX): void | Promise<void> {
     throw new Error("implement me!");
   }
+
+  /**
+   * Called when a lifecycle step threw, before the toolstack drops this op and
+   * restores the branch it replaced. Reverse a partial effect here if reversing is
+   * safe — the stack never calls `undo` on its own, because whether that is correct
+   * depends on the op and on which step failed. A throw from here is reported and
+   * discarded, so the original error still reaches the caller.
+   */
+  onExecError(_ctx: CTX, _error: unknown, _phase: ToolExecPhase): void | Promise<void> {}
 
   undo(_ctx: CTX): void | Promise<void> {
     throw new Error("implement me!");

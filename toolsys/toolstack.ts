@@ -3,6 +3,7 @@ import nstructjs from "../util/struct";
 import * as util from "../util/util";
 import { StructReader } from "../util/nstructjs";
 import { UndoFlags } from "./toolop";
+import type { ToolExecPhase } from "./toolop";
 import { IToolOpConstructor, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 
@@ -297,12 +298,14 @@ export class ToolStack<
     }
 
     const undoflag = this.getUndoFlag(toolop);
-    if (!(undoflag & UndoFlags.NO_UNDO)) {
-      this.cur++;
+    const pushed = !(undoflag & UndoFlags.NO_UNDO);
 
-      //save branch for if tool cancels
+    if (pushed) {
+      // Saved for a cancel or a throw, and taken before cur moves: the slot cur
+      // lands on is the first redo entry, and the push is about to overwrite it
       this._undo_branch = this.slice(this.cur + 1, this.length);
 
+      this.cur++;
       this[this.cur] = toolop as Op;
 
       //truncate
@@ -320,42 +323,95 @@ export class ToolStack<
 
     toolop.execCtx = tctx as ContextCls;
 
-    if (!(undoflag & UndoFlags.NO_UNDO)) {
-      await asyncCheck(toolop.undoPre(tctx));
-    }
+    let phase: ToolExecPhase = "undoPre";
 
-    if (toolop.is_modal) {
-      toolop.modal_ctx = ctx as ModalContextCls;
-
-      this.modal_running = true;
-
-      toolop._on_cancel = (tool: this[0]) => {
-        if (tool.undoflag & UndoFlags.NO_UNDO) {
-          return;
-        }
-        // queued rather than awaited; modalEnd does not wait on this
-        void this.protect("modalCancel", async () => {
-          await asyncCheck(this[this.cur].undo(ctx as ContextCls));
-          this.pop_i(this.cur);
-          this.cur--;
-        });
-      };
-
-      if (event !== undefined) {
-        toolop._pointerId = event.pointerId;
+    try {
+      if (pushed) {
+        await asyncCheck(toolop.undoPre(tctx));
       }
 
-      // Releases the toolstack as soon as the op owns the modal stack. A
-      // gesture commits by running another tool before its modalEnd, which
-      // would deadlock against a lock held for the whole gesture.
-      const modal = toolop.modalStart(ctx as ModalContextCls);
-      const clear = () => (this.modal_running = false);
-      modal.then(clear, clear);
-    } else {
-      await toolop.execPre(tctx);
-      await toolop.exec(tctx);
-      await toolop.execPost(tctx);
-      toolop.saveDefaultInputs();
+      if (toolop.is_modal) {
+        phase = "modalStart";
+        toolop.modal_ctx = ctx as ModalContextCls;
+
+        this.modal_running = true;
+        const clear = () => (this.modal_running = false);
+
+        toolop._on_cancel = (tool: this[0]) => {
+          if (tool.undoflag & UndoFlags.NO_UNDO) {
+            return;
+          }
+          // queued rather than awaited; modalEnd does not wait on this
+          void this.protect("modalCancel", async () => {
+            await asyncCheck(this[this.cur].undo(ctx as ContextCls));
+            this.pop_i(this.cur);
+            this.cur--;
+          });
+        };
+
+        if (event !== undefined) {
+          toolop._pointerId = event.pointerId;
+        }
+
+        try {
+          // Releases the toolstack as soon as the op owns the modal stack. A
+          // gesture commits by running another tool before its modalEnd, which
+          // would deadlock against a lock held for the whole gesture.
+          const modal = toolop.modalStart(ctx as ModalContextCls);
+          modal.then(clear, clear);
+        } catch (error) {
+          // A synchronous throw never reaches the promise handlers above
+          clear();
+          throw error;
+        }
+      } else {
+        phase = "execPre";
+        await toolop.execPre(tctx);
+        phase = "exec";
+        await toolop.exec(tctx);
+        phase = "execPost";
+        await toolop.execPost(tctx);
+        toolop.saveDefaultInputs();
+      }
+    } catch (error) {
+      await this._abortTool(toolop, tctx as ContextCls, error, phase, pushed);
+      throw error;
+    }
+  }
+
+  /**
+   * Drops a tool whose lifecycle threw and puts the stack back the way the push
+   * found it, redo branch included.
+   *
+   * Deliberately does not call the tool's own undo. Whether a half-applied effect
+   * is safe to reverse depends on the tool and on which step failed, so that
+   * decision belongs to `onExecError`.
+   */
+  private async _abortTool(
+    toolop: this[0] | ToolOpAny,
+    ctx: ContextCls,
+    error: unknown,
+    phase: ToolExecPhase,
+    pushed: boolean
+  ): Promise<void> {
+    try {
+      await asyncCheck(toolop.onExecError(ctx, error, phase));
+    } catch (hookError) {
+      util.print_stack(hookError as Error);
+      console.error("onExecError threw; reporting the error it was handed instead");
+    }
+
+    if (!pushed) {
+      return;
+    }
+
+    this.pop_i(this.cur);
+    this.cur--;
+
+    if (this._undo_branch !== undefined) {
+      for (const item of this._undo_branch) {
+        this.push(item as this[0]);
+      }
     }
   }
 

@@ -31,10 +31,6 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 > {
   propType: number;
   _undo: Record<string, unknown> | undefined;
-  // XXX it may now be safe to allow this to propagate,
-  // we can have try/catch in the toolstack itself where
-  // necessary
-  hadError: boolean;
   id: unknown;
   __ctx?: CTX;
 
@@ -43,7 +39,6 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 
     this.propType = -1;
     this._undo = undefined;
-    this.hadError = false;
   }
 
   setValue(ctx: CTX, val: unknown, object: unknown): void {
@@ -68,13 +63,7 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     execCtx.ctx = ctx;
     execCtx.datapath = path;
 
-    try {
-      prop.setValue(val);
-      this.hadError = false;
-    } catch (_error) {
-      console.error("Error setting datapath", path);
-      this.hadError = true;
-    }
+    prop.setValue(val);
   }
 
   static create<CTX extends ContextLike>(
@@ -288,16 +277,9 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     const path = this.inputs.dataPath.getValue() as string;
     const massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
 
-    try {
-      ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
-      this.hadError = false;
-    } catch (error) {
-      console.log((error as Error).stack);
-      console.log((error as Error).message);
-      console.log("error setting " + path);
-
-      this.hadError = true;
-    }
+    // Throws rather than reporting, so a failed write cannot reach the mass set
+    // below and fan a value that did not apply across every selected object
+    ctx.api.setValue(ctx, path, this.inputs.prop.getValue());
 
     if (massSetPath) {
       let value = this.inputs.prop.getValue() as number;
@@ -308,15 +290,8 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 
         value = !!(value & bit) as unknown as number;
       }
-      try {
-        ctx.api.massSetProp(ctx, massSetPath, value);
-      } catch (error) {
-        console.log((error as Error).stack);
-        console.log((error as Error).message);
-        console.log("error setting " + path);
 
-        this.hadError = true;
-      }
+      ctx.api.massSetProp(ctx, massSetPath, value);
     }
   }
 
@@ -334,8 +309,12 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     //save full, modal ctx
     const result = super.modalStart(this.__ctx!);
 
-    this.exec(this.__ctx!);
-    this.modalEnd(false);
+    try {
+      this.exec(this.__ctx!);
+    } finally {
+      this.modalEnd(false);
+    }
+
     return result;
   }
 
