@@ -665,12 +665,6 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    * `resolveStructName` derived. See `getStructByName`.
    */
   private readonly _structsByName: Record<string, DataStruct> = {};
-
-  /**
-   * Structs mapped with `useGlobalRegistry: false`, which stay out of `_structsByName`. Weak
-   * so an opt-out cannot outlive the class it describes.
-   */
-  private readonly _localStructs = new WeakMap<object, DataStruct>();
   /** Message from the most recent failed resolvePath (incl. "did you mean" hints). */
   lastResolveError: string | undefined = undefined;
 
@@ -711,9 +705,9 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     this.rootContextStruct = sdef;
   }
 
-  /** Whether `mapStruct(cls, false)` would answer here, globally or from this api's own store. */
+  /** Whether `mapStruct(cls, false)` would answer here. */
   hasStruct(cls: any) {
-    return this._localStructs.has(cls) || this._structsByClass.has(cls);
+    return this._structsByClass.has(cls);
   }
 
   getStruct(cls: any) {
@@ -835,23 +829,14 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    *
    * @param cls: the class
    * @param auto_create: If true, automatically create definition if not already existing.
-   * @param useGlobalRegistry: add to the global resolveStructName registry, defaults true
    * @returns {IterableIterator<*>}
    */
 
-  _addClass(cls: any, dstruct: DataStruct, name?: string, useGlobalRegistry = true) {
+  _addClass(cls: any, dstruct: DataStruct, name?: string) {
     const stableName = resolveStructName(cls, name);
     dstruct.name = stableName;
 
     this.structs.push(dstruct);
-
-    // Stamping first would leave the class a global id with no struct behind it, which every
-    // api then reports as mapped and none can resolve, auto-create included
-    if (!useGlobalRegistry) {
-      this._localStructs.set(cls, dstruct);
-      return;
-    }
-
     this._structsByClass.set(cls, dstruct);
     const existing = this._structsByName[stableName];
     if (existing !== undefined && existing !== dstruct) {
@@ -877,12 +862,6 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   mapStruct<CLS extends BoundConstructor>(cls: CLS, auto_create = true, name?: string) {
-    const local = this._localStructs.get(cls);
-
-    if (local !== undefined) {
-      return local as DataStruct<CTX, InstanceType<CLS>>;
-    }
-
     const mapped = this._structsByClass.get(cls);
 
     if (mapped !== undefined) {
