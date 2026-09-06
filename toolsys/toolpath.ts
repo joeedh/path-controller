@@ -1,10 +1,10 @@
 import { ToolClasses, ToolOp } from "./toolop";
+import { defaultRegistry } from "./toolregistry";
 import { tokdef, lexer, parser, PUTLParseError } from "../util/parseutil";
 import { DataPathError } from "../controller/controller_base";
 
-export const ToolPaths: Record<string, typeof ToolOp> = {};
-
-let initToolPaths_run = false;
+/** The default registry's toolpath map, by identity. */
+export const ToolPaths: Record<string, typeof ToolOp> = defaultRegistry.paths;
 
 export function buildParser(): InstanceType<typeof parser> {
   type Tok = { type: string; value: string | number | boolean };
@@ -90,8 +90,8 @@ interface ParseToolPathResult {
 }
 
 export function parseToolPath(str: string, check_tool_exists: boolean = true): ParseToolPathResult {
-  if (!initToolPaths_run) {
-    initToolPaths_run = true;
+  if (!defaultRegistry.pathsScanned) {
+    defaultRegistry.pathsScanned = true;
     initToolPaths();
   }
 

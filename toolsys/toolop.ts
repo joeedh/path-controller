@@ -74,9 +74,10 @@ import { PropFlags, PropTypes, ToolProperty } from "./toolprop";
 import { ContextLike, ToolOpAny } from "../controller";
 import { StructableClass, StructReader } from "../util/nstructjs";
 import { SavedToolDefaults } from "./tooldefaults";
-import { updateToolDefaults } from "./toolsys";
+import { defaultRegistry } from "./toolregistry";
 
-export const ToolClasses: IToolOpConstructor[] = [];
+/** The default registry's class list, by identity — the array `register` pushes to. */
+export const ToolClasses: IToolOpConstructor[] = defaultRegistry.classes;
 
 /**
  * Which step of a tool's lifecycle threw. An op's undo snapshot is only complete
@@ -556,13 +557,7 @@ export class ToolOp<
 
   // use `any` to avoid extremely nasty constructor typing errors
   static register(cls: any): void {
-    if (ToolClasses.includes(cls)) {
-      console.warn("Tried to register same ToolOp class twice:", cls.name, cls);
-      return;
-    }
-
-    ToolClasses.push(cls);
-    updateToolDefaults(cls);
+    defaultRegistry.register(cls);
   }
 
   static _regWithNstructjs(cls: IToolOpConstructor, structName: string = cls.name): void {
@@ -591,13 +586,11 @@ export class ToolOp<
   }
 
   static isRegistered(cls: IToolOpConstructor): boolean {
-    return ToolClasses.includes(cls);
+    return defaultRegistry.isRegistered(cls);
   }
 
   static unregister(cls: any): void {
-    if (ToolClasses.includes(cls)) {
-      (ToolClasses as unknown as unknown[]).remove(cls);
-    }
+    defaultRegistry.unregister(cls);
   }
 
   static _getFinalToolDef(): ResolvedToolDef {

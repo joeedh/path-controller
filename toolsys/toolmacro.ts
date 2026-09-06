@@ -6,7 +6,10 @@ import { SavedToolDefaults } from "./tooldefaults";
 import { PropFlags, ToolProperty } from "./toolprop";
 import { IToolOpConstructor, ResolvedToolDef, ToolDef, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
-export const MacroClasses: Record<string, MacroClassType> = {};
+import { defaultRegistry } from "./toolregistry";
+
+/** The default registry's generated macro classes, by identity. */
+export const MacroClasses: Record<string, MacroClassType> = defaultRegistry.macros;
 
 const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
 
@@ -20,8 +23,6 @@ export type MacroClassType = (new () => ToolOp) & {
   name: string;
   STRUCT?: string;
 };
-
-let macroidgen: number = 0;
 
 /* ------------------------------------------------------------------ */
 /*  ToolMacro                                                         */
@@ -206,7 +207,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     const cls = this._macro_class;
     cls.__tooldef = tdef;
-    cls._macroTypeId = macroidgen++;
+    cls._macroTypeId = defaultRegistry.macroIdGen++;
     cls.ready = true;
 
     /*

@@ -1,8 +1,8 @@
 import { PropFlags, ToolProperty } from "./toolprop";
 import { DataPath } from "../controller/controller_base";
-import { DataAPI, DataStruct } from "../controller";
+import type { DataAPI, DataStruct } from "../controller";
 import type { MacroClassType } from "./toolmacro";
-import { IToolOpConstructor } from "./toolop";
+import type { IToolOpConstructor } from "./toolop";
 
 /* ------------------------------------------------------------------ */
 /*  ToolPropertyCache                                                 */

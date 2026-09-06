@@ -1,22 +1,11 @@
 import nstructjs from "../util/struct";
-import { PropFlags, ToolProperty } from "./toolprop";
-import { DataPath } from "../controller/controller_base";
-import { ContextLike, DataAPI, DataStruct } from "../controller";
+import type { ContextLike, DataAPI, DataStruct } from "../controller";
 import { StructableClass } from "../util/nstructjs";
 import { Context } from "../controller/context";
 import type { ToolStack } from "./toolstack";
 import { IToolOpConstructor, ToolClasses, ToolOp } from "./toolop";
 import { SavedToolDefaults, ToolPropertyCache } from "./tooldefaults";
-
-// Window globals (_ToolClasses, _MacroClasses, etc.) are declared in global.d.ts
-
-/* ------------------------------------------------------------------ */
-/*  Shared types                                                      */
-/* ------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------ */
-/*  Module-level state                                                */
-/* ------------------------------------------------------------------ */
+import { defaultRegistry } from "./toolregistry";
 
 /** @deprecated */
 export function setContextClass(_cls: unknown): void {
@@ -27,34 +16,13 @@ export function setContextClass(_cls: unknown): void {
 /*  API builders                                                      */
 /* ------------------------------------------------------------------ */
 
+/** Calls `updateDefaults` on the default registry. */
 export function updateToolDefaults(
   cls: IToolOpConstructor,
   api?: DataAPI,
   datastruct?: DataStruct
 ): void {
-  const def = cls._getFinalToolDef();
-
-  if (datastruct === undefined) {
-    datastruct = SavedToolDefaults.dstruct;
-  }
-  if (api === undefined) {
-    api = SavedToolDefaults.api;
-  }
-
-  if (datastruct === undefined || api === undefined) {
-    // not api yet for SavedToolDefaults
-    return;
-  }
-
-  buildToolOpAPI(api, cls);
-
-  for (const k in def.inputs) {
-    const prop = def.inputs[k];
-
-    if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
-      SavedToolDefaults._buildAccessors(cls, k, prop, datastruct, api);
-    }
-  }
+  defaultRegistry.updateDefaults(cls, api, datastruct);
 }
 
 export function updateToolSysAPI(api: DataAPI): void {
@@ -66,40 +34,9 @@ export function updateToolSysAPI(api: DataAPI): void {
   }
 }
 
+/** Calls `buildOpAPI` on the default registry. */
 export function buildToolOpAPI(api: DataAPI, cls: IToolOpConstructor): unknown {
-  const st = api.mapStruct(cls, true);
-  const def = cls._getFinalToolDef();
-
-  function makeProp(k: string): void {
-    const prop = def.inputs[k];
-
-    if (prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
-      return;
-    }
-
-    prop.uiname = prop.uiname || ToolProperty.makeUIName(k);
-
-    const dpath = new DataPath(k, k, prop);
-    st.add(dpath);
-
-    dpath.customGetSet(
-      // we can type erase here safely,
-      // since this is part of a strongly typed
-      // runtime type system
-      function (this: { dataref: ToolOp }) {
-        return (this.dataref.inputs as any)[k].getValue();
-      },
-      function (this: { dataref: ToolOp }, val: unknown) {
-        (this.dataref.inputs as any)[k].setValue(val);
-      }
-    );
-  }
-
-  for (const k in def.inputs) {
-    makeProp(k);
-  }
-
-  return st;
+  return defaultRegistry.buildOpAPI(api, cls);
 }
 
 /**

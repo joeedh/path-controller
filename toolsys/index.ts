@@ -7,4 +7,5 @@ export * from "./toolprop";
 export * from "./toolop";
 export * from "./toolmacro";
 export * from "./tooldefaults";
+export * from "./toolregistry";
 export * from "./toolstack";
