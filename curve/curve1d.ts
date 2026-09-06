@@ -3,7 +3,6 @@ import nstructjs from "../util/struct";
 import * as util from "../util/util";
 //import * as ui_base from './ui_base.js';
 import { Vector2, Vector3, Vector4, Matrix4 } from "../util/vectormath";
-import { EventDispatcher } from "../util/events";
 import type { StructReader } from "../util/nstructjs";
 
 export { getCurve } from "./curve1d_base";
@@ -17,8 +16,6 @@ export function mySafeJSONStringify(obj: { toJSON(): Record<string, unknown> }):
     if (typeof v === "number") {
       if (v !== Math.floor(v)) {
         v = parseFloat(v.toFixed(5));
-      } else {
-        v = v;
       }
     }
 

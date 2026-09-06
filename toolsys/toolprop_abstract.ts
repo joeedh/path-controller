@@ -60,15 +60,12 @@ export const PropFlags = {
   OPTIONAL              : 1 << 21,
 } as const;
 
-/* Declared on a merged interface rather than in the class body: this
-   tsconfig leaves useDefineForClassFields at its ES2022 default of true, so a
-   bare field here emits an own `data = undefined` that shadows the get/set
-   data accessors subclasses define.  See ToolProperty. */
-export interface ToolPropertyIF<TYPE extends number = number> {
-  data: unknown;
-}
-
 export class ToolPropertyIF<TYPE extends number = number> {
+  /* `declare` (rather than a plain field): this tsconfig leaves
+     useDefineForClassFields at its ES2022 default of true, so a bare field
+     here would emit an own `data = undefined` that shadows the get/set data
+     accessors subclasses define.  See ToolProperty. */
+  declare data: unknown;
   declare type: TYPE;
   subtype: number | undefined;
   apiname: string | undefined;
@@ -191,7 +188,7 @@ export class EnumPropertyIF extends ToolPropertyIF {
     for (const k in this.values) {
       let uin = k[0].toUpperCase() + k.slice(1, k.length);
 
-      uin = uin.replace(/\_/g, " ");
+      uin = uin.replace(/_/g, " ");
       this.ui_value_names[k] = uin;
     }
   }

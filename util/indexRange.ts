@@ -1,5 +1,3 @@
-let indexRangeStack: IndexRangeStack;
-
 class _IndexRange {
   start = 0;
   end = 0;
@@ -49,7 +47,7 @@ class IndexRangeStack extends Array<_IndexRange> {
   cur = 0;
 }
 
-indexRangeStack = new IndexRangeStack(2048);
+const indexRangeStack: IndexRangeStack = new IndexRangeStack(2048);
 for (let i = 0; i < 2048; i++) {
   indexRangeStack[i] = new _IndexRange(0, 0);
 }

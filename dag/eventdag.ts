@@ -515,7 +515,7 @@ export const PropSocketModes = {
   MAX    : 2,
 };
 
-type PropertyCallback<T = any> = (newval: T, oldval?: T) => T;
+type PropertyCallback<T = any> = (newval: T | undefined, oldval?: T) => T;
 
 export class PropertySocket<T = any> extends EventSocket {
   static socketDef: SocketDef = {
@@ -566,7 +566,7 @@ export class PropertySocket<T = any> extends EventSocket {
     return bind.obj ? bind.obj[bind.key] : undefined;
   }
 
-  set value(v: T) {
+  set value(v: T | undefined) {
     const old = this.value;
     if (this.#callbacks.length > 0) {
       for (const cb of this.#callbacks) {

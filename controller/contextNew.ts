@@ -2,7 +2,7 @@ export type PropertyLoader = (ctx: any, key: string | number | symbol, data: any
 export type PropertySaver = (ctx: any, key: string | number | symbol, existing: any) => any;
 type CtxAny = any;
 
-class ContextLocker<OVERLAYS extends {}> {
+class ContextLocker {
   private ctx: CtxAny;
 
   constructor(ctx: CtxAny) {

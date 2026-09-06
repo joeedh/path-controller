@@ -2,8 +2,6 @@
 // So a proxy-based context layering approach runs into bugs with TS's type checker
 // (got 'circular type dependency' errors that didn't happen with straight inheritance)
 
-import { ContextLike } from "./controller_abstract";
-
 type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void
   ? I
   : never;

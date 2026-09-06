@@ -1,7 +1,7 @@
 import { JSONAny } from "../../controller";
 import nstructjs from "../../util/struct";
 import { PropFlags, PropTypes } from "../toolprop_abstract";
-import { TOOLPROP_SCHEMA_VERSION, ToolProperty } from "./base";
+import { ToolProperty } from "./base";
 
 export class StringPropertyBase<TYPE extends number> extends ToolProperty<string, TYPE> {
   static STRUCT = nstructjs.inlineRegister(

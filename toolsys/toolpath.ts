@@ -24,8 +24,8 @@ export function buildParser(): InstanceType<typeof parser> {
     t("LSBRACKET", /\[/),
     t("RSBRACKET", /\]/),
     t("DOT", /\./),
-    t("COMMA", /\,/),
-    t("EQUALS", /\=/),
+    t("COMMA", /,/),
+    t("EQUALS", /=/),
     t("STRLIT", /"[^"]*"/, (tok: Tok) => {
       tok.value = (tok.value as string).slice(1, (tok.value as string).length - 1);
       return tok;
@@ -149,7 +149,7 @@ window.parseToolPath = parseToolPath;
 //tool path parser for simple_toolsys.js
 export function initToolPaths(): void {
   for (const cls of ToolClasses) {
-    if (!cls.hasOwnProperty("tooldef")) {
+    if (!Object.prototype.hasOwnProperty.call(cls, "tooldef")) {
       //ignore abstract classes
       continue;
     }

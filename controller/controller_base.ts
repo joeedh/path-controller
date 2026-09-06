@@ -1,6 +1,5 @@
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract";
 import { Quat, Vector2, Vector3, Vector4 } from "../util/vectormath";
-import * as toolprop_abstract from "../toolsys/toolprop_abstract";
 import * as toolprop from "../toolsys/toolprop";
 import { cachering } from "../util/util";
 import { ToolProperty } from "../toolsys/toolprop";
@@ -513,7 +512,6 @@ export interface ListIFace<
   ListType = any,
   KeyType = any,
   ValType = any,
-  CTX extends ContextLike = ContextLike,
 > {
   getStruct(api: DataAPIType, list: ListType, key: KeyType): DataStruct | undefined;
   get(api: DataAPIType, list: ListType, key: KeyType): ValType;
@@ -544,7 +542,7 @@ export type ListFuncs<
   ObjType = any,
   CTX extends ContextLike = ContextLike,
 > = (
-  | Required<ListIFace<DataAPIType, ListType, KeyType, ObjType, CTX>>[keyof ListIFace]
+  | Required<ListIFace<DataAPIType, ListType, KeyType, ObjType>>[keyof ListIFace]
   | ((api: ModelInterface<CTX>, list: ListType, key: KeyType, val: ObjType) => void)
 )[];
 
@@ -557,7 +555,7 @@ export class DataList<
   KeyType = any,
   ValType = any,
   CTX extends ContextLike = ContextLike,
-> implements ListIFace<DataAPIType, ListType, KeyType, ValType, CTX> {
+> implements ListIFace<DataAPIType, ListType, KeyType, ValType> {
   cb: ListCallbackMap;
 
   // XXX

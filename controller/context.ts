@@ -5,7 +5,6 @@
 import * as util from "../util/util";
 
 import cconst from "../config/config";
-import type { ContextLike } from "../controller";
 
 declare global {
   interface SymbolConstructor {
@@ -111,7 +110,7 @@ export function makeDerivedOverlay(parent: OverlayParent) {
 
     //don't override this
     static resolveDef(): { name?: string; flag: number } {
-      if (this.hasOwnProperty(Symbol.CachedDef)) {
+      if (Object.prototype.hasOwnProperty.call(this, Symbol.CachedDef)) {
         return (this as unknown as Record<symbol, { name?: string; flag: number }>)[
           Symbol.CachedDef
         ];
@@ -264,7 +263,7 @@ export class LockedContext {
       }
 
       try {
-        (ctx as Record<string, unknown>)[k];
+        void (ctx as Record<string, unknown>)[k];
       } catch (_error) {
         if ((cconst.DEBUG as Record<string, boolean>).contextSystem) {
           console.warn("failed to look up property in context: ", k);
@@ -331,7 +330,7 @@ export class LockedContext {
 const next_key = {};
 let idgen = 1;
 
-export class Context<Overlays extends ContextLike = ContextLike> {
+export class Context {
   state: unknown;
   _props: Set<string>;
   _stack: OverlayInstance[];
@@ -540,7 +539,7 @@ export class Context<Overlays extends ContextLike = ContextLike> {
   }
 
   ensureProperty(name: string): void {
-    if (this.hasOwnProperty(name)) {
+    if (Object.prototype.hasOwnProperty.call(this, name)) {
       return;
     }
 
@@ -567,7 +566,10 @@ export class Context<Overlays extends ContextLike = ContextLike> {
 
   pushOverlay(overlay: OverlayInstance): void {
     if (
-      !(overlay as unknown as Record<string | symbol, unknown>).hasOwnProperty(Symbol.ContextID)
+      !Object.prototype.hasOwnProperty.call(
+        overlay as unknown as Record<string | symbol, unknown>,
+        Symbol.ContextID
+      )
     ) {
       (overlay as unknown as Record<string | symbol, unknown>)[Symbol.ContextID] = idgen++;
     }

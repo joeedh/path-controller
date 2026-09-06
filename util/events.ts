@@ -128,11 +128,6 @@ export const DomEventTypes = {
   on_pointerup    : "pointerup",
 } as const;
 
-function getDom(dom: EventTarget, eventtype: string): EventTarget {
-  if (eventtype.startsWith("key")) return window;
-  return dom;
-}
-
 export const modalStack: unknown[] = [];
 export function isModalHead(owner: unknown): boolean {
   return modalStack.length === 0 || modalStack[modalStack.length - 1] === owner;

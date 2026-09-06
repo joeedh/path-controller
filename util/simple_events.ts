@@ -36,77 +36,9 @@ function consolelog(..._args: unknown[]): void {
   //  onsole.log(...arguments)
 }
 
-function debugDomEvents(): void {
-  const cbsymbol = Symbol("event-callback");
-  const thsymbol = Symbol("debug-info");
-
-  let idgen = 0;
-
-  function init(et: Record<symbol, number>): void {
-    if (!et[thsymbol]) {
-      et[thsymbol] = idgen++;
-    }
-  }
-
-  function getkey(et: Record<symbol, number>, type: string, options: unknown): string {
-    init(et);
-    return "" + et[thsymbol] + ":" + type + ":" + JSON.stringify(options);
-  }
-
-  const addEventListener = EventTarget.prototype.addEventListener;
-  const removeEventListener = EventTarget.prototype.removeEventListener;
-
-  EventTarget.prototype.addEventListener = function (
-    this: EventTarget & Record<symbol, number>,
-    type: string,
-    cb: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    init(this as unknown as Record<symbol, number>);
-
-    const cbRec = cb as unknown as Record<symbol, Set<string>>;
-    if (!cbRec[cbsymbol]) {
-      cbRec[cbsymbol] = new Set();
-    }
-
-    const key = getkey(this as unknown as Record<symbol, number>, type, options);
-    cbRec[cbsymbol].add(key);
-
-    return addEventListener.call(this, type, cb, options);
-  };
-
-  EventTarget.prototype.removeEventListener = function (
-    this: EventTarget & Record<symbol, number>,
-    type: string,
-    cb: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions
-  ): void {
-    init(this as unknown as Record<symbol, number>);
-
-    const cbRec = cb as unknown as Record<symbol, Set<string>>;
-    if (!cbRec[cbsymbol]) {
-      console.error("Invalid callback in removeEventListener for", type, this, cb);
-      return;
-    }
-
-    const key = getkey(this as unknown as Record<symbol, number>, type, options);
-
-    if (!cbRec[cbsymbol].has(key)) {
-      console.error("Callback not in removeEventListener;", type, this, cb);
-      return;
-    }
-
-    cbRec[cbsymbol].delete(key);
-
-    return removeEventListener.call(this, type, cb, options);
-  };
-}
-
 interface SingletonMouseEventsResult {
   singleMouseEvent(cb: (e: Event) => void, type: string): void;
 }
-
-let singletonMouseEventsResult: SingletonMouseEventsResult | undefined;
 
 function singletonMouseEventsInit(): SingletonMouseEventsResult | undefined {
   if (typeof document === "undefined") {
@@ -230,7 +162,7 @@ function singletonMouseEventsInit(): SingletonMouseEventsResult | undefined {
   };
 }
 
-singletonMouseEventsResult = singletonMouseEventsInit();
+const singletonMouseEventsResult = singletonMouseEventsInit();
 
 /**
  * adds a mouse event callback that only gets called once
@@ -869,6 +801,8 @@ export enum keymap_latin_1 {
   Space = 32,
   Escape = 27,
   Enter = 13,
+  // Alias: some call sites spell the Enter/Return key either way.
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   Return = 13,
   Up = 38,
   Down = 40,
@@ -905,6 +839,8 @@ export enum keymap_latin_1 {
   NumMinus = 109,
   Shift = 16,
   Ctrl = 17,
+  // Alias: some call sites spell the Ctrl/Control key either way.
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   Control = 17,
   Alt = 18,
   A = 65,

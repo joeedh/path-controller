@@ -49,7 +49,7 @@ export interface ContextLike<AppState = any, TS extends IToolStack = IToolStack>
 /**
  * Result of resolvePath().
  */
-export interface ResolvePathResult<CTX extends ContextLike = ContextLike> {
+export interface ResolvePathResult {
   dpath: DataPath;
   parent: any;
   obj: any;
@@ -207,7 +207,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     path: string,
     ignoreExistence?: boolean,
     rootStruct?: unknown
-  ): ResolvePathResult<CTX> | undefined {
+  ): ResolvePathResult | undefined {
     return undefined;
   }
 

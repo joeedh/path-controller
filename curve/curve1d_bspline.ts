@@ -110,8 +110,6 @@ export function mySafeJSONStringify(obj: { toJSON(): Record<string, unknown> }):
     if (typeof v === "number") {
       if (v !== Math.floor(v)) {
         v = parseFloat(v.toFixed(5));
-      } else {
-        v = v;
       }
     }
 
@@ -165,7 +163,7 @@ export function binomial(n: number, i: number): number {
   return ret;
 }
 
-import { CurveFlags, TangentModes, CurveTypeData, CurveTypeDataConstructor } from "./curve1d_base";
+import { CurveFlags, TangentModes, CurveTypeData } from "./curve1d_base";
 import {
   BoolProperty,
   EnumProperty,
@@ -2362,8 +2360,11 @@ export function initSplineTemplates() {
   console.log("Loaded 1d spline templates");
 }
 
+// Disabled (see "get tests working"): running this at module load broke tests.
+const ENABLE_SPLINE_TEMPLATE_AUTOLOAD = false;
+
 //don't run in nodejs
-if (0 && !util.insideNodeJS()) {
+if (ENABLE_SPLINE_TEMPLATE_AUTOLOAD && !util.insideNodeJS()) {
   //delay to ensure config is fully loaded
   window.setTimeout(() => {
     if (config.autoLoadSplineTemplates) {

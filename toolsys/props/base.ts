@@ -182,20 +182,17 @@ export class ExecScopeUsingStack extends Array<ExecScopeUsing> {
 // eslint-disable-next-line no-var
 export var execScopeUsingStack = new ExecScopeUsingStack(512);
 
-/* Both are declared on a merged interface rather than in the class body; see
-   ToolPropertyIF.  A bare `ctx?: unknown` field emits an own `ctx = undefined`
-   under this tsconfig, which shadowed the get/set ctx accessors on
-   subclasses. */
-export interface ToolProperty<T = unknown, TYPE extends number = number> {
-  data: T;
-
-  ctx?: unknown;
-}
-
 export class ToolProperty<T = unknown, TYPE extends number = number>
   extends ToolPropertyIF<TYPE>
   implements DataAPIExecScope
 {
+  /* `declare` (rather than a plain field): a bare `data`/`ctx` field here
+     would emit an own `= undefined` initializer under this tsconfig's
+     useDefineForClassFields default, shadowing the get/set accessors
+     subclasses define.  See ToolPropertyIF. */
+  declare data: T;
+  declare ctx?: unknown;
+
   static STRUCT = nstructjs.inlineRegister(
     this,
     `

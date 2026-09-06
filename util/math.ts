@@ -26,8 +26,6 @@ type Vec2Like = Vector2Like;
 type Vec3Like = Vector3Like;
 type Vec4Like = Vector4Like;
 type Vec2Arr = Vec2Like | number[];
-type Vec3Arr = Vec3Like | number[];
-type Vec4Arr = Vec4Like | number[];
 
 const dtvtmps = util.cachering.fromConstructor(Vector3, 32);
 const quad_co_rets2 = util.cachering.fromConstructor(Vector2, 512);
@@ -63,8 +61,6 @@ export function quad_bilinear(
 
  */
 export function quad_uv_2d(p: Vec2Like, v1: Vec2Like, v2: Vec2Like, v3: Vec2Like, v4: Vec2Like) {
-  let u;
-  let v;
   const v2x = v2[0] - v1[0];
   const v2y = v2[1] - v1[1];
   const v3x = v3[0] - v1[0];
@@ -449,19 +445,7 @@ on fort;
 dot(p2, p2);
 off fort;
 
-**/ function _linedis2(co: Vec3Like, v1: Vec3Like, v2: Vec3Like): number {
-  const v1x = v1[0] - co[0];
-  const v1y = v1[1] - co[1];
-  const v1z = v1[2] - co[2];
-  const v2x = v2[0] - co[0];
-  const v2y = v2[1] - co[1];
-  const v2z = v2[2] - co[2];
-  const dis =
-    (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1y - v2y) - v1y) ** 2 +
-    (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1z - v2z) - v1z) ** 2 +
-    (((v1y - v2y) * v1y + (v1z - v2z) * v1z + (v1x - v2x) * v1x) * (v1x - v2x) - v1x) ** 2;
-  return dis;
-}
+**/
 const closest_p_tri_rets = new util.cachering(() => {
   return {
     co  : new Vector3(),
@@ -668,17 +652,6 @@ export function dist_to_tri_v3_old(
   pparr[1] = coarr[axis2];
   pparr[2] = 0.0;
   let dis = 1e17;
-  function linedis2d(a: Vec2Like, b: Vec2Like, c: Vec2Like) {
-    const dx1 = a[0] - b[0];
-    const dy1 = a[1] - b[1];
-    let dx2 = c[0] - b[0];
-    let dy2 = c[1] - b[1];
-    let len = dx2 * dx2 + dy2 * dy2;
-    len = len > 0.000001 ? 1.0 / len : 0.0;
-    dx2 *= len;
-    dy2 *= len;
-    return Math.abs(dx1 * dy2 - dx2 * dy1);
-  }
   const tmp = dtvtmps.next();
   const tmp2 = dtvtmps.next();
   function linedis3d(a: Vec3Like, b: Vec3Like, c: Vec3Like) {
@@ -833,7 +806,7 @@ export function dist_to_tri_v3_sqr(
    */ //console.log(axis1, axis2, axis3, n);
   //console.log(s1, s2, s3);
   //console.log(bx, by, cx, cy);
-  if (1 && narr[axis3] < 0.0) {
+  if (narr[axis3] < 0.0) {
     s1 = !s1;
     s2 = !s2;
     s3 = !s3;
@@ -953,12 +926,7 @@ export function dist_to_tri_v3_sqr(
     d = -d;
     lx += nx * d;
     ly += ny * d;
-    lz += nz * d;
     //dis = lx*lx + ly*ly;
-    if (0 && Math.random() > 0.999) {
-      console.log("d", d.toFixed(6));
-      console.log(lx * nx + ly * ny + lz * nz);
-    }
   }
   let mul =
     ((lx ** 2 + ly ** 2) * nz ** 2 + (lx * nx + ly * ny) ** 2) / ((lx ** 2 + ly ** 2) * nz ** 2);
@@ -1185,29 +1153,9 @@ export function aabb_union_2d(
   ret.pos.load(max);
   return ret;
 }
-//XXX refactor to use es6 classes,
-//    or at last the class system in typesystem.js
-function init_prototype(cls: any, proto: any): any {
-  for (const k in proto) {
-    cls.prototype[k] = proto[k];
-  }
-  return cls.prototype;
-}
-function inherit(cls: any, parent: any, proto: any): any {
-  cls.prototype = Object.create(parent.prototype);
-  for (const k in proto) {
-    cls.prototype[k] = proto[k];
-  }
-  return cls.prototype;
-}
 //everything below here was compiled from es6 code
 //variables starting with $ are function static local vars,
 //like in C.  don't use them outside their owning functions.
-//
-//except for $_mh and $_swapt.  they were used with a C macro
-//preprocessor.
-let $_mh;
-let $_swapt;
 //XXX destroy me
 export const feps = 2.22e-16;
 export const COLINEAR = 1;
@@ -2423,8 +2371,6 @@ export function get_tri_circ(a: Vec3Like, b: Vec3Like, c: Vec3Like): [Vector3, n
   v2arr[2] = e2[2];
   v1.normalize();
   v2.normalize();
-  let cent;
-  let type;
   const p12arr = _gtc_p12;
   const p22arr = _gtc_p22;
   for (let _i = 0; _i < 3; _i++) {
@@ -2433,7 +2379,7 @@ export function get_tri_circ(a: Vec3Like, b: Vec3Like, c: Vec3Like): [Vector3, n
     p22arr[i] = p2[i] + v2[i];
   }
   const isect = line_isect(p1, _gtc_p12, p2, _gtc_p22);
-  cent = isect[0];
+  const cent = isect[0];
   e1.load(a);
   e2.load(b);
   e3.load(c);

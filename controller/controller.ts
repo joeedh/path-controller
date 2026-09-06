@@ -106,10 +106,10 @@ const tokens = [
     return t;
   }),
   tk("DOT", /\./),
-  tk("EQUALS", /(\=)|(\=\=)/),
+  tk("EQUALS", /(=)|(==)/),
   tk("LSBRACKET", /\[/),
   tk("RSBRACKET", /\]/),
-  tk("AND", /\&/),
+  tk("AND", /&/),
   tk("WS", /[ \t\n\r]+/, () => undefined), //drop token
 ];
 
@@ -134,18 +134,7 @@ export { DataPathError, DataFlags } from "./controller_base";
 
 import { ToolProperty, IntProperty } from "../toolsys/toolprop";
 
-let tool_idgen = 1;
 Symbol.ToolID = Symbol("toolid");
-
-type AnyClass = Record<string | symbol, any>;
-
-function toolkey(cls: AnyClass): number {
-  if (!(Symbol.ToolID in cls)) {
-    cls[Symbol.ToolID] = tool_idgen++;
-  }
-
-  return cls[Symbol.ToolID] as number;
-}
 
 const reportstack = ["api"];
 
@@ -527,7 +516,7 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
     path: string,
     apiname: string,
     funcs:
-      | ListIFace<DataAPI, ListType, KeyType, ObjType, CTX>
+      | ListIFace<DataAPI, ListType, KeyType, ObjType>
       | ListFuncs<DataAPI, ListType, KeyType, ObjType, CTX>
   ) {
     const array = new DataList<DataAPI, ListType, KeyType, ObjType, CTX>(funcs);
@@ -623,7 +612,10 @@ function resolveStructName(cls: any, explicit?: string): string {
     return explicit;
   }
 
-  if (cls.hasOwnProperty("structName") && typeof cls.structName === "string") {
+  if (
+    Object.prototype.hasOwnProperty.call(cls, "structName") &&
+    typeof cls.structName === "string"
+  ) {
     return cls.structName;
   }
 
@@ -716,7 +708,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   }
 
   hasStruct(cls: any) {
-    return cls.hasOwnProperty(CLS_API_KEY);
+    return Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY);
   }
 
   getStruct(cls: any) {
@@ -882,7 +874,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
   mapStruct<CLS extends BoundConstructor>(cls: CLS, auto_create = true, name?: string) {
     let key;
 
-    if (!cls.hasOwnProperty(CLS_API_KEY)) {
+    if (!Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY)) {
       key = undefined;
     } else {
       key = cls[CLS_API_KEY];

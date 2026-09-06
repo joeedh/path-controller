@@ -95,9 +95,12 @@ export function termPrint(...args: unknown[]): string {
     s += args[i];
   }
 
+  // These match ANSI escape sequences, which start with the ESC control character.
+  /* eslint-disable no-control-regex */
   const re1a = /\u001b\[[1-9][0-9]?m/;
   const re1b = /\u001b\[[1-9][0-9];[0-9][0-9]?;[0-9]+m/;
   const re2 = /\u001b\[39m/;
+  /* eslint-enable no-control-regex */
 
   const endtag = "\u001b[39m";
 
@@ -1047,7 +1050,7 @@ export class set<T extends KeystrObject> {
 
       if (item === EmptySlot) continue;
 
-      thisvar !== undefined ? func.call(thisvar, item as T) : func(item as T);
+      void (thisvar !== undefined ? func.call(thisvar, item as T) : func(item as T));
     }
   }
 }
@@ -1635,8 +1638,6 @@ export class ImageReader {
   }
 }
 
-let digestcache: cachering<HashDigest>;
-
 /** NOT CRYPTOGRAPHIC */
 export class HashDigest {
   i: number;
@@ -1709,7 +1710,7 @@ export class HashDigest {
   }
 }
 
-digestcache = cachering.fromConstructor(HashDigest, 512);
+const digestcache: cachering<HashDigest> = cachering.fromConstructor(HashDigest, 512);
 
 const NullItem: object = {};
 

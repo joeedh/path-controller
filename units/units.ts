@@ -510,13 +510,13 @@ export function setMetric(val: boolean): void {
   Unit.isMetric = val;
 }
 
-const numre1 = /[+\-]?[0-9]+(\.[0-9]*)?$/;
-const numre2 = /[+\-]?[0-9]?(\.[0-9]*)+$/;
-const hexre1 = /[+\-]?[0-9a-fA-F]+h$/;
-const hexre2 = /[+\-]?0x[0-9a-fA-F]+$/;
-const binre = /[+\-]?0b[01]+$/;
-const expre = /[+\-]?[0-9]+(\.[0-9]*)?[eE]\-?[0-9]+$/;
-const intre = /[+\-]?[0-9]+$/;
+const numre1 = /[+-]?[0-9]+(\.[0-9]*)?$/;
+const numre2 = /[+-]?[0-9]?(\.[0-9]*)+$/;
+const hexre1 = /[+-]?[0-9a-fA-F]+h$/;
+const hexre2 = /[+-]?0x[0-9a-fA-F]+$/;
+const binre = /[+-]?0b[01]+$/;
+const expre = /[+-]?[0-9]+(\.[0-9]*)?[eE]-?[0-9]+$/;
+const intre = /[+-]?[0-9]+$/;
 
 function isnumber(s: string): boolean {
   s = ("" + s).trim();

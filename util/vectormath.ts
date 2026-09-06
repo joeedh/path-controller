@@ -3,8 +3,6 @@ import nstructjs from "./struct";
 import type { StructReader } from "./nstructjs";
 import * as util from "./util";
 
-let vec_temp_mats: util.cachering<Matrix4>;
-
 const DOT_NORM_SNAP_LIMIT = 0.00000000001;
 const FLT_EPSILON = 2.22e-16;
 
@@ -23,7 +21,6 @@ export declare interface IOpenNumVector {
 }
 
 type indexUnions = { 0: never; 1: 0; 2: 0 | 1; 3: 0 | 1 | 2; 4: 0 | 1 | 2 | 3 };
-type strNumMap = { "0": 0; "1": 1; "2": 2; "3": 3; "4": 4 };
 
 export type INumVectorLimited<LEN extends 0 | 1 | 2 | 3 | 4> = {
   //[P: number]: never;
@@ -81,7 +78,7 @@ type IBaseBase<LEN extends 2 | 3 | 4> = {
  * }
  * ```
  */
-export type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = number[]> = IBaseBase<LEN> & {
+export type IBaseVector<LEN extends 2 | 3 | 4> = IBaseBase<LEN> & {
   length: number;
 
   // for indices above LEN, type to number | undefined
@@ -134,9 +131,9 @@ export type IBaseVector<LEN extends 2 | 3 | 4, ArrayType = number[]> = IBaseBase
 };
 
 /** @deprecated use IBaseVector directly */
-export type VectorLikeOrHigher<LEN extends 2 | 3 | 4, Type = never> = IBaseVector<LEN>;
+export type VectorLikeOrHigher<LEN extends 2 | 3 | 4> = IBaseVector<LEN>;
 /** @deprecated use IBaseVector directly */
-export type IVectorOrHigher<LEN extends 2 | 3 | 4, Type = never> = VectorLikeOrHigher<LEN, Type>;
+export type IVectorOrHigher<LEN extends 2 | 3 | 4> = VectorLikeOrHigher<LEN>;
 
 export type IQuat = IBaseVector<4> & {
   axisAngleToQuat(axis: IBaseVector<3>, angle: number): IQuat;
@@ -1809,14 +1806,6 @@ export const EulerOrders = {
 };
 export type EulerOrders = (typeof EulerOrders)[keyof typeof EulerOrders];
 
-let lookat_cache_vs3: util.cachering<Vector3>;
-let lookat_cache_vs4: util.cachering<Vector4>;
-let lookat_cache_ms: util.cachering<Matrix4>;
-let euler_rotate_mats: util.cachering<Matrix4>;
-let makenormalcache: util.cachering<Vector3>;
-let temp_mats: util.cachering<Matrix4>;
-let preMultTemp: Matrix4;
-
 function myclamp(f: number, a: number, b: number) {
   return Math.min(Math.max(f, a), b);
 }
@@ -2047,11 +2036,11 @@ export class Matrix4 {
   }
 
   load(b: Matrix4 | number[] | Float32Array | Float64Array) {
-    if (arguments.length === 1 && typeof arguments[0] === "object") {
+    if (b !== undefined && typeof b === "object") {
       let matrix;
-      if (arguments[0] instanceof Matrix4) {
-        matrix = arguments[0].$matrix;
-        this.isPersp = arguments[0].isPersp;
+      if (b instanceof Matrix4) {
+        matrix = b.$matrix;
+        this.isPersp = b.isPersp;
         this.$matrix.m11 = matrix.m11;
         this.$matrix.m12 = matrix.m12;
         this.$matrix.m13 = matrix.m13;
@@ -2069,7 +2058,7 @@ export class Matrix4 {
         this.$matrix.m43 = matrix.m43;
         this.$matrix.m44 = matrix.m44;
         return this;
-      } else matrix = arguments[0];
+      } else matrix = b;
       if ("length" in matrix && matrix.length >= 16) {
         this.$matrix.m11 = matrix[0];
         this.$matrix.m12 = matrix[1];
@@ -2578,7 +2567,7 @@ export class Matrix4 {
   ): this | undefined {
     let x = 0;
     let y = 0;
-    let z = 0;
+    let z: number;
 
     if (typeof _x === "object" && _x !== null && "length" in _x) {
       x = _x[0] ?? 0;
@@ -3368,18 +3357,19 @@ export class Matrix4 {
   }
 }
 
-lookat_cache_vs3 = util.cachering.fromConstructor(Vector3, 512);
-lookat_cache_ms = util.cachering.fromConstructor(Matrix4, 512);
-euler_rotate_mats = util.cachering.fromConstructor(Matrix4, 512);
-makenormalcache = util.cachering.fromConstructor(Vector3, 512);
-temp_mats = util.cachering.fromConstructor(Matrix4, 512);
-preMultTemp = new Matrix4();
-vec_temp_mats = util.cachering.fromConstructor(Matrix4, 64);
+const lookat_cache_vs3: util.cachering<Vector3> = util.cachering.fromConstructor(Vector3, 512);
+const lookat_cache_ms: util.cachering<Matrix4> = util.cachering.fromConstructor(Matrix4, 512);
+const euler_rotate_mats: util.cachering<Matrix4> = util.cachering.fromConstructor(Matrix4, 512);
+const makenormalcache: util.cachering<Vector3> = util.cachering.fromConstructor(Vector3, 512);
+const temp_mats: util.cachering<Matrix4> = util.cachering.fromConstructor(Matrix4, 512);
+const preMultTemp: Matrix4 = new Matrix4();
+const vec_temp_mats: util.cachering<Matrix4> = util.cachering.fromConstructor(Matrix4, 64);
 
 export type VectorArg<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- V pins the vector type at call sites below; the alias itself only needs N
   V extends Vector2 | Vector3 | Vector4 | Quat,
   N extends 2 | 3 | 4,
-> = VectorLikeOrHigher<N, V>;
+> = VectorLikeOrHigher<N>;
 
 export type Vector2Like = VectorArg<Vector2, 2>;
 export type Vector3Like = VectorArg<Vector3, 3>;
@@ -3388,7 +3378,9 @@ export type Vector4Like = VectorArg<Vector4, 4>;
 // static assert that Vectors convert to IBaseVectors
 // since we can't use 'implements' keyword in mixins
 type AssertVectorIBaseVector<N extends 2 | 3 | 4, V extends IBaseVector<N>> = V;
+/* eslint-disable @typescript-eslint/no-unused-vars -- each alias exists only to fail compilation if the constraint above breaks */
 type A = AssertVectorIBaseVector<2, Vector2>;
 type B = AssertVectorIBaseVector<3, Vector3>;
 type C = AssertVectorIBaseVector<4, Vector4>;
 type D = AssertVectorIBaseVector<4, Quat>;
+/* eslint-enable @typescript-eslint/no-unused-vars */

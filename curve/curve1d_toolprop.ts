@@ -1,5 +1,5 @@
 import { Curve1D } from "./curve1d";
-import { ToolProperty, PropTypes, PropFlags } from "../toolsys/toolprop";
+import { ToolProperty, PropTypes } from "../toolsys/toolprop";
 import * as nstructjs from "../util/nstructjs";
 
 import "./curve1d_all";

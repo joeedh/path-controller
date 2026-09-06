@@ -1,5 +1,4 @@
-import * as vectormath from "./vectormath";
-import { lexer, tokdef, token, parser, PUTLParseError, TokFunc } from "./parseutil";
+import { lexer, tokdef, token, parser, TokFunc } from "./parseutil";
 
 const tk = <T = string>(n: string, r?: RegExp, f?: TokFunc<T>): tokdef<T> => new tokdef<T>(n, r, f);
 
@@ -33,7 +32,7 @@ const tokens = [
     t.lexer.lineno += count(t.value, "\n");
     //drop token by not returning it
   }),
-  tk("COMMA", /\,/),
+  tk("COMMA", /,/),
   tk("COLON", /:/),
   tk("LSBRACKET", /\[/),
   tk("RSBRACKET", /\]/),
@@ -41,22 +40,22 @@ const tokens = [
   tk("RBRACKET", /\}/),
   tk("DOT", /\./),
   tk("PLUS", /\+/),
-  tk("MINUS", /\-/),
+  tk("MINUS", /-/),
   tk("TIMES", /\*/),
   tk("DIVIDE", /\//),
   tk("EXP", /\*\*/),
-  tk("LAND", /\&\&/),
-  tk("BAND", /\&/),
+  tk("LAND", /&&/),
+  tk("BAND", /&/),
   tk("LOR", /\|\|/),
   tk("BOR", /\|/),
   tk("EQUALS", /=/),
-  tk("LEQUALS", /\<\=/),
-  tk("GEQUALS", /\>\=/),
-  tk("LTHAN", /\</),
-  tk("GTHAN", /\>/),
-  tk("MOD", /\%/),
+  tk("LEQUALS", /<=/),
+  tk("GEQUALS", />=/),
+  tk("LTHAN", /</),
+  tk("GTHAN", />/),
+  tk("MOD", /%/),
   tk("XOR", /\^/),
-  tk("BITINV", /\~/),
+  tk("BITINV", /~/),
 ];
 
 const lex = new lexer(tokens, (_t: lexer) => {
