@@ -51,9 +51,41 @@ export class ToolRegistry {
    */
   readonly structName: string;
 
+  /**
+   * The APIs `buildAPI` has run against. Weak because `defineGraphApi`-style callers build
+   * one per pane, and a strong list would pin every closed pane's struct graph.
+   */
+  private readonly _builtAPIs: WeakRef<DataAPI>[] = [];
+
   constructor(defaults: ToolPropertyCache = new ToolPropertyCache(), structName?: string) {
     this.defaults = defaults;
     this.structName = structName ?? `ToolPropertyCache.${++structNameGen}`;
+
+    if (defaults.registry !== undefined) {
+      console.warn(
+        "A ToolPropertyCache belongs to one registry; this one already had",
+        defaults.registry
+      );
+    }
+    defaults.registry = this;
+  }
+
+  /** The APIs built against this registry, dropping any that have been collected. */
+  apis(): DataAPI[] {
+    const live: DataAPI[] = [];
+    let kept = 0;
+
+    for (const ref of this._builtAPIs) {
+      const api = ref.deref();
+
+      if (api !== undefined) {
+        this._builtAPIs[kept++] = ref;
+        live.push(api);
+      }
+    }
+
+    this._builtAPIs.length = kept;
+    return live;
   }
 
   register(cls: IToolOpConstructor): void {
@@ -160,21 +192,27 @@ export class ToolRegistry {
     };
   }
 
-  /** Builds the accessors this registry's defaults cache reads `cls`'s inputs through. */
+  /**
+   * Builds the accessors this registry's defaults cache reads `cls`'s inputs through.
+   *
+   * `register` calls this with no api, which reaches every api built against this registry
+   * rather than whichever one happened to build last. An api gets a tool's `buildOpAPI`
+   * struct that way too, which is what `ctx.last_tool.<input>` resolves through.
+   */
   updateDefaults(cls: IToolOpConstructor, api?: DataAPI, datastruct?: DataStruct): void {
-    const def = cls._getFinalToolDef();
-
-    if (datastruct === undefined) {
-      datastruct = this.defaults.dstruct;
-    }
-    if (api === undefined) {
-      api = this.defaults.api;
-    }
-
-    if (datastruct === undefined || api === undefined) {
-      // buildToolSysAPI has not run, so there is nowhere to build them yet
+    if (api !== undefined) {
+      this._updateDefaultsFor(cls, api, datastruct ?? this.structFor(api));
       return;
     }
+
+    // No apis yet means buildToolSysAPI has not run, and there is nowhere to build into
+    for (const built of this.apis()) {
+      this._updateDefaultsFor(cls, built, this.structFor(built));
+    }
+  }
+
+  private _updateDefaultsFor(cls: IToolOpConstructor, api: DataAPI, datastruct: DataStruct): void {
+    const def = cls._getFinalToolDef();
 
     this.buildOpAPI(api, cls);
 
@@ -202,6 +240,10 @@ export class ToolRegistry {
 
   /** Rebuilds `api`'s bindings for every class registered here. */
   buildAPI(api: DataAPI): DataStruct {
+    if (!this.apis().includes(api)) {
+      this._builtAPIs.push(new WeakRef(api));
+    }
+
     const dstruct = this.structFor(api);
 
     // Safe to wipe: it is this registry's own, so nothing else has built into it
