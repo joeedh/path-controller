@@ -2,8 +2,8 @@
 import nstructjs from "../util/struct";
 import * as util from "../util/util";
 import { StructReader } from "../util/nstructjs";
-import { UndoFlags } from "./toolop";
-import type { ToolExecPhase } from "./toolop";
+import { runToolPhases, UndoFlags } from "./toolop";
+import type { RunnableToolPhase, ToolExecPhase } from "./toolop";
 import { IToolOpConstructor, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 
@@ -323,15 +323,12 @@ export class ToolStack<
 
     toolop.execCtx = tctx as ContextCls;
 
-    let phase: ToolExecPhase = "undoPre";
-
     try {
       if (pushed) {
-        await asyncCheck(toolop.undoPre(tctx));
+        await this._runPhases(toolop, tctx as ContextCls, ["undoPre"]);
       }
 
       if (toolop.is_modal) {
-        phase = "modalStart";
         toolop.modal_ctx = ctx as ModalContextCls;
 
         this.modal_running = true;
@@ -362,37 +359,42 @@ export class ToolStack<
         } catch (error) {
           // A synchronous throw never reaches the promise handlers above
           clear();
+          await this._reportExecError(toolop, tctx as ContextCls, error, "modalStart");
           throw error;
         }
       } else {
-        phase = "execPre";
-        await toolop.execPre(tctx);
-        phase = "exec";
-        await toolop.exec(tctx);
-        phase = "execPost";
-        await toolop.execPost(tctx);
+        await this._runPhases(toolop, tctx as ContextCls, ["execPre", "exec", "execPost"]);
         toolop.saveDefaultInputs();
       }
     } catch (error) {
-      await this._abortTool(toolop, tctx as ContextCls, error, phase, pushed);
+      this._rollbackPush(pushed);
       throw error;
     }
   }
 
   /**
-   * Drops a tool whose lifecycle threw and puts the stack back the way the push
-   * found it, redo branch included.
-   *
-   * Deliberately does not call the tool's own undo. Whether a half-applied effect
-   * is safe to reverse depends on the tool and on which step failed, so that
-   * decision belongs to `onExecError`.
+   * Runs lifecycle steps in order, reporting whichever one throws to the tool
+   * before rethrowing. Restoring the stack is left to the caller.
    */
-  private async _abortTool(
+  private async _runPhases(
+    toolop: this[0] | ToolOpAny,
+    ctx: ContextCls,
+    phases: readonly RunnableToolPhase[]
+  ): Promise<void> {
+    return runToolPhases(toolop as ToolOp<any, any, ContextCls>, ctx, phases, (error, phase) =>
+      this._reportExecError(toolop, ctx, error, phase)
+    );
+  }
+
+  /**
+   * Hands a failed step to the tool. A throw from the handler is reported and
+   * dropped, so it cannot displace the error the caller is about to see.
+   */
+  private async _reportExecError(
     toolop: this[0] | ToolOpAny,
     ctx: ContextCls,
     error: unknown,
-    phase: ToolExecPhase,
-    pushed: boolean
+    phase: ToolExecPhase
   ): Promise<void> {
     try {
       await asyncCheck(toolop.onExecError(ctx, error, phase));
@@ -400,7 +402,10 @@ export class ToolStack<
       util.print_stack(hookError as Error);
       console.error("onExecError threw; reporting the error it was handed instead");
     }
+  }
 
+  /** Drops the tool the current push added and restores the branch it displaced. */
+  private _rollbackPush(pushed: boolean): void {
     if (!pushed) {
       return;
     }
@@ -453,7 +458,8 @@ export class ToolStack<
     if (this.cur >= 0 && !(this[this.cur].undoflag & UndoFlags.IS_UNDO_ROOT)) {
       const tool = this[this.cur];
 
-      await asyncCheck(tool.undo(tool.execCtx!));
+      // cur stays put if undo throws: the tool is still the applied head
+      await this._runPhases(tool, tool.execCtx!, ["undo"]);
 
       this.cur--;
     }
@@ -476,15 +482,19 @@ export class ToolStack<
         tool.execCtx = this.ctx;
       }
 
-      await asyncCheck(tool.undo(tool.execCtx));
+      // Reversing first, so cur stays put if it throws — the tool is still applied
+      await this._runPhases(tool, tool.execCtx, ["undo"]);
 
       tool._was_redo = true; //also set by toolstack.redo
-      let p: unknown;
 
-      await asyncCheck(tool.undoPre(tool.execCtx));
-      await asyncCheck(tool.execPre(tool.execCtx));
-      await asyncCheck(tool.exec(tool.execCtx));
-      await asyncCheck(tool.execPost(tool.execCtx));
+      try {
+        await this._runPhases(tool, tool.execCtx, ["undoPre", "execPre", "exec", "execPost"]);
+      } catch (error) {
+        // The tool is undone and will not re-run, so it stops being the head
+        this.pop_i(this.cur);
+        this.cur--;
+        throw error;
+      }
     } else {
       console.warn("Tool wasn't at head of stack", tool);
     }
@@ -510,7 +520,14 @@ export class ToolStack<
       }
 
       tool._was_redo = true;
-      await asyncCheck(tool.redo(tool.execCtx));
+
+      try {
+        await this._runPhases(tool, tool.execCtx, ["redo"]);
+      } catch (error) {
+        // Nothing was reapplied, so cur goes back to the entry before it
+        this.cur--;
+        throw error;
+      }
 
       tool.saveDefaultInputs();
     }
@@ -564,52 +581,48 @@ export class ToolStack<
   ): Promise<unknown> {
     await rewind();
 
-    let last = this.cur;
-
     const start = util.time_ms();
 
-    return new Promise((accept, reject) => {
-      const next = async () => {
-        last = this.cur;
+    // A loop rather than a self-calling promise executor: a throw out of the old
+    // `next` rejected a promise nobody held, leaving replay's own promise unsettled
+    // and the toolstack locked for the life of the page
+    for (;;) {
+      const last = this.cur;
 
-        if (cb && cb(this.ctx) === false) {
-          accept(undefined);
-          return;
+      if (cb && cb(this.ctx) === false) {
+        return undefined;
+      }
+
+      if (this.cur < this.length - 1) {
+        this.cur++;
+
+        const tool = this[this.cur];
+        if (!tool.execCtx) {
+          tool.execCtx = this.ctx;
         }
 
-        if (this.cur < this.length - 1) {
-          this.cur++;
-
-          const tool = this[this.cur];
-          if (!tool.execCtx) {
-            tool.execCtx = this.ctx;
-          }
-          await tool.undoPre(tool.execCtx);
-          await tool.execPre(tool.execCtx);
-          await tool.exec(tool.execCtx);
-          await tool.execPost(tool.execCtx);
+        try {
+          await this._runPhases(tool, tool.execCtx, ["undoPre", "execPre", "exec", "execPost"]);
+        } catch (error) {
+          // Stop at the entry before the one that failed, so cur matches the model
+          this.cur--;
+          throw error;
         }
+      }
 
-        if (last === this.cur) {
-          console.warn("time:", (util.time_ms() - start) / 1000.0);
-          accept(this);
-        } else {
-          const ret = onStep ? onStep() : true;
+      if (last === this.cur) {
+        console.warn("time:", (util.time_ms() - start) / 1000.0);
+        return this;
+      }
 
-          if (ret && ret instanceof Promise) {
-            ret.then(async () => {
-              await next();
-            });
-          } else {
-            window.setTimeout(() => {
-              next();
-            });
-          }
-        }
-      };
+      const ret = onStep ? onStep() : true;
 
-      next();
-    });
+      if (ret instanceof Promise) {
+        await ret;
+      } else {
+        await new Promise<void>((accept) => window.setTimeout(accept));
+      }
+    }
   }
 
   loadSTRUCT(reader: StructReader<this>) {

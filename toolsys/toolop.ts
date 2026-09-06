@@ -81,9 +81,50 @@ export const ToolClasses: IToolOpConstructor[] = [];
 /**
  * Which step of a tool's lifecycle threw. An op's undo snapshot is only complete
  * from `execPre` onward, so a handler deciding whether to reverse itself has to
- * know which of these it is looking at.
+ * know which of these it is looking at. `redo` is reported whole rather than by
+ * inner step, because an overridden one is opaque to the stack.
  */
-export type ToolExecPhase = "undoPre" | "execPre" | "exec" | "execPost" | "modalStart";
+export type ToolExecPhase =
+  | "undo"
+  | "undoPre"
+  | "execPre"
+  | "exec"
+  | "execPost"
+  | "redo"
+  | "modalStart";
+
+/** The phases that name a method `runToolPhases` can call. */
+export type RunnableToolPhase = Exclude<ToolExecPhase, "modalStart">;
+
+/**
+ * Runs lifecycle steps in order, awaiting each before starting the next.
+ *
+ * `onError` sees the step that threw, and the error is rethrown either way;
+ * putting the stack back together is the caller's job, since only it knows what
+ * the run displaced.
+ */
+export async function runToolPhases<CTX extends ContextLike>(
+  op: ToolOp<any, any, CTX, any>,
+  ctx: CTX,
+  phases: readonly RunnableToolPhase[],
+  onError?: (error: unknown, phase: RunnableToolPhase) => void | Promise<void>
+): Promise<void> {
+  for (const phase of phases) {
+    try {
+      const result = op[phase](ctx);
+      if (result instanceof Promise) {
+        await result;
+      }
+    } catch (error) {
+      if (onError) {
+        await onError(error, phase);
+      }
+      throw error;
+    }
+  }
+}
+
+const REDO_PHASES = ["undoPre", "execPre", "exec", "execPost"] as const;
 
 export const ToolFlags: Record<string, number> = {
   PRIVATE: 1,
@@ -762,13 +803,11 @@ export class ToolOp<
     //_appstate.loadUndoFile(this._undo);
   }
 
+  /** Returns the promise, so a caller can wait on an async phase and see it throw. */
   redo(ctx: CTX): void | Promise<void> {
     this._was_redo = true; //also set by toolstack.redo
 
-    this.undoPre(ctx);
-    this.execPre(ctx);
-    this.exec(ctx);
-    this.execPost(ctx);
+    return runToolPhases(this, ctx, REDO_PHASES);
   }
 
   //for compatibility with fairmotion
