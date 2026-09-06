@@ -6,6 +6,15 @@ import type { IToolOpConstructor, ToolOp } from "./toolop";
 import type { MacroClassType } from "./toolmacro";
 
 /**
+ * Marks the registry a class belongs to. A symbol so it cannot collide with a tooldef
+ * field, and so nothing that walks a class's keys picks it up.
+ */
+const REGISTRY_KEY = Symbol("toolRegistry");
+
+/** A tool class carrying the mark `register` leaves on it. */
+type Stamped = { [REGISTRY_KEY]?: ToolRegistry };
+
+/**
  * The tool tables on an object, so a subsystem can be handed its own set.
  *
  * `defaultRegistry` holds the ones the module-level `ToolClasses`, `ToolPaths`,
@@ -42,12 +51,32 @@ export class ToolRegistry {
     }
 
     this.classes.push(cls);
+    this.stamp(cls);
     this.updateDefaults(cls);
+  }
+
+  /**
+   * Marks `cls` as belonging here. The `ToolOp` constructor reads defaults and has no
+   * ctx to reach a registry through, so the class itself has to carry the answer.
+   *
+   * Macro type classes never reach `register`, so `_getTypeClass` calls this directly.
+   */
+  stamp(cls: IToolOpConstructor | MacroClassType): void {
+    (cls as Stamped)[REGISTRY_KEY] = this;
   }
 
   unregister(cls: IToolOpConstructor): void {
     if (this.classes.includes(cls)) {
       (this.classes as unknown as unknown[]).remove(cls);
+    }
+
+    // Another registry's claim on the class is not ours to drop, and an inherited mark
+    // belongs to the parent rather than to `cls`
+    if (
+      Object.prototype.hasOwnProperty.call(cls, REGISTRY_KEY) &&
+      (cls as Stamped)[REGISTRY_KEY] === this
+    ) {
+      delete (cls as Stamped)[REGISTRY_KEY];
     }
   }
 
@@ -126,3 +155,18 @@ export class ToolRegistry {
  * this module and so keeps the two out of a module-scope cycle.
  */
 export const defaultRegistry = new ToolRegistry(SavedToolDefaults);
+
+/**
+ * The registry `cls` was registered into, or the default one when it was registered
+ * nowhere. A subclass inherits its parent's answer through the static prototype chain,
+ * deliberately: an unregistered subclass belongs wherever its parent does, and falling
+ * back to the default registry instead would send it to a different one's defaults.
+ */
+export function registryOf(cls: IToolOpConstructor | MacroClassType): ToolRegistry {
+  return (cls as Stamped)[REGISTRY_KEY] ?? defaultRegistry;
+}
+
+/** The saved input values `cls` reads its defaults out of. */
+export function defaultsFor(cls: IToolOpConstructor | MacroClassType): ToolPropertyCache {
+  return registryOf(cls).defaults;
+}

@@ -2,11 +2,10 @@
 import nstructjs from "../util/struct";
 
 import { StructableClass, StructReader } from "../util/nstructjs";
-import { SavedToolDefaults } from "./tooldefaults";
 import { PropFlags, ToolProperty } from "./toolprop";
 import { IToolOpConstructor, ResolvedToolDef, ToolDef, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
-import { defaultRegistry } from "./toolregistry";
+import { defaultRegistry, defaultsFor, registryOf } from "./toolregistry";
 
 /** The default registry's generated macro classes, by identity. */
 export const MacroClasses: Record<string, MacroClassType> = defaultRegistry.macros;
@@ -127,6 +126,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       return this._macro_class;
     }
 
+    const registry = registryOf(this.constructor as unknown as IToolOpConstructor);
+
     if (!this._macro_class) {
       this._macro_class = class MacroTypeClass extends ToolOp {
         static override tooldef(): ToolDef {
@@ -138,6 +139,9 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
         toolpath: (this.constructor as unknown as IToolOpConstructor).tooldef().toolpath || "",
       };
       this._macro_class.ready = false;
+
+      // Nothing else would: a macro type class never passes through register()
+      registry.stamp(this._macro_class);
     }
 
     if (!this.tools || this.tools.length === 0) {
@@ -148,7 +152,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     let key = "";
     for (const tool of this.tools) {
-      key = tool.constructor.name + ":";
+      key += tool.constructor.name + ":";
     }
 
     /* Handle child classes of ToolMacro */
@@ -160,8 +164,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       key += k + ":";
     }
 
-    if (key in MacroClasses) {
-      this._macro_class = MacroClasses[key];
+    if (key in registry.macros) {
+      this._macro_class = registry.macros[key];
       return this._macro_class;
     }
 
@@ -207,6 +211,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
 
     const cls = this._macro_class;
     cls.__tooldef = tdef;
+    // Type ids stay process-wide even where the macro does not: two registries handing
+    // out the same id would collide in a saved file
     cls._macroTypeId = defaultRegistry.macroIdGen++;
     cls.ready = true;
 
@@ -221,7 +227,7 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       }
     };//*/
 
-    MacroClasses[key] = cls;
+    registry.macros[key] = cls;
 
     return cls;
   }
@@ -233,7 +239,8 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       const prop = inputs[k];
 
       if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
-        SavedToolDefaults.set(this._getTypeClass(), k, prop);
+        const cls = this._getTypeClass();
+        defaultsFor(cls).set(cls, k, prop);
       }
     }
 
@@ -241,14 +248,16 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
   }
 
   override hasDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): boolean {
-    return SavedToolDefaults.has(this._getTypeClass(), key, toolprop);
+    const cls = this._getTypeClass();
+    return defaultsFor(cls).has(cls, key, toolprop);
   }
 
   override getDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): unknown {
     const cls = this._getTypeClass();
+    const defaults = defaultsFor(cls);
 
-    if (SavedToolDefaults.has(cls, key, toolprop)) {
-      return SavedToolDefaults.get(cls, key, toolprop);
+    if (defaults.has(cls, key, toolprop)) {
+      return defaults.get(cls, key, toolprop);
     } else {
       return toolprop.getValue();
     }

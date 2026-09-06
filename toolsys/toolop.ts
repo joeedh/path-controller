@@ -73,8 +73,7 @@ import { keymap } from "../util/simple_events";
 import { PropFlags, PropTypes, ToolProperty } from "./toolprop";
 import { ContextLike, ToolOpAny } from "../controller";
 import { StructableClass, StructReader } from "../util/nstructjs";
-import { SavedToolDefaults } from "./tooldefaults";
-import { defaultRegistry } from "./toolregistry";
+import { defaultRegistry, defaultsFor } from "./toolregistry";
 
 /** The default registry's class list, by identity — the array `register` pushes to. */
 export const ToolClasses: IToolOpConstructor[] = defaultRegistry.classes;
@@ -585,6 +584,11 @@ export class ToolOp<
     nstructjs.register(cls as unknown as StructableClass);
   }
 
+  /**
+   * Whether `cls` is in the *default* registry. `ToolOp`'s statics are that registry's
+   * API, so a class registered only into another one answers `false` here — which is the
+   * answer `setDataPathToolOp` wants, since it re-registers into the default.
+   */
   static isRegistered(cls: IToolOpConstructor): boolean {
     return defaultRegistry.isRegistered(cls);
   }
@@ -724,27 +728,31 @@ export class ToolOp<
   }
 
   hasDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): boolean {
-    return SavedToolDefaults.has(this.constructor as unknown as IToolOpConstructor, key, toolprop);
+    const cls = this.constructor as unknown as IToolOpConstructor;
+    return defaultsFor(cls).has(cls, key, toolprop);
   }
 
   getDefault(toolprop: ToolProperty, key: string = toolprop.apiname ?? ""): unknown {
     const cls = this.constructor as unknown as IToolOpConstructor;
+    const defaults = defaultsFor(cls);
 
-    if (SavedToolDefaults.has(cls, key, toolprop)) {
-      return SavedToolDefaults.get(cls, key, toolprop);
+    if (defaults.has(cls, key, toolprop)) {
+      return defaults.get(cls, key, toolprop);
     } else {
       return toolprop.getValue();
     }
   }
 
   saveDefaultInputs(): this {
+    const cls = this.constructor as unknown as IToolOpConstructor;
+    const defaults = defaultsFor(cls);
     const inputs = this.inputs;
 
     for (const k in inputs) {
       const prop = inputs[k];
 
       if (prop.flag & PropFlags.SAVE_LAST_VALUE) {
-        SavedToolDefaults.set(this.constructor as unknown as IToolOpConstructor, k, prop);
+        defaults.set(cls, k, prop);
       }
     }
 

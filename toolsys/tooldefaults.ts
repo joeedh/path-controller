@@ -102,7 +102,12 @@ export class ToolPropertyCache {
     prop2.description = prop2.description || prop2.uiname;
 
     st.add(dpath);
-    obj[name] = prop2.getValue();
+
+    // Seed only. Re-registering a class rebuilds its accessors, and assigning here
+    // unconditionally would throw away whatever saveDefaultInputs had put in
+    if (!(name in obj)) {
+      obj[name] = prop2.getValue();
+    }
   }
 
   _getAccessor(cls: IToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
