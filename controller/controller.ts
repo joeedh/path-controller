@@ -584,15 +584,14 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
   }
 }
 
-let _map_struct_idgen = 1;
-const _map_structs = {} as { [k: string]: DataStruct };
+/** Every class mapped through the global registry. Weak, so a dead class takes its struct. */
+const _map_structs = new WeakMap<object, DataStruct>();
 /** Reverse index: stable (mangle-proof) struct name → DataStruct. See `resolveStructName`. */
 const _map_structs_by_name = {} as { [k: string]: DataStruct };
 
 const _dummypath = new DataPath();
 
 const DummyIntProperty = new IntProperty();
-const CLS_API_KEY = Symbol("dp_map_id");
 const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
 
 /**
@@ -619,7 +618,7 @@ function resolveStructName(cls: any, explicit?: string): string {
   return cls.name;
 }
 
-export type BoundConstructor = (abstract new (...args: any[]) => any) & { [CLS_API_KEY]?: string };
+export type BoundConstructor = abstract new (...args: any[]) => any;
 
 /**
  * Augmentable seam mapping a wrapped model *type* to the datapaths that may be
@@ -710,7 +709,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
   /** Whether `mapStruct(cls, false)` would answer here, globally or from this api's own store. */
   hasStruct(cls: any) {
-    return this._localStructs.has(cls) || Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY);
+    return this._localStructs.has(cls) || _map_structs.has(cls);
   }
 
   getStruct(cls: any) {
@@ -849,10 +848,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       return;
     }
 
-    const key = _map_struct_idgen++;
-    cls[CLS_API_KEY] = key;
-
-    _map_structs[key] = dstruct;
+    _map_structs.set(cls, dstruct);
     const existing = _map_structs_by_name[stableName];
     if (existing !== undefined && existing !== dstruct) {
       console.warn(
@@ -883,29 +879,26 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       return local as DataStruct<CTX, InstanceType<CLS>>;
     }
 
-    let key;
+    const mapped = _map_structs.get(cls);
 
-    if (!Object.prototype.hasOwnProperty.call(cls, CLS_API_KEY)) {
-      key = undefined;
-    } else {
-      key = cls[CLS_API_KEY];
+    if (mapped !== undefined) {
+      return mapped as DataStruct<CTX, InstanceType<CLS>>;
     }
 
-    if (key === undefined && auto_create) {
-      let dstruct: DataStruct<CTX, InstanceType<CLS>>;
-
-      if (name !== undefined && _map_structs_by_name[name] !== undefined) {
-        dstruct = _map_structs_by_name[name];
-      } else {
-        dstruct = new DataStruct<CTX, InstanceType<CLS>>(undefined, resolveStructName(cls, name));
-      }
-      this._addClass(cls, dstruct, name);
-      return dstruct;
-    } else if (key === undefined) {
+    if (!auto_create) {
       throw new Error("class does not have a struct definition: " + resolveStructName(cls, name));
     }
 
-    return _map_structs[key];
+    let dstruct: DataStruct<CTX, InstanceType<CLS>>;
+
+    if (name !== undefined && _map_structs_by_name[name] !== undefined) {
+      dstruct = _map_structs_by_name[name];
+    } else {
+      dstruct = new DataStruct<CTX, InstanceType<CLS>>(undefined, resolveStructName(cls, name));
+    }
+
+    this._addClass(cls, dstruct, name);
+    return dstruct;
   }
 
   //used for tagging error messages
