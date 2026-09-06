@@ -35,10 +35,7 @@ export type INumVectorLimited<LEN extends 0 | 1 | 2 | 3 | 4> = {
 };
 
 declare type INumVector =
-  | IOpenNumVector
-  | INumVectorLimited<2>
-  | INumVectorLimited<3>
-  | INumVectorLimited<4>;
+  IOpenNumVector | INumVectorLimited<2> | INumVectorLimited<3> | INumVectorLimited<4>;
 
 export type IndexUnion<L extends 0 | 1 | 2 | 3 | 4> = indexUnions[L];
 

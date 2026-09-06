@@ -7,10 +7,4 @@ export * from "./curve1d_bspline";
 export * from "./curve1d_anim";
 
 export type AllCurveTypes =
-  | BounceCurve
-  | ElasticCurve
-  | EaseCurve
-  | RandCurve
-  | EquationCurve
-  | GuassianCurve
-  | BSplineCurve;
+  BounceCurve | ElasticCurve | EaseCurve | RandCurve | EquationCurve | GuassianCurve | BSplineCurve;

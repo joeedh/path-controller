@@ -557,8 +557,7 @@ export class DataList<
   KeyType = any,
   ValType = any,
   CTX extends ContextLike = ContextLike,
-> implements ListIFace<DataAPIType, ListType, KeyType, ValType, CTX>
-{
+> implements ListIFace<DataAPIType, ListType, KeyType, ValType, CTX> {
   cb: ListCallbackMap;
 
   // XXX

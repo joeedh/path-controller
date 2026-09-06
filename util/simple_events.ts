@@ -590,8 +590,7 @@ export function pushModalLight(
     const screen = findScreen();
     if (screen) {
       const sarea = (screen.findScreenArea as Function)(mpos[0], mpos[1]) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       if (sarea?.area) {
         const area = sarea.area as Record<string, Function>;
         area.push_ctx_active();

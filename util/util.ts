@@ -262,9 +262,11 @@ export function isMobile(): boolean {
       // early exit
       result = true;
     } else {
-      mobileDetect = new (MobileDetect as unknown as new (ua: string) => {
-        mobile(): string | null;
-      })(navigator.userAgent);
+      mobileDetect = new (
+        MobileDetect as unknown as new (ua: string) => {
+          mobile(): string | null;
+        }
+      )(navigator.userAgent);
       result = mobileDetect!.mobile();
     }
 

@@ -370,7 +370,7 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
       }
     }
 
-    return prop.description ? prop.description : prop.uiname ?? "";
+    return prop.description ? prop.description : (prop.uiname ?? "");
   }
 
   validPath(ctx: CTX, path: string, rootStruct?: unknown): boolean {

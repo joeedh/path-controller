@@ -85,13 +85,7 @@ export const ToolClasses: IToolOpConstructor[] = [];
  * inner step, because an overridden one is opaque to the stack.
  */
 export type ToolExecPhase =
-  | "undo"
-  | "undoPre"
-  | "execPre"
-  | "exec"
-  | "execPost"
-  | "redo"
-  | "modalStart";
+  "undo" | "undoPre" | "execPre" | "exec" | "execPost" | "redo" | "modalStart";
 
 /** The phases that name a method `runToolPhases` can call. */
 export type RunnableToolPhase = Exclude<ToolExecPhase, "modalStart">;
@@ -275,7 +269,9 @@ export class ToolOp<
   OutputSlots extends PropertySlots = {},
   CTX extends ContextLike = ContextLike,
   ModalCTX extends CTX = CTX,
-> extends events.EventHandler {
+>
+  extends events.EventHandler
+{
   /**
    Main ToolOp constructor.  It reads the inputs/outputs properties from
    this.constructor.tooldef() and copies them to build this.inputs and this.outputs.
@@ -372,8 +368,7 @@ export class ToolOp<
 
           if (pdef[key] !== undefined) {
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
-              | Record<string, ToolProperty>
-              | InheritFlag;
+              Record<string, ToolProperty> | InheritFlag;
 
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
@@ -625,8 +620,7 @@ export class ToolOp<
 
           if (pdef[key] !== undefined) {
             let slots2: Record<string, ToolProperty> | InheritFlag = pdef[key] as
-              | Record<string, ToolProperty>
-              | InheritFlag;
+              Record<string, ToolProperty> | InheritFlag;
             if (slots2 instanceof InheritFlag) {
               slots2 = slots2.slots;
             }

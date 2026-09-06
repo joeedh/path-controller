@@ -18,7 +18,7 @@ export function rgb_to_hsv(r: number, g: number, b: number): number[] {
     computedV = minRGB;
 
     const ret = rgb_to_hsv_rets.next();
-    (ret[0] = 0), (ret[1] = 0), (ret[2] = computedV);
+    ((ret[0] = 0), (ret[1] = 0), (ret[2] = computedV));
     return ret;
   }
 
@@ -31,7 +31,7 @@ export function rgb_to_hsv(r: number, g: number, b: number): number[] {
   computedV = maxRGB;
 
   const ret = rgb_to_hsv_rets.next();
-  (ret[0] = computedH), (ret[1] = computedS), (ret[2] = computedV);
+  ((ret[0] = computedH), (ret[1] = computedS), (ret[2] = computedV));
   return ret;
 }
 
