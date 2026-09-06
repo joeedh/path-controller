@@ -126,6 +126,31 @@ export async function runToolPhases<CTX extends ContextLike>(
 
 const REDO_PHASES = ["undoPre", "execPre", "exec", "execPost"] as const;
 
+/**
+ * An op that can absorb a later invocation of itself, so a gesture sending one
+ * op per frame leaves a single undo entry holding the last value.
+ */
+export interface FoldableToolOp<CTX extends ContextLike = ContextLike> {
+  /**
+   * Coalescing identity. Two ops of the same class fold when their keys match,
+   * so anything that must end a run — a different widget, a different path, an
+   * `undoBreakPoint` — belongs in the key.
+   */
+  foldKey(): string;
+
+  /**
+   * Absorbs `next`'s inputs and applies them, keeping the undo snapshot taken
+   * when this op was pushed. Runs in place of the whole lifecycle, so it has to
+   * extend that snapshot itself if what the op writes has widened.
+   */
+  foldFrom(next: this, ctx: CTX): void | Promise<void>;
+}
+
+export function isFoldableToolOp(op: unknown): op is ToolOpAny & FoldableToolOp {
+  const candidate = op as Partial<FoldableToolOp> | undefined;
+  return typeof candidate?.foldKey === "function" && typeof candidate?.foldFrom === "function";
+}
+
 export const ToolFlags: Record<string, number> = {
   PRIVATE: 1,
 };

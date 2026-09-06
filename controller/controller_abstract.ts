@@ -17,7 +17,7 @@ export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
 // this interface exists to avoid circular type references, bleh
 export interface IToolStack {
-  head: Promise<ToolOpAny|undefined>;
+  head: Promise<ToolOpAny | undefined>;
   [k: number]: ToolOpAny;
   length: number;
   cur: number;
@@ -27,6 +27,8 @@ export interface IToolStack {
   reset(ctx?: unknown): void;
   execOrRedo(ctx: unknown, tool: ToolOpAny, compareInputs?: boolean): Promise<boolean>;
   execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): Promise<void>;
+  /** Runs the op, or folds it into a matching head; true when it pushed. */
+  foldOrExec(ctx: unknown, toolop: ToolOpAny): Promise<boolean>;
   toolCancel(ctx: unknown, toolop: ToolOpAny): void;
   undo(ctx: unknown): Promise<void>;
   redo(ctx: unknown): Promise<void>;

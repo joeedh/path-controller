@@ -185,6 +185,63 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
     );
   }
 
+  foldKey(): string {
+    return this.hashThis();
+  }
+
+  foldFrom(next: this, ctx: CTX): void | Promise<void> {
+    //use saved ctx we got from modal start
+    const opCtx = this.__ctx ?? ctx;
+
+    const apply = () => {
+      this.inputs.prop.setValue(next.inputs.prop.getValue());
+      this.inputs.flagBit.setValue(next.inputs.flagBit.getValue());
+      this.inputs.useFlagBit.setValue(next.inputs.useFlagBit.getValue());
+
+      this.exec(opCtx);
+    };
+
+    // Stays synchronous unless a subclass overrode extendUndo with an async one,
+    // since this runs once per drag frame
+    const extended = this.extendUndo(opCtx);
+    return extended instanceof Promise ? extended.then(apply) : apply();
+  }
+
+  /**
+   * Snapshots mass-set paths that were not in the set when `undoPre` ran, so a
+   * fold can keep that snapshot instead of retaking it.
+   *
+   * The filter re-evaluates every frame, so an object entering the selection
+   * mid-drag gets written by `exec` and would otherwise have nothing to restore.
+   * Existing entries are never overwritten — they hold the pre-drag values.
+   */
+  extendUndo(ctx: CTX): void | Promise<void> {
+    const undo = this._undo;
+
+    if (undo === undefined || this.inputs.fullSaveUndo.getValue()) {
+      return;
+    }
+
+    const massSetPath = (this.inputs.massSetPath.getValue() as string).trim();
+    if (!massSetPath) {
+      return;
+    }
+
+    for (const path of ctx.api.resolveMassSetPaths(ctx, massSetPath)) {
+      if (path in undo) {
+        continue;
+      }
+
+      let val = ctx.api.getValue(ctx, path) as unknown;
+
+      if (typeof val === "object" && val !== null) {
+        val = (val as { copy(): unknown }).copy();
+      }
+
+      undo[path] = val;
+    }
+  }
+
   undoPre(ctx: CTX) {
     if (this.inputs.fullSaveUndo.getValue()) {
       return super.undoPre(ctx);

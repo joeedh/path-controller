@@ -2,7 +2,7 @@
 import nstructjs from "../util/struct";
 import * as util from "../util/util";
 import { StructReader } from "../util/nstructjs";
-import { runToolPhases, UndoFlags } from "./toolop";
+import { isFoldableToolOp, runToolPhases, UndoFlags } from "./toolop";
 import type { RunnableToolPhase, ToolExecPhase } from "./toolop";
 import { IToolOpConstructor, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
@@ -275,6 +275,38 @@ export class ToolStack<
     }
     undoflag = undoflag === undefined ? 0 : undoflag;
     return undoflag;
+  }
+
+  /**
+   * Runs `toolop`, or folds it into the head when the two are the same foldable
+   * class and their keys match. Returns true when a new entry was pushed.
+   *
+   * The test and the write share one protected region, so nothing can move the
+   * head between them — which is why a gesture coalesces here rather than by
+   * reading `head` and driving `undo`/`redo` itself.
+   */
+  async foldOrExec(ctx: ContextCls, toolop: ToolOpAny): Promise<boolean> {
+    return this.protect("foldOrExec", async () => {
+      const head = this[this.cur] as ToolOpAny | undefined;
+
+      // Folding into an entry with a redo branch after it would leave the branch
+      // standing over a value it was never built against
+      const atHead = this.cur === this.length - 1;
+
+      if (
+        atHead &&
+        head?.constructor === toolop.constructor &&
+        isFoldableToolOp(head) &&
+        isFoldableToolOp(toolop) &&
+        head.foldKey() === toolop.foldKey()
+      ) {
+        await asyncCheck(head.foldFrom(toolop as typeof head, ctx));
+        return false;
+      }
+
+      await this._execTool(ctx, toolop);
+      return true;
+    });
   }
 
   async execTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
