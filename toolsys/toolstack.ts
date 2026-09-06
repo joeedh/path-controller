@@ -2,7 +2,7 @@
 import nstructjs from "../util/struct";
 import * as util from "../util/util";
 import { StructReader } from "../util/nstructjs";
-import { toolopCanRunAsync, UndoFlags } from "./toolop";
+import { UndoFlags } from "./toolop";
 import { IToolOpConstructor, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 
@@ -75,8 +75,8 @@ export class ToolStack<
     this.splice(0, 0, tool);
   }
 
-  get head(): (typeof this)[0] | undefined {
-    return this[this.cur];
+  get head(): Promise<ToolOpAny | undefined> {
+    return this.protect("toolstackHead", async () => this[this.cur]);
   }
 
   limitMemory(maxmem: number = this.memLimit, ctx = this.ctx): number {
@@ -240,7 +240,7 @@ export class ToolStack<
     tool: ToolOp<any, any, ContextCls, ModalContextCls>,
     compareInputs: boolean
   ): Promise<boolean> {
-    const head = this.head;
+    const head = this[this.cur]!;
 
     const ok = compareInputs
       ? ToolOp.Equals<ContextCls, ModalContextCls>(head, tool)
@@ -257,12 +257,12 @@ export class ToolStack<
       } else {
         //inputs may differ, so drop the head and execute the new instance
         await this._undo();
-        await this._pushTool(ctx, tool);
+        await this._execTool(ctx, tool);
       }
 
       return false;
     } else {
-      await this._pushTool(ctx, tool);
+      await this._execTool(ctx, tool);
       return true;
     }
   }
@@ -276,19 +276,22 @@ export class ToolStack<
     return undoflag;
   }
 
-  /**
-   * Pushes a tool onto the toolstack and returns a promise that resolves when
-   * the tool finishes. A modal tool resolves once it has taken the modal
-   * stack, not when the gesture ends.
-   *
-   * The push waits for any operation already running, so tools queue rather
-   * than interleave.
-   **/
-  pushTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
-    return this.protect("pushTool", () => this._pushTool(ctx, toolop, event));
+  async execTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+    return this.protect("execTool", () => {
+      return this._execTool(ctx, toolop, event);
+    });
   }
 
-  private async _pushTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+  private async _execTool(
+    ctx: ContextCls | ModalContextCls,
+    toolop: this[0] | ToolOpAny,
+    event?: PointerEvent
+  ): Promise<void> {
+    // Mutates the stack without taking the lock, so every caller must already hold it
+    if (!this.locked) {
+      throw new Error("_execTool ran outside a protected region");
+    }
+
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx as ContextCls);
     }
@@ -305,20 +308,6 @@ export class ToolStack<
       //truncate
       this.length = this.cur + 1;
     }
-
-    return await this._execToolTail(ctx, toolop, event);
-  }
-
-  async execTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
-    return await this.pushTool(ctx, toolop, event);
-  }
-
-  private async _execToolTail(
-    ctx: ContextCls | ModalContextCls,
-    toolop: this[0] | ToolOpAny,
-    event?: PointerEvent
-  ): Promise<void> {
-    const undoflag = this.getUndoFlag(toolop);
 
     if (!("toLocked" in ctx)) {
       console.warn("warning: context does not support locking, could lead to undo errors");

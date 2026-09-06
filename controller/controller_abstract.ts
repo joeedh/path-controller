@@ -17,7 +17,7 @@ export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 
 // this interface exists to avoid circular type references, bleh
 export interface IToolStack {
-  head?: ToolOpAny;
+  head: Promise<ToolOpAny|undefined>;
   [k: number]: ToolOpAny;
   length: number;
   cur: number;
@@ -27,11 +27,6 @@ export interface IToolStack {
   reset(ctx?: unknown): void;
   execOrRedo(ctx: unknown, tool: ToolOpAny, compareInputs?: boolean): Promise<boolean>;
   execTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): Promise<void>;
-  /**
-   * Immediately pushes a tool onto the toolstack
-   * and returns a promise that resolves when tool finishes
-   **/
-  pushTool(ctx: unknown, toolop: ToolOpAny, event?: PointerEvent): Promise<void>;
   toolCancel(ctx: unknown, toolop: ToolOpAny): void;
   undo(ctx: unknown): Promise<void>;
   redo(ctx: unknown): Promise<void>;
@@ -104,40 +99,17 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return ctx.toolstack.execOrRedo(ctx, toolop, compareInputs);
   }
 
-  execToolAsync<T extends ToolOpAny | unknown = unknown>(
-    ctx: CTX,
-    path: string | (T extends ToolOpAny ? T : ToolOpAny),
-    inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
-    unused?: unknown,
-    event?: PointerEvent | undefined
-  ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
-    return this.execToolImpl(ctx, path, inputs, unused, event, true);
-  }
-
   /**
-   *  Unlike toolstack.execTool, this resolves before the tool is run
-   *  so the client can modify the class first.  Use execToolAsync
-   *  if you need to wait for the tool to execute.
-   *
-   *  Note: this will not wait for fully modal tools to complete.
+   *  Note: modal tools resolve on aquiring the modal stack,
+   *  not tool modal end.
    */
   execTool<T extends ToolOpAny | unknown = unknown>(
     ctx: CTX,
     path: string | (T extends ToolOpAny ? T : ToolOpAny),
     inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
     unused?: unknown,
-    event?: PointerEvent | undefined
-  ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
-    return this.execToolImpl(ctx, path, inputs, unused, event, false);
-  }
-
-  private execToolImpl<T extends ToolOpAny | unknown = unknown>(
-    ctx: CTX,
-    path: string | (T extends ToolOpAny ? T : ToolOpAny),
-    inputs?: T extends ToolOpAny ? Partial<ReturnType<T["getInputs"]>> : Record<string, any>,
-    unused?: unknown,
     event?: PointerEvent | undefined,
-    resolveBeforeRun = true
+    resolveBeforeRun = false
   ): Promise<T extends ToolOpAny ? T : ToolOpAny> {
     type Tool = T extends ToolOpAny ? T : ToolOpAny;
 

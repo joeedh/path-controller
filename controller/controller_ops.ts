@@ -31,6 +31,9 @@ export class DataPathSetOp<CTX extends ContextLike = ContextLike> extends ToolOp
 > {
   propType: number;
   _undo: Record<string, unknown> | undefined;
+  // XXX it may now be safe to allow this to propagate,
+  // we can have try/catch in the toolstack itself where
+  // necessary
   hadError: boolean;
   id: unknown;
   __ctx?: CTX;
