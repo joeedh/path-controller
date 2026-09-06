@@ -886,7 +886,11 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
 
     if (!auto_create) {
-      throw new Error("class does not have a struct definition: " + resolveStructName(cls, name));
+      // DataPathError, so resolvePath records it on lastResolveError instead of printing a
+      // stack; the path still resolves to undefined either way
+      throw new DataPathError(
+        "class does not have a struct definition: " + resolveStructName(cls, name)
+      );
     }
 
     let dstruct: DataStruct<CTX, InstanceType<CLS>>;
