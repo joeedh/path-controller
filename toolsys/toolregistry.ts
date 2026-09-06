@@ -16,6 +16,9 @@ const REGISTRY_KEY = Symbol("toolRegistry");
 /** A tool class carrying the mark `register` leaves on it. */
 type Stamped = { [REGISTRY_KEY]?: ToolRegistry };
 
+/** Names the struct of a registry that was not given one. See `structName`. */
+let structNameGen = 0;
+
 /**
  * The tool tables on an object, so a subsystem can be handed its own set.
  *
@@ -42,8 +45,15 @@ export class ToolRegistry {
    */
   macroIdGen = 0;
 
-  constructor(defaults: ToolPropertyCache = new ToolPropertyCache()) {
+  /**
+   * The name `defaults`'s struct is registered under. Must differ between registries, or
+   * `mapStruct` hands the second one the first's struct by name.
+   */
+  readonly structName: string;
+
+  constructor(defaults: ToolPropertyCache = new ToolPropertyCache(), structName?: string) {
     this.defaults = defaults;
+    this.structName = structName ?? `ToolPropertyCache.${++structNameGen}`;
   }
 
   register(cls: IToolOpConstructor): void {
@@ -177,6 +187,33 @@ export class ToolRegistry {
     }
   }
 
+  /**
+   * The datapath binding for `defaults`, which `ctx.toolDefaults` resolves through.
+   *
+   * Keyed on the cache instance rather than on `ToolPropertyCache`, because the struct's
+   * shape comes from the registered tools rather than from the class: keying on the class
+   * gives every registry the same struct, and `buildAPI` then clears one registry's
+   * accessors while building another's. `mapStruct` keys on object identity, so an
+   * instance works the same way the accessor objects `_buildAccessors` maps do.
+   */
+  structFor(api: DataAPI): DataStruct {
+    return api.mapStruct(this.defaults as never, true, this.structName);
+  }
+
+  /** Rebuilds `api`'s bindings for every class registered here. */
+  buildAPI(api: DataAPI): DataStruct {
+    const dstruct = this.structFor(api);
+
+    // Safe to wipe: it is this registry's own, so nothing else has built into it
+    dstruct.clear();
+
+    for (const cls of this.classes) {
+      this.updateDefaults(cls, api, dstruct);
+    }
+
+    return dstruct;
+  }
+
   /** Gives `cls` a struct whose paths read and write a live op's inputs. */
   buildOpAPI(api: DataAPI, cls: IToolOpConstructor): unknown {
     const st = api.mapStruct(cls, true);
@@ -219,8 +256,11 @@ export class ToolRegistry {
  * The registry every module-level tool table names. It takes `SavedToolDefaults` rather
  * than building a cache of its own, which keeps `tooldefaults.ts` free of any import of
  * this module and so keeps the two out of a module-scope cycle.
+ *
+ * Its struct keeps the class's own name, so `getStructByName("ToolPropertyCache")` still
+ * answers with the struct it did before registries existed.
  */
-export const defaultRegistry = new ToolRegistry(SavedToolDefaults);
+export const defaultRegistry = new ToolRegistry(SavedToolDefaults, "ToolPropertyCache");
 
 /**
  * The registry `cls` was registered into, or the default one when it was registered

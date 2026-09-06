@@ -3,8 +3,7 @@ import type { ContextLike, DataAPI, DataStruct } from "../controller";
 import { StructableClass } from "../util/nstructjs";
 import { Context } from "../controller/context";
 import type { ToolStack } from "./toolstack";
-import { IToolOpConstructor, ToolClasses, ToolOp } from "./toolop";
-import { ToolPropertyCache } from "./tooldefaults";
+import { IToolOpConstructor, ToolOp } from "./toolop";
 import { defaultRegistry } from "./toolregistry";
 
 /** @deprecated */
@@ -25,13 +24,9 @@ export function updateToolDefaults(
   defaultRegistry.updateDefaults(cls, api, datastruct);
 }
 
+/** Calls `buildAPI` on whichever registry `api` carries. */
 export function updateToolSysAPI(api: DataAPI): void {
-  const datastruct = api.mapStruct(ToolPropertyCache, true);
-  datastruct.clear();
-
-  for (const cls of ToolClasses) {
-    updateToolDefaults(cls, api, datastruct);
-  }
+  api.registry.buildAPI(api);
 }
 
 /** Calls `buildOpAPI` on the default registry. */
@@ -60,7 +55,7 @@ export function buildToolSysAPI(
       "toolDefaults",
       "toolDefaults",
       "Tool Defaults",
-      api.mapStruct(ToolPropertyCache)
+      api.registry.structFor(api)
     );
     rootCtxStruct.dynamicStruct("last_tool", "last_tool", "Last Tool");
   }
@@ -106,7 +101,7 @@ export function buildToolSysAPI(
   }
 
   //register tools with nstructjs
-  for (const cls of ToolClasses) {
+  for (const cls of api.registry.classes) {
     try {
       if (!nstructjs.isRegistered(cls as unknown as StructableClass)) {
         ToolOp._regWithNstructjs(cls);

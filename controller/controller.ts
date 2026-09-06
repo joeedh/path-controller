@@ -25,17 +25,14 @@
 
  //map MyContextClass to a struct, true tells mapStruct to auto-create
  //the struct if it doesn't already exist.
- //
- //MyContextClass should have a member "propCache" pointing at SavedToolDefaults.
  let st = api.mapStruct(MyContextClass, true);
+ api.setRoot(st);
 
  //set fields of struct, e.g. st.int, st.float, st.enum, st.struct, etc
 
- //build toolsys api
- buildToolSysAPI(api);
-
- //create bindings for default tool operator settings
- cstruct.struct("propCache", "toolDefaults", "Tool Defaults", api.mapStruct(ToolPropertyCache));
+ //build toolsys api. Passing the root struct and its class adds the bindings for
+ //default tool operator settings, and a ".toolDefaults" getter reaching api.registry
+ buildToolSysAPI(api, true, st, MyContextClass);
 
  return api;
  }
