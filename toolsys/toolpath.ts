@@ -1,142 +1,16 @@
-import { ToolClasses, ToolOp } from "./toolop";
+import type { ToolOp } from "./toolop";
 import { defaultRegistry } from "./toolregistry";
-import { tokdef, lexer, parser, PUTLParseError } from "../util/parseutil";
-import { DataPathError } from "../controller/controller_base";
+import type { ParseToolPathResult } from "./toolpath_parser";
+
+export { buildParser, Parser } from "./toolpath_parser";
+export type { ParseToolPathResult } from "./toolpath_parser";
 
 /** The default registry's toolpath map, by identity. */
 export const ToolPaths: Record<string, typeof ToolOp> = defaultRegistry.paths;
 
-export function buildParser(): InstanceType<typeof parser> {
-  type Tok = { type: string; value: string | number | boolean };
-  const t = (name: string, re: RegExp, func?: (tok: Tok) => Tok | undefined) =>
-    new tokdef(name, re, func as unknown as undefined);
-
-  const tokens = [
-    t("ID", /[a-zA-Z_$]+[a-zA-Z0-9_$]*/, (tok: Tok) => {
-      if (tok.value === "true" || tok.value === "false") {
-        tok.type = "BOOL";
-        tok.value = tok.value === "true";
-      }
-      return tok;
-    }),
-    t("LPAREN", /\(/),
-    t("RPAREN", /\)/),
-    t("LSBRACKET", /\[/),
-    t("RSBRACKET", /\]/),
-    t("DOT", /\./),
-    t("COMMA", /,/),
-    t("EQUALS", /=/),
-    t("STRLIT", /"[^"]*"/, (tok: Tok) => {
-      tok.value = (tok.value as string).slice(1, (tok.value as string).length - 1);
-      return tok;
-    }),
-    t("STRLIT", /'[^']*'/, (tok: Tok) => {
-      tok.value = (tok.value as string).slice(1, (tok.value as string).length - 1);
-      return tok;
-    }),
-    t("NUMBER", /-?[0-9]+/, (tok: Tok) => {
-      tok.value = parseInt(tok.value as string);
-      return tok;
-    }),
-    t("NUMBER", /-?[0-9]+\.[0-9]*/, (tok: Tok) => {
-      tok.value = parseFloat(tok.value as string);
-      return tok;
-    }),
-    t("WS", /[ \n\r\t]/, () => undefined), //ignore whitespace
-  ];
-
-  const lexerror = () => {
-    console.warn("Parse error");
-    return true;
-  };
-
-  const valid_datatypes: Record<string, number> = {
-    STRLIT: 1,
-    NUMBER: 1,
-    BOOL  : 1,
-    ID    : 1,
-  };
-
-  function p_Start(p: InstanceType<typeof parser>): Record<string, unknown> {
-    const args: Record<string, unknown> = {};
-
-    while (!p.at_end()) {
-      const keyword = p.expect("ID") as string;
-      p.expect("EQUALS");
-
-      const t = p.next() as { type: string; value: unknown };
-      if (!(t.type in valid_datatypes)) {
-        throw new PUTLParseError("parse error: unexpected " + t.type);
-      }
-
-      args[keyword] = t.value;
-    }
-
-    return args;
-  }
-
-  const lex = new lexer(tokens, lexerror);
-  const p = new parser(lex);
-  p.start = p_Start;
-
-  return p;
-}
-
-export const Parser = buildParser();
-
-interface ParseToolPathResult {
-  toolclass: typeof ToolOp | undefined;
-  args: Record<string, unknown>;
-}
-
+/** Resolves against the default registry; an api resolves against its own. */
 export function parseToolPath(str: string, check_tool_exists: boolean = true): ParseToolPathResult {
-  if (!defaultRegistry.pathsScanned) {
-    defaultRegistry.pathsScanned = true;
-    initToolPaths();
-  }
-
-  const startstr = str;
-
-  const i1 = str.search(/\(/);
-  const i2 = str.search(/\)/);
-  let argsStr = "";
-
-  if (i1 >= 0 && i2 >= 0) {
-    argsStr = str.slice(i1 + 1, i2).trim();
-    str = str.slice(0, i1).trim();
-  }
-
-  // The scan above runs once, so an addon enabled later registers its ToolOps
-  // behind it: a miss means the map may be stale, not that the tool is absent.
-  if (!(str in ToolPaths)) {
-    initToolPaths();
-  }
-
-  if (!(str in ToolPaths) && check_tool_exists) {
-    throw new DataPathError("unknown tool " + str);
-  }
-
-  let args: Record<string, unknown>;
-
-  try {
-    args = Parser.parse(argsStr) as Record<string, unknown>;
-  } catch (error) {
-    console.log(error);
-    throw new DataPathError(`"${startstr}"\n  ${(error as Error).message}`);
-  }
-
-  const toolclass = ToolPaths[str];
-
-  if (toolclass !== undefined) {
-    // note: we parse args here for validation,
-    // args are also parsed in the invoke static method.
-    args = toolclass.parseArgs(args);
-  }
-
-  return {
-    toolclass,
-    args,
-  };
+  return defaultRegistry.parseToolPath(str, check_tool_exists);
 }
 
 export function testToolParser(): ParseToolPathResult {
@@ -146,17 +20,7 @@ export function testToolParser(): ParseToolPathResult {
 
 window.parseToolPath = parseToolPath;
 
-//tool path parser for simple_toolsys.js
+/** Walks the default registry's registered classes into its toolpath map. */
 export function initToolPaths(): void {
-  for (const cls of ToolClasses) {
-    if (!Object.prototype.hasOwnProperty.call(cls, "tooldef")) {
-      //ignore abstract classes
-      continue;
-    }
-
-    const def = (cls as unknown as { tooldef(): Record<string, unknown> }).tooldef();
-    const path = def.toolpath as string;
-
-    ToolPaths[path] = cls as unknown as typeof ToolOp;
-  }
+  defaultRegistry.initPaths();
 }

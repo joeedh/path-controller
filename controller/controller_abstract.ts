@@ -9,6 +9,8 @@ import {
   ToolProperty,
 } from "../toolsys";
 import { DataList, DataPath, DataPathError } from "./controller_base";
+import { defaultRegistry } from "../toolsys/toolregistry";
+import type { ToolRegistry } from "../toolsys/toolregistry";
 import { notifyPathChange } from "./pathwatch";
 import type { DataAPI, DataStruct } from "./controller";
 import type { Screen } from "../../screen/FrameManager";
@@ -64,8 +66,15 @@ export interface ResolvePathResult {
 export class ModelInterface<CTX extends ContextLike = ContextLike> {
   prefix: string;
 
+  /**
+   * The tool tables this api resolves toolpaths and tool defaults against. Assigning a
+   * second registry here is how a subsystem gets its own namespace.
+   */
+  registry: ToolRegistry;
+
   constructor() {
     this.prefix = "";
+    this.registry = defaultRegistry;
   }
 
   getToolDef(path: string): ToolDef | undefined {

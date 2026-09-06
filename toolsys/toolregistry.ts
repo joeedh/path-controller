@@ -1,9 +1,11 @@
-import { DataPath } from "../controller/controller_base";
+import { DataPath, DataPathError } from "../controller/controller_base";
 import type { DataAPI, DataStruct } from "../controller";
 import { PropFlags, ToolProperty } from "./toolprop";
 import { SavedToolDefaults, ToolPropertyCache } from "./tooldefaults";
 import type { IToolOpConstructor, ToolOp } from "./toolop";
 import type { MacroClassType } from "./toolmacro";
+import { Parser } from "./toolpath_parser";
+import type { ParseToolPathResult } from "./toolpath_parser";
 
 /**
  * Marks the registry a class belongs to. A symbol so it cannot collide with a tooldef
@@ -82,6 +84,70 @@ export class ToolRegistry {
 
   isRegistered(cls: IToolOpConstructor): boolean {
     return this.classes.includes(cls);
+  }
+
+  /** Walks the registered classes into the toolpath map. */
+  initPaths(): void {
+    for (const cls of this.classes) {
+      if (!Object.prototype.hasOwnProperty.call(cls, "tooldef")) {
+        //ignore abstract classes
+        continue;
+      }
+
+      const def = cls.tooldef();
+      this.paths[def.toolpath as string] = cls as unknown as typeof ToolOp;
+    }
+  }
+
+  /** Resolves `"some.tool(a=1 b='x')"` to the class and its parsed arguments. */
+  parseToolPath(str: string, checkExists: boolean = true): ParseToolPathResult {
+    if (!this.pathsScanned) {
+      this.pathsScanned = true;
+      this.initPaths();
+    }
+
+    const startstr = str;
+
+    const i1 = str.search(/\(/);
+    const i2 = str.search(/\)/);
+    let argsStr = "";
+
+    if (i1 >= 0 && i2 >= 0) {
+      argsStr = str.slice(i1 + 1, i2).trim();
+      str = str.slice(0, i1).trim();
+    }
+
+    // The scan above runs once, so an addon enabled later registers its ToolOps
+    // behind it: a miss means the map may be stale, not that the tool is absent.
+    if (!(str in this.paths)) {
+      this.initPaths();
+    }
+
+    if (!(str in this.paths) && checkExists) {
+      throw new DataPathError("unknown tool " + str);
+    }
+
+    let args: Record<string, unknown>;
+
+    try {
+      args = Parser.parse(argsStr) as Record<string, unknown>;
+    } catch (error) {
+      console.log(error);
+      throw new DataPathError(`"${startstr}"\n  ${(error as Error).message}`);
+    }
+
+    const toolclass = this.paths[str];
+
+    if (toolclass !== undefined) {
+      // note: we parse args here for validation,
+      // args are also parsed in the invoke static method.
+      args = toolclass.parseArgs(args);
+    }
+
+    return {
+      toolclass,
+      args,
+    };
   }
 
   /** Builds the accessors this registry's defaults cache reads `cls`'s inputs through. */

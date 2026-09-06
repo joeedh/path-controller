@@ -127,7 +127,7 @@ for (let i = 0; i < parserStack.length; i++) {
 let parserStackCur = 0;
 
 import { setImplementationClass } from "./controller_base";
-import { initToolPaths, parseToolPath } from "../toolsys/toolpath";
+import { initToolPaths } from "../toolsys/toolpath";
 import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract";
 
 export { DataPathError, DataFlags } from "./controller_base";
@@ -1653,7 +1653,7 @@ An example of a more complicated expression might be:
 
   parseToolPath(path: string) {
     try {
-      return parseToolPath(path).toolclass;
+      return this.registry.parseToolPath(path).toolclass;
     } catch (error) {
       if (error instanceof DataPathError) {
         console.warn("warning, bad tool path " + path);
@@ -1665,7 +1665,7 @@ An example of a more complicated expression might be:
   }
 
   parseToolArgs(path: string) {
-    return parseToolPath(path).args;
+    return this.registry.parseToolPath(path).args;
   }
 
   createTool<T extends ToolOp = ToolOp>(ctx: CTX, path: string, inputs: any = {}): T {
@@ -1674,7 +1674,7 @@ An example of a more complicated expression might be:
 
     if (typeof path == "string") {
       //parseToolPath will raise DataPathError if path is malformed
-      const tpath = parseToolPath(path);
+      const tpath = this.registry.parseToolPath(path);
 
       cls = tpath.toolclass;
       args = tpath.args;

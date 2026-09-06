@@ -4,7 +4,7 @@ import { StructableClass } from "../util/nstructjs";
 import { Context } from "../controller/context";
 import type { ToolStack } from "./toolstack";
 import { IToolOpConstructor, ToolClasses, ToolOp } from "./toolop";
-import { SavedToolDefaults, ToolPropertyCache } from "./tooldefaults";
+import { ToolPropertyCache } from "./tooldefaults";
 import { defaultRegistry } from "./toolregistry";
 
 /** @deprecated */
@@ -90,7 +90,7 @@ export function buildToolSysAPI(
     if (!haveprop("toolDefaults")) {
       Object.defineProperty(rootCtxClass.prototype, "toolDefaults", {
         get() {
-          return SavedToolDefaults;
+          return api.registry.defaults;
         },
       });
 
