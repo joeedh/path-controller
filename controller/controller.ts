@@ -584,11 +584,6 @@ export class DataStruct<CTX extends ContextLike = ContextLike, STRUCT = unknown>
   }
 }
 
-/** Every class mapped through the global registry. Weak, so a dead class takes its struct. */
-const _map_structs = new WeakMap<object, DataStruct>();
-/** Reverse index: stable (mangle-proof) struct name → DataStruct. See `resolveStructName`. */
-const _map_structs_by_name = {} as { [k: string]: DataStruct };
-
 const _dummypath = new DataPath();
 
 const DummyIntProperty = new IntProperty();
@@ -659,12 +654,21 @@ export type StructUpdateMember<T> = StructEntryFor<T> extends { members: infer M
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
 
-  /** The structs this api created, in creation order. Not what it can reach. */
+  /** Every struct this api has mapped, in creation order. */
   structs: DataStruct[] = [];
 
+  /** This api's structs, keyed on the class. Weak, so a dead class takes its struct. */
+  private readonly _structsByClass = new WeakMap<object, DataStruct>();
+
   /**
-   * Structs mapped with `useGlobalRegistry: false`, which belong to this api alone. Weak so
-   * an opt-out cannot outlive the class it describes.
+   * Reverse index into the same structs, by the stable (mangle-proof) name
+   * `resolveStructName` derived. See `getStructByName`.
+   */
+  private readonly _structsByName: Record<string, DataStruct> = {};
+
+  /**
+   * Structs mapped with `useGlobalRegistry: false`, which stay out of `_structsByName`. Weak
+   * so an opt-out cannot outlive the class it describes.
    */
   private readonly _localStructs = new WeakMap<object, DataStruct>();
   /** Message from the most recent failed resolvePath (incl. "did you mean" hints). */
@@ -709,7 +713,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
   /** Whether `mapStruct(cls, false)` would answer here, globally or from this api's own store. */
   hasStruct(cls: any) {
-    return this._localStructs.has(cls) || _map_structs.has(cls);
+    return this._localStructs.has(cls) || this._structsByClass.has(cls);
   }
 
   getStruct(cls: any) {
@@ -804,7 +808,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
    * struct was registered with an nstructjs/explicit name.
    */
   getStructByName(name: string): DataStruct | undefined {
-    return _map_structs_by_name[name];
+    return this._structsByName[name];
   }
 
   mergeStructs(dest: DataStruct<CTX>, src: DataStruct<CTX>) {
@@ -848,15 +852,15 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       return;
     }
 
-    _map_structs.set(cls, dstruct);
-    const existing = _map_structs_by_name[stableName];
+    this._structsByClass.set(cls, dstruct);
+    const existing = this._structsByName[stableName];
     if (existing !== undefined && existing !== dstruct) {
       console.warn(
         `mapStruct: duplicate struct name "${stableName}"; keeping the first registration. ` +
           `Pass an explicit name to mapStruct/inheritStruct to disambiguate.`
       );
     } else {
-      _map_structs_by_name[stableName] = dstruct;
+      this._structsByName[stableName] = dstruct;
     }
   }
 
@@ -879,7 +883,7 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
       return local as DataStruct<CTX, InstanceType<CLS>>;
     }
 
-    const mapped = _map_structs.get(cls);
+    const mapped = this._structsByClass.get(cls);
 
     if (mapped !== undefined) {
       return mapped as DataStruct<CTX, InstanceType<CLS>>;
@@ -895,8 +899,8 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
     let dstruct: DataStruct<CTX, InstanceType<CLS>>;
 
-    if (name !== undefined && _map_structs_by_name[name] !== undefined) {
-      dstruct = _map_structs_by_name[name];
+    if (name !== undefined && this._structsByName[name] !== undefined) {
+      dstruct = this._structsByName[name];
     } else {
       dstruct = new DataStruct<CTX, InstanceType<CLS>>(undefined, resolveStructName(cls, name));
     }
