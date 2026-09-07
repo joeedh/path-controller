@@ -80,6 +80,14 @@ export class ToolStack<
     return this.protect("toolstackHead", async () => this[this.cur]);
   }
 
+  /**
+   * The op on top of the stack, read without queueing behind whatever holds the lock.
+   * `ctx.last_tool` binds through this, since a datapath resolver cannot await.
+   */
+  get headOp(): ToolOpAny | undefined {
+    return this[this.cur];
+  }
+
   limitMemory(maxmem: number = this.memLimit, ctx = this.ctx): number {
     if (maxmem === undefined) {
       throw new Error("maxmem cannot be undefined");

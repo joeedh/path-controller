@@ -22,6 +22,8 @@ export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
 // this interface exists to avoid circular type references, bleh
 export interface IToolStack {
   head: Promise<ToolOpAny | undefined>;
+  /** The same op as `head`, without the wait. */
+  headOp: ToolOpAny | undefined;
   [k: number]: ToolOpAny;
   length: number;
   cur: number;

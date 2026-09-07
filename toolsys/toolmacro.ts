@@ -257,6 +257,10 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     cls._macroTypeId = defaultRegistry.macroIdGen++;
     cls.ready = true;
 
+    // An api names a struct after the class it maps, and every generated class would
+    // otherwise answer "MacroTypeClass" and collide with the last macro's struct
+    Object.defineProperty(cls, "name", { value: key, configurable: true });
+
     /*
     let cls = {
       name : key,

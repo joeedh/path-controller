@@ -592,6 +592,12 @@ const _dummypath = new DataPath();
 const DummyIntProperty = new IntProperty();
 const CLS_API_KEY_CUSTOM = Symbol("dp_map_custom");
 
+/** What `mapStructCustom` takes: the struct to read one instance through. */
+export type CustomStructCB = (
+  instance: any,
+  api: DataAPI<any>
+) => DataStruct<any> | undefined | void;
+
 /**
  * Resolve the most stable name available for `cls`, in priority order:
  *
@@ -990,14 +996,19 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
     }
   }
 
-  /* Associate cls with a DataStruct
-   * via callback, which will be called
-   * with an instance of cls as its argument*/
+  /**
+   * Associates `cls` with a struct chosen per instance rather than per class. The callback
+   * is handed the instance and the api resolving it, and answers the struct to read it
+   * through; `undefined` falls back to the dynamic path's own default struct.
+   *
+   * The callback lives on the class, so two apis share one — which is why the api is
+   * passed in rather than closed over.
+   */
   mapStructCustom<
     CLS extends BoundConstructor & {
-      [CLS_API_KEY_CUSTOM]?: (instance: any) => void;
+      [CLS_API_KEY_CUSTOM]?: CustomStructCB;
     },
-  >(cls: CLS, callback: (instance: any) => void, name?: string) {
+  >(cls: CLS, callback: CustomStructCB, name?: string) {
     this.mapStruct<CLS>(cls, true, name);
     cls[CLS_API_KEY_CUSTOM] = callback;
   }
@@ -1373,7 +1384,7 @@ An example of a more complicated expression might be:
 
           if (obj2 !== undefined) {
             if (CLS_API_KEY_CUSTOM in obj2.constructor) {
-              dstruct = obj2.constructor[CLS_API_KEY_CUSTOM](obj2);
+              dstruct = obj2.constructor[CLS_API_KEY_CUSTOM](obj2, this) as DataStruct;
             } else {
               dstruct = this.mapStruct(obj2.constructor, false);
             }

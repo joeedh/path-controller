@@ -4,7 +4,8 @@ import { StructableClass } from "../util/nstructjs";
 import { Context } from "../controller/context";
 import type { ToolStack } from "./toolstack";
 import { IToolOpConstructor, ToolOp } from "./toolop";
-import { defaultRegistry } from "./toolregistry";
+import { ToolMacro } from "./toolmacro";
+import { defaultRegistry, registryOf } from "./toolregistry";
 
 /** @deprecated */
 export function setContextClass(_cls: unknown): void {
@@ -25,6 +26,27 @@ export function updateToolSysAPI(api: DataAPI): void {
   for (const registry of api.registries) {
     registry.buildAPI(api);
   }
+
+  buildMacroAPI(api);
+}
+
+/**
+ * Lets `ctx.last_tool.<input>` reach a running macro. A macro assembles its inputs in
+ * `add()` rather than declaring them, so one struct per class cannot describe it; the
+ * struct comes from the macro's own generated type class instead.
+ */
+function buildMacroAPI(api: DataAPI): void {
+  api.mapStructCustom(ToolMacro, (macro: ToolMacro<ContextLike>, resolving: DataAPI) => {
+    const cls = macro._getTypeClass();
+
+    // Until the macro has its tools the class is a placeholder that would cache an empty
+    // struct under the identity the finished one goes on to use
+    if (!cls.ready) {
+      return undefined;
+    }
+
+    return registryOf(cls).buildOpAPI(resolving, cls);
+  });
 }
 
 /** Calls `buildOpAPI` on the default registry. */
@@ -65,7 +87,7 @@ export function buildToolSysAPI(
     if (!haveprop("last_tool")) {
       Object.defineProperty(rootCtxClass.prototype, "last_tool", {
         get(this: Record<string, unknown>) {
-          return (this.toolstack as ToolStack).head;
+          return (this.toolstack as ToolStack).headOp;
         },
       });
 

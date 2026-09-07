@@ -298,8 +298,11 @@ export class ToolRegistry {
     return api.toolDefaultsStruct();
   }
 
-  /** Gives `cls` a struct whose paths read and write a live op's inputs. */
-  buildOpAPI(api: DataAPI, cls: IToolOpConstructor): unknown {
+  /**
+   * Gives `cls` a struct whose paths read and write a live op's inputs. Takes a macro type
+   * class too, which is how `ctx.last_tool` reaches a running macro's inputs.
+   */
+  buildOpAPI(api: DataAPI, cls: IToolOpConstructor | MacroClassType): DataStruct {
     const st = api.mapStruct(cls, true);
     const def = cls._getFinalToolDef();
 
