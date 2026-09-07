@@ -225,13 +225,18 @@ export async function toolopCanRunAsync<CTX extends ContextLike, ModalCTX extend
   return (await toolopRefusal(ctx, cls, toolop)) === undefined;
 }
 
-/** The refusal sentence, or undefined when the tool may run. */
-export async function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
+/**
+ * The refusal sentence, or undefined when the tool may run. Stays synchronous when `canRun`
+ * does, so a caller on a hot path — or one building UI that cannot await — is not forced
+ * through a microtask; `await` works either way.
+ */
+export function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
   ctx: CTX,
   cls: IToolOpConstructor,
   toolop?: ToolOp<any, any, CTX, ModalCTX>
-): Promise<string | undefined> {
-  return refusalOf(await cls.canRun(ctx, toolop));
+): string | undefined | Promise<string | undefined> {
+  const answer = cls.canRun(ctx, toolop);
+  return answer instanceof Promise ? answer.then(refusalOf) : refusalOf(answer);
 }
 
 /** The shape returned by ToolOp.tooldef() */
