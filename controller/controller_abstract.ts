@@ -10,6 +10,8 @@ import {
 } from "../toolsys";
 import { DataList, DataPath, DataPathError } from "./controller_base";
 import { defaultRegistry } from "../toolsys/toolregistry";
+import { Parser, splitToolPath } from "../toolsys/toolpath_parser";
+import type { ParseToolPathResult } from "../toolsys/toolpath_parser";
 import type { ToolRegistry } from "../toolsys/toolregistry";
 import { notifyPathChange } from "./pathwatch";
 import type { DataAPI, DataStruct } from "./controller";
@@ -63,18 +65,154 @@ export interface ResolvePathResult {
   mass_set?: string;
 }
 
+/** What a merged toolpath resolves to, and which registry supplied it. */
+export interface ToolPathEntry {
+  cls: typeof ToolOp;
+  registry: ToolRegistry;
+}
+
 export class ModelInterface<CTX extends ContextLike = ContextLike> {
   prefix: string;
 
-  /**
-   * The tool tables this api resolves toolpaths and tool defaults against. Assigning a
-   * second registry here is how a subsystem gets its own namespace.
-   */
-  registry: ToolRegistry;
+  private _registries: ToolRegistry[];
+
+  /** Built on demand from `_registries`, and dropped whenever one of them changes. */
+  private _toolPaths: Map<string, ToolPathEntry> | undefined;
 
   constructor() {
     this.prefix = "";
-    this.registry = defaultRegistry;
+    this._registries = [defaultRegistry];
+  }
+
+  /**
+   * The tool tables this api resolves toolpaths and tool defaults against, in the order
+   * they are merged. Listing a second registry is how a subsystem gets its own namespace
+   * without losing the built-ins, and two APIs may order the same two registries
+   * differently.
+   */
+  get registries(): ToolRegistry[] {
+    return this._registries;
+  }
+
+  set registries(registries: ToolRegistry[]) {
+    this._registries = [...registries];
+    this.invalidateToolPaths();
+  }
+
+  /** The first listed registry. Assigning replaces it rather than the whole list. */
+  get registry(): ToolRegistry {
+    return this._registries[0];
+  }
+
+  set registry(registry: ToolRegistry) {
+    this._registries[0] = registry;
+    this.invalidateToolPaths();
+  }
+
+  /**
+   * Every toolpath the listed registries offer, merged in list order. A toolpath names
+   * one tool within one api, which is what makes the bare string usable as an identity.
+   */
+  get toolPaths(): ReadonlyMap<string, ToolPathEntry> {
+    if (this._toolPaths === undefined) {
+      this._toolPaths = this._mergeToolPaths();
+    }
+
+    return this._toolPaths;
+  }
+
+  /** Drops the merged table, so the next read rebuilds it. */
+  invalidateToolPaths(): void {
+    this._toolPaths = undefined;
+  }
+
+  /**
+   * Merging is also the collision scan, which is why a stale table is dropped and rebuilt
+   * rather than rescanned in place: a rescan cannot see a duplicate it introduces.
+   */
+  private _mergeToolPaths(): Map<string, ToolPathEntry> {
+    const merged = new Map<string, ToolPathEntry>();
+    const macroKeys = new Set<string>();
+
+    const claim = (path: string, cls: typeof ToolOp, registry: ToolRegistry, macro: boolean) => {
+      const held = merged.get(path);
+
+      if (held === undefined) {
+        merged.set(path, { cls, registry });
+        if (macro) {
+          macroKeys.add(path);
+        }
+        return;
+      }
+
+      // A macro key is structural, so two registries holding one is two macros of the
+      // same shape and the first stands. Everything else has no principled winner
+      if (macro || macroKeys.has(path)) {
+        return;
+      }
+
+      // Not a DataPathError: `parseToolPath` answers undefined for one of those, and a
+      // collision is a wiring mistake rather than a path that does not resolve
+      throw new Error(
+        `two registries offer the tool "${path}": ` +
+          `${held.registry.structName} and ${registry.structName}`
+      );
+    };
+
+    for (const registry of this._registries) {
+      const paths = registry.ensurePaths();
+
+      for (const path in paths) {
+        claim(path, paths[path], registry, false);
+      }
+
+      for (const key in registry.macros) {
+        const cls = registry.macros[key];
+
+        // The bootstrap class the ToolOp constructor asks for carries no shape yet
+        if (cls.ready) {
+          claim(key, cls as unknown as typeof ToolOp, registry, true);
+        }
+      }
+    }
+
+    return merged;
+  }
+
+  /**
+   * Resolves `"some.tool(a=1)"` against the merged table. A miss rebuilds it first, since
+   * a registry that never had `buildAPI` run against it cannot have said it changed.
+   */
+  resolveToolPath(str: string, checkExists: boolean = true): ParseToolPathResult {
+    const { path, argsStr } = splitToolPath(str);
+
+    let entry = this.toolPaths.get(path);
+
+    if (entry === undefined) {
+      this.invalidateToolPaths();
+      entry = this.toolPaths.get(path);
+    }
+
+    if (entry === undefined && checkExists) {
+      throw new DataPathError("unknown tool " + path);
+    }
+
+    let args: Record<string, unknown>;
+
+    try {
+      args = Parser.parse(argsStr) as Record<string, unknown>;
+    } catch (error) {
+      console.log(error);
+      throw new DataPathError(`"${str}"
+  ${(error as Error).message}`);
+    }
+
+    if (entry !== undefined) {
+      // Parsed here for validation; the invoke static parses them again
+      args = entry.cls.parseArgs(args);
+    }
+
+    return { toolclass: entry?.cls, args };
   }
 
   getToolDef(path: string): ToolDef | undefined {

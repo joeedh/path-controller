@@ -24,9 +24,11 @@ export function updateToolDefaults(
   defaultRegistry.updateDefaults(cls, api, datastruct);
 }
 
-/** Calls `buildAPI` on whichever registry `api` carries. */
+/** Calls `buildAPI` on every registry `api` lists. */
 export function updateToolSysAPI(api: DataAPI): void {
-  api.registry.buildAPI(api);
+  for (const registry of api.registries) {
+    registry.buildAPI(api);
+  }
 }
 
 /** Calls `buildOpAPI` on the default registry. */
@@ -101,14 +103,16 @@ export function buildToolSysAPI(
   }
 
   //register tools with nstructjs
-  for (const cls of api.registry.classes) {
-    try {
-      if (!nstructjs.isRegistered(cls as unknown as StructableClass)) {
-        ToolOp._regWithNstructjs(cls);
+  for (const registry of api.registries) {
+    for (const cls of registry.classes) {
+      try {
+        if (!nstructjs.isRegistered(cls as unknown as StructableClass)) {
+          ToolOp._regWithNstructjs(cls);
+        }
+      } catch (error) {
+        console.log((error as Error).stack);
+        console.error("Failed to register a tool with nstructjs");
       }
-    } catch (error) {
-      console.log((error as Error).stack);
-      console.error("Failed to register a tool with nstructjs");
     }
   }
 }

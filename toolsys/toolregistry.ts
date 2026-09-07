@@ -4,7 +4,7 @@ import { PropFlags, ToolProperty } from "./toolprop";
 import { SavedToolDefaults, ToolPropertyCache } from "./tooldefaults";
 import type { IToolOpConstructor, ToolOp } from "./toolop";
 import type { MacroClassType } from "./toolmacro";
-import { Parser } from "./toolpath_parser";
+import { Parser, splitToolPath } from "./toolpath_parser";
 import type { ParseToolPathResult } from "./toolpath_parser";
 
 /**
@@ -96,7 +96,42 @@ export class ToolRegistry {
 
     this.classes.push(cls);
     this.stamp(cls);
+    this._setPath(cls, cls as unknown as typeof ToolOp);
     this.updateDefaults(cls);
+    this.notifyToolPaths();
+  }
+
+  /**
+   * Keeps `paths` level with `classes` across one registration. Only once the scan has
+   * run: before that `ensurePaths` walks the whole list anyway.
+   */
+  private _setPath(cls: IToolOpConstructor, value: typeof ToolOp | undefined): void {
+    if (!this.pathsScanned || !Object.prototype.hasOwnProperty.call(cls, "tooldef")) {
+      return;
+    }
+
+    const path = cls.tooldef().toolpath as string;
+
+    if (value === undefined) {
+      // Another class may have taken the path over, and dropping that one is not ours
+      if (this.paths[path] === (cls as unknown as typeof ToolOp)) {
+        delete this.paths[path];
+      }
+      return;
+    }
+
+    this.paths[path] = value;
+  }
+
+  /**
+   * Tells every api built against this registry that its merged toolpath table no longer
+   * describes what is here. The table rebuilds on its next read, which is also where a
+   * duplicate across two registries is caught.
+   */
+  notifyToolPaths(): void {
+    for (const api of this.apis()) {
+      api.invalidateToolPaths();
+    }
   }
 
   /**
@@ -122,6 +157,9 @@ export class ToolRegistry {
     ) {
       delete (cls as Stamped)[REGISTRY_KEY];
     }
+
+    this._setPath(cls, undefined);
+    this.notifyToolPaths();
   }
 
   isRegistered(cls: IToolOpConstructor): boolean {
@@ -141,23 +179,27 @@ export class ToolRegistry {
     }
   }
 
-  /** Resolves `"some.tool(a=1 b='x')"` to the class and its parsed arguments. */
-  parseToolPath(str: string, checkExists: boolean = true): ParseToolPathResult {
+  /**
+   * The toolpath map, walked out of `classes` if that has not happened yet. A caller that
+   * merges this registry into a table of its own reads it through here.
+   */
+  ensurePaths(): Record<string, typeof ToolOp> {
     if (!this.pathsScanned) {
       this.pathsScanned = true;
       this.initPaths();
     }
 
+    return this.paths;
+  }
+
+  /** Resolves `"some.tool(a=1 b='x')"` to the class and its parsed arguments. */
+  parseToolPath(str: string, checkExists: boolean = true): ParseToolPathResult {
+    this.ensurePaths();
+
     const startstr = str;
+    const { path, argsStr } = splitToolPath(str);
 
-    const i1 = str.search(/\(/);
-    const i2 = str.search(/\)/);
-    let argsStr = "";
-
-    if (i1 >= 0 && i2 >= 0) {
-      argsStr = str.slice(i1 + 1, i2).trim();
-      str = str.slice(0, i1).trim();
-    }
+    str = path;
 
     // The scan above runs once, so an addon enabled later registers its ToolOps
     // behind it: a miss means the map may be stale, not that the tool is absent.

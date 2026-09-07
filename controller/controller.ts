@@ -1644,7 +1644,7 @@ An example of a more complicated expression might be:
 
   parseToolPath(path: string) {
     try {
-      return this.registry.parseToolPath(path).toolclass;
+      return this.resolveToolPath(path).toolclass;
     } catch (error) {
       if (error instanceof DataPathError) {
         console.warn("warning, bad tool path " + path);
@@ -1656,7 +1656,7 @@ An example of a more complicated expression might be:
   }
 
   parseToolArgs(path: string) {
-    return this.registry.parseToolPath(path).args;
+    return this.resolveToolPath(path).args;
   }
 
   createTool<T extends ToolOp = ToolOp>(ctx: CTX, path: string, inputs: any = {}): T {
@@ -1665,7 +1665,7 @@ An example of a more complicated expression might be:
 
     if (typeof path == "string") {
       //parseToolPath will raise DataPathError if path is malformed
-      const tpath = this.registry.parseToolPath(path);
+      const tpath = this.resolveToolPath(path);
 
       cls = tpath.toolclass;
       args = tpath.args;

@@ -84,6 +84,22 @@ export function buildParser(): InstanceType<typeof parser> {
 
 export const Parser = buildParser();
 
+/**
+ * Separates `"some.tool(a=1)"` into the bare toolpath and the unparsed argument text.
+ * Shared because a registry and an api both resolve toolpaths and must split them the
+ * same way.
+ */
+export function splitToolPath(str: string): { path: string; argsStr: string } {
+  const i1 = str.search(/\(/);
+  const i2 = str.search(/\)/);
+
+  if (i1 >= 0 && i2 >= 0) {
+    return { path: str.slice(0, i1).trim(), argsStr: str.slice(i1 + 1, i2).trim() };
+  }
+
+  return { path: str, argsStr: "" };
+}
+
 export interface ParseToolPathResult {
   toolclass: typeof ToolOp | undefined;
   args: Record<string, unknown>;
