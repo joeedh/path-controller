@@ -10,6 +10,9 @@ import { defaultRegistry, defaultsFor, registryOf } from "./toolregistry";
 /** The default registry's generated macro classes, by identity. */
 export const MacroClasses: Record<string, MacroClassType> = defaultRegistry.macros;
 
+/** Namespaces every generated macro key, keeping it apart from an authored toolpath. */
+const MACRO_PREFIX = "macro.";
+
 const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
 
 /** Runtime-generated macro class shape */
@@ -150,7 +153,10 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       return this._macro_class;
     }
 
-    let key = "";
+    // A reserved prefix, so a macro key cannot be mistaken for a toolpath and the
+    // defaults tree stays legible beside the ordinary ones. Nothing persists the key
+    let key = MACRO_PREFIX;
+
     for (const tool of this.tools) {
       key += tool.constructor.name + ":";
     }
@@ -228,6 +234,12 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     };//*/
 
     registry.macros[key] = cls;
+
+    // Generation is the only way a macro reaches a registry, so it is where an api has
+    // to hear that its merged table is behind. Seeding is deliberately left to the first
+    // save: a seeded value would satisfy hasDefault and overwrite the member's own
+    // toolpath default at loadDefaults, which is the seed half of the macro policy
+    registry.notifyToolPaths();
 
     return cls;
   }
