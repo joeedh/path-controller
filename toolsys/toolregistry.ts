@@ -304,11 +304,15 @@ export class ToolRegistry {
     const def = cls._getFinalToolDef();
 
     function makeProp(k: string): void {
-      const prop = def.inputs[k];
-
-      if (prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
+      if (def.inputs[k].flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
         return;
       }
+
+      // A copy because customGetSet below rewrites getValue/setValue on whatever it is
+      // handed. A normal tooldef() hands out fresh properties every call and would not
+      // notice, but a macro type class returns one `__tooldef` forever, so mutating it
+      // there would leave the macro's declared inputs permanently bound to a live op
+      const prop = def.inputs[k].copy();
 
       prop.uiname = prop.uiname || ToolProperty.makeUIName(k);
 

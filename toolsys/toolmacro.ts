@@ -13,6 +13,47 @@ export const MacroClasses: Record<string, MacroClassType> = defaultRegistry.macr
 /** Namespaces every generated macro key, keeping it apart from an authored toolpath. */
 const MACRO_PREFIX = "macro.";
 
+/** Joins the parts within one section of a macro key. */
+const MACRO_SEP = "$";
+
+/** Separates a macro key's sections: members, the subclass toolpath, then input names. */
+const MACRO_SECTION = "$$";
+
+/**
+ * Builds the key that identifies a macro's shape, and doubles as its toolpath.
+ *
+ * Every part is a JS identifier — class names, input names, the dotted segments of a
+ * subclass toolpath — so `$` separates them while the whole key stays a single datapath
+ * segment. That is what lets `container.toolPanel` bind a macro's saved defaults, since it
+ * resolves `toolDefaults.<toolpath>.<apiname>` like any other tool's.
+ *
+ * The sections matter: without them a key could not tell members from inputs, so a macro
+ * over `[A, B]` taking nothing collided with one over `[A]` taking `B`.
+ */
+function macroKey(members: string[], subclassPath: string | undefined, inputs: string[]): string {
+  const sections = [members];
+
+  if (subclassPath !== undefined) {
+    sections.push(subclassPath.split(".").filter((part) => part.length > 0));
+  }
+
+  sections.push(inputs);
+
+  for (const section of sections) {
+    for (const part of section) {
+      // Legal in an identifier, so it cannot be ruled out — but it would merge two shapes
+      if (part.includes(MACRO_SEP)) {
+        console.warn(
+          `Macro key part "${part}" carries a "${MACRO_SEP}"; ` +
+            "two macro shapes may end up sharing one set of defaults"
+        );
+      }
+    }
+  }
+
+  return MACRO_PREFIX + sections.map((section) => section.join(MACRO_SEP)).join(MACRO_SECTION);
+}
+
 const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
 
 /** Runtime-generated macro class shape */
@@ -153,22 +194,16 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
       return this._macro_class;
     }
 
-    // A reserved prefix, so a macro key cannot be mistaken for a toolpath and the
-    // defaults tree stays legible beside the ordinary ones. Nothing persists the key
-    let key = MACRO_PREFIX;
-
-    for (const tool of this.tools) {
-      key += tool.constructor.name + ":";
-    }
+    const members = this.tools.map((tool) => tool.constructor.name);
+    const inputNames = Object.keys(this.inputs);
 
     /* Handle child classes of ToolMacro */
-    if (this.constructor !== ToolMacro) {
-      key += ":" + (this.constructor as unknown as IToolOpConstructor).tooldef().toolpath;
-    }
+    const subclassPath =
+      this.constructor === ToolMacro
+        ? undefined
+        : ((this.constructor as unknown as IToolOpConstructor).tooldef().toolpath ?? "");
 
-    for (const k in this.inputs) {
-      key += k + ":";
-    }
+    const key = macroKey(members, subclassPath, inputNames);
 
     if (key in registry.macros) {
       this._macro_class = registry.macros[key];
