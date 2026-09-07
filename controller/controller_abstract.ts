@@ -1,4 +1,5 @@
 import { print_stack } from "../util/util";
+
 import { PropFlags, PropTypes } from "../toolsys/toolprop_abstract";
 import {
   ToolPropertyTypes,
@@ -7,6 +8,7 @@ import {
   ToolDef,
   ToolOp,
   ToolProperty,
+  ToolRefusedError,
 } from "../toolsys";
 import { DataList, DataPath, DataPathError } from "./controller_base";
 import { defaultRegistry } from "../toolsys/toolregistry";
@@ -18,6 +20,16 @@ import type { DataAPI, DataStruct } from "./controller";
 import type { Screen } from "../../screen/FrameManager";
 
 export type ToolOpAny = ToolOp<any, any, any, any> | ToolOp;
+
+/** A refused tool is an expected outcome of an unexpected route, so it reports as a sentence. */
+function reportToolError(error: unknown): void {
+  if (ToolRefusedError.is(error)) {
+    console.warn(`could not run "${error.toolpath ?? "tool"}": ${error.reason}`);
+    return;
+  }
+
+  print_stack(error as Error);
+}
 
 // this interface exists to avoid circular type references, bleh
 export interface IToolStack {
@@ -314,11 +326,12 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
             .then(() => accept(tool))
             .catch(reject);
         } else {
-          ctx.toolstack.execTool(ctx, tool, event);
+          // The caller already has the instance, so nothing else can receive this rejection
+          ctx.toolstack.execTool(ctx, tool, event).catch(reportToolError);
         }
       } catch (error) {
         //for some reason chrome is suppressing errors
-        print_stack(error as Error);
+        reportToolError(error);
         reject(error);
         throw error;
       }

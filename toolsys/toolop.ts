@@ -242,6 +242,27 @@ export function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CT
   return answer instanceof Promise ? answer.then(refusalOf) : refusalOf(answer);
 }
 
+/**
+ * Thrown by the toolstack's public entry points when `canRun` refuses. Reaching the exec path
+ * with a refusal means something bypassed a disabled control — a hotkey, a script, or a race.
+ */
+export class ToolRefusedError extends Error {
+  override readonly name = "ToolRefusedError";
+
+  constructor(
+    readonly reason: string,
+    readonly toolop?: ToolOpAny,
+    readonly toolpath?: string
+  ) {
+    super(reason);
+  }
+
+  /** `instanceof` is unreliable when a bundle holds two copies of this module. */
+  static is(e: unknown): e is ToolRefusedError {
+    return e instanceof Error && e.name === "ToolRefusedError";
+  }
+}
+
 /** The shape returned by ToolOp.tooldef() */
 export interface ToolDef<InputSlots = PropertySlots, OutputSlots = PropertySlots> {
   uiname?: string;

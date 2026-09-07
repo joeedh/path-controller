@@ -2,9 +2,16 @@
 import nstructjs from "../util/struct";
 import * as util from "../util/util";
 import { StructReader } from "../util/nstructjs";
-import { isFoldableToolOp, runToolPhases, UndoFlags } from "./toolop";
+import {
+  isFoldableToolOp,
+  runToolPhases,
+  ToolRefusedError,
+  toolopRefusal,
+  UndoFlags,
+} from "./toolop";
 import type { RunnableToolPhase, ToolExecPhase } from "./toolop";
 import { IToolOpConstructor, ToolOp } from "./toolop";
+import type { Refusal } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 
 const asyncCheck = async (p: unknown) => (p instanceof Promise ? await p : undefined);
@@ -241,7 +248,33 @@ export class ToolStack<
     tool: ToolOp<any, any, ContextCls, ModalContextCls>,
     compareInputs: boolean = false
   ): Promise<boolean> {
+    const check = this._checkCanRun(ctx, tool);
+    if (check) {
+      await check;
+    }
+
     return this.protect("execOrRedo", () => this._execOrRedo(ctx, tool, compareInputs));
+  }
+
+  /**
+   * Throws `ToolRefusedError` when `toolop` refuses. Runs outside `protect`, because `canRun` is
+   * consumer code and the lock is not reentrant; the answer is therefore a gate rather than a
+   * guarantee, and an op that must be certain still checks in `exec`.
+   *
+   * Answers synchronously whenever `canRun` does — the default — so an ordinary exec still claims
+   * the lock in the turn it was issued, and cannot be overtaken by an undo issued right after it.
+   * A tool whose `canRun` is async gives that ordering up.
+   */
+  private _checkCanRun(ctx: ContextCls, toolop: ToolOpAny): void | Promise<void> {
+    const cls = toolop.constructor as unknown as IToolOpConstructor;
+    const refuse = (refusal: Refusal | undefined) => {
+      if (refusal) {
+        throw new ToolRefusedError(refusal.reason, toolop, cls.tooldef().toolpath);
+      }
+    };
+
+    const answer = toolopRefusal(ctx, cls, toolop as never);
+    return answer instanceof Promise ? answer.then(refuse) : refuse(answer);
   }
 
   private async _execOrRedo(
@@ -294,6 +327,12 @@ export class ToolStack<
    * reading `head` and driving `undo`/`redo` itself.
    */
   async foldOrExec(ctx: ContextCls, toolop: ToolOpAny): Promise<boolean> {
+    // Both branches gate: a gesture whose op starts refusing mid-drag should stop, not fold
+    const check = this._checkCanRun(ctx, toolop);
+    if (check) {
+      await check;
+    }
+
     return this.protect("foldOrExec", async () => {
       const head = this[this.cur] as ToolOpAny | undefined;
 
@@ -318,11 +357,22 @@ export class ToolStack<
   }
 
   async execTool(ctx: ContextCls, toolop: ToolOpAny, event?: PointerEvent): Promise<void> {
+    const check = this._checkCanRun(ctx, toolop);
+    if (check) {
+      await check;
+    }
+
     return this.protect("execTool", () => {
       return this._execTool(ctx, toolop, event);
     });
   }
 
+  /**
+   * Runs `toolop` and pushes it, having taken no authorization decision of its own: the three
+   * public wrappers call `_checkCanRun` before taking the lock. It must not check here — `canRun`
+   * is consumer code, and awaiting it while holding the non-reentrant lock deadlocks the stack.
+   * Undo, redo and `_rerun` reach this unchecked by design.
+   */
   private async _execTool(
     ctx: ContextCls | ModalContextCls,
     toolop: this[0] | ToolOpAny,
