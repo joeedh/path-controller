@@ -189,28 +189,31 @@ export function setDefaultUndoHandlers(
 }
 
 /**
- * A refusal from `canRun`. `reason` is shown verbatim on the control that refused, so it is
- * written for the person who pressed it.
+ * Why something refused, written for the person who pressed the control. The same shape a
+ * widget holds, so an op's answer reaches a tooltip without an adapter in between.
  */
-export interface ToolRefusal {
+export interface Refusal {
+  /** One sentence, shown on the control itself. */
   reason: string;
+  /** The longer explanation, shown behind the tooltip's expander. */
+  description?: string;
 }
 
 /** What `canRun` answers. An object always means refused; there is no object form for yes. */
-export type CanRunResult = boolean | ToolRefusal;
+export type CanRunResult = boolean | Refusal;
 
 /** Stands in for a refusal that supplied no sentence of its own. */
 const UNSPECIFIED_REFUSAL = "the tool refused to run";
 
-function refusalOf(result: CanRunResult): string | undefined {
+function refusalOf(result: CanRunResult): Refusal | undefined {
   if (result === true) {
     return undefined;
   }
   if (result === false) {
-    return UNSPECIFIED_REFUSAL;
+    return { reason: UNSPECIFIED_REFUSAL };
   }
   // An empty reason still refuses, or an op could allow itself by returning {reason: ""}
-  return result.reason || UNSPECIFIED_REFUSAL;
+  return result.reason ? result : { ...result, reason: UNSPECIFIED_REFUSAL };
 }
 
 /**
@@ -226,15 +229,15 @@ export async function toolopCanRunAsync<CTX extends ContextLike, ModalCTX extend
 }
 
 /**
- * The refusal sentence, or undefined when the tool may run. Stays synchronous when `canRun`
- * does, so a caller on a hot path — or one building UI that cannot await — is not forced
- * through a microtask; `await` works either way.
+ * The refusal, or undefined when the tool may run. Stays synchronous when `canRun` does, so a
+ * caller on a hot path — or one building UI that cannot await — is not forced through a
+ * microtask; `await` works either way.
  */
 export function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
   ctx: CTX,
   cls: IToolOpConstructor,
   toolop?: ToolOp<any, any, CTX, ModalCTX>
-): string | undefined | Promise<string | undefined> {
+): Refusal | undefined | Promise<Refusal | undefined> {
   const answer = cls.canRun(ctx, toolop);
   return answer instanceof Promise ? answer.then(refusalOf) : refusalOf(answer);
 }
