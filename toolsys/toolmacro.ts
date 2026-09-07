@@ -3,7 +3,7 @@ import nstructjs from "../util/struct";
 
 import { StructableClass, StructReader } from "../util/nstructjs";
 import { PropFlags, ToolProperty } from "./toolprop";
-import { IToolOpConstructor, ResolvedToolDef, ToolDef, ToolOp } from "./toolop";
+import { CanRunResult, IToolOpConstructor, ResolvedToolDef, ToolDef, ToolOp } from "./toolop";
 import { ContextLike, ToolOpAny } from "../controller/controller_abstract";
 import { defaultRegistry, defaultsFor, registryOf } from "./toolregistry";
 
@@ -124,6 +124,11 @@ export class MacroLink {
   }
 }
 
+/** The first refusal among `results`, or true when every one of them allows. */
+function firstRefusal(results: CanRunResult[]): CanRunResult {
+  return results.find((result) => result !== true) ?? true;
+}
+
 export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> extends ToolOp<
   any,
   any,
@@ -160,9 +165,30 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     };
   }
 
-  //toolop is an optional instance of this class, may be undefined
-  static override canRun(_ctx: ContextLike, _toolop?: ToolOp | undefined): boolean {
-    return true;
+  /**
+   * Refused if any step is, with that step's sentence. An empty macro is allowed; it runs
+   * nothing.
+   *
+   * toolop is an optional instance of this class, may be undefined
+   */
+  static override canRun(
+    ctx: ContextLike,
+    toolop?: ToolOp | undefined
+  ): CanRunResult | Promise<CanRunResult> {
+    const tools = (toolop as ToolMacro<ContextLike> | undefined)?.tools;
+    if (!tools?.length) {
+      return true;
+    }
+
+    const answers = tools.map((tool) =>
+      (tool.constructor as unknown as IToolOpConstructor).canRun(ctx, tool)
+    );
+
+    if (answers.some((answer) => answer instanceof Promise)) {
+      return Promise.all(answers).then(firstRefusal);
+    }
+
+    return firstRefusal(answers as CanRunResult[]);
   }
 
   _getTypeClass(): MacroClassType {
@@ -423,14 +449,6 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     }
   }
 
-  /*
-  canRun(ctx) {
-    if (this.tools.length == 0)
-      return false;
-
-    //poll first tool only in list
-    return this.tools[0].constructor.canRun(ctx);
-  }//*/
 
   /** Note: resolves when the modalEnd is called */
   override async modalStart(ctx: ModalCTX): Promise<unknown> {

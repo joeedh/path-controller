@@ -188,16 +188,50 @@ export function setDefaultUndoHandlers(
   defaultUndoHandlers.undo = undo;
 }
 
+/**
+ * A refusal from `canRun`. `reason` is shown verbatim on the control that refused, so it is
+ * written for the person who pressed it.
+ */
+export interface ToolRefusal {
+  reason: string;
+}
+
+/** What `canRun` answers. An object always means refused; there is no object form for yes. */
+export type CanRunResult = boolean | ToolRefusal;
+
+/** Stands in for a refusal that supplied no sentence of its own. */
+const UNSPECIFIED_REFUSAL = "the tool refused to run";
+
+function refusalOf(result: CanRunResult): string | undefined {
+  if (result === true) {
+    return undefined;
+  }
+  if (result === false) {
+    return UNSPECIFIED_REFUSAL;
+  }
+  // An empty reason still refuses, or an op could allow itself by returning {reason: ""}
+  return result.reason || UNSPECIFIED_REFUSAL;
+}
+
+/**
+ * Whether the tool may run. A refusal object normalizes to false, so callers written against
+ * the boolean contract cannot read one as permission.
+ */
 export async function toolopCanRunAsync<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
   ctx: CTX,
   cls: IToolOpConstructor,
   toolop?: ToolOp<any, any, CTX, ModalCTX>
 ): Promise<boolean> {
-  const result = cls.canRun(ctx, toolop);
-  if (result instanceof Promise) {
-    return result;
-  }
-  return Promise.resolve(result);
+  return (await toolopRefusal(ctx, cls, toolop)) === undefined;
+}
+
+/** The refusal sentence, or undefined when the tool may run. */
+export async function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
+  ctx: CTX,
+  cls: IToolOpConstructor,
+  toolop?: ToolOp<any, any, CTX, ModalCTX>
+): Promise<string | undefined> {
+  return refusalOf(await cls.canRun(ctx, toolop));
 }
 
 /** The shape returned by ToolOp.tooldef() */
@@ -245,11 +279,11 @@ export interface IToolOpConstructor {
   canRun<CTX extends ContextLike, ModalCTX extends CTX = CTX>(
     ctx: CTX,
     toolop?: ToolOp<any, any, CTX, ModalCTX>
-  ): boolean | Promise<boolean>;
+  ): CanRunResult | Promise<CanRunResult>;
   isRegistered(cls: IToolOpConstructor): boolean;
   register(cls: IToolOpConstructor): void;
   unregister(cls: IToolOpConstructor): void;
-  searchBoxOk(ctx: unknown): boolean;
+  searchBoxOk(ctx: unknown): Promise<boolean>;
   onTick(): void;
   invoke(ctx: unknown, args: Record<string, unknown>): ToolOp;
   inherit<Slots>(slots: Slots): InheritFlag<Slots>;
@@ -659,10 +693,21 @@ export class ToolOp<
   }
 
   /**
+   * Whether this tool may run. Return `true`, or `{reason}` naming the refusal in a sentence
+   * the person who pressed the control can read.
+   *
+   * Must not call into `ctx.toolstack`. This is polled from the exec path and from UI build
+   * code; `head`, `idle`, `execTool`, `undo`, `redo`, `rerun` and `rewind` all take the
+   * toolstack lock, which is not reentrant. Read `ctx.toolstack.headOp` if the head is
+   * genuinely needed.
+   *
    * note: you can use a derivation of ContextLike if you like for ctx
    * @param toolop: an optional instance of this class, may be undefined
    */
-  static canRun(ctx: ContextLike, toolop?: ToolOp | undefined): boolean {
+  static canRun(
+    ctx: ContextLike,
+    toolop?: ToolOp | undefined
+  ): CanRunResult | Promise<CanRunResult> {
     return true;
   }
 
