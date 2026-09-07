@@ -16,12 +16,8 @@ export function setContextClass(_cls: unknown): void {
 /* ------------------------------------------------------------------ */
 
 /** Calls `updateDefaults` on the default registry. */
-export function updateToolDefaults(
-  cls: IToolOpConstructor,
-  api?: DataAPI,
-  datastruct?: DataStruct
-): void {
-  defaultRegistry.updateDefaults(cls, api, datastruct);
+export function updateToolDefaults(cls: IToolOpConstructor, api?: DataAPI): void {
+  defaultRegistry.updateDefaults(cls, api);
 }
 
 /** Calls `buildAPI` on every registry `api` lists. */
@@ -53,12 +49,7 @@ export function buildToolSysAPI(
   updateToolSysAPI(api);
 
   if (rootCtxStruct) {
-    rootCtxStruct.struct(
-      "toolDefaults",
-      "toolDefaults",
-      "Tool Defaults",
-      api.registry.structFor(api)
-    );
+    rootCtxStruct.struct("toolDefaults", "toolDefaults", "Tool Defaults", api.toolDefaultsStruct());
     rootCtxStruct.dynamicStruct("last_tool", "last_tool", "Last Tool");
   }
 
@@ -87,7 +78,7 @@ export function buildToolSysAPI(
     if (!haveprop("toolDefaults")) {
       Object.defineProperty(rootCtxClass.prototype, "toolDefaults", {
         get() {
-          return api.registry.defaults;
+          return api.toolDefaults;
         },
       });
 

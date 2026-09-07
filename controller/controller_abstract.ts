@@ -121,9 +121,21 @@ export class ModelInterface<CTX extends ContextLike = ContextLike> {
     return this._toolPaths;
   }
 
-  /** Drops the merged table, so the next read rebuilds it. */
+  /** Whether the defaults tree still describes what the listed registries hold. */
+  protected _toolDefaultsDirty = true;
+
+  /**
+   * Drops the merged table, so the next read rebuilds it. The defaults tree is derived
+   * from the same table, so it owes a rebuild too.
+   */
   invalidateToolPaths(): void {
     this._toolPaths = undefined;
+    this.invalidateToolDefaults();
+  }
+
+  /** Marks the defaults tree as owing a rebuild, which the next read does. */
+  invalidateToolDefaults(): void {
+    this._toolDefaultsDirty = true;
   }
 
   /**

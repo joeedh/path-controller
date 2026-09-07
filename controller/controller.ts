@@ -125,6 +125,9 @@ let parserStackCur = 0;
 
 import { setImplementationClass } from "./controller_base";
 import { initToolPaths } from "../toolsys/toolpath";
+import { defaultsFor } from "../toolsys/toolregistry";
+import { ToolPropertyCache } from "../toolsys/tooldefaults";
+import type { IToolOpConstructor } from "../toolsys/toolop";
 import { ContextLike, ModelInterface, ResolvePathResult } from "./controller_abstract";
 
 export { DataPathError, DataFlags } from "./controller_base";
@@ -651,8 +654,47 @@ export type StructUpdatePath<T> = StructEntryFor<T> extends { paths: infer P } ?
 /** Member apinames of `T`'s DataStruct (empty seam ⇒ `never`). */
 export type StructUpdateMember<T> = StructEntryFor<T> extends { members: infer M } ? M : never;
 
+/**
+ * One api's view of every registry it lists, and the object `ctx.toolDefaults` answers
+ * with. The tree under `accessors` is the api's; each tool's leaf is the owning registry's
+ * own value record, so a write through the datapath lands in that registry's storage.
+ *
+ * Not exported: the `pathux` barrel re-exports this module wholesale, and a name here
+ * becomes public API. `ToolDefaults` below is the type alias consumers name it by.
+ */
+class ToolDefaultsView {
+  /** Prefix tree. Only grows, so a struct already bound to a node stays valid. */
+  readonly accessors: Record<string, any> = {};
+
+  constructor(readonly api: DataAPI<any>) {}
+
+  /* The four questions ToolPropertyCache answers, routed to the registry that owns the
+     class rather than to whichever one happens to be listed first. */
+
+  useDefault(cls: IToolOpConstructor, key: string, prop: ToolProperty): boolean {
+    return defaultsFor(cls).useDefault(cls, key, prop);
+  }
+
+  has(cls: IToolOpConstructor, key: string, prop: ToolProperty): boolean {
+    return defaultsFor(cls).has(cls, key, prop);
+  }
+
+  get<T>(cls: IToolOpConstructor, key: string, prop: ToolProperty<T>): T | undefined {
+    return defaultsFor(cls).get(cls, key, prop);
+  }
+
+  set<T>(cls: IToolOpConstructor, key: string, prop: ToolProperty<T>): void {
+    defaultsFor(cls).set(cls, key, prop);
+  }
+}
+
+/** What `ctx.toolDefaults` and `DataAPI.toolDefaults` answer with. */
+export type ToolDefaults = ToolDefaultsView;
+
 export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterface {
   rootContextStruct: DataStruct | undefined;
+
+  private _toolDefaults: ToolDefaultsView | undefined;
 
   /** Every struct this api has mapped, in creation order. */
   structs: DataStruct[] = [];
@@ -703,6 +745,105 @@ export class DataAPI<CTX extends ContextLike = ContextLike> extends ModelInterfa
 
   setRoot(sdef: DataStruct) {
     this.rootContextStruct = sdef;
+  }
+
+  /**
+   * The saved tool defaults of every registry this api lists, as one tree. A prefix two
+   * registries both use is one node here, with each tool's values still read out of its
+   * own registry.
+   */
+  get toolDefaults(): ToolDefaults {
+    if (this._toolDefaults === undefined) {
+      this._toolDefaults = new ToolDefaultsView(this);
+    }
+
+    if (this._toolDefaultsDirty) {
+      this._toolDefaultsDirty = false;
+      this._buildToolDefaults();
+    }
+
+    return this._toolDefaults;
+  }
+
+  /** The struct `toolDefaults.<prefix>.<tool>.<prop>` resolves through. */
+  toolDefaultsStruct(): DataStruct {
+    return this.mapStruct(this.toolDefaults as never, true, "ToolDefaults");
+  }
+
+  /**
+   * Walks the merged toolpath table into the tree and its structs. The root is wiped
+   * first, the way one registry's own struct used to be; prefix nodes are kept, since a
+   * struct bound to a node cannot be rebound once something holds it.
+   */
+  private _buildToolDefaults(): void {
+    const view = this._toolDefaults!;
+    const root = this.mapStruct(view as never, true, "ToolDefaults");
+
+    root.clear();
+
+    for (const [toolpath, entry] of this.toolPaths) {
+      const def = entry.cls._getFinalToolDef();
+      const segments = toolpath
+        .trim()
+        .split(".")
+        .filter((f) => f.trim().length > 0);
+
+      if (segments.length === 0) {
+        continue;
+      }
+
+      let obj: Record<string, any> = view.accessors;
+      let st = root;
+
+      for (let i = 0; i < segments.length; i++) {
+        const k = segments[i];
+        const last = i === segments.length - 1;
+
+        if (!(k in obj)) {
+          // The leaf is the registry's own record, so a write lands in its storage
+          obj[k] = last ? entry.registry.defaults.valuesFor(toolpath.trim()) : {};
+        }
+
+        const st2 = this.mapStruct(obj[k], true, k);
+
+        // The dataref is the view, so the first hop has to name the tree it hangs from
+        if (!(st.pathmap && k in st.pathmap)) {
+          st.struct(i === 0 ? "accessors." + k : k, k, k, st2);
+        }
+
+        obj = obj[k];
+        st = st2;
+      }
+
+      for (const key in def.inputs) {
+        const prop = def.inputs[key];
+
+        if (prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY)) {
+          continue;
+        }
+
+        const name = ToolPropertyCache._accessorName(key, prop);
+
+        if (st.pathmap && name in st.pathmap) {
+          continue;
+        }
+
+        const prop2 = prop.copy();
+        let uiname = prop.uiname;
+
+        if (!uiname || uiname.trim().length === 0) {
+          uiname = prop.apiname;
+        }
+        if (!uiname || uiname.trim().length === 0) {
+          uiname = key;
+        }
+
+        prop2.uiname = ToolProperty.makeUIName(uiname);
+        prop2.description = prop2.description || prop2.uiname;
+
+        st.add(new DataPath(name, name, prop2));
+      }
+    }
   }
 
   /** Whether `mapStruct(cls, false)` would answer here. */

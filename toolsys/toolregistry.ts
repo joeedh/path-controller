@@ -46,8 +46,10 @@ export class ToolRegistry {
   macroIdGen = 0;
 
   /**
-   * The name `defaults`'s struct is registered under. Must differ between registries, or
-   * `mapStruct` hands the second one the first's struct by name.
+   * Names this registry in a diagnostic, such as the duplicate-toolpath error. Once the
+   * defaults struct became the api's there is nothing left for it to name in a struct
+   * table, so it no longer has to differ between registries — but it still does, since a
+   * message naming two registries the same would say nothing.
    */
   readonly structName: string;
 
@@ -235,67 +237,65 @@ export class ToolRegistry {
   }
 
   /**
-   * Builds the accessors this registry's defaults cache reads `cls`'s inputs through.
+   * Seeds `cls`'s saved inputs and gives every api that should know about them a chance
+   * to rebuild.
    *
    * `register` calls this with no api, which reaches every api built against this registry
    * rather than whichever one happened to build last. An api gets a tool's `buildOpAPI`
    * struct that way too, which is what `ctx.last_tool.<input>` resolves through.
    */
-  updateDefaults(cls: IToolOpConstructor, api?: DataAPI, datastruct?: DataStruct): void {
+  updateDefaults(cls: IToolOpConstructor, api?: DataAPI): void {
+    this.seedDefaults(cls);
+
     if (api !== undefined) {
-      this._updateDefaultsFor(cls, api, datastruct ?? this.structFor(api));
+      this.buildOpAPI(api, cls);
+      api.invalidateToolDefaults();
       return;
     }
 
     // No apis yet means buildToolSysAPI has not run, and there is nowhere to build into
     for (const built of this.apis()) {
-      this._updateDefaultsFor(cls, built, this.structFor(built));
+      this.buildOpAPI(built, cls);
+      built.invalidateToolDefaults();
     }
   }
 
-  private _updateDefaultsFor(cls: IToolOpConstructor, api: DataAPI, datastruct: DataStruct): void {
+  /**
+   * Gives every saveable input of `cls` a stored value if it has none. Needs no api: the
+   * toolpath alone says where the value lives.
+   */
+  seedDefaults(cls: IToolOpConstructor): void {
     const def = cls._getFinalToolDef();
-
-    this.buildOpAPI(api, cls);
 
     for (const k in def.inputs) {
       const prop = def.inputs[k];
 
       if (!(prop.flag & (PropFlags.PRIVATE | PropFlags.READ_ONLY))) {
-        this.defaults._buildAccessors(cls, k, prop, datastruct, api);
+        this.defaults._ensureValues(cls, k, prop);
       }
     }
   }
 
   /**
-   * The datapath binding for `defaults`, which `ctx.toolDefaults` resolves through.
+   * Seeds every registered class and builds their op structs into `api`, then answers the
+   * api's merged defaults struct.
    *
-   * Keyed on the cache instance rather than on `ToolPropertyCache`, because the struct's
-   * shape comes from the registered tools rather than from the class: keying on the class
-   * gives every registry the same struct, and `buildAPI` then clears one registry's
-   * accessors while building another's. `mapStruct` keys on object identity, so an
-   * instance works the same way the accessor objects `_buildAccessors` maps do.
+   * The defaults binding is the api's rather than this registry's, because an api may list
+   * several registries and a toolpath prefix can span them.
    */
-  structFor(api: DataAPI): DataStruct {
-    return api.mapStruct(this.defaults as never, true, this.structName);
-  }
-
-  /** Rebuilds `api`'s bindings for every class registered here. */
   buildAPI(api: DataAPI): DataStruct {
     if (!this.apis().includes(api)) {
       this._builtAPIs.push(new WeakRef(api));
     }
 
-    const dstruct = this.structFor(api);
-
-    // Safe to wipe: it is this registry's own, so nothing else has built into it
-    dstruct.clear();
-
     for (const cls of this.classes) {
-      this.updateDefaults(cls, api, dstruct);
+      this.seedDefaults(cls);
+      this.buildOpAPI(api, cls);
     }
 
-    return dstruct;
+    api.invalidateToolDefaults();
+
+    return api.toolDefaultsStruct();
   }
 
   /** Gives `cls` a struct whose paths read and write a live op's inputs. */

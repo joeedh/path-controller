@@ -1,6 +1,4 @@
 import { PropFlags, ToolProperty } from "./toolprop";
-import { DataPath } from "../controller/controller_base";
-import type { DataAPI, DataStruct } from "../controller";
 import type { MacroClassType } from "./toolmacro";
 import type { IToolOpConstructor } from "./toolop";
 import type { ToolRegistry } from "./toolregistry";
@@ -9,12 +7,15 @@ import type { ToolRegistry } from "./toolregistry";
 /*  ToolPropertyCache                                                 */
 /* ------------------------------------------------------------------ */
 
+/**
+ * One registry's saved tool inputs. Storage only: the datapath binding that reads these
+ * belongs to whichever api asked for it, since an api may list several registries and a
+ * toolpath prefix can span them.
+ */
 export class ToolPropertyCache {
-  /** @deprecated */
-  map: Map<unknown, unknown>;
+  /** Saved values per toolpath. An api's defaults tree hangs these records directly. */
+  readonly values: Map<string, Record<string, any>>;
 
-  pathmap: Map<string, any>;
-  accessors: Record<string, any>;
   userSetMap: Set<string>;
 
   /**
@@ -24,11 +25,20 @@ export class ToolPropertyCache {
   declare registry: ToolRegistry;
 
   constructor() {
-    this.map = new Map();
-    this.pathmap = new Map();
-    this.accessors = {};
-
+    this.values = new Map();
     this.userSetMap = new Set();
+  }
+
+  /** The record holding one tool's saved inputs, created empty on first ask. */
+  valuesFor(toolpath: string): Record<string, any> {
+    let obj = this.values.get(toolpath);
+
+    if (obj === undefined) {
+      obj = {};
+      this.values.set(toolpath, obj);
+    }
+
+    return obj;
   }
 
   static getPropKey(_cls: unknown, key: string, prop: ToolProperty): string {
@@ -56,8 +66,8 @@ export class ToolPropertyCache {
   }
 
   /**
-   * Seeds the stored value for one input and returns the object holding it. Reachable from
-   * the toolpath alone, so it works with no api and no struct.
+   * Seeds the stored value for one input and returns the record holding it. Reachable
+   * from the toolpath alone, so it works with no api and no struct.
    */
   _ensureValues(
     cls: IToolOpConstructor | MacroClassType,
@@ -70,29 +80,11 @@ export class ToolPropertyCache {
       return undefined;
     }
 
-    let obj = this.accessors;
-    let partial = "";
-
-    for (let i = 0; i < path.length; i++) {
-      const k = path[i];
-
-      if (i > 0) {
-        partial += ".";
-      }
-      partial += k;
-
-      if (!(k in obj)) {
-        obj[k] = {};
-      }
-
-      this.pathmap.set(partial, obj[k]);
-      obj = obj[k];
-    }
-
+    const obj = this.valuesFor(path.join("."));
     const name = ToolPropertyCache._accessorName(key, prop);
 
-    // Seed only. Re-registering a class rebuilds its accessors, and assigning here
-    // unconditionally would throw away whatever saveDefaultInputs had put in
+    // Seed only. Re-registering a class re-seeds, and assigning here unconditionally
+    // would throw away whatever saveDefaultInputs had put in
     if (!(name in obj)) {
       obj[name] = prop.copy().getValue();
     }
@@ -100,79 +92,10 @@ export class ToolPropertyCache {
     return obj;
   }
 
-  /**
-   * Adds one input to `dstruct` as a datapath over the stored value. `_ensureValues` must
-   * have run for `cls`, since the prefix objects it maps are the ones that seeds.
-   */
-  _buildBinding(
-    cls: IToolOpConstructor | MacroClassType,
-    key: string,
-    prop: ToolProperty,
-    dstruct: DataStruct,
-    api: DataAPI
-  ): void {
-    const path = ToolPropertyCache._splitToolpath(cls);
-
-    if (path === undefined) {
-      return;
-    }
-
-    let obj = this.accessors;
-    let st = dstruct;
-
-    for (let i = 0; i < path.length; i++) {
-      const k = path[i];
-      let pathk = k;
-
-      if (i === 0) {
-        pathk = "accessors." + k;
-      }
-
-      const st2 = api.mapStruct(obj[k], true, k);
-      if (!(st.pathmap && k in st.pathmap)) {
-        st.struct(pathk, k, k, st2);
-      }
-      st = st2;
-
-      obj = obj[k];
-    }
-
-    const name = ToolPropertyCache._accessorName(key, prop);
-    const prop2 = prop.copy();
-
-    const dpath = new DataPath(name, name, prop2);
-    let uiname = prop.uiname;
-
-    if (!uiname || uiname.trim().length === 0) {
-      uiname = prop.apiname;
-    }
-    if (!uiname || uiname.trim().length === 0) {
-      uiname = key;
-    }
-
-    uiname = ToolProperty.makeUIName(uiname);
-
-    prop2.uiname = uiname;
-    prop2.description = prop2.description || prop2.uiname;
-
-    st.add(dpath);
-  }
-
-  _buildAccessors(
-    cls: IToolOpConstructor | MacroClassType,
-    key: string,
-    prop: ToolProperty,
-    dstruct: DataStruct,
-    api: DataAPI
-  ): void {
-    this._ensureValues(cls, key, prop);
-    this._buildBinding(cls, key, prop, dstruct, api);
-  }
-
   _getAccessor(cls: IToolOpConstructor | MacroClassType): Record<string, unknown> | undefined {
     const toolpath = cls.tooldef().toolpath;
     if (!toolpath) return undefined;
-    return this.pathmap.get(toolpath.trim());
+    return this.values.get(toolpath.trim());
   }
 
   static getFullPath(
@@ -239,8 +162,8 @@ export class ToolPropertyCache {
     if (!obj) {
       console.warn("Warning, toolop " + cls.name + " was not in the default map; unregistered?");
 
-      // Seeding is what makes the write below land; binding is best-effort, since a
-      // registry with no built api has nowhere to put one yet
+      // Seeding is what makes the write below land; telling the apis is best-effort,
+      // since a registry with no built api has nowhere to put a binding yet
       obj = this._ensureValues(cls, key, prop);
       this.registry?.updateDefaults(cls as IToolOpConstructor);
     }
