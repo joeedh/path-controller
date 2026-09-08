@@ -449,7 +449,6 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     }
   }
 
-
   /** Note: resolves when the modalEnd is called */
   override async modalStart(ctx: ModalCTX): Promise<unknown> {
     //macros obviously can't call loadDefaults in the constructor
