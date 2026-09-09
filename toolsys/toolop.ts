@@ -190,11 +190,27 @@ export function setDefaultUndoHandlers(
 
 /**
  * Why something refused, written for the person who pressed the control. The same shape a
- * widget holds, so an op's answer reaches a tooltip without an adapter in between.
+ * widget holds, so an op's answer reaches a tooltip without an adapter in between. A class
+ * rather than an interface so a struct field can name it and the two halves keep their shape
+ * across IPC.
+ *
+ * Do not write `instanceof Refusal`. Every refusal in the tree is an object literal, which
+ * satisfies the class structurally without inheriting from it, so the test is false for all of
+ * them. Check `reason` instead.
  */
-export interface Refusal {
+export class Refusal {
+  static STRUCT = nstructjs.inlineRegister(
+    this,
+    `
+toolsys.Refusal {
+  reason      : string;
+  description?: string;
+}
+`
+  );
+
   /** One sentence, shown on the control itself. */
-  reason: string;
+  reason = "";
   /** The longer explanation, shown behind the tooltip's expander. */
   description?: string;
 }
