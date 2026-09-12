@@ -80,16 +80,44 @@ interface EventDebugData {
   ownerpath?: unknown;
 }
 
+/** One line of the event trace; `dump()` prints these in order. */
+interface EventTraceEntry {
+  /** Milliseconds since `start()`. */
+  t: number;
+  /** "event" when an event first reaches window capture, "listener" when a wrapped
+   *  listener runs, "call" for preventDefault / stopPropagation / stopImmediatePropagation,
+   *  "dispatch" for a script-side dispatchEvent. */
+  kind: "event" | "listener" | "call" | "dispatch";
+  type: string;
+  phase?: string;
+  target?: string;
+  currentTarget?: string;
+  pointerId?: number;
+  pointerType?: string;
+  buttons?: number;
+  x?: number;
+  y?: number;
+  defaultPrevented?: boolean;
+  /** Where the listener was registered (first stack frame outside this module). */
+  listener?: string;
+  method?: string;
+}
+
 interface EventDebugModule {
   _addEventListener: typeof EventTarget.prototype.addEventListener;
   _removeEventListener: typeof EventTarget.prototype.removeEventListener;
   _dispatchEvent: typeof EventTarget.prototype.dispatchEvent;
+  /** Event types the trace follows; edit before `start()` or at runtime. */
+  traceTypes: Set<string>;
+  trace: EventTraceEntry[];
   start(): void;
   add(type: string, data: EventDebugData): void;
   ondispatch(this: EventTarget, ...args: unknown[]): boolean;
   onadd(this: EventTarget, ...args: unknown[]): void;
   onrem(this: EventTarget, ...args: unknown[]): void;
   pruneConnected(): void;
+  clear(): void;
+  dump(filter?: string | RegExp): string;
 }
 
 window.eventDebugModule = (function (): EventDebugModule {
@@ -97,14 +125,101 @@ window.eventDebugModule = (function (): EventDebugModule {
 
   const debugLists = () => window.debugEventLists as Record<string, EventDebugData[]>;
 
-  return {
+  /* Listener wrappers keyed by callback, then by capture flag, so removeEventListener
+   * can find the wrapper that addEventListener installed. */
+  const wrappers = new WeakMap<object, Map<boolean, EventListener>>();
+  let t0 = 0;
+  let uid = 0;
+
+  const describe = (n: unknown): string => {
+    if (n === window) {
+      return "window";
+    }
+    if (n === document) {
+      return "document";
+    }
+    if (!(n instanceof Element)) {
+      return n === null || n === undefined ? String(n) : Object.prototype.toString.call(n);
+    }
+    const el = n as Element & { __dbgid?: number };
+    if (el.__dbgid === undefined) {
+      el.__dbgid = ++uid;
+    }
+    let s = el.tagName.toLowerCase() + "#" + el.__dbgid;
+    if (el.id) {
+      s += "[" + el.id + "]";
+    }
+    if (el.className && typeof el.className === "string") {
+      s += "." + el.className.trim().split(/\s+/).join(".");
+    }
+    const text = (el as HTMLElement).innerText;
+    if (text && el.tagName === "LI") {
+      s += '"' + text.trim().slice(0, 24) + '"';
+    }
+    return s;
+  };
+
+  const captureFlag = (options: unknown): boolean => {
+    if (typeof options === "boolean") {
+      return options;
+    }
+    return !!(options as AddEventListenerOptions | undefined)?.capture;
+  };
+
+  // Frames 0-2 are Error, siteOf, and the module method that called it
+  const siteOf = (): string => {
+    const stack = (new Error().stack ?? "").split("\n").slice(3, 6);
+    return stack.map((line) => line.trim().replace(/^at\s+/, "")).join(" < ") || "?";
+  };
+
+  const eventFields = (e: Event): Partial<EventTraceEntry> => {
+    const ret: Partial<EventTraceEntry> = {
+      type            : e.type,
+      target          : describe(e.target),
+      defaultPrevented: e.defaultPrevented,
+    };
+    if (e instanceof MouseEvent) {
+      ret.buttons = e.buttons;
+      ret.x = Math.round(e.clientX);
+      ret.y = Math.round(e.clientY);
+    }
+    if (e instanceof PointerEvent) {
+      ret.pointerId = e.pointerId;
+      ret.pointerType = e.pointerType;
+    }
+    return ret;
+  };
+
+  const phaseName = (e: Event): string => {
+    return ["none", "capture", "target", "bubble"][e.eventPhase] ?? String(e.eventPhase);
+  };
+
+  const mod: EventDebugModule = {
     _addEventListener   : EventTarget.prototype.addEventListener,
     _removeEventListener: EventTarget.prototype.removeEventListener,
     _dispatchEvent      : EventTarget.prototype.dispatchEvent,
 
+    traceTypes: new Set([
+      "pointerdown",
+      "pointerup",
+      "pointercancel",
+      "gotpointercapture",
+      "lostpointercapture",
+      "mousedown",
+      "mouseup",
+      "click",
+      "dblclick",
+      "contextmenu",
+      "touchstart",
+      "touchend",
+      "touchcancel",
+    ]),
+    trace     : [],
+
     start(this: EventDebugModule) {
       window.debugEventLists = {};
-      window.debugEventList = [];
+      window.debugEventList = this.trace;
+      t0 = performance.now();
 
       this._addEventListener = EventTarget.prototype.addEventListener;
       this._removeEventListener = EventTarget.prototype.removeEventListener;
@@ -116,6 +231,78 @@ window.eventDebugModule = (function (): EventDebugModule {
         .onrem as unknown as typeof EventTarget.prototype.removeEventListener;
       EventTarget.prototype.dispatchEvent = this
         .ondispatch as unknown as typeof EventTarget.prototype.dispatchEvent;
+
+      // Log each event once as it enters window capture, before any listener
+      // (this also catches on* handler properties, which never pass through addEventListener)
+      for (const type of this.traceTypes) {
+        this._addEventListener.call(
+          window,
+          type,
+          (e: Event) => {
+            if (!this.traceTypes.has(e.type)) {
+              return;
+            }
+            this.trace.push({
+              t   : performance.now() - t0,
+              kind: "event",
+              ...eventFields(e),
+            } as EventTraceEntry);
+          },
+          { capture: true, passive: true }
+        );
+      }
+
+      const proto = Event.prototype as unknown as Record<string, (this: Event) => void>;
+      for (const method of ["preventDefault", "stopPropagation", "stopImmediatePropagation"]) {
+        const orig = proto[method];
+        proto[method] = function (this: Event) {
+          if (mod.traceTypes.has(this.type)) {
+            mod.trace.push({
+              t   : performance.now() - t0,
+              kind: "call",
+              method,
+              phase        : phaseName(this),
+              currentTarget: describe(this.currentTarget),
+              listener     : siteOf(),
+              ...eventFields(this),
+            } as EventTraceEntry);
+          }
+          return orig.call(this);
+        };
+      }
+    },
+
+    clear(this: EventDebugModule) {
+      this.trace.length = 0;
+      t0 = performance.now();
+    },
+
+    dump(this: EventDebugModule, filter?: string | RegExp) {
+      const lines: string[] = [];
+      for (const e of this.trace) {
+        let s = e.t.toFixed(1).padStart(8) + " ";
+        if (e.kind === "event") {
+          s += "== " + e.type;
+          s += " id=" + e.pointerId + " " + (e.pointerType ?? "") + " buttons=" + e.buttons;
+          s += " at " + e.x + "," + e.y + " target=" + e.target;
+          if (e.defaultPrevented) {
+            s += " (defaultPrevented)";
+          }
+        } else if (e.kind === "listener") {
+          s += "   -> " + e.phase + " " + e.currentTarget + "  " + e.listener;
+        } else if (e.kind === "call") {
+          s += "      * " + e.method + " @" + e.currentTarget + "  " + e.listener;
+        } else {
+          s += "dispatchEvent " + e.type + " on " + e.target;
+        }
+        if (
+          filter === undefined ||
+          (typeof filter === "string" ? s.includes(filter) : filter.test(s))
+        ) {
+          lines.push(s);
+        }
+      }
+      return lines.join("\n");
     },
 
     add(type: string, data: EventDebugData) {
@@ -127,31 +314,77 @@ window.eventDebugModule = (function (): EventDebugModule {
     },
 
     ondispatch(this: EventTarget, ...args: unknown[]): boolean {
-      const mod = window.eventDebugModule as EventDebugModule;
+      const e = args[0] as Event;
       mod.add("Dispatch", {
-        event    : args[0],
+        event    : e,
         thisvar  : args[4],
         line     : args[5],
         filename : String(args[6]).replace(/\\/g, "/"),
         filepath : location.origin + String(args[6]).replace(/\\/g, "/") + ":" + args[5],
         ownerpath: args[7],
       });
+      if (e && mod.traceTypes.has(e.type)) {
+        mod.trace.push({
+          t       : performance.now() - t0,
+          kind    : "dispatch",
+          type    : e.type,
+          target  : describe(this),
+          listener: siteOf(),
+        });
+      }
 
       return mod._dispatchEvent.apply(this, args as unknown as [Event]);
     },
 
     onadd(this: EventTarget, ...args: unknown[]) {
-      const mod = window.eventDebugModule as EventDebugModule;
+      const [type, cb, options] = args as [
+        string,
+        EventListenerOrEventListenerObject | null,
+        unknown,
+      ];
       mod.add("Add", {
-        type     : args[0] as string,
-        cb       : args[1],
-        args     : args[2],
+        type,
+        cb,
+        args     : options,
         thisvar  : args[4],
         line     : args[5],
         filename : String(args[6]).replace(/\\/g, "/"),
         filepath : location.origin + String(args[6]).replace(/\\/g, "/") + ":" + args[5],
         ownerpath: args[7],
       });
+
+      if (cb && (typeof cb === "function" || typeof cb === "object")) {
+        const capture = captureFlag(options);
+        let byCapture = wrappers.get(cb);
+        if (!byCapture) {
+          byCapture = new Map();
+          wrappers.set(cb, byCapture);
+        }
+
+        let wrapper = byCapture.get(capture);
+        if (!wrapper) {
+          const site = siteOf();
+          const target = this;
+          wrapper = function (this: EventTarget, e: Event) {
+            if (mod.traceTypes.has(e.type)) {
+              mod.trace.push({
+                t            : performance.now() - t0,
+                kind         : "listener",
+                phase        : phaseName(e),
+                currentTarget: describe(target),
+                listener     : site,
+                ...eventFields(e),
+              } as EventTraceEntry);
+            }
+            if (typeof cb === "function") {
+              return cb.call(this, e);
+            }
+            return cb.handleEvent(e);
+          };
+          byCapture.set(capture, wrapper);
+        }
+        args[1] = wrapper;
+      }
 
       mod._addEventListener.apply(
         this,
@@ -178,11 +411,15 @@ window.eventDebugModule = (function (): EventDebugModule {
     },
 
     onrem(this: EventTarget, ...args: unknown[]) {
-      const mod = window.eventDebugModule as EventDebugModule;
+      const [type, cb, options] = args as [
+        string,
+        EventListenerOrEventListenerObject | null,
+        unknown,
+      ];
       mod.add("Rem", {
-        type     : args[0] as string,
-        cb       : args[1],
-        args     : args[2],
+        type,
+        cb,
+        args     : options,
         thisvar  : args[4],
         line     : args[5],
         filename : String(args[6]).replace(/\\/g, "/"),
@@ -190,12 +427,21 @@ window.eventDebugModule = (function (): EventDebugModule {
         ownerpath: args[7],
       });
 
+      if (cb && (typeof cb === "function" || typeof cb === "object")) {
+        const wrapper = wrappers.get(cb)?.get(captureFlag(options));
+        if (wrapper) {
+          args[1] = wrapper;
+        }
+      }
+
       mod._removeEventListener.apply(
         this,
         args as unknown as Parameters<typeof EventTarget.prototype.removeEventListener>
       );
     },
   };
+
+  return mod;
 })();
 
 if (typeof _debug_event_listeners !== "undefined" && _debug_event_listeners) {

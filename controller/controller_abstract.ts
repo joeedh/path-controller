@@ -36,6 +36,8 @@ export interface IToolStack {
   head: Promise<ToolOpAny | undefined>;
   /** The same op as `head`, without the wait. */
   headOp: ToolOpAny | undefined;
+  /** True while an operation holds the lock. */
+  readonly locked: boolean;
   [k: number]: ToolOpAny;
   length: number;
   cur: number;

@@ -95,7 +95,7 @@ export class ToolStack<
     return this[this.cur];
   }
 
-  limitMemory(maxmem: number = this.memLimit, ctx = this.ctx): number {
+  limitMemory(maxmem: number = this.memLimit, ctx: ContextCls = this.ctx): number {
     if (maxmem === undefined) {
       throw new Error("maxmem cannot be undefined");
     }
