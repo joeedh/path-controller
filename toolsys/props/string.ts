@@ -10,6 +10,7 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
     StringPropertyBase {
       data                  : string;
       multiLineIdleTimeout ?: int;
+      richTextFormat       ?: string;
     }
   `
   );
@@ -19,6 +20,9 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
    * Uses a default value if undefined.  In miliseconds.
    */
   multiLineIdleTimeout?: number;
+
+  /** The document format a rich text field edits this string as; `undefined` is the plain block form. */
+  richTextFormat?: string;
 
   constructor(
     type?: TYPE,
@@ -45,6 +49,7 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
   copyTo(b: this): void {
     super.copyTo(b);
     b.multiLineIdleTimeout = this.multiLineIdleTimeout;
+    b.richTextFormat = this.richTextFormat;
     b.data = this.data;
   }
 
@@ -72,12 +77,19 @@ export class StringPropertyBase<TYPE extends number> extends ToolProperty<string
     return this;
   }
 
-  setRichText(state: boolean) {
-    if (state) {
-      this.flag |= PropFlags.RICH_TEXT_STRING;
-    } else {
+  /**
+   * Should a rich text field edit this property? A format name (`"markdown"`) picks the
+   * document format the field uses; `true` is the plain block form.
+   */
+  setRichText(state: boolean | string): this {
+    if (state === false) {
       this.flag &= ~PropFlags.RICH_TEXT_STRING;
+      this.richTextFormat = undefined;
+    } else {
+      this.flag |= PropFlags.RICH_TEXT_STRING;
+      this.richTextFormat = state === true ? undefined : state;
     }
+    return this;
   }
 
   /** Should a textarea be used to edit this property? */
