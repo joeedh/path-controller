@@ -509,6 +509,14 @@ export class ToolMacro<CTX extends ContextLike, ModalCTX extends CTX = CTX> exte
     return super.loadDefaults(force);
   }
 
+  override historyPreflight(ctx: CTX, action: "exec" | "fold" | "undo" | "redo" | "rerun") {
+    for (const tool of this.tools) {
+      const refusal = tool.historyPreflight(tool.execCtx ?? ctx, action);
+      if (refusal) return refusal;
+    }
+    return undefined;
+  }
+
   override async exec(ctx: CTX): Promise<void> {
     //macros obviously can't call loadDefaults in the constructor
     //like normal tool ops can.

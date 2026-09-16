@@ -259,7 +259,7 @@ export function toolopRefusal<CTX extends ContextLike, ModalCTX extends CTX = CT
 }
 
 /**
- * Thrown by the toolstack's public entry points when `canRun` refuses. Reaching the exec path
+ * Thrown when `canRun` or the locked history preflight refuses. Reaching the exec path
  * with a refusal means something bypassed a disabled control — a hotkey, a script, or a race.
  */
 export class ToolRefusedError extends Error {
@@ -893,6 +893,14 @@ export class ToolOp<
   calcUndoMem(_ctx: CTX): number {
     console.warn("ToolOp.prototype.calcUndoMem: implement me!");
     return 0;
+  }
+
+  /** Refuses synchronously under the history lock, before any cursor or document change. */
+  historyPreflight(
+    _ctx: CTX,
+    _action: "exec" | "fold" | "undo" | "redo" | "rerun"
+  ): Refusal | undefined {
+    return undefined;
   }
 
   undoPre(_ctx: CTX): void | Promise<void> {

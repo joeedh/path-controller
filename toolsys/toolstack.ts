@@ -298,6 +298,7 @@ export class ToolStack<
         await this._rerun(head);
       } else {
         //inputs may differ, so drop the head and execute the new instance
+        this._preflight(ctx, tool, "exec");
         await this._undo();
         await this._execTool(ctx, tool);
       }
@@ -307,6 +308,20 @@ export class ToolStack<
       await this._execTool(ctx, tool);
       return true;
     }
+  }
+
+  private _preflight(
+    ctx: ContextCls,
+    tool: ToolOpAny,
+    action: "exec" | "fold" | "undo" | "redo" | "rerun"
+  ): void {
+    const refusal = tool.historyPreflight(ctx, action);
+    if (refusal)
+      throw new ToolRefusedError(
+        refusal.reason,
+        tool,
+        (tool.constructor as unknown as IToolOpConstructor).tooldef().toolpath
+      );
   }
 
   private getUndoFlag(toolop: ToolOpAny) {
@@ -347,6 +362,7 @@ export class ToolStack<
         isFoldableToolOp(toolop) &&
         head.foldKey() === toolop.foldKey()
       ) {
+        this._preflight(ctx, toolop, "fold");
         await asyncCheck(head.foldFrom(toolop as typeof head, ctx));
         return false;
       }
@@ -367,12 +383,7 @@ export class ToolStack<
     });
   }
 
-  /**
-   * Runs `toolop` and pushes it, having taken no authorization decision of its own: the three
-   * public wrappers call `_checkCanRun` before taking the lock. It must not check here — `canRun`
-   * is consumer code, and awaiting it while holding the non-reentrant lock deadlocks the stack.
-   * Undo, redo and `_rerun` reach this unchecked by design.
-   */
+  /** Runs synchronous history preflight under the lock before recording or executing the op. */
   private async _execTool(
     ctx: ContextCls | ModalContextCls,
     toolop: this[0] | ToolOpAny,
@@ -383,10 +394,10 @@ export class ToolStack<
       throw new Error("_execTool ran outside a protected region");
     }
 
+    this._preflight(ctx as ContextCls, toolop, "exec");
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit, ctx as ContextCls);
     }
-
     const undoflag = this.getUndoFlag(toolop);
     const pushed = !(undoflag & UndoFlags.NO_UNDO);
 
@@ -541,6 +552,10 @@ export class ToolStack<
   }
 
   private async _undo(): Promise<void> {
+    const candidate = this[this.cur];
+    if (candidate && !(candidate.undoflag & UndoFlags.IS_UNDO_ROOT)) {
+      this._preflight(candidate.execCtx!, candidate, "undo");
+    }
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
@@ -561,11 +576,12 @@ export class ToolStack<
   }
 
   private async _rerun(tool?: this[0]): Promise<void> {
+    if (tool && tool === this[this.cur]) this._preflight(tool.execCtx ?? this.ctx, tool, "rerun");
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
 
-    if (tool === this[this.cur]) {
+    if (tool && tool === this[this.cur]) {
       tool._was_redo = false;
 
       if (!tool.execCtx) {
@@ -595,6 +611,8 @@ export class ToolStack<
   }
 
   private async _redo(): Promise<void> {
+    const candidate = this[this.cur + 1];
+    if (candidate) this._preflight(candidate.execCtx ?? this.ctx, candidate, "redo");
     if (this.enforceMemLimit) {
       this.limitMemory(this.memLimit);
     }
@@ -602,8 +620,8 @@ export class ToolStack<
     if (this.cur >= -1 && this.cur + 1 < this.length) {
       //console.log("redo!", this.cur, this.length);
 
+      const tool = this[this.cur + 1];
       this.cur++;
-      const tool = this[this.cur];
 
       if (!tool.execCtx) {
         tool.execCtx = this.ctx;
@@ -684,9 +702,9 @@ export class ToolStack<
       }
 
       if (this.cur < this.length - 1) {
+        const tool = this[this.cur + 1];
+        this._preflight(tool.execCtx ?? this.ctx, tool, "redo");
         this.cur++;
-
-        const tool = this[this.cur];
         if (!tool.execCtx) {
           tool.execCtx = this.ctx;
         }
