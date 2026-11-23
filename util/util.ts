@@ -249,13 +249,26 @@ export function pollTimer(id: string, interval: number): boolean {
 let mobileDetect: { mobile(): string | null } | undefined = undefined;
 let mobileDetectValue: boolean | undefined = undefined;
 let lastUserAgent = "";
+// theme lookups call isMobile constantly; re-read the user agent only after a resize
+let userAgentChecked = false;
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  // devtools device emulation changes the user agent and resizes the viewport
+  window.addEventListener("resize", () => {
+    userAgentChecked = false;
+  });
+}
 
 export function isMobile(): boolean {
-  if (lastUserAgent !== navigator.userAgent) {
-    // user agent changed, e.g. devtools is in mobile mode (or not)
-    lastUserAgent = navigator.userAgent;
-    mobileDetectValue = undefined;
-    mobileDetect = undefined;
+  if (!userAgentChecked) {
+    userAgentChecked = true;
+
+    if (lastUserAgent !== navigator.userAgent) {
+      // user agent changed, e.g. devtools is in mobile mode (or not)
+      lastUserAgent = navigator.userAgent;
+      mobileDetectValue = undefined;
+      mobileDetect = undefined;
+    }
   }
 
   if (mobileDetectValue === undefined) {
