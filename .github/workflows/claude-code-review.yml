@@ -1,0 +1,87 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+    paths-ignore:
+      - "extern/**"
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      # The project rules, the callers and the tests all live in path.ux. Paired PRs use
+      # the same branch name in both repositories, so that branch is preferred to master.
+      - name: Clone path.ux
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          url=https://github.com/joeedh/path.ux.git
+          branch=master
+          if git ls-remote --exit-code --heads "$url" "refs/heads/$HEAD_REF" > /dev/null; then
+            branch=$HEAD_REF
+          fi
+          echo "Using path.ux branch $branch"
+          git clone --depth 1 --branch="$branch" "$url" ../path.ux
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. The PR branch is already checked out in the
+            working directory.
+
+            This repository is a submodule of path.ux, mounted there at
+            `scripts/path-controller`, so an import such as `../../core/ui` resolves to
+            `scripts/core/ui` in path.ux. A checkout of path.ux is at `../path.ux`, on the
+            branch with the same name as this PR's if there is one and on master
+            otherwise. Its own `scripts/path-controller` is left empty. The code that
+            calls this library is in `../path.ux/scripts`, and the tests for it are in
+            `../path.ux/tests`. Search both when a change alters behavior or an export.
+
+            Read ../path.ux/CLAUDE.md and ../path.ux/documentation/proseStyle.md first:
+            they are the project's rules, and a change that breaks one is a finding.
+
+            Focus on, in order:
+            - Correctness bugs: wrong behavior, broken edge cases, lifecycle leaks
+              (path watchers, event listeners, modal ToolOps that keep widget pointers),
+              undo and redo that do not restore the same state, async toolstack races
+            - Changes that break path.ux: a removed or changed export, signature or
+              default that a caller in `../path.ux/scripts` depends on
+            - Renamed nstructjs struct names or changed struct fields that stop files
+              already saved by consumer projects from loading
+            - Broken CLAUDE.md rules, especially: no `any` outside JSON.parse, a DataAPI
+              reaching structs it does not own, writes that skip change notification, new
+              names leaking into the `pathux` barrel (`controller.ts` is re-exported from
+              it with `export *`), ToolOps that are not undoable, comment rules (`//`
+              notes at most 3 lines, no leftover `CLAUDENOTE:`)
+            - Missing or weakened tests for changed behavior. Tests belong in path.ux, so
+              check `../path.ux/tests` before reporting one as missing
+
+            Do not comment on formatting (prettier owns it) or offer praise.
+            Put each specific issue in an inline comment on the line it concerns.
+            Finish with one short top-level comment that summarizes the findings, or
+            says the review found nothing, using `gh pr comment`.
+
+          claude_args: |
+            --add-dir ../path.ux
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
