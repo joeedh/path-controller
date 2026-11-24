@@ -74,6 +74,14 @@ function warnNoSnapshot(path: string): void {
   );
 }
 
+/** The object's bound `[CreateSnapshot]` method, if it has one. */
+function snapshotMethod(v: unknown): (() => unknown) | undefined {
+  if (v === null || typeof v !== "object") {
+    return undefined;
+  }
+  return (v as { [CreateSnapshot]?: () => unknown })[CreateSnapshot]?.bind(v);
+}
+
 /** Watchers awaiting the next flush. Strong refs, but only transiently. */
 const dirty = new Set<AnyWatcher>();
 let flushScheduled = false;
@@ -292,6 +300,9 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
   private prop: ToolPropertyTypes | undefined = undefined;
   private snapshot: unknown = undefined;
   private hasSnapshot = false;
+  /** The object a `[CreateSnapshot]` snapshot was taken of; weak, since no model object is
+   * retained here. */
+  private snapshotSource: WeakRef<object> | undefined = undefined;
   /** false when the snapshot is an identity ref that cannot detect in-place
    * mutation; push flushes then fire unconditionally instead of diffing. */
   private snapshotReliable = true;
@@ -489,19 +500,41 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
     return false;
   }
 
+  /**
+   * Whether a live value still matches the snapshot. A value with `[CreateSnapshot]` is compared
+   * snapshot to snapshot, and replacing the object counts as a change even if the new one has
+   * equal contents.
+   */
+  private matchesSnapshot(value: unknown): boolean {
+    const make = snapshotMethod(value);
+    if (make === undefined) {
+      return DataPathWatcher.valuesEqual(this.snapshot, value);
+    }
+    if (this.snapshotSource?.deref() !== value) {
+      return false;
+    }
+    try {
+      return DataPathWatcher.valuesEqual(this.snapshot, make());
+    } catch {
+      return false;
+    }
+  }
+
   private snapshotValue(v: unknown): void {
     this.hasSnapshot = true;
     this.snapshotReliable = true;
+    this.snapshotSource = undefined;
 
     if (v === null || typeof v !== "object") {
       this.snapshot = v;
       return;
     }
 
-    const cp = v as { [CreateSnapshot]?: () => unknown };
-    if (cp[CreateSnapshot]) {
+    const make = snapshotMethod(v);
+    if (make !== undefined) {
       try {
-        this.snapshot = cp[CreateSnapshot]();
+        this.snapshot = make();
+        this.snapshotSource = new WeakRef(v);
         return;
       } catch (error) {
         print_stack(error as Error);
@@ -543,7 +576,7 @@ export class DataPathWatcher<CTX extends ContextLike = ContextLike> {
       this.resolveMeta();
     }
 
-    let changed = !this.hasSnapshot || !DataPathWatcher.valuesEqual(this.snapshot, value);
+    let changed = !this.hasSnapshot || !this.matchesSnapshot(value);
 
     if (!changed && fireOnUnreliable && !this.snapshotReliable) {
       /* explicit push notification on a value we can't diff — trust it */
