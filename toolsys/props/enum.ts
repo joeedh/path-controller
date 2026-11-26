@@ -265,7 +265,7 @@ export class EnumPropertyBase<
     if (enumdef_or_prop instanceof EnumPropertyBase) {
       enumdef = enumdef_or_prop.values;
     } else {
-      enumdef = enumdef_or_prop;
+      enumdef = stripEnumReverseMapping(enumdef_or_prop);
     }
 
     for (const k in enumdef) {
