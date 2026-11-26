@@ -32,7 +32,13 @@ export { FloatArrayProperty, ArrayBufferProperty } from "./props/array";
 export { StringPropertyBase, StringProperty, ReportProperty } from "./props/string";
 export { NumProperty, _NumberPropertyBase, IntProperty, FloatProperty } from "./props/number";
 export { BoolProperty } from "./props/bool";
-export { EnumKeyPair, EnumPropertyBase, EnumProperty, FlagProperty } from "./props/enum";
+export {
+  EnumKeyPair,
+  EnumPropertyBase,
+  EnumProperty,
+  FlagProperty,
+  stripEnumReverseMapping,
+} from "./props/enum";
 export {
   VecPropertyBase,
   Vec2Property,
