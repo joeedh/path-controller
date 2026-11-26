@@ -30,6 +30,27 @@ const first = <T>(iter: Iterable<T> | Record<string, T> | undefined): T | string
   return undefined;
 };
 
+/**
+ * Returns an enum definition without the reverse mapping that a numeric TypeScript enum carries.
+ * `enum Mode { A = 0 }` compiles to `{ A: 0, "0": "A" }`, and the `"0"` entry would otherwise be a
+ * value of its own. An entry is left out when its key is a number, its value is a string, and
+ * that string maps back to that number. EnumProperty and FlagProperty apply this to what they are
+ * given, so an app can pass a TypeScript enum as it is.
+ */
+export function stripEnumReverseMapping<VALUE extends string | number>(
+  def: Readonly<Record<string, VALUE>>
+): Record<string, VALUE> {
+  const out: Record<string, VALUE> = {};
+  for (const k in def) {
+    const v = def[k];
+    const reverse = typeof v === "string" && String(Number(k)) === k && def[v] === Number(k);
+    if (!reverse) {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 export class EnumKeyPair {
   static loadMap<
     KEY extends string | number, //
@@ -160,6 +181,10 @@ export class EnumPropertyBase<
     this.iconmap2 = {} as typeof this.iconmap2;
 
     if (valid_values === undefined) return;
+
+    if (!(valid_values instanceof Array) && !(valid_values instanceof EnumPropertyBase)) {
+      valid_values = stripEnumReverseMapping(valid_values);
+    }
 
     if (valid_values instanceof Array) {
       for (let i = 0; i < valid_values.length; i++) {
